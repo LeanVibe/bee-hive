@@ -1,0 +1,319 @@
+# Getting Started with LeanVibe Agent Hive
+
+A quick guide to get you up and running with the multi-agent orchestration platform.
+
+## Prerequisites
+
+Make sure you have these installed:
+
+- **Python 3.11+** ([Download](https://www.python.org/downloads/))
+- **Node.js 18+** ([Download](https://nodejs.org/))
+- **Docker & Docker Compose** ([Download](https://docs.docker.com/get-docker/))
+- **Git** ([Download](https://git-scm.com/downloads))
+
+## Quick Start (5 minutes)
+
+### 1. Clone and Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/LeanVibe/bee-hive.git
+cd bee-hive
+
+# Copy environment configuration
+cp .env.example .env
+```
+
+### 2. Start Infrastructure
+
+```bash
+# Start PostgreSQL and Redis
+docker-compose up -d postgres redis
+
+# Wait for services to be ready (30 seconds)
+sleep 30
+```
+
+### 3. Setup Backend
+
+```bash
+# Install Python dependencies
+pip install -e .
+
+# Run database migrations
+alembic upgrade head
+
+# Start the API server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 4. Access the Application
+
+Open your browser and visit:
+
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
+- **WebSocket Test**: ws://localhost:8000/ws/observability
+
+## Frontend Setup (Optional)
+
+### Vue.js Web Dashboard
+
+```bash
+# In a new terminal
+cd frontend
+npm install
+npm run dev
+
+# Available at http://localhost:3000
+```
+
+### Mobile PWA Dashboard
+
+```bash
+# In a new terminal
+cd mobile-pwa
+npm install
+npm run dev
+
+# Available at http://localhost:3001
+```
+
+## What's Working Right Now
+
+### ✅ Backend API
+
+- **Agent Management**: Create, read, update, delete agents
+- **Task Management**: Full task lifecycle with assignments
+- **Authentication**: JWT-based login with RBAC
+- **WebSocket**: Real-time event streaming
+- **Database**: PostgreSQL with pgvector for embeddings
+- **Redis**: Message bus and caching
+
+### ✅ Web Dashboard
+
+- **Real-time Monitoring**: Live agent and task status
+- **Performance Charts**: System metrics visualization
+- **Event Timeline**: Real-time event streaming
+- **Responsive Design**: Works on desktop and mobile
+
+### ✅ Mobile PWA
+
+- **Progressive Web App**: Installable on mobile devices
+- **Offline Support**: Works without internet connection
+- **Push Notifications**: Firebase Cloud Messaging setup
+- **Authentication**: JWT + WebAuthn (biometric login)
+
+## Test the API
+
+### Create an Agent
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/agents/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "backend-developer",
+    "role": "developer",
+    "capabilities": ["python", "fastapi", "postgresql"],
+    "max_concurrent_tasks": 3
+  }'
+```
+
+### Create a Task
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/tasks/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Implement user authentication",
+    "description": "Add JWT-based authentication system",
+    "task_type": "feature",
+    "priority": "high",
+    "estimated_effort": 480
+  }'
+```
+
+### List Agents
+
+```bash
+curl "http://localhost:8000/api/v1/agents/"
+```
+
+### Test WebSocket
+
+```bash
+# Install wscat if you don't have it
+npm install -g wscat
+
+# Connect to WebSocket
+wscat -c ws://localhost:8000/ws/observability
+```
+
+## Development Workflow
+
+### Running Tests
+
+```bash
+# Backend tests
+pytest -v --cov=app
+
+# Frontend tests (if you set up frontends)
+cd frontend && npm test
+cd mobile-pwa && npm test
+```
+
+### Code Quality
+
+```bash
+# Format Python code
+black app/ tests/
+
+# Check linting
+ruff check app/ tests/
+
+# Type checking
+mypy app/
+```
+
+### Database Operations
+
+```bash
+# Create new migration
+alembic revision --autogenerate -m "Add new feature"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback migration
+alembic downgrade -1
+```
+
+## Environment Configuration
+
+Edit the `.env` file for your setup:
+
+```env
+# Database
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/agent_hive
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# Security
+JWT_SECRET_KEY=your-secret-key-here
+
+# AI (optional for now)
+ANTHROPIC_API_KEY=your-anthropic-key
+
+# Firebase (for push notifications)
+FIREBASE_PROJECT_ID=your-firebase-project
+FIREBASE_VAPID_KEY=your-vapid-key
+```
+
+## Monitoring
+
+### View Logs
+
+```bash
+# API logs
+docker-compose logs -f api
+
+# Database logs
+docker-compose logs -f postgres
+
+# Redis logs
+docker-compose logs -f redis
+```
+
+### Health Checks
+
+```bash
+# Basic health
+curl http://localhost:8000/health
+
+# Detailed health
+curl http://localhost:8000/health/detailed
+```
+
+### Metrics (Optional)
+
+If you want to see metrics and dashboards:
+
+```bash
+# Start monitoring stack
+docker-compose up -d prometheus grafana
+
+# Access Grafana
+open http://localhost:3000
+# Login: admin/admin
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Database connection failed:**
+```bash
+# Check if PostgreSQL is running
+docker-compose ps postgres
+
+# Restart if needed
+docker-compose restart postgres
+```
+
+**Redis connection failed:**
+```bash
+# Check if Redis is running
+docker-compose ps redis
+
+# Test connection
+redis-cli -h localhost -p 6379 ping
+```
+
+**Port already in use:**
+```bash
+# Find what's using port 8000
+lsof -i :8000
+
+# Kill the process or use a different port
+uvicorn app.main:app --reload --port 8001
+```
+
+**Migration errors:**
+```bash
+# Reset database (development only!)
+docker-compose down postgres
+docker volume rm bee-hive_postgres_data
+docker-compose up -d postgres
+sleep 30
+alembic upgrade head
+```
+
+## Next Steps
+
+1. **Explore the API**: Check out http://localhost:8000/docs
+2. **Read the docs**: See `docs/DEVELOPER_GUIDE.md` for detailed information
+3. **Check current status**: See `docs/CURRENT_STATUS.md` for what's implemented
+4. **Contribute**: Read `CONTRIBUTING.md` for contribution guidelines
+
+## Getting Help
+
+- **Issues**: [GitHub Issues](https://github.com/LeanVibe/bee-hive/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/LeanVibe/bee-hive/discussions)
+- **Documentation**: [docs/](docs/) directory
+
+## What's Next?
+
+The platform is designed to support:
+
+- **Multi-Agent Coordination**: Intelligent task distribution
+- **Real-time Collaboration**: Live agent communication
+- **Context Management**: Intelligent memory and learning
+- **GitHub Integration**: Automated development workflows
+- **AI-Powered Agents**: Claude-based autonomous agents
+
+Check out the [roadmap](docs/strategic-roadmap.md) to see what's coming next!
+
+---
+
+**Welcome to the future of autonomous software development! 🚀**
