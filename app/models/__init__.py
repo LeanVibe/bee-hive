@@ -19,6 +19,11 @@ from .github_integration import (
     CodeReview, GitCommit, BranchOperation, WorkTreeStatus,
     PullRequestStatus, IssueState, ReviewStatus, BranchOperationType
 )
+from .self_modification import (
+    ModificationSession, CodeModification, ModificationMetric, 
+    SandboxExecution, ModificationFeedback, ModificationSafety,
+    ModificationStatus, ModificationType, SandboxExecutionType
+)
 
 __all__ = [
     "Agent", "AgentStatus", "AgentType",
@@ -35,5 +40,8 @@ __all__ = [
     "AgentEvent", "EventType", "ChatTranscript",
     "GitHubRepository", "AgentWorkTree", "PullRequest", "GitHubIssue",
     "CodeReview", "GitCommit", "BranchOperation", "WorkTreeStatus",
-    "PullRequestStatus", "IssueState", "ReviewStatus", "BranchOperationType"
+    "PullRequestStatus", "IssueState", "ReviewStatus", "BranchOperationType",
+    "ModificationSession", "CodeModification", "ModificationMetric", 
+    "SandboxExecution", "ModificationFeedback", "ModificationSafety",
+    "ModificationStatus", "ModificationType", "SandboxExecutionType"
 ]

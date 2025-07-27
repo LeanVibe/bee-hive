@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 
 from pydantic import BaseModel, Field, validator, EmailStr
-from pydantic.types import IPvAnyAddress
+from pydantic import IPvAnyAddress
 
 
 class AgentStatusEnum(str, Enum):

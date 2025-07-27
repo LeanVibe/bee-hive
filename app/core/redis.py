@@ -383,3 +383,92 @@ class RedisHealthCheck:
         except Exception as e:
             logger.error("Failed to get Redis info", error=str(e))
             return {}
+
+
+class RedisClient:
+    """Redis client wrapper for caching and data operations."""
+    
+    def __init__(self, redis_instance: Optional[Redis] = None):
+        """Initialize Redis client."""
+        self._redis = redis_instance or get_redis()
+    
+    async def get(self, key: str) -> Optional[str]:
+        """Get value by key."""
+        try:
+            return await self._redis.get(key)
+        except Exception as e:
+            logger.error("Redis GET failed", key=key, error=str(e))
+            return None
+    
+    async def set(self, key: str, value: str, expire: Optional[int] = None) -> bool:
+        """Set key-value pair with optional expiration."""
+        try:
+            await self._redis.set(key, value, ex=expire)
+            return True
+        except Exception as e:
+            logger.error("Redis SET failed", key=key, error=str(e))
+            return False
+    
+    async def delete(self, key: str) -> bool:
+        """Delete key."""
+        try:
+            await self._redis.delete(key)
+            return True
+        except Exception as e:
+            logger.error("Redis DELETE failed", key=key, error=str(e))
+            return False
+    
+    async def exists(self, key: str) -> bool:
+        """Check if key exists."""
+        try:
+            return bool(await self._redis.exists(key))
+        except Exception as e:
+            logger.error("Redis EXISTS failed", key=key, error=str(e))
+            return False
+    
+    async def expire(self, key: str, seconds: int) -> bool:
+        """Set expiration for key."""
+        try:
+            await self._redis.expire(key, seconds)
+            return True
+        except Exception as e:
+            logger.error("Redis EXPIRE failed", key=key, error=str(e))
+            return False
+    
+    async def hget(self, name: str, key: str) -> Optional[str]:
+        """Get hash field value."""
+        try:
+            return await self._redis.hget(name, key)
+        except Exception as e:
+            logger.error("Redis HGET failed", name=name, key=key, error=str(e))
+            return None
+    
+    async def hset(self, name: str, key: str, value: str) -> bool:
+        """Set hash field value."""
+        try:
+            await self._redis.hset(name, key, value)
+            return True
+        except Exception as e:
+            logger.error("Redis HSET failed", name=name, key=key, error=str(e))
+            return False
+    
+    async def hdel(self, name: str, key: str) -> bool:
+        """Delete hash field."""
+        try:
+            await self._redis.hdel(name, key)
+            return True
+        except Exception as e:
+            logger.error("Redis HDEL failed", name=name, key=key, error=str(e))
+            return False
+    
+    async def close(self):
+        """Close Redis connection."""
+        try:
+            await self._redis.close()
+        except Exception as e:
+            logger.error("Redis close failed", error=str(e))
+
+
+def get_redis_client() -> RedisClient:
+    """Get Redis client instance."""
+    return RedisClient()

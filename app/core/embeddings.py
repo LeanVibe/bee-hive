@@ -9,17 +9,45 @@ import asyncio
 import hashlib
 import json
 import time
-from typing import Dict, List, Optional, Any
+import random
+from typing import Dict, List, Optional, Any, Tuple
 import logging
+from datetime import datetime, timedelta
 
 import openai
 from openai import AsyncOpenAI
 import tiktoken
+from prometheus_client import Counter, Histogram, Gauge
 
 from ..core.config import get_settings
+from ..core.redis import get_redis_client, RedisClient
 
 
 logger = logging.getLogger(__name__)
+
+# Prometheus metrics for monitoring
+embedding_requests_total = Counter('embedding_requests_total', 'Total embedding requests', ['model', 'status'])
+embedding_duration_seconds = Histogram('embedding_duration_seconds', 'Time spent generating embeddings', ['model'])
+embedding_cache_hits_total = Counter('embedding_cache_hits_total', 'Total cache hits', ['cache_type'])
+embedding_tokens_processed = Counter('embedding_tokens_processed_total', 'Total tokens processed')
+embedding_batch_size = Histogram('embedding_batch_size', 'Batch sizes used for embeddings')
+embedding_rate_limit_errors = Counter('embedding_rate_limit_errors_total', 'Rate limit errors encountered')
+embedding_cache_size = Gauge('embedding_cache_size', 'Current cache size', ['cache_type'])
+
+
+class EmbeddingError(Exception):
+    """Base exception for embedding service errors."""
+    pass
+
+
+class RateLimitError(EmbeddingError):
+    """Raised when API rate limit is exceeded."""
+    pass
+
+
+class TokenLimitError(EmbeddingError):
+    """Raised when text exceeds token limits."""
+    pass
 
 
 class EmbeddingService:
@@ -38,7 +66,12 @@ class EmbeddingService:
         self,
         model_name: str = "text-embedding-ada-002",
         max_tokens: int = 8191,
-        cache_ttl: int = 3600
+        cache_ttl: int = 3600,
+        redis_client: Optional[RedisClient] = None,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        max_delay: float = 60.0,
+        rate_limit_rpm: int = 3000
     ):
         """
         Initialize embedding service.
@@ -47,14 +80,26 @@ class EmbeddingService:
             model_name: OpenAI embedding model to use
             max_tokens: Maximum tokens per embedding request
             cache_ttl: Cache time-to-live in seconds
+            redis_client: Redis client for caching (optional)
+            max_retries: Maximum retry attempts for failed requests
+            base_delay: Base delay for exponential backoff (seconds)
+            max_delay: Maximum delay for exponential backoff (seconds)
+            rate_limit_rpm: Rate limit in requests per minute
         """
         self.settings = get_settings()
         self.model_name = model_name
         self.max_tokens = max_tokens
         self.cache_ttl = cache_ttl
+        self.max_retries = max_retries
+        self.base_delay = base_delay
+        self.max_delay = max_delay
+        self.rate_limit_rpm = rate_limit_rpm
         
         # Initialize OpenAI client
         self.client = AsyncOpenAI(api_key=self.settings.openai_api_key)
+        
+        # Initialize Redis client for caching
+        self.redis = redis_client or get_redis_client()
         
         # Initialize tokenizer for the model
         try:
@@ -63,17 +108,23 @@ class EmbeddingService:
             # Fallback to cl100k_base encoding
             self.tokenizer = tiktoken.get_encoding("cl100k_base")
         
-        # In-memory cache for embeddings
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        # In-memory cache for embeddings (fallback)
+        self._memory_cache: Dict[str, Dict[str, Any]] = {}
+        
+        # Rate limiting
+        self._request_times: List[float] = []
         
         # Performance metrics
         self._api_calls = 0
         self._cache_hits = 0
+        self._redis_cache_hits = 0
+        self._memory_cache_hits = 0
         self._total_tokens = 0
+        self._failed_requests = 0
         
     async def generate_embedding(self, text: str) -> List[float]:
         """
-        Generate embedding for a single text input.
+        Generate embedding for a single text input with caching and error handling.
         
         Args:
             text: Text to embed
@@ -82,51 +133,48 @@ class EmbeddingService:
             List of floats representing the embedding vector
             
         Raises:
-            ValueError: If text is too long or empty
-            openai.OpenAIError: If API call fails
+            TokenLimitError: If text is too long
+            EmbeddingError: If text is empty or API call fails
+            RateLimitError: If rate limit is exceeded
         """
-        if not text or not text.strip():
-            raise ValueError("Text cannot be empty")
-        
-        # Check cache first
-        cache_key = self._get_cache_key(text)
-        cached_result = self._get_from_cache(cache_key)
-        if cached_result:
-            self._cache_hits += 1
-            logger.debug(f"Cache hit for text: {text[:50]}...")
-            return cached_result
-        
-        # Validate token count
-        token_count = len(self.tokenizer.encode(text))
-        if token_count > self.max_tokens:
-            raise ValueError(f"Text too long: {token_count} tokens (max: {self.max_tokens})")
-        
-        try:
-            # Call OpenAI API
-            logger.debug(f"Generating embedding for text: {text[:50]}... ({token_count} tokens)")
-            response = await self.client.embeddings.create(
-                model=self.model_name,
-                input=text
-            )
+        with embedding_duration_seconds.labels(model=self.model_name).time():
+            if not text or not text.strip():
+                embedding_requests_total.labels(model=self.model_name, status='error').inc()
+                raise EmbeddingError("Text cannot be empty")
             
-            embedding = response.data[0].embedding
+            # Check cache first
+            cache_key = self._get_cache_key(text)
+            cached_result = await self._get_from_cache(cache_key)
+            if cached_result:
+                self._cache_hits += 1
+                embedding_cache_hits_total.labels(cache_type='total').inc()
+                embedding_requests_total.labels(model=self.model_name, status='cache_hit').inc()
+                logger.debug(f"Cache hit for text: {text[:50]}...")
+                return cached_result
+            
+            # Validate token count
+            token_count = len(self.tokenizer.encode(text))
+            if token_count > self.max_tokens:
+                embedding_requests_total.labels(model=self.model_name, status='error').inc()
+                raise TokenLimitError(f"Text too long: {token_count} tokens (max: {self.max_tokens})")
+            
+            # Check and enforce rate limits
+            await self._enforce_rate_limit()
+            
+            # Generate embedding with retries
+            embedding = await self._generate_with_retries(text, token_count)
+            
+            # Cache the result
+            await self._cache_result(cache_key, embedding)
             
             # Update metrics
             self._api_calls += 1
             self._total_tokens += token_count
-            
-            # Cache the result
-            self._cache_result(cache_key, embedding)
+            embedding_tokens_processed.inc(token_count)
+            embedding_requests_total.labels(model=self.model_name, status='success').inc()
             
             logger.debug(f"Generated embedding with {len(embedding)} dimensions")
             return embedding
-            
-        except openai.OpenAIError as e:
-            logger.error(f"OpenAI API error generating embedding: {e}")
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error generating embedding: {e}")
-            raise
     
     async def batch_generate_embeddings(
         self,

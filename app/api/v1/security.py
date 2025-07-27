@@ -629,8 +629,9 @@ async def security_metrics(
 
 
 # Error Handlers
+# Note: Exception handlers should be registered at the app level, not router level
 
-@router.exception_handler(TokenValidationError)
+# @app.exception_handler(TokenValidationError)
 async def token_validation_error_handler(request: Request, exc: TokenValidationError):
     """Handle token validation errors."""
     return SecurityError(
@@ -640,7 +641,7 @@ async def token_validation_error_handler(request: Request, exc: TokenValidationE
     )
 
 
-@router.exception_handler(RateLimitExceededError)
+# @app.exception_handler(RateLimitExceededError)
 async def rate_limit_error_handler(request: Request, exc: RateLimitExceededError):
     """Handle rate limit exceeded errors."""
     return SecurityError(

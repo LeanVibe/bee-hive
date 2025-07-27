@@ -106,6 +106,14 @@ class Settings(BaseSettings):
     
     # OpenAI API (for embeddings)
     OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY")
+    OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-ada-002", env="OPENAI_EMBEDDING_MODEL")
+    OPENAI_EMBEDDING_MAX_TOKENS: int = Field(default=8191, env="OPENAI_EMBEDDING_MAX_TOKENS")
+    OPENAI_EMBEDDING_CACHE_TTL: int = Field(default=3600, env="OPENAI_EMBEDDING_CACHE_TTL")
+    OPENAI_EMBEDDING_MAX_RETRIES: int = Field(default=3, env="OPENAI_EMBEDDING_MAX_RETRIES")
+    OPENAI_EMBEDDING_BASE_DELAY: float = Field(default=1.0, env="OPENAI_EMBEDDING_BASE_DELAY")
+    OPENAI_EMBEDDING_MAX_DELAY: float = Field(default=60.0, env="OPENAI_EMBEDDING_MAX_DELAY")
+    OPENAI_EMBEDDING_RATE_LIMIT_RPM: int = Field(default=3000, env="OPENAI_EMBEDDING_RATE_LIMIT_RPM")
+    OPENAI_EMBEDDING_BATCH_SIZE: int = Field(default=100, env="OPENAI_EMBEDDING_BATCH_SIZE")
     
     # Security
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")

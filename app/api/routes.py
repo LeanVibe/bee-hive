@@ -23,6 +23,7 @@ from .v1.observability import router as observability_router
 from .v1.sleep_wake import router as sleep_wake_router
 from .v1.communication import router as communication_router
 from .v1.github_integration import router as github_integration_router
+from .v1.self_modification import router as self_modification_router
 
 # Main API router
 router = APIRouter()
@@ -43,6 +44,7 @@ router.include_router(observability_router, tags=["observability"])
 router.include_router(sleep_wake_router, tags=["sleep-wake"])
 router.include_router(communication_router, tags=["communication"])
 router.include_router(github_integration_router, tags=["github-integration"])
+router.include_router(self_modification_router, tags=["self-modification"])
 
 
 @router.get("/")

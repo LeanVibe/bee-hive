@@ -18,6 +18,16 @@ from .workflow import (
 from .context import (
     ContextCreate, ContextUpdate, ContextResponse, ContextListResponse
 )
+from .self_modification import (
+    AnalyzeCodebaseRequest, ApplyModificationsRequest, RollbackModificationRequest,
+    ProvideFeedbackRequest, ModificationSuggestion, AnalyzeCodebaseResponse,
+    ApplyModificationsResponse, RollbackModificationResponse, ModificationMetricResponse,
+    SandboxExecutionResponse, ModificationSessionResponse, ModificationSessionSummary,
+    GetSessionsResponse, ModificationMetricsResponse, SystemHealthResponse,
+    ErrorDetail, ErrorResponse, PaginationParams, FilterParams,
+    ModificationSafetySchema, ModificationStatusSchema, ModificationTypeSchema,
+    SandboxExecutionTypeSchema
+)
 
 __all__ = [
     "AgentCreate", "AgentUpdate", "AgentResponse", "AgentListResponse",
@@ -27,5 +37,13 @@ __all__ = [
     "WorkflowCreate", "WorkflowUpdate", "WorkflowResponse", "WorkflowListResponse",
     "WorkflowTaskAssignment", "WorkflowExecutionRequest", "WorkflowProgressResponse",
     "WorkflowValidationResponse", "WorkflowStatsResponse",
-    "ContextCreate", "ContextUpdate", "ContextResponse", "ContextListResponse"
+    "ContextCreate", "ContextUpdate", "ContextResponse", "ContextListResponse",
+    "AnalyzeCodebaseRequest", "ApplyModificationsRequest", "RollbackModificationRequest",
+    "ProvideFeedbackRequest", "ModificationSuggestion", "AnalyzeCodebaseResponse",
+    "ApplyModificationsResponse", "RollbackModificationResponse", "ModificationMetricResponse",
+    "SandboxExecutionResponse", "ModificationSessionResponse", "ModificationSessionSummary",
+    "GetSessionsResponse", "ModificationMetricsResponse", "SystemHealthResponse",
+    "ErrorDetail", "ErrorResponse", "PaginationParams", "FilterParams",
+    "ModificationSafetySchema", "ModificationStatusSchema", "ModificationTypeSchema",
+    "SandboxExecutionTypeSchema"
 ]
