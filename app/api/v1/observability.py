@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session_dependency
 from app.core.event_processor import get_event_processor
+from app.core.hook_processor import get_hook_event_processor
 from app.core.redis import get_redis
 from app.models.observability import AgentEvent, EventType
 from app.observability.hooks import get_hook_interceptor
@@ -81,7 +82,216 @@ class HealthResponse(BaseModel):
     timestamp: str = Field(..., description="Health check timestamp")
 
 
+class HookEventRequest(BaseModel):
+    """Request model for Claude Code hook events."""
+    
+    session_id: str = Field(..., description="Session UUID")
+    agent_id: str = Field(..., description="Agent UUID")
+    event_type: str = Field(..., description="Hook event type")
+    tool_name: Optional[str] = Field(None, description="Tool name for tool events")
+    parameters: Optional[Dict[str, Any]] = Field(None, description="Tool parameters for PreToolUse")
+    result: Optional[Any] = Field(None, description="Tool result for PostToolUse")
+    success: Optional[bool] = Field(None, description="Tool success status for PostToolUse")
+    error: Optional[str] = Field(None, description="Error message for error events")
+    error_type: Optional[str] = Field(None, description="Error type classification")
+    stack_trace: Optional[str] = Field(None, description="Stack trace for error events")
+    context: Optional[Dict[str, Any]] = Field(None, description="Additional context")
+    correlation_id: Optional[str] = Field(None, description="Correlation ID for event matching")
+    execution_time_ms: Optional[int] = Field(None, description="Tool execution time in milliseconds")
+    timestamp: Optional[str] = Field(None, description="Event timestamp (ISO format)")
+    
+    @field_validator("session_id", "agent_id")
+    @classmethod
+    def validate_uuid(cls, v):
+        """Validate UUID format."""
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError("Invalid UUID format")
+        return v
+
+
+class HookEventResponse(BaseModel):
+    """Response model for hook event operations."""
+    
+    status: str = Field(..., description="Processing status")
+    event_id: Optional[str] = Field(None, description="Event ID if processed")
+    processing_time_ms: Optional[float] = Field(None, description="Processing time in milliseconds")
+    redacted: Optional[bool] = Field(None, description="Whether data was redacted")
+    performance_warnings: Optional[List[str]] = Field(None, description="Performance warnings")
+
+
+class PerformanceMetricsResponse(BaseModel):
+    """Response model for real-time performance metrics."""
+    
+    timestamp: str = Field(..., description="Metrics timestamp")
+    performance: Dict[str, Any] = Field(..., description="Performance metrics")
+    health: str = Field(..., description="Health status")
+    degradation: Optional[Dict[str, Any]] = Field(None, description="Performance degradation info")
+    stream_info: Optional[Dict[str, Any]] = Field(None, description="Redis stream information")
+
+
 # === API Endpoints ===
+
+@router.post("/hook-events", response_model=HookEventResponse, status_code=201)
+async def process_hook_event(
+    hook_request: HookEventRequest,
+    request: Request
+) -> HookEventResponse:
+    """
+    Process Claude Code hook events with automatic PII redaction and performance monitoring.
+    
+    This endpoint receives events from Claude Code hooks and processes them through
+    the enhanced hook event processor with security filtering, PII redaction,
+    and real-time streaming capabilities.
+    """
+    import time
+    start_time = time.time()
+    
+    try:
+        # Get hook event processor
+        processor = get_hook_event_processor()
+        if not processor:
+            raise HTTPException(
+                status_code=503,
+                detail="Hook event processor not available"
+            )
+        
+        # Route to appropriate processing method based on event type
+        event_id = None
+        performance_warnings = []
+        
+        if hook_request.event_type == "PRE_TOOL_USE":
+            event_data = {
+                "session_id": hook_request.session_id,
+                "agent_id": hook_request.agent_id,
+                "tool_name": hook_request.tool_name,
+                "parameters": hook_request.parameters or {},
+                "correlation_id": hook_request.correlation_id,
+                "timestamp": hook_request.timestamp
+            }
+            event_id = await processor.process_pre_tool_use(event_data)
+            
+        elif hook_request.event_type == "POST_TOOL_USE":
+            event_data = {
+                "session_id": hook_request.session_id,
+                "agent_id": hook_request.agent_id,
+                "tool_name": hook_request.tool_name,
+                "result": hook_request.result,
+                "success": hook_request.success,
+                "error": hook_request.error,
+                "correlation_id": hook_request.correlation_id,
+                "execution_time_ms": hook_request.execution_time_ms,
+                "timestamp": hook_request.timestamp
+            }
+            event_id = await processor.process_post_tool_use(event_data)
+            
+        elif hook_request.event_type == "ERROR":
+            event_data = {
+                "session_id": hook_request.session_id,
+                "agent_id": hook_request.agent_id,
+                "error_type": hook_request.error_type,
+                "error_message": hook_request.error,
+                "stack_trace": hook_request.stack_trace,
+                "context": hook_request.context or {},
+                "correlation_id": hook_request.correlation_id,
+                "timestamp": hook_request.timestamp
+            }
+            event_id = await processor.process_error_event(event_data)
+            
+        elif hook_request.event_type in ["AGENT_START", "AGENT_STOP"]:
+            from app.models.observability import EventType
+            event_type = EventType(hook_request.event_type)
+            
+            event_data = {
+                "session_id": hook_request.session_id,
+                "agent_id": hook_request.agent_id,
+                "context": hook_request.context or {},
+                "timestamp": hook_request.timestamp
+            }
+            event_id = await processor.process_agent_lifecycle_event(event_data, event_type)
+            
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unsupported event type: {hook_request.event_type}"
+            )
+        
+        # Calculate processing time
+        processing_time_ms = (time.time() - start_time) * 1000
+        
+        # Check for performance warnings
+        if processing_time_ms > 150:  # PRD requirement
+            performance_warnings.append(f"Processing time ({processing_time_ms:.1f}ms) exceeded 150ms threshold")
+        
+        logger.info(
+            "🔗 Hook event processed",
+            event_type=hook_request.event_type,
+            event_id=event_id,
+            processing_time_ms=processing_time_ms,
+            session_id=hook_request.session_id
+        )
+        
+        return HookEventResponse(
+            status="processed" if event_id else "failed",
+            event_id=event_id,
+            processing_time_ms=processing_time_ms,
+            redacted=True,  # PII redaction is always enabled
+            performance_warnings=performance_warnings if performance_warnings else None
+        )
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.warning("❌ Invalid hook event request", error=str(e))
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        processing_time_ms = (time.time() - start_time) * 1000
+        logger.error(
+            "❌ Failed to process hook event", 
+            error=str(e), 
+            event_type=hook_request.event_type,
+            processing_time_ms=processing_time_ms,
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process hook event"
+        )
+
+
+@router.get("/hook-performance", response_model=PerformanceMetricsResponse)
+async def get_hook_performance() -> PerformanceMetricsResponse:
+    """
+    Get real-time performance metrics for hook event processing.
+    
+    Returns comprehensive performance data including processing times,
+    throughput, error rates, and system health indicators.
+    """
+    try:
+        processor = get_hook_event_processor()
+        if not processor:
+            raise HTTPException(
+                status_code=503,
+                detail="Hook event processor not available"
+            )
+        
+        # Get real-time metrics
+        metrics = await processor.get_real_time_metrics()
+        
+        logger.debug("📊 Hook performance metrics retrieved")
+        
+        return PerformanceMetricsResponse(**metrics)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("❌ Failed to get hook performance metrics", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve performance metrics"
+        )
+
 
 @router.post("/event", response_model=EventResponse, status_code=201)
 async def create_event(
@@ -455,6 +665,18 @@ async def get_health(
             }
         else:
             components["hook_interceptor"] = {"status": "unavailable", "message": "Not initialized"}
+        
+        # Check hook event processor health
+        hook_processor = get_hook_event_processor()
+        if hook_processor:
+            hook_health = await hook_processor.health_check()
+            components["hook_event_processor"] = hook_health
+            
+            if hook_health["status"] != "healthy":
+                overall_status = "degraded" if overall_status == "healthy" else "unhealthy"
+        else:
+            components["hook_event_processor"] = {"status": "unavailable", "message": "Not initialized"}
+            overall_status = "degraded" if overall_status == "healthy" else "unhealthy"
         
         logger.debug("🏥 Health check completed", status=overall_status)
         
