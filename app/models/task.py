@@ -49,6 +49,10 @@ class TaskType(Enum):
     CODE_REVIEW = "code_review"
     RESEARCH = "research"
     OPTIMIZATION = "optimization"
+    # Additional task types for persona system
+    CODE_GENERATION = "code_generation"
+    COORDINATION = "coordination"
+    PLANNING = "planning"
 
 
 class Task(Base):
@@ -102,6 +106,7 @@ class Task(Base):
     # Relationships
     assigned_agent = relationship("Agent", foreign_keys=[assigned_agent_id])
     created_by = relationship("Agent", foreign_keys=[created_by_agent_id])
+    persona_performance = relationship("PersonaPerformanceModel", back_populates="task")
     
     def __init__(self, **kwargs):
         """Initialize task with proper defaults."""
