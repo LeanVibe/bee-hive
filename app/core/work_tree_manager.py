@@ -33,6 +33,26 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+class WorkTreeConfig:
+    """Configuration class for work tree management."""
+    
+    def __init__(
+        self,
+        base_path: str = None,
+        file_permissions: int = 0o750,
+        directory_permissions: int = 0o750,
+        max_disk_usage_mb: int = 2048,
+        max_file_count: int = 10000,
+        cleanup_after_days: int = 7
+    ):
+        self.base_path = base_path or "/tmp/agent-workspaces"
+        self.file_permissions = file_permissions
+        self.directory_permissions = directory_permissions
+        self.max_disk_usage_mb = max_disk_usage_mb
+        self.max_file_count = max_file_count
+        self.cleanup_after_days = cleanup_after_days
+
+
 class WorkTreeError(Exception):
     """Custom exception for work tree operations."""
     pass

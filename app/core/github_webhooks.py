@@ -17,13 +17,13 @@ from enum import Enum
 
 from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 
 from ..core.config import get_settings
 from ..core.database import get_db_session
 from ..models.github_integration import (
-    GitHubRepository, PullRequest, GitHubIssue, AgentWorkTree,
+    GitHubRepository, PullRequest, GitHubIssue, AgentWorkTree, GitCommit,
     PullRequestStatus, IssueState
 )
 from ..core.github_api_client import GitHubAPIClient
