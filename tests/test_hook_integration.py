@@ -80,8 +80,8 @@ class TestPIIRedactor:
         assert "/Users/john" not in result["error"]
         assert "/home/jane" not in result["stack_trace"]
         # The actual implementation uses [FILE_PATH_REDACTED] pattern
-        assert "FILE_PATH_REDACTED" in result["error"] or "/Users/[USER]" in result["error"]
-        assert "FILE_PATH_REDACTED" in result["stack_trace"] or "/home/[USER]" in result["stack_trace"]
+        assert "FILE_PATH_REDACTED" in result["error"]
+        assert "FILE_PATH_REDACTED" in result["stack_trace"]
     
     def test_redact_nested_structures(self, redactor):
         """Test redaction in nested data structures."""
@@ -233,7 +233,7 @@ class TestHookEventProcessor:
         payload = call_args[1]["payload"]
         
         assert payload["parameters"]["password"] == "[REDACTED]"
-        assert "/Users/[USER]" in payload["parameters"]["file_path"]
+        assert "[FILE_PATH_REDACTED]" in payload["parameters"]["file_path"]
         assert payload["context"]["redacted"] is True
     
     @pytest.mark.asyncio
@@ -281,7 +281,7 @@ class TestHookEventProcessor:
         call_args = hook_processor.event_processor.process_event.call_args
         payload = call_args[1]["payload"]
         
-        assert "/Users/[USER]" in payload["error_message"]
+        assert "[FILE_PATH_REDACTED]" in payload["error_message"]
         assert "secret123" not in payload["error_message"]
     
     @pytest.mark.asyncio

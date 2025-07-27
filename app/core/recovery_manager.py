@@ -26,9 +26,11 @@ from ..models.sleep_wake import (
     Checkpoint, CheckpointType, SleepWakeCycle, SleepState, SleepWakeAnalytics
 )
 from ..models.agent import Agent
+from ..models.context import Context
 from ..core.database import get_async_session
 from ..core.redis import get_redis
 from ..core.checkpoint_manager import get_checkpoint_manager
+from ..core.context_manager import ContextManager
 from ..core.config import get_settings
 
 
@@ -56,6 +58,7 @@ class RecoveryManager:
     def __init__(self):
         self.settings = get_settings()
         self.checkpoint_manager = get_checkpoint_manager()
+        self.context_manager = ContextManager()
         
         # Recovery settings
         self.max_fallback_generations = 3
@@ -67,10 +70,26 @@ class RecoveryManager:
         self.min_success_rate = 0.8  # 80% health check success rate
         self.max_error_rate = 0.1   # 10% maximum error rate
         
+        # Wake restoration settings
+        self.enable_context_integrity_validation = True
+        self.enable_performance_validation = True
+        self.enable_health_monitoring = True
+        self.target_recovery_time_ms = 60000  # 60 seconds from PRD
+        
         # Recovery tracking
         self._active_recoveries: Dict[UUID, Dict[str, Any]] = {}
         self._recovery_history: List[Dict[str, Any]] = []
         self._last_successful_recovery: Optional[datetime] = None
+        
+        # Performance metrics
+        self._recovery_metrics: Dict[str, Any] = {
+            "total_recoveries": 0,
+            "successful_recoveries": 0,
+            "failed_recoveries": 0,
+            "average_recovery_time_ms": 0.0,
+            "context_integrity_failures": 0,
+            "health_check_failures": 0
+        }
     
     async def initiate_recovery(
         self,
@@ -212,6 +231,427 @@ class RecoveryManager:
         except Exception as e:
             logger.error(f"Error during emergency recovery: {e}")
             return False
+    
+    async def comprehensive_wake_restoration(
+        self,
+        agent_id: UUID,
+        checkpoint: Checkpoint,
+        validation_level: str = "full"
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Perform comprehensive wake restoration with full validation.
+        
+        Args:
+            agent_id: Agent ID for wake restoration
+            checkpoint: Checkpoint to restore from
+            validation_level: Level of validation (minimal, standard, full)
+            
+        Returns:
+            Tuple of (success, restoration_details)
+        """
+        start_time = time.time()
+        restoration_details = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "agent_id": str(agent_id),
+            "checkpoint_id": str(checkpoint.id),
+            "validation_level": validation_level,
+            "phases_completed": [],
+            "validation_results": {},
+            "performance_metrics": {},
+            "errors": []
+        }
+        
+        try:
+            logger.info(f"Starting comprehensive wake restoration for agent {agent_id}")
+            
+            # Phase 1: Pre-restoration validation
+            pre_validation_result = await self._perform_pre_restoration_validation(
+                agent_id, checkpoint, validation_level
+            )
+            restoration_details["validation_results"]["pre_restoration"] = pre_validation_result
+            restoration_details["phases_completed"].append("pre_validation")
+            
+            if not pre_validation_result["passed"] and validation_level == "full":
+                restoration_details["errors"].append("Pre-restoration validation failed")
+                return False, restoration_details
+            
+            # Phase 2: State restoration
+            restoration_start = time.time()
+            success, state_data = await self.checkpoint_manager.restore_checkpoint(checkpoint.id)
+            
+            if not success:
+                restoration_details["errors"].append("Checkpoint restoration failed")
+                return False, restoration_details
+            
+            restoration_time_ms = (time.time() - restoration_start) * 1000
+            restoration_details["performance_metrics"]["restoration_time_ms"] = restoration_time_ms
+            restoration_details["phases_completed"].append("state_restoration")
+            
+            # Phase 3: Context integrity validation
+            if self.enable_context_integrity_validation:
+                context_validation_result = await self._validate_context_integrity(agent_id, state_data)
+                restoration_details["validation_results"]["context_integrity"] = context_validation_result
+                restoration_details["phases_completed"].append("context_validation")
+                
+                if not context_validation_result["passed"]:
+                    self._recovery_metrics["context_integrity_failures"] += 1
+                    if validation_level == "full":
+                        restoration_details["errors"].append("Context integrity validation failed")
+                        return False, restoration_details
+            
+            # Phase 4: Agent state restoration and validation
+            agent_restoration_result = await self._restore_and_validate_agent_state(
+                agent_id, state_data, validation_level
+            )
+            restoration_details["validation_results"]["agent_state"] = agent_restoration_result
+            restoration_details["phases_completed"].append("agent_state_restoration")
+            
+            if not agent_restoration_result["passed"]:
+                restoration_details["errors"].append("Agent state restoration failed")
+                return False, restoration_details
+            
+            # Phase 5: Service coordination and health checks
+            if self.enable_health_monitoring:
+                health_check_result = await self._perform_post_restoration_health_checks(
+                    agent_id, validation_level
+                )
+                restoration_details["validation_results"]["health_checks"] = health_check_result
+                restoration_details["phases_completed"].append("health_checks")
+                
+                if not health_check_result["passed"]:
+                    self._recovery_metrics["health_check_failures"] += 1
+                    if validation_level == "full":
+                        restoration_details["errors"].append("Post-restoration health checks failed")
+                        return False, restoration_details
+            
+            # Phase 6: Performance validation
+            if self.enable_performance_validation:
+                performance_validation_result = await self._validate_performance_targets(
+                    restoration_time_ms, agent_id
+                )
+                restoration_details["validation_results"]["performance"] = performance_validation_result
+                restoration_details["phases_completed"].append("performance_validation")
+                
+                if not performance_validation_result["passed"]:
+                    if validation_level == "full":
+                        restoration_details["errors"].append("Performance targets not met")
+                        return False, restoration_details
+            
+            # Calculate final metrics
+            total_time_ms = (time.time() - start_time) * 1000
+            restoration_details["performance_metrics"]["total_time_ms"] = total_time_ms
+            restoration_details["performance_metrics"]["meets_target"] = total_time_ms < self.target_recovery_time_ms
+            
+            logger.info(
+                f"Comprehensive wake restoration completed for agent {agent_id} in {total_time_ms:.0f}ms "
+                f"(target: {self.target_recovery_time_ms}ms)"
+            )
+            
+            return True, restoration_details
+            
+        except Exception as e:
+            logger.error(f"Error during comprehensive wake restoration: {e}")
+            restoration_details["errors"].append(f"Exception: {str(e)}")
+            return False, restoration_details
+    
+    async def _perform_pre_restoration_validation(
+        self,
+        agent_id: UUID,
+        checkpoint: Checkpoint,
+        validation_level: str
+    ) -> Dict[str, Any]:
+        """Perform pre-restoration validation checks."""
+        validation_result = {
+            "passed": True,
+            "checks": {},
+            "warnings": [],
+            "errors": []
+        }
+        
+        try:
+            # Validate checkpoint integrity
+            is_valid, errors = await self.checkpoint_manager.validate_checkpoint(checkpoint.id)
+            validation_result["checks"]["checkpoint_integrity"] = {
+                "passed": is_valid,
+                "errors": errors
+            }
+            
+            if not is_valid:
+                validation_result["passed"] = False
+                validation_result["errors"].extend(errors)
+            
+            # Validate agent exists and is in valid state
+            async with get_async_session() as session:
+                agent = await session.get(Agent, agent_id)
+                if not agent:
+                    validation_result["checks"]["agent_exists"] = {
+                        "passed": False,
+                        "error": "Agent not found"
+                    }
+                    validation_result["passed"] = False
+                    validation_result["errors"].append("Agent not found")
+                else:
+                    validation_result["checks"]["agent_exists"] = {"passed": True}
+                    
+                    # Check agent state compatibility
+                    compatible_states = [SleepState.SLEEPING, SleepState.PREPARING_WAKE, SleepState.ERROR]
+                    state_compatible = agent.current_sleep_state in compatible_states
+                    validation_result["checks"]["agent_state_compatible"] = {
+                        "passed": state_compatible,
+                        "current_state": agent.current_sleep_state.value,
+                        "compatible_states": [s.value for s in compatible_states]
+                    }
+                    
+                    if not state_compatible and validation_level == "full":
+                        validation_result["passed"] = False
+                        validation_result["errors"].append(
+                            f"Agent in incompatible state: {agent.current_sleep_state.value}"
+                        )
+            
+            # Validate system resources
+            resource_check = await self._check_system_resources()
+            validation_result["checks"]["system_resources"] = resource_check
+            
+            if not resource_check["sufficient"] and validation_level == "full":
+                validation_result["passed"] = False
+                validation_result["errors"].append("Insufficient system resources")
+            elif not resource_check["sufficient"]:
+                validation_result["warnings"].append("Low system resources detected")
+            
+            return validation_result
+            
+        except Exception as e:
+            logger.error(f"Error in pre-restoration validation: {e}")
+            validation_result["passed"] = False
+            validation_result["errors"].append(f"Validation error: {str(e)}")
+            return validation_result
+    
+    async def _validate_context_integrity(self, agent_id: UUID, state_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate context integrity after restoration."""
+        validation_result = {
+            "passed": True,
+            "checks": {},
+            "warnings": [],
+            "errors": []
+        }
+        
+        try:
+            # Check context count consistency
+            async with get_async_session() as session:
+                current_context_count = await session.scalar(
+                    select(func.count(Context.id)).where(Context.agent_id == agent_id)
+                )
+                
+                # Get expected context count from state data
+                expected_contexts = len(state_data.get("agent_states", {}).get("contexts", []))
+                
+                context_count_check = {
+                    "current_count": current_context_count or 0,
+                    "expected_count": expected_contexts,
+                    "consistent": abs((current_context_count or 0) - expected_contexts) <= 5  # Allow 5 context variance
+                }
+                validation_result["checks"]["context_count"] = context_count_check
+                
+                if not context_count_check["consistent"]:
+                    validation_result["warnings"].append(
+                        f"Context count mismatch: current={current_context_count}, expected={expected_contexts}"
+                    )
+            
+            # Check for corrupted contexts
+            corrupted_contexts = await self._check_for_corrupted_contexts(agent_id)
+            validation_result["checks"]["corrupted_contexts"] = {
+                "found": len(corrupted_contexts),
+                "context_ids": [str(ctx_id) for ctx_id in corrupted_contexts]
+            }
+            
+            if corrupted_contexts:
+                validation_result["errors"].append(f"Found {len(corrupted_contexts)} corrupted contexts")
+                validation_result["passed"] = False
+            
+            # Validate context embeddings integrity
+            embedding_check = await self._validate_context_embeddings(agent_id)
+            validation_result["checks"]["embeddings"] = embedding_check
+            
+            if not embedding_check["valid"]:
+                validation_result["warnings"].append("Some context embeddings may be invalid")
+            
+            return validation_result
+            
+        except Exception as e:
+            logger.error(f"Error validating context integrity: {e}")
+            validation_result["passed"] = False
+            validation_result["errors"].append(f"Context validation error: {str(e)}")
+            return validation_result
+    
+    async def _restore_and_validate_agent_state(
+        self,
+        agent_id: UUID,
+        state_data: Dict[str, Any],
+        validation_level: str
+    ) -> Dict[str, Any]:
+        """Restore and validate agent state."""
+        validation_result = {
+            "passed": True,
+            "restoration_steps": [],
+            "validation_checks": {},
+            "errors": []
+        }
+        
+        try:
+            async with get_async_session() as session:
+                agent = await session.get(Agent, agent_id)
+                if not agent:
+                    validation_result["passed"] = False
+                    validation_result["errors"].append("Agent not found during restoration")
+                    return validation_result
+                
+                # Restore agent state
+                agent.current_sleep_state = SleepState.AWAKE
+                agent.last_wake_time = datetime.utcnow()
+                agent.current_cycle_id = None
+                
+                # Restore additional state from checkpoint
+                agent_state_data = state_data.get("agent_states", {})
+                if isinstance(agent_state_data, list) and agent_state_data:
+                    agent_state_data = agent_state_data[0]  # Take first agent state
+                
+                if isinstance(agent_state_data, dict):
+                    # Restore configuration if present
+                    if "config" in agent_state_data:
+                        agent.config = agent_state_data["config"]
+                    
+                    validation_result["restoration_steps"].append("Updated agent state and configuration")
+                
+                await session.commit()
+                validation_result["restoration_steps"].append("Committed agent state changes")
+                
+                # Validate restored state
+                await session.refresh(agent)
+                
+                state_validation = {
+                    "sleep_state_correct": agent.current_sleep_state == SleepState.AWAKE,
+                    "wake_time_recent": agent.last_wake_time and 
+                                       (datetime.utcnow() - agent.last_wake_time).seconds < 60,
+                    "cycle_id_cleared": agent.current_cycle_id is None
+                }
+                validation_result["validation_checks"]["agent_state"] = state_validation
+                
+                # Check if all validations passed
+                all_passed = all(state_validation.values())
+                if not all_passed:
+                    validation_result["passed"] = False
+                    validation_result["errors"].append("Agent state validation failed")
+                
+                return validation_result
+                
+        except Exception as e:
+            logger.error(f"Error restoring agent state: {e}")
+            validation_result["passed"] = False
+            validation_result["errors"].append(f"State restoration error: {str(e)}")
+            return validation_result
+    
+    async def _perform_post_restoration_health_checks(
+        self,
+        agent_id: UUID,
+        validation_level: str
+    ) -> Dict[str, Any]:
+        """Perform comprehensive health checks after restoration."""
+        health_result = {
+            "passed": True,
+            "checks": {},
+            "warnings": [],
+            "errors": []
+        }
+        
+        try:
+            # Database connectivity check
+            db_check = await self._check_database_connectivity()
+            health_result["checks"]["database"] = db_check
+            
+            if not db_check["connected"]:
+                health_result["passed"] = False
+                health_result["errors"].append("Database connectivity failed")
+            
+            # Redis connectivity check
+            redis_check = await self._check_redis_connectivity()
+            health_result["checks"]["redis"] = redis_check
+            
+            if not redis_check["connected"]:
+                health_result["passed"] = False
+                health_result["errors"].append("Redis connectivity failed")
+            
+            # Agent-specific health check
+            agent_health_check = await self._check_agent_health(agent_id)
+            health_result["checks"]["agent_health"] = agent_health_check
+            
+            if not agent_health_check["healthy"]:
+                health_result["passed"] = False
+                health_result["errors"].append("Agent health check failed")
+            
+            # Context manager health check
+            context_health_check = await self._check_context_manager_health(agent_id)
+            health_result["checks"]["context_manager"] = context_health_check
+            
+            if not context_health_check["healthy"]:
+                health_result["warnings"].append("Context manager health check warnings")
+            
+            return health_result
+            
+        except Exception as e:
+            logger.error(f"Error performing health checks: {e}")
+            health_result["passed"] = False
+            health_result["errors"].append(f"Health check error: {str(e)}")
+            return health_result
+    
+    async def _validate_performance_targets(
+        self,
+        restoration_time_ms: float,
+        agent_id: UUID
+    ) -> Dict[str, Any]:
+        """Validate that performance targets are met."""
+        performance_result = {
+            "passed": True,
+            "metrics": {},
+            "targets": {},
+            "warnings": [],
+            "errors": []
+        }
+        
+        try:
+            # Recovery time validation
+            performance_result["metrics"]["restoration_time_ms"] = restoration_time_ms
+            performance_result["targets"]["max_recovery_time_ms"] = self.target_recovery_time_ms
+            performance_result["metrics"]["meets_recovery_target"] = restoration_time_ms < self.target_recovery_time_ms
+            
+            if restoration_time_ms >= self.target_recovery_time_ms:
+                performance_result["passed"] = False
+                performance_result["errors"].append(
+                    f"Recovery time {restoration_time_ms:.0f}ms exceeds target {self.target_recovery_time_ms}ms"
+                )
+            
+            # Memory usage check
+            memory_usage = await self._check_memory_usage()
+            performance_result["metrics"]["memory_usage_mb"] = memory_usage
+            performance_result["targets"]["max_memory_usage_mb"] = 500  # 500MB target
+            
+            if memory_usage > 500:
+                performance_result["warnings"].append(f"High memory usage: {memory_usage:.1f}MB")
+            
+            # Context access performance check
+            context_perf = await self._check_context_access_performance(agent_id)
+            performance_result["metrics"]["context_access_time_ms"] = context_perf
+            performance_result["targets"]["max_context_access_time_ms"] = 100  # 100ms target
+            
+            if context_perf > 100:
+                performance_result["warnings"].append(f"Slow context access: {context_perf:.1f}ms")
+            
+            return performance_result
+            
+        except Exception as e:
+            logger.error(f"Error validating performance targets: {e}")
+            performance_result["passed"] = False
+            performance_result["errors"].append(f"Performance validation error: {str(e)}")
+            return performance_result
     
     async def validate_recovery_readiness(self, agent_id: Optional[UUID] = None) -> Dict[str, Any]:
         """

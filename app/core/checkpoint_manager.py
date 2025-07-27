@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import time
@@ -25,6 +26,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Any
 from uuid import UUID
 import zstandard as zstd
+import git
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, desc
@@ -35,6 +37,7 @@ from ..models.agent import Agent
 from ..core.database import get_async_session
 from ..core.redis import get_redis
 from ..core.config import get_settings
+from ..core.git_checkpoint_optimizer import get_git_checkpoint_optimizer
 
 
 logger = logging.getLogger(__name__)
@@ -52,21 +55,32 @@ class CheckpointCreationError(Exception):
 
 class CheckpointManager:
     """
-    Manages atomic checkpoint creation, validation, and recovery.
+    Manages atomic checkpoint creation, validation, and recovery with Git integration.
     
     Features:
     - Atomic snapshot creation with SHA-256 validation
+    - Git-based versioning and branching for checkpoint history
     - Compressed storage with zstd for space efficiency
     - Redis stream offset preservation and restoration
     - Database transaction state management
-    - Multi-generation fallback logic
+    - Multi-generation fallback logic with Git history
     - Automated cleanup and retention policies
+    - File system checkpoint storage integrated with Git
     """
     
     def __init__(self):
         self.settings = get_settings()
         self.checkpoint_dir = Path(self.settings.checkpoint_base_path or "/var/lib/hive/checkpoints")
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Git repository setup
+        self.git_repo_path = self.checkpoint_dir / "git_checkpoints"
+        self.git_repo_path.mkdir(parents=True, exist_ok=True)
+        self.git_repo = self._initialize_git_repository()
+        
+        # Git optimizer integration
+        self.git_optimizer = get_git_checkpoint_optimizer(self.git_repo_path)
+        self._optimizer_initialized = False
         
         # Compression settings
         self.compression_level = 3  # Balance between speed and compression
@@ -81,6 +95,93 @@ class CheckpointManager:
         self.max_checkpoints_per_agent = 10
         self.max_checkpoint_age_days = 30
         self.cleanup_interval_hours = 6
+        
+        # Git-specific settings
+        self.enable_git_checkpoints = True
+        self.git_compression_enabled = True
+        self.max_git_history_depth = 50
+    
+    def _initialize_git_repository(self) -> Optional[git.Repo]:
+        """Initialize or open the Git repository for checkpoint versioning."""
+        try:
+            if (self.git_repo_path / ".git").exists():
+                # Open existing repository
+                repo = git.Repo(self.git_repo_path)
+                logger.info(f"Opened existing Git checkpoint repository at {self.git_repo_path}")
+            else:
+                # Initialize new repository
+                repo = git.Repo.init(self.git_repo_path)
+                
+                # Configure repository
+                with repo.config_writer() as config:
+                    config.set_value("user", "name", "LeanVibe Agent Hive")
+                    config.set_value("user", "email", "checkpoints@leanvibe.com")
+                    config.set_value("core", "compression", "1" if self.git_compression_enabled else "0")
+                    config.set_value("gc", "auto", "1")
+                    config.set_value("gc", "autoDetach", "false")
+                
+                # Create initial commit
+                gitignore_content = """
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Large binary files (will be handled via Git LFS if needed)
+*.bin
+*.data
+
+# Backup files
+*.bak
+*.backup
+"""
+                gitignore_path = self.git_repo_path / ".gitignore"
+                gitignore_path.write_text(gitignore_content.strip())
+                
+                readme_content = """# LeanVibe Agent Hive Checkpoints
+
+This repository contains versioned checkpoints for the LeanVibe Agent Hive system.
+
+## Structure
+
+- `agents/`: Agent-specific checkpoints
+- `system/`: System-wide checkpoints
+- `metadata/`: Checkpoint metadata and indexes
+
+## Checkpoint Format
+
+Checkpoints are stored as compressed tar files with the following structure:
+- `state.json`: Core state data
+- `redis_state.json`: Redis stream states and offsets
+- `db_snapshot/`: Database snapshots
+- `metadata.json`: Checkpoint metadata
+
+## Branching Strategy
+
+- `main`: Primary checkpoint branch
+- `agent/{agent_id}`: Agent-specific checkpoint branches
+- `system/{timestamp}`: System checkpoint branches for major milestones
+"""
+                readme_path = self.git_repo_path / "README.md"
+                readme_path.write_text(readme_content.strip())
+                
+                # Create directory structure
+                (self.git_repo_path / "agents").mkdir(exist_ok=True)
+                (self.git_repo_path / "system").mkdir(exist_ok=True)
+                (self.git_repo_path / "metadata").mkdir(exist_ok=True)
+                
+                # Initial commit
+                repo.index.add([".gitignore", "README.md"])
+                repo.index.commit("Initial checkpoint repository setup")
+                
+                logger.info(f"Initialized new Git checkpoint repository at {self.git_repo_path}")
+            
+            return repo
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize Git repository: {e}")
+            return None
     
     async def create_checkpoint(
         self,
@@ -89,7 +190,7 @@ class CheckpointManager:
         metadata: Optional[Dict[str, Any]] = None
     ) -> Optional[Checkpoint]:
         """
-        Create a new checkpoint with atomic state preservation.
+        Create a new checkpoint with atomic state preservation and Git versioning.
         
         Args:
             agent_id: Agent ID for agent-specific checkpoint, None for system-wide
@@ -108,6 +209,7 @@ class CheckpointManager:
             checkpoint_id = self._generate_checkpoint_id()
             checkpoint_path = self.checkpoint_dir / f"{checkpoint_id}.tar.zst"
             temp_dir = None
+            git_commit_hash = None
             
             try:
                 # Create temporary directory for atomic operations
@@ -116,6 +218,12 @@ class CheckpointManager:
                 
                 # Collect state data
                 state_data = await self._collect_state_data(agent_id)
+                
+                # Create Git checkpoint if enabled
+                if self.enable_git_checkpoints and self.git_repo:
+                    git_commit_hash = await self._create_git_checkpoint(
+                        checkpoint_id, agent_id, checkpoint_type, state_data, metadata
+                    )
                 
                 # Create compressed archive
                 await self._create_compressed_archive(temp_path, state_data)
@@ -148,8 +256,13 @@ class CheckpointManager:
                 
                 creation_time_ms = (time.time() - start_time) * 1000
                 
-                # Create database record
+                # Create database record with Git information
                 async with get_async_session() as session:
+                    checkpoint_metadata = metadata or {}
+                    if git_commit_hash:
+                        checkpoint_metadata["git_commit_hash"] = git_commit_hash
+                        checkpoint_metadata["git_repository_path"] = str(self.git_repo_path)
+                    
                     checkpoint = Checkpoint(
                         agent_id=agent_id,
                         checkpoint_type=checkpoint_type,
@@ -158,7 +271,7 @@ class CheckpointManager:
                         size_bytes=file_size,
                         is_valid=is_valid,
                         validation_errors=validation_errors,
-                        checkpoint_metadata=metadata or {},
+                        checkpoint_metadata=checkpoint_metadata,
                         redis_offsets=state_data.get("redis_offsets", {}),
                         database_snapshot_id=state_data.get("database_snapshot_id"),
                         compression_ratio=compression_ratio,
@@ -175,7 +288,8 @@ class CheckpointManager:
                     f"Checkpoint created successfully: {checkpoint.id} "
                     f"(size: {file_size // 1024 // 1024}MB, "
                     f"compression: {compression_ratio:.2f}, "
-                    f"time: {creation_time_ms:.0f}ms)"
+                    f"time: {creation_time_ms:.0f}ms"
+                    f"{f', git: {git_commit_hash[:8]}' if git_commit_hash else ''})"
                 )
                 
                 return checkpoint
@@ -361,6 +475,47 @@ class CheckpointManager:
             logger.error(f"Error getting checkpoint fallbacks: {e}")
             return []
     
+    async def optimize_checkpoint_repository(self, aggressive: bool = False) -> Dict[str, Any]:
+        """
+        Optimize the Git checkpoint repository for performance and space efficiency.
+        
+        Args:
+            aggressive: Enable aggressive optimization (longer processing time)
+            
+        Returns:
+            Optimization results and statistics
+        """
+        try:
+            # Initialize optimizer if not done
+            if not self._optimizer_initialized:
+                await self.git_optimizer.initialize_repository()
+                self._optimizer_initialized = True
+            
+            # Run repository optimization
+            optimization_result = await self.git_optimizer.optimize_repository(aggressive)
+            
+            # Get optimization recommendations
+            recommendations = await self.git_optimizer.get_optimization_recommendations()
+            optimization_result["recommendations"] = recommendations
+            
+            # Update cleanup based on optimization results
+            if optimization_result.get("operations_performed"):
+                cleanup_count = await self.cleanup_old_checkpoints()
+                optimization_result["database_checkpoints_cleaned"] = cleanup_count
+            
+            logger.info(f"Checkpoint repository optimization completed: {optimization_result.get('space_saved_mb', 0):.1f}MB saved")
+            
+            return optimization_result
+            
+        except Exception as e:
+            logger.error(f"Error optimizing checkpoint repository: {e}")
+            return {
+                "error": str(e),
+                "success": False,
+                "space_saved_mb": 0.0,
+                "operations_performed": []
+            }
+
     async def cleanup_old_checkpoints(self) -> int:
         """
         Clean up old and invalid checkpoints based on retention policies.
@@ -763,6 +918,252 @@ class CheckpointManager:
         """Generate unique checkpoint identifier."""
         timestamp = int(time.time() * 1000)  # milliseconds
         return f"cp_{timestamp}"
+    
+    async def _create_git_checkpoint(
+        self,
+        checkpoint_id: str,
+        agent_id: Optional[UUID],
+        checkpoint_type: CheckpointType,
+        state_data: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """Create a Git-versioned checkpoint."""
+        if not self.git_repo:
+            logger.warning("Git repository not available for checkpoint")
+            return None
+        
+        try:
+            # Determine the target branch
+            if agent_id:
+                branch_name = f"agent/{agent_id}"
+            else:
+                branch_name = "main"
+            
+            # Ensure branch exists
+            await self._ensure_git_branch(branch_name)
+            
+            # Switch to target branch
+            current_branch = self.git_repo.active_branch.name
+            if current_branch != branch_name:
+                try:
+                    self.git_repo.git.checkout(branch_name)
+                except git.exc.GitCommandError:
+                    # Branch might not exist, create it
+                    self.git_repo.git.checkout('-b', branch_name)
+            
+            # Create checkpoint directory structure
+            if agent_id:
+                checkpoint_dir = self.git_repo_path / "agents" / str(agent_id)
+            else:
+                checkpoint_dir = self.git_repo_path / "system"
+            
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Write state data files
+            state_file = checkpoint_dir / f"{checkpoint_id}_state.json"
+            with open(state_file, "w") as f:
+                json.dump(state_data, f, indent=2, default=str)
+            
+            # Write metadata
+            checkpoint_metadata = {
+                "checkpoint_id": checkpoint_id,
+                "agent_id": str(agent_id) if agent_id else None,
+                "checkpoint_type": checkpoint_type.value,
+                "created_at": datetime.utcnow().isoformat(),
+                "state_size": len(json.dumps(state_data)),
+                "additional_metadata": metadata or {}
+            }
+            
+            metadata_file = checkpoint_dir / f"{checkpoint_id}_metadata.json"
+            with open(metadata_file, "w") as f:
+                json.dump(checkpoint_metadata, f, indent=2)
+            
+            # Write Redis state separately for better diff tracking
+            if "redis_offsets" in state_data:
+                redis_file = checkpoint_dir / f"{checkpoint_id}_redis.json"
+                with open(redis_file, "w") as f:
+                    json.dump(state_data["redis_offsets"], f, indent=2)
+            
+            # Add files to Git index
+            relative_path = checkpoint_dir.relative_to(self.git_repo_path)
+            self.git_repo.index.add([
+                str(relative_path / f"{checkpoint_id}_state.json"),
+                str(relative_path / f"{checkpoint_id}_metadata.json")
+            ])
+            
+            if "redis_offsets" in state_data:
+                self.git_repo.index.add([str(relative_path / f"{checkpoint_id}_redis.json")])
+            
+            # Create commit
+            commit_message = f"Checkpoint {checkpoint_id}: {checkpoint_type.value}"
+            if agent_id:
+                commit_message += f" for agent {agent_id}"
+            
+            commit_message += f"\n\nState size: {len(json.dumps(state_data))} bytes"
+            if metadata:
+                commit_message += f"\nMetadata: {json.dumps(metadata, default=str)}"
+            
+            commit = self.git_repo.index.commit(commit_message)
+            
+            # Switch back to original branch
+            if current_branch != branch_name and current_branch != "HEAD":
+                try:
+                    self.git_repo.git.checkout(current_branch)
+                except git.exc.GitCommandError:
+                    logger.warning(f"Could not switch back to branch {current_branch}")
+            
+            logger.info(f"Created Git checkpoint: {commit.hexsha[:8]} on branch {branch_name}")
+            
+            # Trigger garbage collection if needed
+            await self._cleanup_git_history(agent_id)
+            
+            return commit.hexsha
+            
+        except Exception as e:
+            logger.error(f"Failed to create Git checkpoint: {e}")
+            return None
+    
+    async def _ensure_git_branch(self, branch_name: str) -> None:
+        """Ensure a Git branch exists."""
+        try:
+            if branch_name not in [ref.name for ref in self.git_repo.refs]:
+                # Create new branch from current HEAD
+                self.git_repo.create_head(branch_name)
+                logger.debug(f"Created Git branch: {branch_name}")
+        except Exception as e:
+            logger.warning(f"Could not ensure Git branch {branch_name}: {e}")
+    
+    async def _cleanup_git_history(self, agent_id: Optional[UUID]) -> None:
+        """Clean up Git history to maintain reasonable repository size."""
+        try:
+            if agent_id:
+                branch_name = f"agent/{agent_id}"
+            else:
+                branch_name = "main"
+            
+            # Check if branch exists
+            if branch_name not in [ref.name for ref in self.git_repo.refs]:
+                return
+            
+            # Get commit count
+            commit_count = len(list(self.git_repo.iter_commits(branch_name)))
+            
+            if commit_count > self.max_git_history_depth:
+                logger.info(f"Cleaning up Git history for branch {branch_name}: {commit_count} commits")
+                
+                # This is a simplified cleanup - in production, you might want more sophisticated logic
+                # For now, we just trigger garbage collection
+                self.git_repo.git.gc('--prune=now')
+                
+        except Exception as e:
+            logger.warning(f"Git history cleanup failed: {e}")
+    
+    async def restore_from_git_checkpoint(
+        self,
+        git_commit_hash: str,
+        agent_id: Optional[UUID] = None
+    ) -> Tuple[bool, Dict[str, Any]]:
+        """Restore state from a Git checkpoint."""
+        try:
+            if not self.git_repo:
+                return False, {}
+            
+            # Determine branch
+            if agent_id:
+                branch_name = f"agent/{agent_id}"
+                checkpoint_dir = self.git_repo_path / "agents" / str(agent_id)
+            else:
+                branch_name = "main"
+                checkpoint_dir = self.git_repo_path / "system"
+            
+            # Switch to the specific commit
+            current_branch = self.git_repo.active_branch.name
+            try:
+                self.git_repo.git.checkout(git_commit_hash)
+                
+                # Find checkpoint files
+                state_files = list(checkpoint_dir.glob("*_state.json"))
+                if not state_files:
+                    logger.error(f"No state files found in Git checkpoint {git_commit_hash}")
+                    return False, {}
+                
+                # Load the most recent state file (there should only be one in a commit)
+                latest_state_file = max(state_files, key=lambda f: f.stat().st_mtime)
+                
+                with open(latest_state_file, "r") as f:
+                    state_data = json.load(f)
+                
+                # Load metadata if available
+                metadata_file = latest_state_file.with_suffix("").with_suffix("") + "_metadata.json"
+                metadata = {}
+                if metadata_file.exists():
+                    with open(metadata_file, "r") as f:
+                        metadata = json.load(f)
+                
+                # Load Redis state if available
+                redis_file = latest_state_file.with_suffix("").with_suffix("") + "_redis.json"
+                if redis_file.exists():
+                    with open(redis_file, "r") as f:
+                        redis_state = json.load(f)
+                        state_data["redis_offsets"] = redis_state
+                
+                logger.info(f"Loaded Git checkpoint {git_commit_hash[:8]} for agent {agent_id}")
+                
+                return True, {
+                    "state_data": state_data,
+                    "metadata": metadata,
+                    "git_commit": git_commit_hash
+                }
+                
+            finally:
+                # Switch back to original branch
+                if current_branch != "HEAD":
+                    try:
+                        self.git_repo.git.checkout(current_branch)
+                    except git.exc.GitCommandError:
+                        logger.warning(f"Could not switch back to branch {current_branch}")
+                        
+        except Exception as e:
+            logger.error(f"Failed to restore from Git checkpoint {git_commit_hash}: {e}")
+            return False, {}
+    
+    async def get_git_checkpoint_history(
+        self,
+        agent_id: Optional[UUID] = None,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get Git checkpoint history for an agent or system."""
+        try:
+            if not self.git_repo:
+                return []
+            
+            if agent_id:
+                branch_name = f"agent/{agent_id}"
+            else:
+                branch_name = "main"
+            
+            # Check if branch exists
+            if branch_name not in [ref.name for ref in self.git_repo.refs]:
+                return []
+            
+            commits = list(self.git_repo.iter_commits(branch_name, max_count=limit))
+            
+            history = []
+            for commit in commits:
+                history.append({
+                    "commit_hash": commit.hexsha,
+                    "short_hash": commit.hexsha[:8],
+                    "message": commit.message.strip(),
+                    "author": str(commit.author),
+                    "committed_date": datetime.fromtimestamp(commit.committed_date).isoformat(),
+                    "branch": branch_name
+                })
+            
+            return history
+            
+        except Exception as e:
+            logger.error(f"Failed to get Git checkpoint history: {e}")
+            return []
 
 
 # Global checkpoint manager instance

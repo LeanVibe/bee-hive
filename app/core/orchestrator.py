@@ -21,10 +21,13 @@ from .config import settings
 from .redis import get_message_broker, get_session_cache, AgentMessageBroker, SessionCache
 from .database import get_session
 from .workflow_engine import WorkflowEngine, WorkflowResult
+from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy
+from .capability_matcher import CapabilityMatcher
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.session import Session, SessionStatus
 from ..models.task import Task, TaskStatus, TaskPriority
 from ..models.workflow import Workflow, WorkflowStatus
+from ..models.agent_performance import AgentPerformanceHistory, TaskRoutingDecision, WorkloadSnapshot
 from sqlalchemy import select, update, func
 
 logger = structlog.get_logger()
@@ -99,11 +102,16 @@ class AgentOrchestrator:
         # Workflow execution engine
         self.workflow_engine: Optional[WorkflowEngine] = None
         
+        # Intelligent task routing system
+        self.intelligent_router: Optional[IntelligentTaskRouter] = None
+        self.capability_matcher: Optional[CapabilityMatcher] = None
+        
         # Orchestrator state
         self.is_running = False
         self.heartbeat_task: Optional[asyncio.Task] = None
         self.consolidation_task: Optional[asyncio.Task] = None
         self.task_queue_task: Optional[asyncio.Task] = None
+        self.workload_monitoring_task: Optional[asyncio.Task] = None
         
         # Performance monitoring
         self.metrics = {
@@ -113,7 +121,10 @@ class AgentOrchestrator:
             'sleep_cycles_completed': 0,
             'average_response_time': 0.0,
             'workflows_executed': 0,
-            'workflows_completed': 0
+            'workflows_completed': 0,
+            'routing_decisions': 0,
+            'routing_accuracy': 0.0,
+            'load_balancing_actions': 0
         }
     
     async def start(self) -> None:
@@ -128,10 +139,15 @@ class AgentOrchestrator:
         self.workflow_engine = WorkflowEngine(orchestrator=self)
         await self.workflow_engine.initialize()
         
+        # Initialize intelligent routing system
+        self.intelligent_router = IntelligentTaskRouter()
+        self.capability_matcher = CapabilityMatcher()
+        
         # Start background tasks
         self.heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         self.consolidation_task = asyncio.create_task(self._consolidation_loop())
         self.task_queue_task = asyncio.create_task(self._task_queue_loop())
+        self.workload_monitoring_task = asyncio.create_task(self._workload_monitoring_loop())
         
         # Initialize with a default strategic partner agent
         await self.spawn_agent(AgentRole.STRATEGIC_PARTNER)
@@ -151,6 +167,8 @@ class AgentOrchestrator:
             self.consolidation_task.cancel()
         if self.task_queue_task:
             self.task_queue_task.cancel()
+        if self.workload_monitoring_task:
+            self.workload_monitoring_task.cancel()
         
         # Shutdown all agents gracefully
         for agent_id in list(self.agents.keys()):
@@ -267,9 +285,13 @@ class AgentOrchestrator:
         priority: TaskPriority = TaskPriority.MEDIUM,
         preferred_agent_role: Optional[AgentRole] = None,
         context: Optional[Dict[str, Any]] = None,
-        required_capabilities: Optional[List[str]] = None
+        required_capabilities: Optional[List[str]] = None,
+        estimated_effort: Optional[int] = None,
+        due_date: Optional[datetime] = None,
+        dependencies: Optional[List[str]] = None,
+        routing_strategy: RoutingStrategy = RoutingStrategy.ADAPTIVE
     ) -> str:
-        """Delegate a task to the most suitable agent using intelligent scheduling."""
+        """Delegate a task to the most suitable agent using intelligent routing."""
         
         # Create task in database first
         task_id = str(uuid.uuid4())
@@ -282,13 +304,44 @@ class AgentOrchestrator:
                 status=TaskStatus.PENDING,
                 priority=priority,
                 context=context or {},
-                required_capabilities=required_capabilities or []
+                required_capabilities=required_capabilities or [],
+                estimated_effort=estimated_effort,
+                due_date=due_date,
+                dependencies=dependencies or []
             )
             db_session.add(task)
             await db_session.commit()
         
-        # Use intelligent task scheduler
-        assigned_agent_id = await self._schedule_task(task_id, task_type, priority, preferred_agent_role, required_capabilities)
+        # Use intelligent task router
+        available_agents = await self._get_available_agent_ids()
+        
+        # Filter by preferred role if specified
+        if preferred_agent_role:
+            role_filtered_agents = []
+            for agent_id in available_agents:
+                if agent_id in self.agents and self.agents[agent_id].role == preferred_agent_role:
+                    role_filtered_agents.append(agent_id)
+            available_agents = role_filtered_agents if role_filtered_agents else available_agents
+        
+        # Create routing context
+        routing_context = TaskRoutingContext(
+            task_id=task_id,
+            task_type=task_type,
+            priority=priority,
+            required_capabilities=required_capabilities or [],
+            estimated_effort=estimated_effort,
+            due_date=due_date,
+            dependencies=dependencies or [],
+            workflow_id=None,
+            context=context or {}
+        )
+        
+        # Route task using intelligent algorithm
+        assigned_agent_id = await self.intelligent_router.route_task(
+            task=routing_context,
+            available_agents=available_agents,
+            strategy=routing_strategy
+        )
         
         if not assigned_agent_id:
             # Queue task for later assignment
@@ -296,17 +349,36 @@ class AgentOrchestrator:
                 "📋 Task queued - no suitable agent available",
                 task_id=task_id,
                 task_type=task_type,
-                priority=priority.value
+                priority=priority.value,
+                available_agents=len(available_agents)
             )
             return task_id
         
-        logger.info(
-            "📋 Task delegated",
-            task_id=task_id,
-            agent_id=assigned_agent_id,
-            task_type=task_type,
-            priority=priority.value
-        )
+        # Assign task to selected agent
+        success = await self._assign_task_to_agent(task_id, assigned_agent_id)
+        
+        if success:
+            # Record routing decision for analytics
+            await self._record_routing_analytics(
+                task_id, assigned_agent_id, routing_context, routing_strategy
+            )
+            
+            self.metrics['routing_decisions'] += 1
+            
+            logger.info(
+                "📋 Task delegated intelligently",
+                task_id=task_id,
+                agent_id=assigned_agent_id,
+                task_type=task_type,
+                priority=priority.value,
+                strategy=routing_strategy.value
+            )
+        else:
+            logger.error(
+                "❌ Failed to assign task after routing",
+                task_id=task_id,
+                agent_id=assigned_agent_id
+            )
         
         return task_id
     
@@ -986,6 +1058,348 @@ class AgentOrchestrator:
             health_status["overall"] = False
         
         return health_status
+    
+    # Enhanced intelligent routing methods
+    
+    async def rebalance_agent_workloads(self) -> Dict[str, Any]:
+        """Rebalance workloads across agents for optimal performance."""
+        if not self.intelligent_router:
+            return {"error": "Intelligent router not initialized"}
+        
+        try:
+            # Perform workload rebalancing
+            reassignments = await self.intelligent_router.rebalance_workload()
+            
+            # Execute approved reassignments
+            executed_reassignments = []
+            for reassignment in reassignments:
+                if reassignment.expected_improvement > 0.2:  # High improvement threshold
+                    success = await self._execute_task_reassignment(reassignment)
+                    if success:
+                        executed_reassignments.append(reassignment)
+                        self.metrics['load_balancing_actions'] += 1
+            
+            logger.info(
+                "Workload rebalancing completed",
+                total_reassignments=len(reassignments),
+                executed_reassignments=len(executed_reassignments)
+            )
+            
+            return {
+                "total_recommendations": len(reassignments),
+                "executed_reassignments": len(executed_reassignments),
+                "reassignments": [r.__dict__ for r in executed_reassignments]
+            }
+            
+        except Exception as e:
+            logger.error("Error rebalancing workloads", error=str(e))
+            return {"error": str(e)}
+    
+    async def get_routing_analytics(self) -> Dict[str, Any]:
+        """Get intelligent routing analytics and performance metrics."""
+        try:
+            async with get_session() as db_session:
+                # Calculate routing accuracy
+                total_decisions_query = select(func.count(TaskRoutingDecision.id))
+                successful_decisions_query = select(func.count(TaskRoutingDecision.id)).where(
+                    TaskRoutingDecision.task_success == True
+                )
+                
+                total_decisions = (await db_session.execute(total_decisions_query)).scalar() or 0
+                successful_decisions = (await db_session.execute(successful_decisions_query)).scalar() or 0
+                
+                routing_accuracy = successful_decisions / total_decisions if total_decisions > 0 else 0.0
+                self.metrics['routing_accuracy'] = routing_accuracy
+                
+                # Get recent performance trends
+                recent_date = datetime.utcnow() - timedelta(days=7)
+                recent_performance_query = select(
+                    TaskRoutingDecision.routing_strategy,
+                    func.avg(TaskRoutingDecision.final_score),
+                    func.count(TaskRoutingDecision.id)
+                ).where(
+                    TaskRoutingDecision.decided_at >= recent_date
+                ).group_by(TaskRoutingDecision.routing_strategy)
+                
+                strategy_performance = {}
+                result = await db_session.execute(recent_performance_query)
+                for row in result:
+                    strategy, avg_score, count = row
+                    strategy_performance[strategy] = {
+                        "average_score": float(avg_score or 0.0),
+                        "decision_count": count
+                    }
+                
+                return {
+                    "routing_accuracy": routing_accuracy,
+                    "total_routing_decisions": self.metrics['routing_decisions'],
+                    "load_balancing_actions": self.metrics['load_balancing_actions'],
+                    "strategy_performance": strategy_performance,
+                    "agent_utilization": await self._calculate_agent_utilization_stats()
+                }
+                
+        except Exception as e:
+            logger.error("Error getting routing analytics", error=str(e))
+            return {"error": str(e)}
+    
+    async def update_task_completion_metrics(
+        self,
+        task_id: str,
+        agent_id: str,
+        success: bool,
+        completion_time: Optional[float] = None
+    ) -> None:
+        """Update performance metrics when a task is completed."""
+        try:
+            # Update intelligent router performance data
+            if self.intelligent_router:
+                task_result = {
+                    "success": success,
+                    "completion_time": completion_time,
+                    "task_id": task_id
+                }
+                await self.intelligent_router.update_agent_performance(agent_id, task_result)
+            
+            # Record performance history
+            async with get_session() as db_session:
+                # Get task details
+                task = await db_session.get(Task, task_id)
+                if not task:
+                    return
+                
+                # Create performance history record
+                performance_record = AgentPerformanceHistory(
+                    agent_id=agent_id,
+                    task_id=task_id,
+                    task_type=task.task_type.value if task.task_type else "general",
+                    success=success,
+                    completion_time_minutes=completion_time,
+                    estimated_time_minutes=task.estimated_effort,
+                    time_variance_ratio=completion_time / task.estimated_effort if task.estimated_effort and completion_time else None,
+                    retry_count=task.retry_count,
+                    priority_level=task.priority.value,
+                    required_capabilities=task.required_capabilities,
+                    started_at=task.started_at,
+                    completed_at=task.completed_at or datetime.utcnow()
+                )
+                
+                db_session.add(performance_record)
+                
+                # Update routing decision outcome
+                routing_decision_query = select(TaskRoutingDecision).where(
+                    TaskRoutingDecision.task_id == task_id
+                )
+                routing_decision = (await db_session.execute(routing_decision_query)).scalar_one_or_none()
+                
+                if routing_decision:
+                    routing_decision.task_completed = True
+                    routing_decision.task_success = success
+                    routing_decision.actual_completion_time = completion_time
+                    routing_decision.outcome_recorded_at = datetime.utcnow()
+                    routing_decision.outcome_score = 1.0 if success else 0.0
+                
+                await db_session.commit()
+                
+                # Update orchestrator metrics
+                if success:
+                    self.metrics['tasks_completed'] += 1
+                else:
+                    self.metrics['tasks_failed'] += 1
+                
+                logger.debug(
+                    "Task completion metrics updated",
+                    task_id=task_id,
+                    agent_id=agent_id,
+                    success=success,
+                    completion_time=completion_time
+                )
+                
+        except Exception as e:
+            logger.error("Error updating task completion metrics", task_id=task_id, error=str(e))
+    
+    async def _get_available_agent_ids(self) -> List[str]:
+        """Get list of available agent IDs for task assignment."""
+        available_agents = []
+        for agent_id, agent_instance in self.agents.items():
+            if (agent_instance.status == AgentStatus.ACTIVE and 
+                agent_instance.current_task is None and
+                agent_instance.context_window_usage < 0.9):
+                available_agents.append(agent_id)
+        return available_agents
+    
+    async def _record_routing_analytics(
+        self,
+        task_id: str,
+        selected_agent_id: str,
+        routing_context: TaskRoutingContext,
+        strategy: RoutingStrategy
+    ) -> None:
+        """Record routing decision for analytics and learning."""
+        try:
+            async with get_session() as db_session:
+                # Get suitability scores for analytics
+                available_agents = await self._get_available_agent_ids()
+                agent_scores = {}
+                
+                if self.intelligent_router:
+                    for agent_id in available_agents[:5]:  # Limit to top 5 for analytics
+                        score = await self.intelligent_router.calculate_agent_suitability(
+                            agent_id, routing_context
+                        )
+                        if score:
+                            agent_scores[agent_id] = {
+                                "total_score": score.total_score,
+                                "capability_score": score.capability_score,
+                                "performance_score": score.performance_score,
+                                "availability_score": score.availability_score
+                            }
+                
+                # Create routing decision record
+                routing_decision = TaskRoutingDecision(
+                    task_id=task_id,
+                    selected_agent_id=selected_agent_id,
+                    routing_strategy=strategy.value,
+                    candidate_agents=available_agents,
+                    agent_scores=agent_scores,
+                    final_score=agent_scores.get(selected_agent_id, {}).get("total_score", 0.0),
+                    confidence_level=0.8,  # Placeholder - could be enhanced
+                    selection_criteria={
+                        "required_capabilities": routing_context.required_capabilities,
+                        "priority": routing_context.priority.value,
+                        "task_type": routing_context.task_type
+                    }
+                )
+                
+                db_session.add(routing_decision)
+                await db_session.commit()
+                
+        except Exception as e:
+            logger.error("Error recording routing analytics", task_id=task_id, error=str(e))
+    
+    async def _execute_task_reassignment(self, reassignment) -> bool:
+        """Execute a task reassignment as part of load balancing."""
+        try:
+            async with get_session() as db_session:
+                # Update task assignment
+                await db_session.execute(
+                    update(Task)
+                    .where(Task.id == reassignment.task_id)
+                    .values(
+                        assigned_agent_id=reassignment.to_agent_id,
+                        updated_at=datetime.utcnow()
+                    )
+                )
+                
+                # Update agent states
+                if reassignment.from_agent_id in self.agents:
+                    from_agent = self.agents[reassignment.from_agent_id]
+                    if from_agent.current_task == reassignment.task_id:
+                        from_agent.current_task = None
+                
+                if reassignment.to_agent_id in self.agents:
+                    to_agent = self.agents[reassignment.to_agent_id]
+                    to_agent.current_task = reassignment.task_id
+                
+                await db_session.commit()
+                
+                # Send reassignment messages
+                await self.message_broker.send_message(
+                    from_agent="orchestrator",
+                    to_agent=reassignment.from_agent_id,
+                    message_type="task_reassignment_remove",
+                    payload={"task_id": reassignment.task_id, "reason": reassignment.reason}
+                )
+                
+                await self.message_broker.send_message(
+                    from_agent="orchestrator",
+                    to_agent=reassignment.to_agent_id,
+                    message_type="task_assignment",
+                    payload={"task_id": reassignment.task_id}
+                )
+                
+                logger.info(
+                    "Task reassigned for load balancing",
+                    task_id=reassignment.task_id,
+                    from_agent=reassignment.from_agent_id,
+                    to_agent=reassignment.to_agent_id,
+                    reason=reassignment.reason
+                )
+                
+                return True
+                
+        except Exception as e:
+            logger.error("Error executing task reassignment", reassignment=reassignment.__dict__, error=str(e))
+            return False
+    
+    async def _calculate_agent_utilization_stats(self) -> Dict[str, Any]:
+        """Calculate agent utilization statistics."""
+        try:
+            utilization_stats = {}
+            
+            for agent_id, agent_instance in self.agents.items():
+                if self.capability_matcher:
+                    workload_factor = await self.capability_matcher.get_workload_factor(agent_id)
+                    utilization_stats[agent_id] = {
+                        "status": agent_instance.status.value,
+                        "workload_factor": workload_factor,
+                        "context_usage": agent_instance.context_window_usage,
+                        "current_task": agent_instance.current_task,
+                        "role": agent_instance.role.value
+                    }
+            
+            return utilization_stats
+            
+        except Exception as e:
+            logger.error("Error calculating agent utilization stats", error=str(e))
+            return {}
+    
+    async def _workload_monitoring_loop(self) -> None:
+        """Background task to monitor and optimize agent workloads."""
+        while self.is_running:
+            try:
+                # Take workload snapshots
+                await self._take_workload_snapshots()
+                
+                # Perform periodic rebalancing if needed
+                if self.metrics['routing_decisions'] % 10 == 0:  # Every 10 routing decisions
+                    await self.rebalance_agent_workloads()
+                
+                # Sleep for monitoring interval
+                await asyncio.sleep(300)  # 5 minutes
+                
+            except Exception as e:
+                logger.error("Error in workload monitoring loop", error=str(e))
+                await asyncio.sleep(60)
+    
+    async def _take_workload_snapshots(self) -> None:
+        """Take snapshots of current agent workloads."""
+        try:
+            async with get_session() as db_session:
+                for agent_id, agent_instance in self.agents.items():
+                    if self.capability_matcher:
+                        # Get current workload metrics
+                        workload_metrics = await self.capability_matcher._get_agent_workload_metrics(agent_id)
+                        
+                        if workload_metrics:
+                            snapshot = WorkloadSnapshot(
+                                agent_id=agent_id,
+                                active_tasks=workload_metrics.active_tasks,
+                                pending_tasks=workload_metrics.pending_tasks,
+                                context_usage_percent=workload_metrics.context_usage * 100,
+                                estimated_capacity=1.0,  # Could be dynamic
+                                utilization_ratio=await self.capability_matcher.get_workload_factor(agent_id),
+                                priority_distribution={
+                                    str(k.value): v for k, v in workload_metrics.priority_distribution.items()
+                                },
+                                task_type_distribution=workload_metrics.task_type_distribution
+                            )
+                            
+                            db_session.add(snapshot)
+                
+                await db_session.commit()
+                
+        except Exception as e:
+            logger.error("Error taking workload snapshots", error=str(e))
     
     async def _check_database_health(self) -> bool:
         """Check database connectivity and performance."""

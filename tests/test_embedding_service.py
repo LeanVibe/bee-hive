@@ -14,6 +14,7 @@ from typing import Dict, List, Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+import pytest_asyncio
 import openai
 
 from app.core.embedding_service_simple import (
@@ -64,11 +65,11 @@ class TestEmbeddingService:
     """Test suite for production-ready embedding service."""
 
     @pytest.fixture
-    async def mock_redis_client(self):
+    def mock_redis_client(self):
         """Create mock Redis client for testing."""
         return MockRedisClient()
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def embedding_service(self, mock_redis_client):
         """Create embedding service instance for testing."""
         with patch('app.core.embedding_service_simple.get_redis_client', return_value=mock_redis_client):
@@ -244,7 +245,7 @@ class TestEmbeddingService:
             await embedding_service.generate_embedding(long_text)
         
         assert "Text too long" in str(exc_info.value)
-        assert embedding_service.max_tokens in str(exc_info.value)
+        assert str(embedding_service.max_tokens) in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_empty_text_validation(self, embedding_service):
@@ -369,8 +370,8 @@ class TestEmbeddingService:
         """Test error handling for various API error scenarios."""
         with patch.object(embedding_service, 'client') as mock_client:
             # Test different types of OpenAI errors
-            api_error = openai.APIError("API Error")
-            connection_error = openai.APIConnectionError("Connection failed")
+            api_error = openai.APIError(message="API Error", request=Mock(), body=None)
+            connection_error = openai.APIConnectionError(message="Connection failed", request=Mock())
             
             mock_client.embeddings.create = AsyncMock(side_effect=api_error)
             
@@ -421,6 +422,8 @@ class TestEmbeddingService:
         """Test cache TTL expiration functionality."""
         # Set very short TTL for testing
         embedding_service.cache_ttl = 1
+        # Disable Redis for this test to focus on memory cache TTL
+        embedding_service.redis = None
         
         with patch.object(embedding_service, 'client') as mock_client:
             mock_response = Mock()
@@ -446,7 +449,7 @@ class TestEmbeddingService:
 class TestPerformanceBenchmarks:
     """Performance benchmark tests for production readiness."""
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def performance_service(self):
         """Create embedding service optimized for performance testing."""
         mock_redis = MockRedisClient()
@@ -523,8 +526,9 @@ class TestPerformanceBenchmarks:
     async def test_memory_usage_efficiency(self, performance_service):
         """Test memory usage stays within reasonable bounds."""
         with patch.object(performance_service, 'client') as mock_client:
+            # Mock batch response with 100 embeddings
             mock_response = Mock()
-            mock_response.data = [Mock(embedding=[0.1] * 1536)]
+            mock_response.data = [Mock(embedding=[0.1] * 1536) for _ in range(100)]
             mock_client.embeddings.create = AsyncMock(return_value=mock_response)
             
             # Generate many embeddings to test memory usage
@@ -535,6 +539,7 @@ class TestPerformanceBenchmarks:
             memory_cache_size = metrics["memory_cache_size"]
             
             # Memory cache should contain reasonable number of entries
+            # Note: Batch processing caches individual results, so should be 100
             assert memory_cache_size == 100  # Should cache all 100 embeddings
             assert memory_cache_size < 1000  # Shouldn't grow unbounded
 

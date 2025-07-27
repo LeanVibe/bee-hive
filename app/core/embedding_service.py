@@ -220,6 +220,27 @@ class EmbeddingService:
             
             logger.debug(f"Generated embedding with {len(embedding)} dimensions")
             return embedding
+            
+        except Exception as e:
+            # Record the error
+            self._failed_requests += 1
+            if embedding_requests_total:
+                embedding_requests_total.labels(model=self.model_name, status='error').inc()
+            
+            # Log error details
+            logger.error(f"Failed to generate embedding: {str(e)}")
+            
+            # Re-raise as appropriate exception type
+            if isinstance(e, (TokenLimitError, EmbeddingError, RateLimitError)):
+                raise
+            else:
+                raise EmbeddingError(f"Embedding generation failed: {str(e)}")
+        
+        finally:
+            # Record timing metrics
+            duration = time.time() - start_time
+            if embedding_duration_seconds:
+                embedding_duration_seconds.labels(model=self.model_name).observe(duration)
     
     async def generate_embeddings_batch(
         self,

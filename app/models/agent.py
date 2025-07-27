@@ -81,6 +81,7 @@ class Agent(Base):
     checkpoints = relationship("Checkpoint", back_populates="agent", cascade="all, delete-orphan")
     sleep_wake_cycles = relationship("SleepWakeCycle", back_populates="agent", cascade="all, delete-orphan")
     sleep_wake_analytics = relationship("SleepWakeAnalytics", back_populates="agent", cascade="all, delete-orphan")
+    performance_history = relationship("AgentPerformanceHistory", back_populates="agent", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         return f"<Agent(id={self.id}, name='{self.name}', role='{self.role}', status='{self.status}')>"

@@ -22,6 +22,10 @@ from .core.redis import init_redis, get_redis
 from .core.orchestrator import AgentOrchestrator
 from .core.event_processor import initialize_event_processor, shutdown_event_processor
 from .api.routes import router as api_router
+from .api.sleep_management import router as sleep_management_router
+from .api.intelligent_scheduling import router as intelligent_scheduling_router
+from .api.monitoring_reporting import router as monitoring_router
+from .api.analytics import router as analytics_router
 from .observability.middleware import ObservabilityMiddleware, ObservabilityHookMiddleware
 from .observability.hooks import HookInterceptor, set_hook_interceptor
 
@@ -128,6 +132,10 @@ def create_app() -> FastAPI:
     
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(sleep_management_router)
+    app.include_router(intelligent_scheduling_router)
+    app.include_router(monitoring_router)
+    app.include_router(analytics_router)
     
     @app.get("/health")
     async def health_check():
