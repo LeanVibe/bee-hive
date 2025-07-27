@@ -1,0 +1,409 @@
+groups:
+  - name: leanvibe-agent-hive.rules
+    interval: 30s
+    rules:
+      # === SYSTEM HEALTH ALERTS ===
+      - alert: SystemCPUHigh
+        expr: leanvibe_system_cpu_usage_percent > 80
+        for: 2m
+        labels:
+          severity: warning
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% which is above the 80% threshold for more than 2 minutes."
+          runbook_url: "https://docs.leanvibe.com/runbooks/system-cpu-high"
+          dashboard_url: "https://grafana.leanvibe.com/d/leanvibe-overview"
+
+      - alert: SystemCPUCritical
+        expr: leanvibe_system_cpu_usage_percent > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "Critical CPU usage detected"
+          description: "CPU usage is {{ $value }}% which is above the 95% critical threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/system-cpu-critical"
+
+      - alert: SystemMemoryHigh
+        expr: (leanvibe_system_memory_usage_bytes{type="used"} / leanvibe_system_memory_usage_bytes{type="total"}) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% which is above the 85% threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/system-memory-high"
+
+      - alert: SystemMemoryCritical
+        expr: (leanvibe_system_memory_usage_bytes{type="used"} / leanvibe_system_memory_usage_bytes{type="total"}) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "Critical memory usage detected"
+          description: "Memory usage is {{ $value }}% which is above the 95% critical threshold."
+
+      # === APPLICATION HEALTH ALERTS ===
+      - alert: ApplicationDown
+        expr: up{job="leanvibe-agent-hive"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: application
+          team: engineering
+        annotations:
+          summary: "LeanVibe Agent Hive application is down"
+          description: "The LeanVibe Agent Hive application has been down for more than 1 minute."
+          runbook_url: "https://docs.leanvibe.com/runbooks/application-down"
+
+      - alert: HighErrorRate
+        expr: rate(leanvibe_http_requests_total{status_code=~"5.."}[5m]) / rate(leanvibe_http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          component: application
+          team: engineering
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "HTTP error rate is {{ $value | humanizePercentage }} which is above the 5% threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-error-rate"
+
+      - alert: CriticalErrorRate
+        expr: rate(leanvibe_http_requests_total{status_code=~"5.."}[5m]) / rate(leanvibe_http_requests_total[5m]) > 0.10
+        for: 1m
+        labels:
+          severity: critical
+          component: application
+          team: engineering
+        annotations:
+          summary: "Critical HTTP error rate detected"
+          description: "HTTP error rate is {{ $value | humanizePercentage }} which is above the 10% critical threshold."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(leanvibe_http_request_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+          component: application
+          team: engineering
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s which is above the 2s threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-response-time"
+
+      # === DATABASE ALERTS ===
+      - alert: DatabaseConnectionsHigh
+        expr: leanvibe_database_connections_active > 80
+        for: 2m
+        labels:
+          severity: warning
+          component: database
+          team: infrastructure
+        annotations:
+          summary: "High number of database connections"
+          description: "Database has {{ $value }} active connections which is above the 80 connection threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/database-connections-high"
+
+      - alert: DatabaseConnectionsCritical
+        expr: leanvibe_database_connections_active > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+          team: infrastructure
+        annotations:
+          summary: "Critical number of database connections"
+          description: "Database has {{ $value }} active connections which is approaching the limit."
+
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(leanvibe_database_query_duration_seconds_bucket[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+          component: database
+          team: engineering
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile database query time is {{ $value }}s which is above the 1s threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/slow-database-queries"
+
+      # === REDIS ALERTS ===
+      - alert: RedisMemoryHigh
+        expr: leanvibe_redis_memory_used_bytes > 1073741824  # 1GB
+        for: 2m
+        labels:
+          severity: warning
+          component: redis
+          team: infrastructure
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is {{ $value | humanizeBytes }} which is above the 1GB threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/redis-memory-high"
+
+      - alert: RedisConnectionsHigh
+        expr: leanvibe_redis_connections_active > 100
+        for: 2m
+        labels:
+          severity: warning
+          component: redis
+          team: infrastructure
+        annotations:
+          summary: "High number of Redis connections"
+          description: "Redis has {{ $value }} active connections which is above the 100 connection threshold."
+
+      # === AGENT-SPECIFIC ALERTS ===
+      - alert: NoActiveAgents
+        expr: leanvibe_active_agents_total == 0
+        for: 1m
+        labels:
+          severity: warning
+          component: agents
+          team: engineering
+        annotations:
+          summary: "No active agents detected"
+          description: "There are currently no active agents in the system."
+          runbook_url: "https://docs.leanvibe.com/runbooks/no-active-agents"
+
+      - alert: LowToolSuccessRate
+        expr: leanvibe_tool_success_rate < 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: agents
+          team: engineering
+        annotations:
+          summary: "Low tool execution success rate"
+          description: "Tool success rate is {{ $value | humanizePercentage }} which is below the 80% threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/low-tool-success-rate"
+
+      - alert: CriticalToolSuccessRate
+        expr: leanvibe_tool_success_rate < 0.5
+        for: 2m
+        labels:
+          severity: critical
+          component: agents
+          team: engineering
+        annotations:
+          summary: "Critical tool execution success rate"
+          description: "Tool success rate is {{ $value | humanizePercentage }} which is below the 50% critical threshold."
+
+      - alert: HighAgentExecutionTime
+        expr: histogram_quantile(0.95, rate(leanvibe_agent_execution_duration_seconds_bucket[5m])) > 30
+        for: 3m
+        labels:
+          severity: warning
+          component: agents
+          team: engineering
+        annotations:
+          summary: "High agent execution time"
+          description: "95th percentile agent execution time is {{ $value }}s which is above the 30s threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-agent-execution-time"
+
+      # === EVENT PROCESSING ALERTS ===
+      - alert: EventProcessingBacklog
+        expr: leanvibe_event_queue_size > 1000
+        for: 2m
+        labels:
+          severity: warning
+          component: event-processor
+          team: engineering
+        annotations:
+          summary: "Event processing backlog detected"
+          description: "Event queue has {{ $value }} pending events which is above the 1000 event threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/event-processing-backlog"
+
+      - alert: CriticalEventBacklog
+        expr: leanvibe_event_queue_size > 5000
+        for: 1m
+        labels:
+          severity: critical
+          component: event-processor
+          team: engineering
+        annotations:
+          summary: "Critical event processing backlog"
+          description: "Event queue has {{ $value }} pending events which is above the 5000 critical threshold."
+
+      - alert: LowEventProcessingRate
+        expr: leanvibe_event_processing_rate_per_second < 10
+        for: 3m
+        labels:
+          severity: warning
+          component: event-processor
+          team: engineering
+        annotations:
+          summary: "Low event processing rate"
+          description: "Event processing rate is {{ $value }} events/second which is below the 10 events/s threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/low-event-processing-rate"
+
+      # === WEBSOCKET ALERTS ===
+      - alert: HighWebSocketConnections
+        expr: sum(leanvibe_websocket_connections_active) > 500
+        for: 2m
+        labels:
+          severity: warning
+          component: websocket
+          team: engineering
+        annotations:
+          summary: "High number of WebSocket connections"
+          description: "Total WebSocket connections is {{ $value }} which is above the 500 connection threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-websocket-connections"
+
+      - alert: WebSocketConnectionDrops
+        expr: increase(leanvibe_websocket_connection_duration_seconds_count[5m]) - increase(leanvibe_websocket_connection_duration_seconds_count[10m] offset 5m) > 50
+        for: 1m
+        labels:
+          severity: warning
+          component: websocket
+          team: engineering
+        annotations:
+          summary: "High WebSocket connection drop rate"
+          description: "WebSocket connections are dropping at a high rate ({{ $value }} drops in 5 minutes)."
+          runbook_url: "https://docs.leanvibe.com/runbooks/websocket-connection-drops"
+
+      # === BUSINESS LOGIC ALERTS ===
+      - alert: LongRunningSessions
+        expr: histogram_quantile(0.95, rate(leanvibe_session_duration_seconds_bucket[5m])) > 3600
+        for: 5m
+        labels:
+          severity: info
+          component: business
+          team: product
+        annotations:
+          summary: "Long running sessions detected"
+          description: "95th percentile session duration is {{ $value | humanizeDuration }} which is above 1 hour."
+          runbook_url: "https://docs.leanvibe.com/runbooks/long-running-sessions"
+
+      - alert: HighTaskFailureRate
+        expr: rate(leanvibe_tasks_total{status="failed"}[5m]) / rate(leanvibe_tasks_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          component: business
+          team: engineering
+        annotations:
+          summary: "High task failure rate"
+          description: "Task failure rate is {{ $value | humanizePercentage }} which is above the 10% threshold."
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-task-failure-rate"
+
+      # === SECURITY ALERTS ===
+      - alert: HighAuthenticationFailures
+        expr: rate(leanvibe_http_requests_total{status_code="401"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+          team: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failures are occurring at {{ $value }} requests/second."
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-auth-failures"
+
+      - alert: SuspiciousErrorPatterns
+        expr: rate(leanvibe_errors_total{error_type="SecurityError"}[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+          component: security
+          team: security
+        annotations:
+          summary: "Suspicious security error patterns detected"
+          description: "Security errors are occurring at an unusual rate ({{ $value }} errors/second)."
+          runbook_url: "https://docs.leanvibe.com/runbooks/security-error-patterns"
+
+      # === COMPONENT HEALTH ALERTS ===
+      - alert: ComponentUnhealthy
+        expr: leanvibe_component_health_status != 0  # 0 = healthy in enum
+        for: 1m
+        labels:
+          severity: warning
+          component: "{{ $labels.component }}"
+          team: engineering
+        annotations:
+          summary: "Component {{ $labels.component }} is unhealthy"
+          description: "Component {{ $labels.component }} has been marked as unhealthy."
+          runbook_url: "https://docs.leanvibe.com/runbooks/component-unhealthy"
+
+      # === DISK SPACE ALERTS ===
+      - alert: LowDiskSpace
+        expr: (leanvibe_system_disk_usage_bytes{type="free"} / leanvibe_system_disk_usage_bytes{type="total"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.device }}"
+          description: "Disk {{ $labels.device }} has less than 20% free space remaining."
+          runbook_url: "https://docs.leanvibe.com/runbooks/low-disk-space"
+
+      - alert: CriticalDiskSpace
+        expr: (leanvibe_system_disk_usage_bytes{type="free"} / leanvibe_system_disk_usage_bytes{type="total"}) * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "Critical disk space on {{ $labels.device }}"
+          description: "Disk {{ $labels.device }} has less than 10% free space remaining."
+
+  # === RECORDING RULES ===
+  - name: leanvibe-recording.rules
+    interval: 30s
+    rules:
+      # Request rate by endpoint
+      - record: leanvibe:http_request_rate_5m
+        expr: rate(leanvibe_http_requests_total[5m])
+
+      # Error rate by endpoint  
+      - record: leanvibe:http_error_rate_5m
+        expr: rate(leanvibe_http_requests_total{status_code=~"5.."}[5m]) / rate(leanvibe_http_requests_total[5m])
+
+      # Response time percentiles
+      - record: leanvibe:http_request_duration_p95_5m
+        expr: histogram_quantile(0.95, rate(leanvibe_http_request_duration_seconds_bucket[5m]))
+
+      - record: leanvibe:http_request_duration_p50_5m
+        expr: histogram_quantile(0.50, rate(leanvibe_http_request_duration_seconds_bucket[5m]))
+
+      # Agent operation rates
+      - record: leanvibe:agent_operation_rate_5m
+        expr: rate(leanvibe_agent_operations_total[5m])
+
+      # Tool execution rates
+      - record: leanvibe:tool_execution_rate_5m
+        expr: rate(leanvibe_tool_executions_total[5m])
+
+      # Tool success rate calculation
+      - record: leanvibe:tool_success_rate_5m
+        expr: rate(leanvibe_tool_executions_total{status="success"}[5m]) / rate(leanvibe_tool_executions_total[5m])
+
+      # Event processing efficiency
+      - record: leanvibe:event_processing_efficiency_5m
+        expr: rate(leanvibe_events_processed_total{status="success"}[5m]) / rate(leanvibe_events_processed_total[5m])
+
+      # System resource utilization
+      - record: leanvibe:system_memory_utilization
+        expr: (leanvibe_system_memory_usage_bytes{type="used"} / leanvibe_system_memory_usage_bytes{type="total"}) * 100
+
+      - record: leanvibe:system_disk_utilization
+        expr: (leanvibe_system_disk_usage_bytes{type="used"} / leanvibe_system_disk_usage_bytes{type="total"}) * 100
+
+      # Application health score (composite metric)
+      - record: leanvibe:application_health_score
+        expr: |
+          (
+            (leanvibe:http_error_rate_5m < 0.05) +
+            (leanvibe:http_request_duration_p95_5m < 2) +
+            (leanvibe_system_cpu_usage_percent < 80) +
+            (leanvibe:system_memory_utilization < 85) +
+            (leanvibe:tool_success_rate_5m > 0.8)
+          ) / 5

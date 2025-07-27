@@ -1,0 +1,55 @@
+{
+  "name": "leanvibe-mobile-pwa",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mobile PWA Dashboard for LeanVibe Agent Hive 2.0",
+  "author": "LeanVibe Team",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.js --fix",
+    "format": "prettier --write src/",
+    "test": "vitest",
+    "test:e2e": "cypress run",
+    "test:e2e:dev": "cypress open",
+    "lighthouse": "lighthouse http://localhost:3001 --output json --output html --view"
+  },
+  "dependencies": {
+    "lit": "^3.1.0",
+    "zustand": "^4.5.0",
+    "@lit/reactive-element": "^2.0.0",
+    "@lit/context": "^1.1.0",
+    "sortablejs": "^1.15.0",
+    "idb": "^8.0.0",
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.10",
+    "typescript": "^5.3.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "vite-plugin-pwa": "^0.17.0",
+    "workbox-window": "^7.0.0",
+    "workbox-strategies": "^7.0.0",
+    "workbox-routing": "^7.0.0",
+    "workbox-precaching": "^7.0.0",
+    "vitest": "^1.1.0",
+    "jsdom": "^23.0.1",
+    "cypress": "^13.6.0",
+    "@types/sortablejs": "^1.15.0",
+    "lighthouse": "^11.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

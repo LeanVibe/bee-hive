@@ -1,0 +1,249 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database with Vector Extension
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: leanvibe_postgres
+    environment:
+      POSTGRES_DB: leanvibe_agent_hive
+      POSTGRES_USER: leanvibe_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leanvibe_secure_pass}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+      - ./database/backups:/backups
+    networks:
+      - leanvibe_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leanvibe_user -d leanvibe_agent_hive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Redis for Caching and Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: leanvibe_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-leanvibe_redis_pass}
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - leanvibe_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # FastAPI Backend Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: leanvibe_api
+    environment:
+      - DATABASE_URL=postgresql://leanvibe_user:${POSTGRES_PASSWORD:-leanvibe_secure_pass}@postgres:5432/leanvibe_agent_hive
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-leanvibe_redis_pass}@redis:6379/0
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-leanvibe_super_secret_key_change_in_production}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # For tmux session management
+      - agent_workspaces:/app/workspaces
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # Frontend PWA Development Server (for development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: leanvibe_frontend_dev
+    environment:
+      - API_BASE_URL=http://api:8000
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - leanvibe_network
+    command: npm run dev
+    profiles:
+      - development
+
+  # Nginx Reverse Proxy (for production)
+  nginx:
+    image: nginx:alpine
+    container_name: leanvibe_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./config/ssl:/etc/nginx/ssl
+    depends_on:
+      - api
+    networks:
+      - leanvibe_network
+    profiles:
+      - production
+    restart: unless-stopped
+
+  # Redis Insight for Redis Management (Development)
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: leanvibe_redis_insight
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+    networks:
+      - leanvibe_network
+    profiles:
+      - development
+    restart: unless-stopped
+
+  # pgAdmin for PostgreSQL Management (Development)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: leanvibe_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@leanvibe.dev
+      PGLADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - leanvibe_network
+    profiles:
+      - development
+    restart: unless-stopped
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: leanvibe_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - leanvibe_network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # Grafana for Metrics Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: leanvibe_grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin_password}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - leanvibe_network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # Jupyter Notebook for Data Analysis and Experimentation
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: leanvibe_jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-leanvibe_jupyter_token}
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - jupyter_data:/home/jovyan
+    networks:
+      - leanvibe_network
+    profiles:
+      - development
+    restart: unless-stopped
+
+networks:
+  leanvibe_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgladmin_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  jupyter_data:
+    driver: local
+  agent_workspaces:
+    driver: local
+
+# Health check for the entire stack
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 60s

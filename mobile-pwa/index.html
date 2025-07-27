@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1e40af" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Agent Hive" />
+  
+  <!-- Primary Meta Tags -->
+  <title>LeanVibe Agent Hive - Mobile Dashboard</title>
+  <meta name="title" content="LeanVibe Agent Hive - Mobile Dashboard" />
+  <meta name="description" content="Mobile dashboard for multi-agent development operations monitoring and control" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="LeanVibe Agent Hive - Mobile Dashboard" />
+  <meta property="og:description" content="Mobile dashboard for multi-agent development operations monitoring and control" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="LeanVibe Agent Hive - Mobile Dashboard" />
+  <meta property="twitter:description" content="Mobile dashboard for multi-agent development operations monitoring and control" />
+  
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  
+  <!-- Preconnect to improve performance -->
+  <link rel="preconnect" href="ws://localhost:8000" />
+  <link rel="preconnect" href="http://localhost:8000" />
+  
+  <!-- Critical CSS inline for performance -->
+  <style>
+    /* Prevent FOUC (Flash of Unstyled Content) */
+    html {
+      background-color: #ffffff;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+    
+    /* Loading spinner */
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      z-index: 9999;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #ffffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: white;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    
+    /* Hide loading when app is ready */
+    .app-ready .loading-container {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading screen -->
+  <div class="loading-container">
+    <div class="text-center">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading Agent Hive...</div>
+    </div>
+  </div>
+  
+  <!-- App container -->
+  <div id="app"></div>
+  
+  <!-- PWA registration script -->
+  <script>
+    // Register service worker and handle PWA installation
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+    
+    // Handle PWA install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install button in UI
+      const installButton = document.querySelector('#install-button');
+      if (installButton) {
+        installButton.style.display = 'block';
+      }
+    });
+    
+    // Handle successful installation
+    window.addEventListener('appinstalled', (evt) => {
+      console.log('PWA was installed');
+      // Hide install button
+      const installButton = document.querySelector('#install-button');
+      if (installButton) {
+        installButton.style.display = 'none';
+      }
+    });
+    
+    // Performance monitoring
+    window.addEventListener('load', () => {
+      if ('performance' in window) {
+        const perfData = performance.getEntriesByType('navigation')[0];
+        console.log('Load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+      }
+    });
+  </script>
+  
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

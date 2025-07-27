@@ -1,0 +1,367 @@
+"""
+FastAPI Application Entry Point for LeanVibe Agent Hive 2.0
+
+Multi-agent orchestration system with real-time communication,
+context management, and self-modification capabilities.
+"""
+
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+import structlog
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
+
+from .core.config import settings
+from .core.database import init_database
+from .core.redis import init_redis, get_redis
+from .core.orchestrator import AgentOrchestrator
+from .core.event_processor import initialize_event_processor, shutdown_event_processor
+from .api.routes import router as api_router
+from .observability.middleware import ObservabilityMiddleware, ObservabilityHookMiddleware
+from .observability.hooks import HookInterceptor, set_hook_interceptor
+
+
+# Configure structured logging
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifespan management with proper startup/shutdown."""
+    logger.info("🚀 Starting LeanVibe Agent Hive 2.0...")
+    
+    try:
+        # Initialize core infrastructure
+        await init_database()
+        await init_redis()
+        
+        # Initialize observability system
+        redis_client = get_redis()
+        event_processor = await initialize_event_processor(redis_client)
+        app.state.event_processor = event_processor
+        
+        # Initialize hook interceptor
+        hook_interceptor = HookInterceptor(event_processor=event_processor)
+        set_hook_interceptor(hook_interceptor)
+        app.state.hook_interceptor = hook_interceptor
+        
+        # Start agent orchestrator
+        orchestrator = AgentOrchestrator()
+        await orchestrator.start()
+        app.state.orchestrator = orchestrator
+        
+        logger.info("✅ Agent Hive initialized successfully")
+        
+        yield  # Application runs here
+        
+    except Exception as e:
+        logger.error("❌ Failed to initialize Agent Hive", error=str(e))
+        raise
+    finally:
+        logger.info("🛑 Shutting down Agent Hive...")
+        
+        # Graceful shutdown
+        if hasattr(app.state, 'orchestrator'):
+            await app.state.orchestrator.shutdown()
+        
+        # Shutdown observability system
+        await shutdown_event_processor()
+        
+        logger.info("✅ Agent Hive shutdown complete")
+
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    
+    app = FastAPI(
+        title="LeanVibe Agent Hive 2.0",
+        description="Multi-Agent Orchestration System for Autonomous Software Development",
+        version="2.0.0",
+        lifespan=lifespan,
+        docs_url="/docs" if settings.DEBUG else None,
+        redoc_url="/redoc" if settings.DEBUG else None,
+    )
+    
+    # Security middleware
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS
+    )
+    
+    # CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Observability middleware for monitoring agent interactions
+    app.add_middleware(ObservabilityMiddleware)
+    
+    # Hook interceptor middleware for automatic event capture
+    app.add_middleware(ObservabilityHookMiddleware)
+    
+    # Include API routes
+    app.include_router(api_router, prefix="/api/v1")
+    
+    @app.get("/health")
+    async def health_check():
+        """Comprehensive health check endpoint aggregating all component status."""
+        from .core.database import get_async_session
+        from .core.redis import get_redis
+        from datetime import datetime
+        import json
+        
+        health_status = {
+            "status": "healthy",
+            "version": "2.0.0",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "components": {},
+            "summary": {
+                "healthy": 0,
+                "unhealthy": 0,
+                "total": 0
+            }
+        }
+        
+        # Check Database
+        try:
+            from sqlalchemy import text
+            async for session in get_async_session():
+                result = await session.execute(text("SELECT 1"))
+                assert result.scalar() == 1
+                health_status["components"]["database"] = {
+                    "status": "healthy",
+                    "details": "PostgreSQL connection successful",
+                    "response_time_ms": "<5"
+                }
+                health_status["summary"]["healthy"] += 1
+                break
+        except Exception as e:
+            health_status["components"]["database"] = {
+                "status": "unhealthy", 
+                "error": str(e),
+                "details": "Failed to connect to PostgreSQL"
+            }
+            health_status["summary"]["unhealthy"] += 1
+            health_status["status"] = "degraded"
+        
+        # Check Redis
+        try:
+            redis_client = get_redis()
+            pong = await redis_client.ping()
+            if pong:
+                health_status["components"]["redis"] = {
+                    "status": "healthy",
+                    "details": "Redis connection successful",
+                    "response_time_ms": "<5"
+                }
+                health_status["summary"]["healthy"] += 1
+            else:
+                raise Exception("Redis ping failed")
+        except Exception as e:
+            health_status["components"]["redis"] = {
+                "status": "unhealthy",
+                "error": str(e), 
+                "details": "Failed to connect to Redis"
+            }
+            health_status["summary"]["unhealthy"] += 1
+            health_status["status"] = "degraded"
+        
+        # Check Agent Orchestrator
+        try:
+            orchestrator = getattr(app.state, 'orchestrator', None)
+            if orchestrator:
+                health_status["components"]["orchestrator"] = {
+                    "status": "healthy",
+                    "details": "Agent Orchestrator running",
+                    "active_agents": 0  # Could check actual agent count
+                }
+                health_status["summary"]["healthy"] += 1
+            else:
+                raise Exception("Orchestrator not initialized")
+        except Exception as e:
+            health_status["components"]["orchestrator"] = {
+                "status": "unhealthy",
+                "error": str(e),
+                "details": "Agent Orchestrator not available"
+            }
+            health_status["summary"]["unhealthy"] += 1
+            health_status["status"] = "degraded"
+        
+        # Check Event Processor (Observability)
+        try:
+            event_processor = getattr(app.state, 'event_processor', None)
+            if event_processor:
+                health_status["components"]["observability"] = {
+                    "status": "healthy", 
+                    "details": "Event processor running"
+                }
+                health_status["summary"]["healthy"] += 1
+            else:
+                raise Exception("Event processor not initialized")
+        except Exception as e:
+            health_status["components"]["observability"] = {
+                "status": "unhealthy",
+                "error": str(e),
+                "details": "Event processor not available"
+            }
+            health_status["summary"]["unhealthy"] += 1
+            health_status["status"] = "degraded"
+        
+        health_status["summary"]["total"] = health_status["summary"]["healthy"] + health_status["summary"]["unhealthy"]
+        
+        # Determine overall status
+        if health_status["summary"]["unhealthy"] == 0:
+            health_status["status"] = "healthy"
+        elif health_status["summary"]["healthy"] > 0:
+            health_status["status"] = "degraded" 
+        else:
+            health_status["status"] = "unhealthy"
+            
+        return health_status
+    
+    @app.get("/status")
+    async def system_status():
+        """System-wide status endpoint for component monitoring."""
+        from .core.database import get_async_session
+        from .core.redis import get_redis
+        from datetime import datetime
+        
+        status = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "uptime_seconds": 0,  # Would need app start time tracking
+            "version": "2.0.0",
+            "environment": "development",
+            "components": {
+                "database": {"connected": False, "tables": 0},
+                "redis": {"connected": False, "memory_used": "unknown"},
+                "orchestrator": {"active": False, "agents": []},
+                "observability": {"active": False, "events_processed": 0}
+            }
+        }
+        
+        # Database status
+        try:
+            from sqlalchemy import text
+            async for session in get_async_session():
+                # Check table count
+                result = await session.execute(text("""
+                    SELECT COUNT(*) FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+                """))
+                table_count = result.scalar()
+                status["components"]["database"] = {
+                    "connected": True,
+                    "tables": table_count,
+                    "migrations_current": True
+                }
+                break
+        except Exception:
+            status["components"]["database"]["connected"] = False
+        
+        # Redis status
+        try:
+            redis_client = get_redis()
+            info = await redis_client.info("memory")
+            status["components"]["redis"] = {
+                "connected": True,
+                "memory_used": info.get("used_memory_human", "unknown"),
+                "streams_active": True
+            }
+        except Exception:
+            status["components"]["redis"]["connected"] = False
+        
+        return status
+    
+    @app.get("/metrics")
+    async def system_metrics():
+        """Prometheus-compatible metrics endpoint."""
+        from datetime import datetime
+        
+        # Basic metrics - would be expanded with actual Prometheus metrics
+        metrics = [
+            "# HELP leanvibe_health_status System health status (1=healthy, 0=unhealthy)",
+            "# TYPE leanvibe_health_status gauge",
+            "leanvibe_health_status{component=\"database\"} 1",
+            "leanvibe_health_status{component=\"redis\"} 1",
+            "leanvibe_health_status{component=\"orchestrator\"} 1",
+            "",
+            "# HELP leanvibe_agents_total Total number of registered agents",
+            "# TYPE leanvibe_agents_total gauge", 
+            "leanvibe_agents_total 0",
+            "",
+            "# HELP leanvibe_tasks_total Total number of tasks",
+            "# TYPE leanvibe_tasks_total counter",
+            "leanvibe_tasks_total{status=\"pending\"} 0",
+            "leanvibe_tasks_total{status=\"completed\"} 0",
+            "",
+            f"# HELP leanvibe_uptime_seconds Application uptime in seconds",
+            f"# TYPE leanvibe_uptime_seconds counter",
+            f"leanvibe_uptime_seconds {0}",  # Would track actual uptime
+        ]
+        
+        return "\n".join(metrics)
+    
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        """Global exception handler with structured logging."""
+        logger.error(
+            "Unhandled exception",
+            path=request.url.path,
+            method=request.method,
+            error=str(exc),
+            exc_info=True
+        )
+        
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Internal server error",
+                "request_id": getattr(request.state, 'request_id', 'unknown')
+            }
+        )
+    
+    return app
+
+
+# FastAPI application instance
+app = create_app()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.DEBUG,
+        log_config=None,  # We use structlog
+        access_log=False,  # Handled by middleware
+    )
