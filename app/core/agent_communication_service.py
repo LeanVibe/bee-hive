@@ -1,11 +1,15 @@
 """
-Agent Communication Service for LeanVibe Agent Hive 2.0
+Agent Communication Service for LeanVibe Agent Hive 2.0 - Upgraded for Vertical Slice 4.2
 
-Implements Redis Pub/Sub based communication system for orchestrator-to-agent messaging.
-Provides reliable, low-latency message passing with comprehensive monitoring and error handling.
+Enhanced communication service now supporting both Redis Pub/Sub (VS 4.1) and 
+Redis Streams with Consumer Groups (VS 4.2) for comprehensive message handling.
 
-This is Phase 1 of comprehensive communication system implementation, establishing foundation
-for Phase 2 Redis Streams upgrade.
+Provides unified interface for:
+- Traditional Pub/Sub messaging for real-time notifications
+- Consumer Groups for reliable task distribution and load balancing  
+- Workflow-aware message routing with dependency management
+- Dead letter queue handling for poison messages
+- Seamless migration from Pub/Sub to Streams architecture
 """
 
 import asyncio
@@ -26,6 +30,12 @@ from redis.exceptions import RedisError, ConnectionError as RedisConnectionError
 from ..models.message import StreamMessage, MessageType, MessagePriority
 from .config import settings
 from .redis_pubsub_manager import RedisPubSubManager, StreamStats, MessageProcessingResult
+from .enhanced_redis_streams_manager import (
+    EnhancedRedisStreamsManager, ConsumerGroupConfig, ConsumerGroupType, MessageRoutingMode
+)
+from .consumer_group_coordinator import ConsumerGroupCoordinator
+from .workflow_message_router import WorkflowMessageRouter
+from .dead_letter_queue_handler import DeadLetterQueueHandler
 
 logger = logging.getLogger(__name__)
 
@@ -216,15 +226,15 @@ class MessageValidator:
 
 class AgentCommunicationService:
     """
-    Core Redis Pub/Sub communication service for agent orchestration.
+    Enhanced communication service supporting both Pub/Sub and Consumer Groups.
     
-    Provides reliable message passing between orchestrator and agents with:
-    - Point-to-point messaging
-    - Broadcast capabilities
-    - Optional acknowledgments
-    - Message persistence for reliability
-    - Performance monitoring and diagnostics
-    - Connection resilience and failover
+    Provides unified interface for:
+    - Traditional Pub/Sub for real-time notifications (VS 4.1)
+    - Consumer Groups for reliable task distribution (VS 4.2)
+    - Workflow-aware message routing with dependency management
+    - Dead letter queue handling for poison messages
+    - Seamless migration between communication patterns
+    - Comprehensive monitoring and diagnostics
     """
     
     def __init__(
@@ -235,10 +245,12 @@ class AgentCommunicationService:
         message_ttl_seconds: int = 3600,
         ack_timeout_seconds: int = 30,
         enable_streams: bool = True,
+        enable_consumer_groups: bool = True,
+        enable_workflow_routing: bool = True,
         consumer_name: Optional[str] = None
     ):
         """
-        Initialize the communication service.
+        Initialize the enhanced communication service.
         
         Args:
             redis_url: Redis connection URL
@@ -247,6 +259,8 @@ class AgentCommunicationService:
             message_ttl_seconds: Default TTL for messages
             ack_timeout_seconds: Timeout for acknowledgments
             enable_streams: Whether to use Redis Streams for durable messaging
+            enable_consumer_groups: Whether to enable consumer groups (VS 4.2)
+            enable_workflow_routing: Whether to enable workflow-aware routing
             consumer_name: Unique consumer identifier for streams
         """
         self.redis_url = redis_url or settings.REDIS_URL
@@ -255,13 +269,15 @@ class AgentCommunicationService:
         self.message_ttl_seconds = message_ttl_seconds
         self.ack_timeout_seconds = ack_timeout_seconds
         self.enable_streams = enable_streams
+        self.enable_consumer_groups = enable_consumer_groups
+        self.enable_workflow_routing = enable_workflow_routing
         
         # Connection management
         self._redis: Optional[Redis] = None
         self._connection_pool = None
         self._connected = False
         
-        # Redis Streams manager for durable messaging
+        # Redis Streams manager for durable messaging (VS 4.1)
         self._streams_manager: Optional[RedisPubSubManager] = None
         if enable_streams:
             self._streams_manager = RedisPubSubManager(
@@ -269,6 +285,32 @@ class AgentCommunicationService:
                 connection_pool_size=connection_pool_size,
                 consumer_name=consumer_name
             )
+        
+        # Enhanced components for VS 4.2
+        self._enhanced_streams_manager: Optional[EnhancedRedisStreamsManager] = None
+        self._consumer_group_coordinator: Optional[ConsumerGroupCoordinator] = None
+        self._workflow_router: Optional[WorkflowMessageRouter] = None
+        self._dlq_handler: Optional[DeadLetterQueueHandler] = None
+        
+        if enable_consumer_groups:
+            self._enhanced_streams_manager = EnhancedRedisStreamsManager(
+                redis_url=redis_url,
+                connection_pool_size=connection_pool_size
+            )
+            
+            self._consumer_group_coordinator = ConsumerGroupCoordinator(
+                self._enhanced_streams_manager
+            )
+            
+            self._dlq_handler = DeadLetterQueueHandler(
+                self._enhanced_streams_manager
+            )
+            
+            if enable_workflow_routing:
+                self._workflow_router = WorkflowMessageRouter(
+                    self._enhanced_streams_manager,
+                    self._consumer_group_coordinator
+                )
         
         # Subscription management
         self._subscriptions: Dict[str, asyncio.Task] = {}
@@ -312,17 +354,32 @@ class AgentCommunicationService:
             await self._redis.ping()
             self._connected = True
             
-            # Connect streams manager if enabled
+            # Connect streams manager if enabled (VS 4.1)
             if self._streams_manager:
                 await self._streams_manager.connect()
             
+            # Connect enhanced components if enabled (VS 4.2)
+            if self._enhanced_streams_manager:
+                await self._enhanced_streams_manager.connect()
+            
+            if self._consumer_group_coordinator:
+                await self._consumer_group_coordinator.start()
+            
+            if self._workflow_router:
+                await self._workflow_router.start()
+            
+            if self._dlq_handler:
+                await self._dlq_handler.start()
+            
             logger.info(
-                "Connected to Redis for agent communication",
+                "Connected to Redis for enhanced agent communication",
                 extra={
                     "redis_url": self.redis_url,
                     "pool_size": self.connection_pool_size,
                     "persistence_enabled": self.enable_persistence,
-                    "streams_enabled": self.enable_streams
+                    "streams_enabled": self.enable_streams,
+                    "consumer_groups_enabled": self.enable_consumer_groups,
+                    "workflow_routing_enabled": self.enable_workflow_routing
                 }
             )
             
@@ -340,7 +397,20 @@ class AgentCommunicationService:
         if self._subscriptions:
             await asyncio.gather(*self._subscriptions.values(), return_exceptions=True)
         
-        # Disconnect streams manager if enabled
+        # Disconnect enhanced components if enabled (VS 4.2)
+        if self._dlq_handler:
+            await self._dlq_handler.stop()
+        
+        if self._workflow_router:
+            await self._workflow_router.stop()
+        
+        if self._consumer_group_coordinator:
+            await self._consumer_group_coordinator.stop()
+        
+        if self._enhanced_streams_manager:
+            await self._enhanced_streams_manager.disconnect()
+        
+        # Disconnect streams manager if enabled (VS 4.1)
         if self._streams_manager:
             await self._streams_manager.disconnect()
         
@@ -352,7 +422,7 @@ class AgentCommunicationService:
             await self._connection_pool.disconnect()
         
         self._connected = False
-        logger.info("Disconnected from Redis agent communication service")
+        logger.info("Disconnected from enhanced Redis agent communication service")
     
     @asynccontextmanager
     async def session(self):
@@ -1067,3 +1137,354 @@ class AgentCommunicationService:
         except Exception as e:
             logger.error(f"Failed to get dead letter messages: {e}")
             return []
+    
+    # Enhanced Communication Methods (VS 4.2)
+    
+    async def create_consumer_group(
+        self,
+        group_name: str,
+        stream_name: str,
+        agent_type: ConsumerGroupType,
+        routing_mode: MessageRoutingMode = MessageRoutingMode.LOAD_BALANCED,
+        **kwargs
+    ) -> bool:
+        """
+        Create a consumer group for agent specialization.
+        
+        Args:
+            group_name: Name of the consumer group
+            stream_name: Target stream name
+            agent_type: Type of agents in this group
+            routing_mode: Message routing strategy
+            **kwargs: Additional configuration options
+            
+        Returns:
+            True if group was created successfully
+        """
+        if not self._consumer_group_coordinator:
+            logger.warning("Consumer groups not enabled, falling back to streams")
+            return False
+        
+        try:
+            config = ConsumerGroupConfig(
+                name=group_name,
+                stream_name=stream_name,
+                agent_type=agent_type,
+                routing_mode=routing_mode,
+                **kwargs
+            )
+            
+            await self._enhanced_streams_manager.create_consumer_group(config)
+            
+            logger.info(f"Created consumer group {group_name} for {agent_type.value} agents")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to create consumer group {group_name}: {e}")
+            return False
+    
+    async def join_consumer_group(
+        self,
+        agent_id: str,
+        group_name: str,
+        message_handler: Callable[[StreamMessage], Any]
+    ) -> bool:
+        """
+        Add an agent to a consumer group.
+        
+        Args:
+            agent_id: Unique agent identifier
+            group_name: Consumer group to join
+            message_handler: Function to handle received messages
+            
+        Returns:
+            True if agent joined successfully
+        """
+        if not self._enhanced_streams_manager:
+            logger.warning("Consumer groups not enabled")
+            return False
+        
+        try:
+            await self._enhanced_streams_manager.add_consumer_to_group(
+                group_name, agent_id, message_handler
+            )
+            
+            logger.info(f"Agent {agent_id} joined consumer group {group_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to join consumer group {group_name}: {e}")
+            return False
+    
+    async def leave_consumer_group(
+        self,
+        agent_id: str,
+        group_name: str
+    ) -> bool:
+        """
+        Remove an agent from a consumer group.
+        
+        Args:
+            agent_id: Agent identifier
+            group_name: Consumer group to leave
+            
+        Returns:
+            True if agent left successfully
+        """
+        if not self._enhanced_streams_manager:
+            return False
+        
+        try:
+            await self._enhanced_streams_manager.remove_consumer_from_group(
+                group_name, agent_id
+            )
+            
+            logger.info(f"Agent {agent_id} left consumer group {group_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to leave consumer group {group_name}: {e}")
+            return False
+    
+    async def send_to_consumer_group(
+        self,
+        group_name: str,
+        message: AgentMessage,
+        routing_mode: Optional[MessageRoutingMode] = None
+    ) -> Optional[str]:
+        """
+        Send message to a consumer group with intelligent routing.
+        
+        Args:
+            group_name: Target consumer group
+            message: Message to send
+            routing_mode: Optional routing mode override
+            
+        Returns:
+            Message ID if successful, None otherwise
+        """
+        if not self._enhanced_streams_manager:
+            logger.warning("Consumer groups not enabled, falling back to pub/sub")
+            success = await self.send_message(message)
+            return str(uuid.uuid4()) if success else None
+        
+        try:
+            # Convert AgentMessage to StreamMessage
+            stream_message = StreamMessage(
+                id=message.id,
+                from_agent=message.from_agent,
+                to_agent=message.to_agent,
+                message_type=message.type,
+                payload=message.payload,
+                priority=message.priority,
+                timestamp=message.timestamp,
+                ttl=message.ttl,
+                correlation_id=message.correlation_id
+            )
+            
+            message_id = await self._enhanced_streams_manager.send_message_to_group(
+                group_name, stream_message, routing_mode
+            )
+            
+            return message_id
+            
+        except Exception as e:
+            logger.error(f"Failed to send message to consumer group {group_name}: {e}")
+            return None
+    
+    async def route_workflow_message(
+        self,
+        workflow_id: str,
+        tasks: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Route workflow with intelligent task distribution.
+        
+        Args:
+            workflow_id: Unique workflow identifier
+            tasks: List of task definitions
+            
+        Returns:
+            Routing results or None if workflow routing disabled
+        """
+        if not self._workflow_router:
+            logger.warning("Workflow routing not enabled")
+            return None
+        
+        try:
+            result = await self._workflow_router.route_workflow(workflow_id, tasks)
+            return result
+            
+        except Exception as e:
+            logger.error(f"Failed to route workflow {workflow_id}: {e}")
+            return None
+    
+    async def signal_task_completion(
+        self,
+        workflow_id: str,
+        task_id: str,
+        result: Dict[str, Any]
+    ) -> List[str]:
+        """
+        Signal task completion and trigger dependent tasks.
+        
+        Args:
+            workflow_id: Workflow identifier
+            task_id: Completed task identifier
+            result: Task completion result
+            
+        Returns:
+            List of newly triggered task IDs
+        """
+        if not self._workflow_router:
+            return []
+        
+        try:
+            triggered_tasks = await self._workflow_router.signal_task_completion(
+                workflow_id, task_id, result
+            )
+            return triggered_tasks
+            
+        except Exception as e:
+            logger.error(f"Failed to signal task completion: {e}")
+            return []
+    
+    async def replay_failed_message(
+        self,
+        dlq_message_id: str,
+        target_stream: Optional[str] = None,
+        priority_boost: bool = False
+    ) -> bool:
+        """
+        Replay a message from the Dead Letter Queue.
+        
+        Args:
+            dlq_message_id: DLQ message identifier
+            target_stream: Optional target stream override
+            priority_boost: Whether to boost message priority
+            
+        Returns:
+            True if replay was successful
+        """
+        if not self._dlq_handler:
+            logger.warning("DLQ handler not enabled")
+            return False
+        
+        try:
+            success = await self._dlq_handler.replay_message(
+                dlq_message_id, target_stream, priority_boost
+            )
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to replay DLQ message {dlq_message_id}: {e}")
+            return False
+    
+    async def get_consumer_group_stats(self) -> Dict[str, Any]:
+        """Get comprehensive consumer group statistics."""
+        if not self._enhanced_streams_manager:
+            return {}
+        
+        try:
+            return await self._enhanced_streams_manager.get_all_group_stats()
+        except Exception as e:
+            logger.error(f"Failed to get consumer group stats: {e}")
+            return {}
+    
+    async def get_dlq_statistics(self) -> Dict[str, Any]:
+        """Get Dead Letter Queue statistics."""
+        if not self._dlq_handler:
+            return {}
+        
+        try:
+            return await self._dlq_handler.get_dlq_statistics()
+        except Exception as e:
+            logger.error(f"Failed to get DLQ statistics: {e}")
+            return {}
+    
+    async def get_enhanced_comprehensive_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive metrics including all VS 4.2 components."""
+        base_metrics = await self.get_comprehensive_metrics()
+        
+        enhanced_metrics = {
+            **base_metrics,
+            "vs_4_2_enabled": {
+                "consumer_groups": self.enable_consumer_groups,
+                "workflow_routing": self.enable_workflow_routing
+            }
+        }
+        
+        # Add enhanced component metrics
+        if self._enhanced_streams_manager:
+            try:
+                enhanced_metrics["enhanced_streams"] = await self._enhanced_streams_manager.get_performance_metrics()
+            except Exception as e:
+                logger.error(f"Failed to get enhanced streams metrics: {e}")
+        
+        if self._consumer_group_coordinator:
+            try:
+                enhanced_metrics["coordinator"] = await self._consumer_group_coordinator.get_coordinator_metrics()
+            except Exception as e:
+                logger.error(f"Failed to get coordinator metrics: {e}")
+        
+        if self._workflow_router:
+            try:
+                enhanced_metrics["workflow_routing"] = await self._workflow_router.get_routing_metrics()
+            except Exception as e:
+                logger.error(f"Failed to get workflow routing metrics: {e}")
+        
+        if self._dlq_handler:
+            try:
+                enhanced_metrics["dlq"] = await self._dlq_handler.get_dlq_statistics()
+            except Exception as e:
+                logger.error(f"Failed to get DLQ statistics: {e}")
+        
+        return enhanced_metrics
+    
+    async def enhanced_health_check(self) -> Dict[str, Any]:
+        """Enhanced health check including all VS 4.2 components."""
+        base_health = await self.health_check()
+        
+        enhanced_health = {
+            **base_health,
+            "vs_4_2_components": {}
+        }
+        
+        # Check enhanced component health
+        if self._enhanced_streams_manager:
+            try:
+                enhanced_health["vs_4_2_components"]["enhanced_streams"] = await self._enhanced_streams_manager.health_check()
+            except Exception as e:
+                enhanced_health["vs_4_2_components"]["enhanced_streams"] = {"status": "error", "error": str(e)}
+        
+        if self._consumer_group_coordinator:
+            try:
+                enhanced_health["vs_4_2_components"]["coordinator"] = await self._consumer_group_coordinator.health_check()
+            except Exception as e:
+                enhanced_health["vs_4_2_components"]["coordinator"] = {"status": "error", "error": str(e)}
+        
+        if self._workflow_router:
+            try:
+                enhanced_health["vs_4_2_components"]["workflow_router"] = await self._workflow_router.health_check()
+            except Exception as e:
+                enhanced_health["vs_4_2_components"]["workflow_router"] = {"status": "error", "error": str(e)}
+        
+        if self._dlq_handler:
+            try:
+                enhanced_health["vs_4_2_components"]["dlq_handler"] = await self._dlq_handler.health_check()
+            except Exception as e:
+                enhanced_health["vs_4_2_components"]["dlq_handler"] = {"status": "error", "error": str(e)}
+        
+        # Determine overall enhanced health
+        component_healths = [
+            comp.get("status", "unknown") 
+            for comp in enhanced_health["vs_4_2_components"].values()
+        ]
+        
+        if component_healths:
+            all_healthy = all(status == "healthy" for status in component_healths)
+            enhanced_health["enhanced_status"] = "healthy" if all_healthy else "degraded"
+        else:
+            enhanced_health["enhanced_status"] = base_health.get("status", "unknown")
+        
+        return enhanced_health
