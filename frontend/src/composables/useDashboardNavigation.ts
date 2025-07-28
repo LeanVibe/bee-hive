@@ -7,12 +7,12 @@
 
 import { ref, reactive, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { 
+import { 
   DashboardComponent,
-  GraphNode,
-  ConversationEvent,
-  DetectedPattern,
-  AgentInfo
+  type GraphNode,
+  type ConversationEvent,
+  type DetectedPattern,
+  type AgentInfo
 } from '@/types/coordination'
 
 export interface NavigationContext {

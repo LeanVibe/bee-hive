@@ -6,11 +6,11 @@
  */
 
 import { ref, reactive, computed, watch } from 'vue'
-import type { 
-  DashboardError,
-  ErrorBoundaryState,
+import { 
   DashboardComponent,
-  ConnectionStatus 
+  type DashboardError,
+  type ErrorBoundaryState,
+  type ConnectionStatus 
 } from '@/types/coordination'
 
 export interface ErrorRecoveryStrategy {

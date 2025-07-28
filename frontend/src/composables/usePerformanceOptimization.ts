@@ -6,7 +6,7 @@
  */
 
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import type { DashboardComponent } from '@/types/coordination'
+import { DashboardComponent } from '@/types/coordination'
 
 export interface PerformanceConfig {
   batchSize: number
