@@ -3,6 +3,8 @@ import type { RouteRecordRaw } from 'vue-router'
 
 // Lazy load components for better performance
 const Dashboard = () => import('@/views/Dashboard.vue')
+const CoordinationDashboard = () => import('@/views/CoordinationDashboard.vue')
+const AgentGraphDashboard = () => import('@/views/AgentGraphDashboard.vue')
 const Metrics = () => import('@/views/Metrics.vue')
 const Events = () => import('@/views/Events.vue')
 const Settings = () => import('@/views/Settings.vue')
@@ -16,6 +18,33 @@ const routes: RouteRecordRaw[] = [
     meta: {
       title: 'Dashboard - LeanVibe Agent Hive',
       description: 'Real-time overview of agent activities and system health',
+    },
+  },
+  {
+    path: '/coordination',
+    name: 'Coordination',
+    component: CoordinationDashboard,
+    meta: {
+      title: 'Coordination Dashboard - LeanVibe Agent Hive',
+      description: 'Unified multi-agent coordination, communication analysis, and system monitoring',
+    },
+  },
+  {
+    path: '/coordination/:tab',
+    name: 'CoordinationWithTab',
+    component: CoordinationDashboard,
+    meta: {
+      title: 'Coordination Dashboard - LeanVibe Agent Hive',
+      description: 'Unified multi-agent coordination, communication analysis, and system monitoring',
+    },
+  },
+  {
+    path: '/agent-graph',
+    name: 'AgentGraph',
+    component: AgentGraphDashboard,
+    meta: {
+      title: 'Agent Graph - LeanVibe Agent Hive',
+      description: 'Real-time multi-agent coordination and performance visualization',
     },
   },
   {

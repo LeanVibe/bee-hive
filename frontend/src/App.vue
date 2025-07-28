@@ -106,6 +106,7 @@ import {
   MoonIcon,
   Bars3Icon,
   XMarkIcon,
+  ShareIcon,
 } from '@heroicons/vue/24/outline'
 
 // Stores
@@ -119,6 +120,7 @@ const isDark = ref(false)
 // Navigation links
 const navigation = [
   { name: 'Dashboard', to: '/', icon: HomeIcon },
+  { name: 'Agent Graph', to: '/agent-graph', icon: ShareIcon },
   { name: 'Metrics', to: '/metrics', icon: ChartBarIcon },
   { name: 'Events', to: '/events', icon: ExclamationTriangleIcon },
   { name: 'Settings', to: '/settings', icon: CogIcon },
