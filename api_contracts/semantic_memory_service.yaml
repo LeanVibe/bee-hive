@@ -1,0 +1,1506 @@
+openapi: 3.0.3
+info:
+  title: LeanVibe Semantic Memory Service API
+  description: |
+    Comprehensive API contract for the LeanVibe Agent Hive 2.0 Semantic Memory Service.
+    
+    This service provides advanced semantic search, context management, and memory consolidation
+    capabilities for multi-agent orchestration systems. It supports high-performance vector
+    operations, intelligent context compression, and seamless integration with DAG workflows.
+    
+    **Performance Targets:**
+    - Search Response Time: <200ms P95
+    - Ingestion Throughput: >500 docs/sec  
+    - Workflow Overhead: <10ms
+    - Memory Efficiency: Optimized for large-scale operations
+    
+    **Key Features:**
+    - Advanced semantic search with pgvector
+    - Context-aware memory consolidation
+    - Agent-specific knowledge isolation
+    - Real-time indexing and compression
+    - DAG workflow integration
+  version: "1.0.0"
+  contact:
+    name: LeanVibe Team
+    email: dev@leanvibe.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8001/api/v1
+    description: Development server
+  - url: https://api.leanvibe.com/memory/v1
+    description: Production server
+
+paths:
+  # =============================================================================
+  # DOCUMENT INGESTION & MANAGEMENT
+  # =============================================================================
+  
+  /memory/ingest:
+    post:
+      summary: Ingest single document into semantic memory
+      description: |
+        Processes and stores a single document with semantic embeddings.
+        Automatically generates vector representations and updates search indices.
+      operationId: ingestDocument
+      tags:
+        - Document Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentIngestRequest'
+            example:
+              content: "Agent coordination patterns in distributed systems require careful consideration of message ordering and failure recovery mechanisms."
+              metadata:
+                title: "Agent Coordination Patterns"
+                source: "technical_documentation"
+                importance: 0.8
+              agent_id: "orchestrator-001"
+              workflow_id: "coordination-analysis-flow"
+              tags: ["coordination", "distributed-systems", "patterns"]
+      responses:
+        '201':
+          description: Document successfully ingested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentIngestResponse'
+              example:
+                document_id: "doc_12345678-1234-5678-9012-123456789abc"
+                embedding_id: "emb_87654321-4321-8765-2109-876543210fed"
+                processing_time_ms: 45.3
+                vector_dimensions: 1536
+                index_updated: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/RateLimit'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/batch-ingest:
+    post:
+      summary: Batch ingest multiple documents
+      description: |
+        Efficiently processes multiple documents in a single operation.
+        Optimized for high-throughput ingestion with batch embedding generation.
+      operationId: batchIngestDocuments
+      tags:
+        - Document Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchIngestRequest'
+            example:
+              documents:
+                - content: "Context consolidation reduces memory overhead by 70%"
+                  metadata: {"type": "performance_insight"}
+                  agent_id: "memory-optimizer"
+                - content: "Redis streams provide reliable message ordering"
+                  metadata: {"type": "infrastructure_note"}
+                  agent_id: "messaging-service"
+              batch_options:
+                parallel_processing: true
+                generate_summary: true
+      responses:
+        '201':
+          description: Batch ingestion completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchIngestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: Batch size too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/documents/{document_id}:
+    get:
+      summary: Retrieve document by ID
+      description: Fetches a specific document with its metadata and embedding information
+      operationId: getDocument
+      tags:
+        - Document Management
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the document
+        - name: include_embedding
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Whether to include the full embedding vector
+      responses:
+        '200':
+          description: Document retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    
+    delete:
+      summary: Delete document from memory
+      description: |
+        Removes a document and its associated embeddings from the semantic memory.
+        Updates search indices and cleans up related references.
+      operationId: deleteDocument
+      tags:
+        - Document Management
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Document deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # =============================================================================
+  # SEMANTIC SEARCH OPERATIONS
+  # =============================================================================
+
+  /memory/search:
+    post:
+      summary: Perform semantic search
+      description: |
+        Executes advanced semantic search using vector similarity and optional filters.
+        Supports multi-modal search with context awareness and agent-specific scoping.
+      operationId: semanticSearch
+      tags:
+        - Semantic Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SemanticSearchRequest'
+            example:
+              query: "How do agents coordinate in distributed workflows?"
+              limit: 10
+              similarity_threshold: 0.7
+              agent_id: "orchestrator-001"
+              filters:
+                tags: ["coordination", "workflows"]
+                importance_min: 0.5
+              search_options:
+                rerank: true
+                include_metadata: true
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SemanticSearchResponse'
+              example:
+                results:
+                  - document_id: "doc_12345"
+                    content: "Agent coordination patterns..."
+                    similarity_score: 0.87
+                    metadata: {"type": "pattern", "importance": 0.8}
+                    relevance_explanation: "High semantic similarity in coordination concepts"
+                  - document_id: "doc_67890"
+                    content: "Distributed workflow management..."
+                    similarity_score: 0.82
+                    metadata: {"type": "architecture", "importance": 0.9}
+                    relevance_explanation: "Strong match on workflow and distribution topics"
+                total_found: 25
+                search_time_ms: 143.7
+                query_embedding_time_ms: 12.4
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/similarity:
+    post:
+      summary: Find similar documents
+      description: |
+        Finds documents similar to a provided document or embedding vector.
+        Useful for discovering related content and building knowledge graphs.
+      operationId: findSimilar
+      tags:
+        - Semantic Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimilaritySearchRequest'
+      responses:
+        '200':
+          description: Similar documents found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimilaritySearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/related/{document_id}:
+    get:
+      summary: Get related documents
+      description: |
+        Retrieves documents semantically related to the specified document.
+        Uses advanced clustering and similarity algorithms for intelligent recommendations.
+      operationId: getRelatedDocuments
+      tags:
+        - Semantic Search
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+        - name: similarity_threshold
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 1.0
+            default: 0.6
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [semantic, topical, temporal, agent-based]
+            default: semantic
+      responses:
+        '200':
+          description: Related documents retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatedDocumentsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # =============================================================================
+  # CONTEXT OPERATIONS
+  # =============================================================================
+
+  /memory/compress:
+    post:
+      summary: Compress and consolidate context
+      description: |
+        Applies advanced compression algorithms to reduce context size while preserving
+        semantic meaning. Supports multiple compression strategies and quality targets.
+      operationId: compressContext
+      tags:
+        - Context Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextCompressionRequest'
+            example:
+              context_id: "ctx_workflow_analysis_2024"
+              compression_method: "semantic_clustering"
+              target_reduction: 0.7
+              preserve_importance_threshold: 0.8
+              agent_id: "context-optimizer"
+      responses:
+        '200':
+          description: Context compressed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextCompressionResponse'
+              example:
+                compressed_context_id: "ctx_compressed_workflow_analysis_2024"
+                original_size: 15420
+                compressed_size: 4626
+                compression_ratio: 0.7
+                semantic_preservation_score: 0.94
+                processing_time_ms: 234.5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/contextualize:
+    post:
+      summary: Generate contextual embeddings
+      description: |
+        Creates context-aware embeddings that consider the surrounding semantic environment.
+        Enhances search accuracy by incorporating contextual relationships.
+      operationId: generateContextualEmbeddings
+      tags:
+        - Context Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextualizationRequest'
+      responses:
+        '200':
+          description: Contextual embeddings generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextualizationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/agent-knowledge/{agent_id}:
+    get:
+      summary: Get agent-specific knowledge base
+      description: |
+        Retrieves the consolidated knowledge base for a specific agent.
+        Includes personalized context, learned patterns, and interaction history.
+      operationId: getAgentKnowledge
+      tags:
+        - Context Management
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the agent
+        - name: knowledge_type
+          in: query
+          schema:
+            type: string
+            enum: [patterns, interactions, consolidated, all]
+            default: all
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d, all]
+            default: 7d
+      responses:
+        '200':
+          description: Agent knowledge retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentKnowledgeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # =============================================================================
+  # SYSTEM OPERATIONS
+  # =============================================================================
+
+  /memory/health:
+    get:
+      summary: Service health check
+      description: |
+        Comprehensive health check including database connectivity, 
+        vector index status, and performance metrics.
+      operationId: getHealth
+      tags:
+        - System Operations
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                timestamp: "2024-01-15T10:30:00Z"
+                version: "1.0.0"
+                components:
+                  database: 
+                    status: "healthy"
+                    response_time_ms: 5.2
+                  vector_index:
+                    status: "healthy" 
+                    documents_indexed: 15420
+                    index_size_mb: 234.5
+                  memory_usage:
+                    heap_used_mb: 512
+                    heap_max_mb: 2048
+                performance_metrics:
+                  avg_search_time_ms: 89.3
+                  avg_ingestion_time_ms: 23.1
+                  throughput_docs_per_sec: 847.2
+        '503':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /memory/metrics:
+    get:
+      summary: Performance and usage metrics
+      description: |
+        Detailed metrics for monitoring service performance, usage patterns,
+        and resource utilization. Compatible with Prometheus and Grafana.
+      operationId: getMetrics
+      tags:
+        - System Operations
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, prometheus]
+            default: json
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d]
+            default: 1h
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP semantic_memory_search_duration_seconds Time spent on search operations
+                # TYPE semantic_memory_search_duration_seconds histogram
+                semantic_memory_search_duration_seconds_bucket{le="0.1"} 1245
+                semantic_memory_search_duration_seconds_bucket{le="0.2"} 2341
+                semantic_memory_search_duration_seconds_sum 234.5
+                semantic_memory_search_duration_seconds_count 2500
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /memory/rebuild-index:
+    post:
+      summary: Rebuild vector search index
+      description: |
+        Rebuilds the vector search index for optimal performance.
+        This is a maintenance operation that should be run during low-traffic periods.
+      operationId: rebuildIndex
+      tags:
+        - System Operations
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexRebuildRequest'
+      responses:
+        '202':
+          description: Index rebuild started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexRebuildResponse'
+        '409':
+          description: Rebuild already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+# =============================================================================
+# COMPONENT SCHEMAS
+# =============================================================================
+
+components:
+  schemas:
+    # Document Management Schemas
+    DocumentIngestRequest:
+      type: object
+      required:
+        - content
+        - agent_id
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 100000
+          description: Document content to be processed and indexed
+          example: "Agent coordination requires careful message ordering and failure recovery"
+        metadata:
+          type: object
+          description: Additional document metadata
+          properties:
+            title:
+              type: string
+              maxLength: 255
+            source:
+              type: string
+              maxLength: 100
+            importance:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              default: 0.5
+            created_by:
+              type: string
+              maxLength: 100
+          additionalProperties: true
+        agent_id:
+          type: string
+          pattern: '^[a-zA-Z0-9\-_]+$'
+          maxLength: 100
+          description: ID of the agent creating this document
+          example: "orchestrator-001"
+        workflow_id:
+          type: string
+          format: uuid
+          description: Optional workflow context identifier
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 20
+          description: Semantic tags for categorization
+          example: ["coordination", "distributed-systems", "patterns"]
+        processing_options:
+          type: object
+          properties:
+            generate_summary:
+              type: boolean
+              default: false
+            extract_entities:
+              type: boolean
+              default: false
+            priority:
+              type: string
+              enum: [low, normal, high, urgent]
+              default: normal
+
+    DocumentIngestResponse:
+      type: object
+      required:
+        - document_id
+        - embedding_id
+        - processing_time_ms
+      properties:
+        document_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the ingested document
+        embedding_id:
+          type: string
+          format: uuid
+          description: Identifier for the generated embedding vector
+        processing_time_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Time taken to process the document
+        vector_dimensions:
+          type: integer
+          minimum: 1
+          description: Number of dimensions in the embedding vector
+          example: 1536
+        index_updated:
+          type: boolean
+          description: Whether the search index was updated
+        summary:
+          type: string
+          description: Auto-generated summary if requested
+        extracted_entities:
+          type: array
+          items:
+            type: object
+            properties:
+              entity:
+                type: string
+              type:
+                type: string
+              confidence:
+                type: number
+                format: float
+
+    BatchIngestRequest:
+      type: object
+      required:
+        - documents
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentIngestRequest'
+          minItems: 1
+          maxItems: 100
+          description: Array of documents to ingest
+        batch_options:
+          type: object
+          properties:
+            parallel_processing:
+              type: boolean
+              default: true
+              description: Enable parallel processing for better performance
+            generate_summary:
+              type: boolean
+              default: false
+              description: Generate summaries for all documents
+            fail_on_error:
+              type: boolean
+              default: false
+              description: Stop batch processing on first error
+
+    BatchIngestResponse:
+      type: object
+      required:
+        - total_documents
+        - successful_ingestions
+        - failed_ingestions
+        - processing_time_ms
+      properties:
+        total_documents:
+          type: integer
+          minimum: 0
+        successful_ingestions:
+          type: integer
+          minimum: 0
+        failed_ingestions:
+          type: integer
+          minimum: 0
+        processing_time_ms:
+          type: number
+          format: float
+          minimum: 0
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              status:
+                type: string
+                enum: [success, error]
+              document_id:
+                type: string
+                format: uuid
+              error_message:
+                type: string
+        batch_summary:
+          type: string
+          description: Overall summary of the batch if generated
+
+    DocumentResponse:
+      type: object
+      required:
+        - document_id
+        - content
+        - agent_id
+        - created_at
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        agent_id:
+          type: string
+        workflow_id:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        embedding_vector:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Full embedding vector (only if requested)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        access_count:
+          type: integer
+          minimum: 0
+        last_accessed:
+          type: string
+          format: date-time
+
+    # Search Schemas
+    SemanticSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Natural language search query
+          example: "How do agents coordinate in distributed workflows?"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum number of results to return
+        similarity_threshold:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+          description: Minimum similarity score for results
+        agent_id:
+          type: string
+          description: Scope search to specific agent's context
+        workflow_id:
+          type: string
+          format: uuid
+          description: Scope search to specific workflow
+        filters:
+          type: object
+          properties:
+            tags:
+              type: array
+              items:
+                type: string
+              description: Filter by document tags
+            importance_min:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+            importance_max:
+              type: number
+              format: float  
+              minimum: 0.0
+              maximum: 1.0
+            date_from:
+              type: string
+              format: date-time
+            date_to:
+              type: string
+              format: date-time
+            metadata_filters:
+              type: object
+              additionalProperties: true
+        search_options:
+          type: object
+          properties:
+            rerank:
+              type: boolean
+              default: false
+              description: Apply advanced reranking algorithms
+            include_metadata:
+              type: boolean
+              default: true
+            include_embeddings:
+              type: boolean
+              default: false
+            explain_relevance:
+              type: boolean
+              default: false
+              description: Include relevance explanations
+
+    SemanticSearchResponse:
+      type: object
+      required:
+        - results
+        - total_found
+        - search_time_ms
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total_found:
+          type: integer
+          minimum: 0
+          description: Total number of matching documents
+        search_time_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Time taken for the search operation
+        query_embedding_time_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Time taken to generate query embedding
+        reranking_applied:
+          type: boolean
+          description: Whether reranking was applied
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Query suggestions for better results
+
+    SearchResult:
+      type: object
+      required:
+        - document_id
+        - content
+        - similarity_score
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        similarity_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        metadata:
+          type: object
+          additionalProperties: true
+        agent_id:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        relevance_explanation:
+          type: string
+          description: Explanation of why this result is relevant
+        highlighted_content:
+          type: string
+          description: Content with search terms highlighted
+        embedding_vector:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Document embedding (if requested)
+
+    SimilaritySearchRequest:
+      type: object
+      properties:
+        document_id:
+          type: string
+          format: uuid
+          description: Find documents similar to this document
+        embedding_vector:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Find documents similar to this embedding
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 5
+        similarity_threshold:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.6
+        exclude_self:
+          type: boolean
+          default: true
+          description: Exclude the source document from results
+      oneOf:
+        - required: [document_id]
+        - required: [embedding_vector]
+
+    SimilaritySearchResponse:
+      type: object
+      required:
+        - similar_documents
+        - search_time_ms
+      properties:
+        similar_documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        search_time_ms:
+          type: number
+          format: float
+          minimum: 0
+
+    RelatedDocumentsResponse:
+      type: object
+      required:
+        - related_documents
+        - relationship_analysis
+      properties:
+        related_documents:
+          type: array
+          items:
+            type: object
+            allOf:
+              - $ref: '#/components/schemas/SearchResult'
+              - type: object
+                properties:
+                  relationship_type:
+                    type: string
+                    enum: [semantic, topical, temporal, agent-based]
+                  relationship_strength:
+                    type: number
+                    format: float
+                    minimum: 0.0
+                    maximum: 1.0
+        relationship_analysis:
+          type: object
+          properties:
+            total_relationships_found:
+              type: integer
+            relationship_distribution:
+              type: object
+              additionalProperties:
+                type: integer
+            analysis_time_ms:
+              type: number
+              format: float
+
+    # Context Management Schemas
+    ContextCompressionRequest:
+      type: object
+      required:
+        - context_id
+        - compression_method
+      properties:
+        context_id:
+          type: string
+          description: Identifier for the context to compress
+        compression_method:
+          type: string
+          enum: [semantic_clustering, importance_filtering, temporal_decay, hybrid]
+          description: Algorithm to use for compression
+        target_reduction:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 0.9
+          default: 0.5
+          description: Target compression ratio (0.7 = 70% reduction)
+        preserve_importance_threshold:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.8
+          description: Preserve documents above this importance level
+        agent_id:
+          type: string
+          description: Agent requesting the compression
+        compression_options:
+          type: object
+          properties:
+            preserve_recent:
+              type: boolean
+              default: true
+            maintain_relationships:
+              type: boolean
+              default: true
+            generate_summary:
+              type: boolean
+              default: true
+
+    ContextCompressionResponse:
+      type: object
+      required:
+        - compressed_context_id
+        - original_size
+        - compressed_size
+        - compression_ratio
+        - processing_time_ms
+      properties:
+        compressed_context_id:
+          type: string
+          description: Identifier for the compressed context
+        original_size:
+          type: integer
+          minimum: 0
+          description: Original context size in tokens/characters
+        compressed_size:
+          type: integer
+          minimum: 0
+          description: Compressed context size
+        compression_ratio:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Actual compression ratio achieved
+        semantic_preservation_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: How well semantic meaning was preserved
+        processing_time_ms:
+          type: number
+          format: float
+          minimum: 0
+        compression_summary:
+          type: string
+          description: Summary of what was compressed/removed
+        preserved_documents:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of documents that were preserved
+
+    ContextualizationRequest:
+      type: object
+      required:
+        - content
+        - context_documents
+      properties:
+        content:
+          type: string
+          minLength: 1
+          description: Content to generate contextual embeddings for
+        context_documents:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Document IDs to use as context
+        contextualization_method:
+          type: string
+          enum: [weighted_average, attention_based, hierarchical]
+          default: attention_based
+        agent_id:
+          type: string
+          description: Agent requesting contextualization
+
+    ContextualizationResponse:
+      type: object
+      required:
+        - contextual_embedding
+        - context_influence_scores
+        - processing_time_ms
+      properties:
+        contextual_embedding:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Generated contextual embedding vector
+        context_influence_scores:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: How much each context document influenced the embedding
+        processing_time_ms:
+          type: number
+          format: float
+          minimum: 0
+        context_summary:
+          type: string
+          description: Summary of the contextual influences
+
+    AgentKnowledgeResponse:
+      type: object
+      required:
+        - agent_id
+        - knowledge_base
+        - last_updated
+      properties:
+        agent_id:
+          type: string
+        knowledge_base:
+          type: object
+          properties:
+            patterns:
+              type: array
+              items:
+                type: object
+                properties:
+                  pattern_id:
+                    type: string
+                  description:
+                    type: string
+                  confidence:
+                    type: number
+                    format: float
+                  occurrences:
+                    type: integer
+            interactions:
+              type: array
+              items:
+                type: object
+                properties:
+                  interaction_id:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  context:
+                    type: string
+                  outcome:
+                    type: string
+            consolidated_knowledge:
+              type: object
+              properties:
+                key_insights:
+                  type: array
+                  items:
+                    type: string
+                expertise_areas:
+                  type: array
+                  items:
+                    type: string
+                learned_preferences:
+                  type: object
+                  additionalProperties: true
+        last_updated:
+          type: string
+          format: date-time
+        knowledge_stats:
+          type: object
+          properties:
+            total_documents:
+              type: integer
+            unique_patterns:
+              type: integer
+            interaction_count:
+              type: integer
+            knowledge_confidence:
+              type: number
+              format: float
+
+    # System Operation Schemas
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        components:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, unhealthy]
+                response_time_ms:
+                  type: number
+                  format: float
+                connection_pool_size:
+                  type: integer
+            vector_index:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, rebuilding, unhealthy]
+                documents_indexed:
+                  type: integer
+                index_size_mb:
+                  type: number
+                  format: float
+                last_rebuild:
+                  type: string
+                  format: date-time
+            memory_usage:
+              type: object
+              properties:
+                heap_used_mb:
+                  type: number
+                  format: float
+                heap_max_mb:
+                  type: number
+                  format: float
+                gc_collections:
+                  type: integer
+        performance_metrics:
+          type: object
+          properties:
+            avg_search_time_ms:
+              type: number
+              format: float
+            avg_ingestion_time_ms:
+              type: number
+              format: float
+            throughput_docs_per_sec:
+              type: number
+              format: float
+            error_rate_percent:
+              type: number
+              format: float
+
+    MetricsResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        time_range:
+          type: string
+        performance_metrics:
+          type: object
+          properties:
+            search_operations:
+              type: object
+              properties:
+                total_count:
+                  type: integer
+                avg_duration_ms:
+                  type: number
+                  format: float
+                p95_duration_ms:
+                  type: number
+                  format: float
+                p99_duration_ms:
+                  type: number
+                  format: float
+                error_count:
+                  type: integer
+            ingestion_operations:
+              type: object
+              properties:
+                total_count:
+                  type: integer
+                avg_duration_ms:
+                  type: number
+                  format: float
+                throughput_docs_per_sec:
+                  type: number
+                  format: float
+                error_count:
+                  type: integer
+            compression_operations:
+              type: object
+              properties:
+                total_count:
+                  type: integer
+                avg_compression_ratio:
+                  type: number
+                  format: float
+                avg_processing_time_ms:
+                  type: number
+                  format: float
+        resource_metrics:
+          type: object
+          properties:
+            memory_usage_mb:
+              type: number
+              format: float
+            cpu_usage_percent:
+              type: number
+              format: float
+            disk_usage_mb:
+              type: number
+              format: float
+            network_io_mb:
+              type: number
+              format: float
+        business_metrics:
+          type: object
+          properties:
+            total_documents:
+              type: integer
+            total_agents:
+              type: integer
+            active_workflows:
+              type: integer
+            knowledge_base_size_mb:
+              type: number
+              format: float
+
+    IndexRebuildRequest:
+      type: object
+      properties:
+        rebuild_type:
+          type: string
+          enum: [full, incremental, optimize]
+          default: incremental
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+        maintenance_window:
+          type: object
+          properties:
+            start_time:
+              type: string
+              format: date-time
+            max_duration_minutes:
+              type: integer
+              minimum: 1
+              maximum: 1440
+
+    IndexRebuildResponse:
+      type: object
+      required:
+        - rebuild_id
+        - status
+        - estimated_duration_minutes
+      properties:
+        rebuild_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, in_progress, completed, failed]
+        estimated_duration_minutes:
+          type: integer
+          minimum: 0
+        progress_url:
+          type: string
+          format: uri
+          description: URL to check rebuild progress
+
+    # Common Schemas
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code or type
+        message:
+          type: string
+          description: Human-readable error description
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error context
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          description: Unique request identifier for debugging
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "validation_error"
+            message: "Invalid similarity threshold: must be between 0.0 and 1.0"
+            timestamp: "2024-01-15T10:30:00Z"
+            request_id: "req_12345"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "not_found"
+            message: "Document with ID 'doc_12345' not found"
+            timestamp: "2024-01-15T10:30:00Z"
+            request_id: "req_12346"
+
+    RateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "rate_limit_exceeded"
+            message: "Too many requests. Limit: 1000 requests per hour"
+            details:
+              limit: 1000
+              reset_time: "2024-01-15T11:00:00Z"
+            timestamp: "2024-01-15T10:30:00Z"
+
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "internal_server_error"
+            message: "An unexpected error occurred"
+            timestamp: "2024-01-15T10:30:00Z"
+            request_id: "req_12347"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for agent authentication
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Document Management
+    description: Operations for ingesting, retrieving, and managing documents
+  - name: Semantic Search
+    description: Advanced semantic search and similarity operations
+  - name: Context Management
+    description: Context compression, consolidation, and agent knowledge management
+  - name: System Operations
+    description: Health checks, metrics, and system maintenance operations
