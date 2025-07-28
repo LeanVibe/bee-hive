@@ -7,6 +7,8 @@ monitoring performance, and managing consumer groups.
 
 import asyncio
 import logging
+import time
+import uuid
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 
@@ -16,6 +18,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.communication import MessageBroker, SimplePubSub, CommunicationError
+from ...core.agent_communication_service import AgentCommunicationService, AgentMessage
+from ...core.redis_pubsub_manager import RedisPubSubManager, StreamStats
+from ...core.message_processor import MessageProcessor, ProcessingMetrics
 from ...core.database import get_async_session
 from ...models.message import (
     StreamMessage,
@@ -116,6 +121,66 @@ async def get_pubsub() -> SimplePubSub:
         yield pubsub
     finally:
         await pubsub.disconnect()
+
+
+# Dependency to get enhanced communication service
+async def get_communication_service() -> AgentCommunicationService:
+    """Get configured agent communication service."""
+    service = AgentCommunicationService(enable_streams=True)
+    await service.connect()
+    
+    try:
+        yield service
+    finally:
+        await service.disconnect()
+
+
+# Additional Request/Response Models for Enhanced Features
+class DurableMessageRequest(BaseModel):
+    """Request model for durable message sending."""
+    
+    from_agent: str = Field(..., min_length=1, max_length=255)
+    to_agent: Optional[str] = Field(None, max_length=255)
+    message_type: MessageType
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    priority: MessagePriority = MessagePriority.NORMAL
+    ttl: Optional[int] = Field(None, gt=0)
+    correlation_id: Optional[str] = None
+    acknowledgment_required: bool = False
+
+
+class StreamStatsResponse(BaseModel):
+    """Response model for stream statistics."""
+    
+    name: str
+    length: int
+    consumer_groups: int
+    pending_messages: int
+    first_entry_id: Optional[str]
+    last_entry_id: Optional[str]
+    
+    
+class PerformanceMetricsResponse(BaseModel):
+    """Response model for performance metrics."""
+    
+    messages_sent: int
+    messages_received: int
+    messages_failed: int
+    delivery_rate: float
+    error_rate: float
+    average_latency_ms: float
+    p95_latency_ms: float
+    p99_latency_ms: float
+    throughput_msg_per_sec: float
+    
+    
+class ReplayRequest(BaseModel):
+    """Request model for message replay."""
+    
+    stream_name: str = Field(..., min_length=1)
+    start_id: str = Field("0-0", description="Starting message ID")
+    end_id: str = Field("+", description="Ending message ID")
+    count: int = Field(100, ge=1, le=1000)
 
 
 @router.post("/send", response_model=SendMessageResponse, status_code=status.HTTP_201_CREATED)
@@ -498,3 +563,309 @@ async def subscribe_to_stream(
     finally:
         if 'broker' in locals():
             await broker.disconnect()
+
+
+# Enhanced API Endpoints for Redis Streams and Pub/Sub
+
+@router.post("/durable/send", response_model=SendMessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_durable_message(
+    request: DurableMessageRequest,
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> SendMessageResponse:
+    """
+    Send a durable message via Redis Streams with guaranteed delivery.
+    
+    Provides at-least-once delivery semantics, consumer group support,
+    and automatic retry with dead letter queue functionality.
+    """
+    try:
+        # Create agent message
+        message = AgentMessage(
+            id=str(uuid.uuid4()),
+            from_agent=request.from_agent,
+            to_agent=request.to_agent,
+            type=request.message_type,
+            payload=request.payload,
+            timestamp=time.time(),
+            priority=request.priority,
+            ttl=request.ttl,
+            correlation_id=request.correlation_id,
+            acknowledgment_required=request.acknowledgment_required
+        )
+        
+        # Send via streams
+        stream_message_id = await service.send_durable_message(message)
+        
+        if not stream_message_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send durable message"
+            )
+        
+        logger.info(f"Durable message sent: {stream_message_id}")
+        
+        return SendMessageResponse(
+            message_id=stream_message_id,
+            stream_name=message.get_channel_name(),
+            timestamp=message.timestamp
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to send durable message: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Durable message delivery failed: {str(e)}"
+        )
+
+
+@router.post("/pubsub/send", response_model=SendMessageResponse)
+async def send_pubsub_message(
+    request: DurableMessageRequest,
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> SendMessageResponse:
+    """
+    Send a message via Redis Pub/Sub for fast, fire-and-forget delivery.
+    
+    Provides low-latency delivery without persistence guarantees.
+    Suitable for notifications and real-time updates.
+    """
+    try:
+        # Create agent message
+        message = AgentMessage(
+            id=str(uuid.uuid4()),
+            from_agent=request.from_agent,
+            to_agent=request.to_agent,
+            type=request.message_type,
+            payload=request.payload,
+            timestamp=time.time(),
+            priority=request.priority,
+            ttl=request.ttl,
+            correlation_id=request.correlation_id,
+            acknowledgment_required=request.acknowledgment_required
+        )
+        
+        # Send via pub/sub
+        success = await service.send_message(message)
+        
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send pub/sub message"
+            )
+        
+        logger.info(f"Pub/Sub message sent: {message.id}")
+        
+        return SendMessageResponse(
+            message_id=message.id,
+            stream_name=message.get_channel_name(),
+            timestamp=message.timestamp
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to send pub/sub message: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Pub/Sub message delivery failed: {str(e)}"
+        )
+
+
+@router.get("/streams/{stream_name}/stats", response_model=StreamStatsResponse)
+async def get_enhanced_stream_stats(
+    stream_name: str,
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> StreamStatsResponse:
+    """
+    Get comprehensive statistics for a Redis Stream.
+    
+    Includes consumer group information, pending messages,
+    and performance metrics for monitoring and debugging.
+    """
+    try:
+        stats = await service.get_stream_stats(stream_name)
+        
+        if not stats:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Stream {stream_name} not found or streams not enabled"
+            )
+        
+        # Calculate totals
+        total_consumer_groups = len(stats.groups)
+        total_pending = sum(group.pending_count for group in stats.groups)
+        
+        return StreamStatsResponse(
+            name=stats.name,
+            length=stats.length,
+            consumer_groups=total_consumer_groups,
+            pending_messages=total_pending,
+            first_entry_id=stats.first_entry_id,
+            last_entry_id=stats.last_entry_id
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get stream stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve stream statistics: {str(e)}"
+        )
+
+
+@router.get("/metrics/performance", response_model=PerformanceMetricsResponse)
+async def get_enhanced_performance_metrics(
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> PerformanceMetricsResponse:
+    """
+    Get comprehensive performance metrics for the communication system.
+    
+    Includes throughput, latency percentiles, success rates,
+    and error rates for system monitoring and optimization.
+    """
+    try:
+        comprehensive_metrics = await service.get_comprehensive_metrics()
+        
+        # Extract relevant metrics
+        msg_metrics = comprehensive_metrics.get("message_metrics", {})
+        streams_metrics = comprehensive_metrics.get("streams_metrics", {})
+        
+        return PerformanceMetricsResponse(
+            messages_sent=msg_metrics.get("total_sent", 0) + streams_metrics.get("messages_sent", 0),
+            messages_received=msg_metrics.get("total_acknowledged", 0) + streams_metrics.get("messages_received", 0),
+            messages_failed=msg_metrics.get("total_failed", 0) + streams_metrics.get("messages_failed", 0),
+            delivery_rate=msg_metrics.get("delivery_rate", 0.0),
+            error_rate=msg_metrics.get("error_rate", 0.0),
+            average_latency_ms=msg_metrics.get("average_latency_ms", 0.0),
+            p95_latency_ms=msg_metrics.get("p95_latency_ms", 0.0),
+            p99_latency_ms=msg_metrics.get("p99_latency_ms", 0.0),
+            throughput_msg_per_sec=msg_metrics.get("throughput_msg_per_sec", 0.0)
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to get performance metrics: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve performance metrics: {str(e)}"
+        )
+
+
+@router.post("/streams/{stream_name}/replay")
+async def replay_stream_messages(
+    stream_name: str,
+    request: ReplayRequest,
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> Dict[str, Any]:
+    """
+    Replay messages from a Redis Stream for debugging or recovery.
+    
+    Retrieves messages from the specified range and returns them
+    for analysis or re-processing.
+    """
+    try:
+        messages = await service.replay_messages(
+            stream_name=request.stream_name or stream_name,
+            start_id=request.start_id,
+            end_id=request.end_id,
+            count=request.count
+        )
+        
+        return {
+            "stream_name": stream_name,
+            "messages_found": len(messages),
+            "start_id": request.start_id,
+            "end_id": request.end_id,
+            "messages": messages
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to replay messages: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Message replay failed: {str(e)}"
+        )
+
+
+@router.get("/streams/{stream_name}/dlq")
+async def get_dead_letter_queue(
+    stream_name: str,
+    count: int = Query(100, ge=1, le=1000),
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> Dict[str, Any]:
+    """
+    Get messages from the dead letter queue for a stream.
+    
+    Retrieves messages that failed processing after maximum
+    retry attempts for manual intervention or analysis.
+    """
+    try:
+        dlq_messages = await service.get_dead_letter_messages(
+            original_stream=stream_name,
+            count=count
+        )
+        
+        return {
+            "original_stream": stream_name,
+            "dlq_stream": f"{stream_name}:dlq",
+            "messages_found": len(dlq_messages),
+            "messages": dlq_messages
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get DLQ messages: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve dead letter messages: {str(e)}"
+        )
+
+
+@router.get("/health/comprehensive")
+async def comprehensive_health_check(
+    service: AgentCommunicationService = Depends(get_communication_service)
+) -> Dict[str, Any]:
+    """
+    Comprehensive health check for the enhanced communication system.
+    
+    Checks Redis connectivity, stream functionality, pub/sub status,
+    and overall system health with detailed diagnostics.
+    """
+    try:
+        health_status = await service.health_check()
+        comprehensive_metrics = await service.get_comprehensive_metrics()
+        
+        # Determine overall health
+        is_healthy = (
+            health_status.get("status") == "healthy" and
+            comprehensive_metrics.get("connection_status", {}).get("connected", False)
+        )
+        
+        return {
+            "status": "healthy" if is_healthy else "degraded",
+            "timestamp": datetime.utcnow().isoformat(),
+            "components": {
+                "redis_connection": health_status.get("connected", False),
+                "pub_sub": health_status.get("status") == "healthy",
+                "streams": comprehensive_metrics.get("streams_metrics", {}).get("active_consumers", 0) >= 0,
+                "circuit_breaker": not comprehensive_metrics.get("streams_metrics", {}).get("circuit_breaker_status", {}).get("open", True)
+            },
+            "metrics": {
+                "ping_latency_ms": health_status.get("ping_latency_ms", 0),
+                "delivery_rate": health_status.get("delivery_rate", 0),
+                "error_rate": health_status.get("error_rate", 0),
+                "active_subscriptions": comprehensive_metrics.get("subscription_status", {}).get("active_subscriptions", 0)
+            },
+            "detailed_status": comprehensive_metrics
+        }
+        
+    except Exception as e:
+        logger.error(f"Comprehensive health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e),
+            "components": {
+                "redis_connection": False,
+                "pub_sub": False,
+                "streams": False,
+                "circuit_breaker": False
+            }
+        }

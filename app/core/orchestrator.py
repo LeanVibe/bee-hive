@@ -24,6 +24,8 @@ from anthropic import AsyncAnthropic
 
 from .config import settings
 from .redis import get_message_broker, get_session_cache, AgentMessageBroker, SessionCache
+from .agent_communication_service import AgentCommunicationService, AgentMessage
+from .message_processor import MessageProcessor, ProcessingMetrics
 from .database import get_session
 from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy
@@ -102,6 +104,8 @@ class AgentOrchestrator:
         self.agents: Dict[str, AgentInstance] = {}
         self.active_sessions: Dict[str, Session] = {}
         self.message_broker: Optional[AgentMessageBroker] = None
+        self.communication_service: Optional[AgentCommunicationService] = None
+        self.message_processor: Optional[MessageProcessor] = None
         self.session_cache: Optional[SessionCache] = None
         self.anthropic_client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
         
@@ -166,6 +170,20 @@ class AgentOrchestrator:
         
         self.message_broker = get_message_broker()
         self.session_cache = get_session_cache()
+        
+        # Initialize enhanced communication system
+        self.communication_service = AgentCommunicationService(
+            enable_streams=True,
+            consumer_name=f"orchestrator-{uuid.uuid4().hex[:8]}"
+        )
+        await self.communication_service.connect()
+        
+        # Initialize message processor
+        self.message_processor = MessageProcessor(
+            dead_letter_handler=self._handle_dead_letter_message
+        )
+        await self.message_processor.start()
+        
         self.is_running = True
         
         # Initialize workflow execution engine
@@ -211,7 +229,311 @@ class AgentOrchestrator:
         for agent_id in list(self.agents.keys()):
             await self.shutdown_agent(agent_id, graceful=True)
         
+        # Shutdown enhanced communication system
+        if self.message_processor:
+            await self.message_processor.stop()
+        
+        if self.communication_service:
+            await self.communication_service.disconnect()
+        
         logger.info("✅ Agent Orchestrator shutdown complete")
+    
+    async def _handle_dead_letter_message(
+        self,
+        message: 'StreamMessage',
+        error: Exception
+    ) -> None:
+        """Handle messages that failed processing after maximum retries."""
+        from ..models.message import StreamMessage
+        
+        logger.error(
+            f"Message moved to dead letter queue: {message.id}",
+            extra={
+                "message_id": message.id,
+                "from_agent": message.from_agent,
+                "to_agent": message.to_agent,
+                "message_type": message.message_type.value,
+                "error": str(error)
+            }
+        )
+        
+        # Store DLQ message in database for analysis
+        try:
+            async for db in get_session():
+                from ..models.message import MessageAudit, MessageStatus
+                
+                # Create audit record for DLQ message
+                audit = MessageAudit(
+                    message_id=message.id,
+                    stream_name=message.get_stream_name(),
+                    from_agent_id=message.from_agent,
+                    to_agent_id=message.to_agent,
+                    message_type=message.message_type,
+                    priority=message.priority,
+                    status=MessageStatus.DEAD_LETTER,
+                    payload=message.payload,
+                    correlation_id=message.correlation_id,
+                    error_message=str(error)
+                )
+                
+                db.add(audit)
+                await db.commit()
+                break
+                
+        except Exception as db_error:
+            logger.error(f"Failed to store DLQ message in database: {db_error}")
+    
+    async def send_enhanced_message(
+        self,
+        to_agent: Optional[str],
+        message_type: str,
+        payload: Dict[str, Any],
+        priority: str = "normal",
+        use_streams: bool = True,
+        acknowledgment_required: bool = False
+    ) -> Optional[str]:
+        """
+        Send enhanced message using the new communication system.
+        
+        Args:
+            to_agent: Target agent ID (None for broadcast)
+            message_type: Type of message
+            payload: Message payload
+            priority: Message priority (low, normal, high, urgent)
+            use_streams: Whether to use Redis Streams for durability
+            acknowledgment_required: Whether to require acknowledgment
+            
+        Returns:
+            Message ID if sent successfully
+        """
+        if not self.communication_service:
+            logger.error("Communication service not initialized")
+            return None
+        
+        try:
+            from ..models.message import MessageType, MessagePriority
+            
+            # Convert string types to enums
+            msg_type = MessageType.EVENT  # Default
+            if message_type in [mt.value for mt in MessageType]:
+                msg_type = MessageType(message_type)
+            
+            msg_priority = MessagePriority.NORMAL  # Default
+            if priority in [mp.value for mp in MessagePriority]:
+                msg_priority = MessagePriority(priority)
+            
+            # Create agent message
+            message = AgentMessage(
+                id=str(uuid.uuid4()),
+                from_agent="orchestrator",
+                to_agent=to_agent,
+                type=msg_type,
+                payload=payload,
+                timestamp=time.time(),
+                priority=msg_priority,
+                acknowledgment_required=acknowledgment_required
+            )
+            
+            # Send via appropriate method
+            if use_streams:
+                message_id = await self.communication_service.send_durable_message(message)
+            else:
+                success = await self.communication_service.send_message(message)
+                message_id = message.id if success else None
+            
+            if message_id:
+                logger.debug(
+                    f"Enhanced message sent: {message_id}",
+                    extra={
+                        "to_agent": to_agent,
+                        "message_type": message_type,
+                        "use_streams": use_streams
+                    }
+                )
+            
+            return message_id
+            
+        except Exception as e:
+            logger.error(f"Failed to send enhanced message: {e}")
+            return None
+    
+    async def subscribe_agent_to_streams(
+        self,
+        agent_id: str,
+        message_handler: Optional[Callable] = None
+    ) -> bool:
+        """
+        Subscribe agent to its dedicated stream for durable message consumption.
+        
+        Args:
+            agent_id: Agent identifier
+            message_handler: Optional custom message handler
+            
+        Returns:
+            True if subscription was successful
+        """
+        if not self.communication_service:
+            logger.error("Communication service not initialized")
+            return False
+        
+        try:
+            # Default message handler if none provided
+            if not message_handler:
+                message_handler = self._default_agent_message_handler
+            
+            await self.communication_service.subscribe_agent_stream(
+                agent_id=agent_id,
+                callback=message_handler,
+                consumer_group=f"orchestrator_consumers_{agent_id}"
+            )
+            
+            logger.info(f"Agent {agent_id} subscribed to streams")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to subscribe agent to streams: {e}")
+            return False
+    
+    async def _default_agent_message_handler(self, message: 'StreamMessage') -> None:
+        """Default handler for agent messages."""
+        from ..models.message import StreamMessage
+        
+        logger.debug(
+            f"Received message from {message.from_agent}",
+            extra={
+                "message_id": message.id,
+                "message_type": message.message_type.value,
+                "to_agent": message.to_agent
+            }
+        )
+        
+        # Process message based on type
+        try:
+            if message.message_type.value == "task_result":
+                await self._handle_task_result_message(message)
+            elif message.message_type.value == "heartbeat":
+                await self._handle_heartbeat_message(message)
+            elif message.message_type.value == "error":
+                await self._handle_error_message(message)
+            else:
+                # Add to message processor for handling
+                if self.message_processor:
+                    await self.message_processor.enqueue_message(message)
+                
+        except Exception as e:
+            logger.error(f"Error handling message {message.id}: {e}")
+    
+    async def _handle_task_result_message(self, message: 'StreamMessage') -> None:
+        """Handle task result messages from agents."""
+        try:
+            task_id = message.payload.get("task_id")
+            result = message.payload.get("result")
+            success = message.payload.get("success", False)
+            
+            if task_id:
+                # Update task status in database
+                async for db in get_session():
+                    from ..models.task import Task, TaskStatus
+                    
+                    task_query = select(Task).where(Task.id == task_id)
+                    result = await db.execute(task_query)
+                    task = result.scalar_one_or_none()
+                    
+                    if task:
+                        task.status = TaskStatus.COMPLETED if success else TaskStatus.FAILED
+                        task.result = result
+                        await db.commit()
+                        
+                        logger.info(f"Task {task_id} marked as {'completed' if success else 'failed'}")
+                    break
+                    
+        except Exception as e:
+            logger.error(f"Error handling task result: {e}")
+    
+    async def _handle_heartbeat_message(self, message: 'StreamMessage') -> None:
+        """Handle heartbeat messages from agents."""
+        try:
+            agent_id = message.from_agent
+            
+            if agent_id in self.agents:
+                self.agents[agent_id].last_heartbeat = datetime.utcnow()
+                
+                # Update agent status based on heartbeat data
+                if "status" in message.payload:
+                    status = message.payload["status"]
+                    if hasattr(AgentStatus, status.upper()):
+                        self.agents[agent_id].status = AgentStatus(status)
+                
+                logger.debug(f"Heartbeat received from agent {agent_id}")
+            
+        except Exception as e:
+            logger.error(f"Error handling heartbeat: {e}")
+    
+    async def _handle_error_message(self, message: 'StreamMessage') -> None:
+        """Handle error messages from agents."""
+        try:
+            agent_id = message.from_agent
+            error_details = message.payload.get("error", "Unknown error")
+            
+            logger.error(
+                f"Error reported by agent {agent_id}: {error_details}",
+                extra={
+                    "agent_id": agent_id,
+                    "error_details": error_details,
+                    "message_id": message.id
+                }
+            )
+            
+            # Mark agent as having issues
+            if agent_id in self.agents:
+                self.agents[agent_id].status = AgentStatus.ERROR
+            
+        except Exception as e:
+            logger.error(f"Error handling error message: {e}")
+    
+    async def get_communication_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive communication system metrics."""
+        metrics = {
+            "communication_service": None,
+            "message_processor": None,
+            "overall_health": "unknown"
+        }
+        
+        try:
+            # Get communication service metrics
+            if self.communication_service:
+                comm_metrics = await self.communication_service.get_comprehensive_metrics()
+                metrics["communication_service"] = comm_metrics
+            
+            # Get message processor metrics
+            if self.message_processor:
+                proc_metrics = await self.message_processor.get_metrics()
+                metrics["message_processor"] = proc_metrics.to_dict()
+            
+            # Determine overall health
+            comm_healthy = (
+                self.communication_service and
+                metrics["communication_service"] and
+                metrics["communication_service"].get("connection_status", {}).get("connected", False)
+            )
+            
+            proc_healthy = (
+                self.message_processor and
+                self.message_processor.is_running()
+            )
+            
+            if comm_healthy and proc_healthy:
+                metrics["overall_health"] = "healthy"
+            elif comm_healthy or proc_healthy:
+                metrics["overall_health"] = "degraded"
+            else:
+                metrics["overall_health"] = "unhealthy"
+            
+        except Exception as e:
+            logger.error(f"Error getting communication metrics: {e}")
+            metrics["error"] = str(e)
+        
+        return metrics
     
     async def spawn_agent(
         self,
