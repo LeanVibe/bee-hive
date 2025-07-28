@@ -1,237 +1,209 @@
 <template>
-  <div class="p-6">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Events</h1>
-      <p class="text-gray-600 dark:text-gray-300">Real-time system events and activity</p>
-    </div>
+  <div class="p-6 space-y-6">
+    <!-- Page header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Hook Lifecycle Events</h1>
+        <p class="text-gray-600 dark:text-gray-300">Real-time agent lifecycle monitoring and security dashboard</p>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <!-- View toggle -->
+        <div class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            @click="activeView = 'timeline'"
+            :class="[
+              'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+              activeView === 'timeline'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+            ]"
+          >
+            Timeline
+          </button>
+          <button
+            @click="activeView = 'security'"
+            :class="[
+              'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+              activeView === 'security'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+            ]"
+          >
+            Security
+          </button>
+          <button
+            @click="activeView = 'performance'"
+            :class="[
+              'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+              activeView === 'performance'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+            ]"
+          >
+            Performance
+          </button>
+        </div>
 
-    <!-- Event Filters -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
-      <div class="flex flex-wrap gap-4">
-        <select 
-          v-model="selectedEventType" 
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700"
-        >
-          <option value="">All Event Types</option>
-          <option value="PreToolUse">Pre Tool Use</option>
-          <option value="PostToolUse">Post Tool Use</option>
-          <option value="Notification">Notification</option>
-          <option value="Stop">Stop</option>
-        </select>
-
-        <select 
-          v-model="selectedSeverity" 
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700"
-        >
-          <option value="">All Severities</option>
-          <option value="info">Info</option>
-          <option value="warning">Warning</option>
-          <option value="error">Error</option>
-          <option value="critical">Critical</option>
-        </select>
-
-        <button 
-          @click="refreshEvents"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Refresh
-        </button>
+        <!-- Connection status -->
+        <div class="flex items-center space-x-2 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div 
+            :class="[
+              'w-2 h-2 rounded-full',
+              eventsStore.wsConnected ? 'bg-green-500' : 'bg-red-500'
+            ]"
+          ></div>
+          <span class="text-sm font-medium">
+            {{ eventsStore.wsConnected ? 'Live' : 'Disconnected' }}
+          </span>
+        </div>
       </div>
     </div>
 
-    <!-- Events Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Timestamp
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Event Type
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Agent ID
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Details
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {{ formatTimestamp(event.timestamp) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span 
-                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                  :class="getEventTypeClass(event.event_type)"
-                >
-                  {{ event.event_type }}
+    <!-- Filter panel -->
+    <EventFilterPanel
+      :filters="currentFilters"
+      :available-agents="eventsStore.agents"
+      :available-sessions="eventsStore.sessions"
+      @filters-change="handleFiltersChange"
+      @clear-filters="handleClearFilters"
+    />
+
+    <!-- Main content area -->
+    <div class="space-y-6">
+      <!-- Timeline view -->
+      <div v-if="activeView === 'timeline'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main timeline -->
+        <div class="lg:col-span-2">
+          <HookEventTimeline
+            :height="600"
+            :max-events="200"
+            :auto-scroll="true"
+            :initial-filters="currentFilters"
+            @event-click="handleEventClick"
+          />
+        </div>
+        
+        <!-- Side panel with session info -->
+        <div class="space-y-6">
+          <SessionVisualization
+            :sessions="eventsStore.sessions"
+            :max-sessions="10"
+            :show-inactive="false"
+          />
+          
+          <!-- Quick stats -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              Quick Stats
+            </h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Total Events</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ eventsStore.hookEvents.length }}
                 </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">
-                {{ event.agent_id.substring(0, 8) }}...
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                {{ getEventDetails(event) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span 
-                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                  :class="getStatusClass(event.status || 'completed')"
-                >
-                  {{ event.status || 'completed' }}
+              </div>
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Active Agents</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ activeAgentsCount }}
                 </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Security Alerts</span>
+                <span class="text-sm font-medium text-red-600 dark:text-red-400">
+                  {{ eventsStore.securityAlerts.length }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Empty State -->
-      <div v-if="filteredEvents.length === 0" class="text-center py-12">
-        <p class="text-gray-500 dark:text-gray-400">No events found matching the current filters.</p>
+      <!-- Security view -->
+      <div v-else-if="activeView === 'security'">
+        <SecurityDashboard
+          :show-approval-queue="true"
+          :alert-limit="15"
+          :auto-refresh="true"
+          :refresh-interval="30000"
+        />
+      </div>
+
+      <!-- Performance view -->
+      <div v-else-if="activeView === 'performance'">
+        <PerformanceMonitoringDashboard
+          :refresh-interval="5000"
+          :show-historical-data="true"
+          :time-range="'1h'"
+        />
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-between items-center mt-6">
-      <div class="text-sm text-gray-700 dark:text-gray-300">
-        Showing {{ (currentPage - 1) * pageSize + 1 }} to 
-        {{ Math.min(currentPage * pageSize, totalEvents) }} of {{ totalEvents }} events
-      </div>
-      <div class="flex space-x-2">
-        <button 
-          @click="previousPage" 
-          :disabled="currentPage === 1"
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <button 
-          @click="nextPage" 
-          :disabled="currentPage * pageSize >= totalEvents"
-          class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+    <!-- Event details modal -->
+    <EventDetailsModal
+      :event="selectedEvent"
+      :is-open="isEventModalOpen"
+      :show-security-info="true"
+      :show-performance-info="true"
+      @close="closeEventModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { format } from 'date-fns'
+import { useEventsStore } from '@/stores/events'
+import { 
+  type EventFilter,
+  type HookEvent as TypedHookEvent
+} from '@/types/hooks'
+import HookEventTimeline from '@/components/hooks/HookEventTimeline.vue'
+import SecurityDashboard from '@/components/hooks/SecurityDashboard.vue'
+import EventFilterPanel from '@/components/hooks/EventFilterPanel.vue'
+import SessionVisualization from '@/components/hooks/SessionVisualization.vue'
+import EventDetailsModal from '@/components/hooks/EventDetailsModal.vue'
+import PerformanceMonitoringDashboard from '@/components/hooks/PerformanceMonitoringDashboard.vue'
 
-interface Event {
-  id: string
-  timestamp: string
-  event_type: string
-  agent_id: string
-  session_id: string
-  payload: any
-  status?: string
-}
+// Store
+const eventsStore = useEventsStore()
 
-const events = ref<Event[]>([])
-const selectedEventType = ref('')
-const selectedSeverity = ref('')
-const currentPage = ref(1)
-const pageSize = ref(50)
-const totalEvents = ref(0)
+// Local state
+const activeView = ref<'timeline' | 'security' | 'performance'>('timeline')
+const currentFilters = ref<EventFilter>({})
+const selectedEvent = ref<TypedHookEvent | undefined>()
+const isEventModalOpen = ref(false)
 
-const filteredEvents = computed(() => {
-  let filtered = events.value
-
-  if (selectedEventType.value) {
-    filtered = filtered.filter(event => event.event_type === selectedEventType.value)
-  }
-
-  return filtered.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value)
+// Computed
+const activeAgentsCount = computed(() => {
+  return eventsStore.agents.filter(agent => agent.status === 'active').length
 })
 
-const formatTimestamp = (timestamp: string) => {
-  return format(new Date(timestamp || ''), 'MMM dd, HH:mm:ss')
+// Methods
+const handleFiltersChange = (filters: EventFilter) => {
+  currentFilters.value = filters
+  eventsStore.updateHookFilters(filters)
 }
 
-const getEventTypeClass = (eventType: string) => {
-  const classes = {
-    'PreToolUse': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    'PostToolUse': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    'Notification': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    'Stop': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-  }
-  return classes[eventType as keyof typeof classes] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+const handleClearFilters = () => {
+  currentFilters.value = {}
+  eventsStore.clearHookFilters()
 }
 
-const getStatusClass = (status: string) => {
-  const classes = {
-    'completed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    'failed': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-  }
-  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+const handleEventClick = (event: TypedHookEvent) => {
+  selectedEvent.value = event
+  isEventModalOpen.value = true
 }
 
-const getEventDetails = (event: Event) => {
-  if (event.event_type === 'PreToolUse' && event.payload.tool_name) {
-    return `Tool: ${event.payload.tool_name}`
-  }
-  if (event.event_type === 'PostToolUse' && event.payload.tool_name) {
-    return `Tool: ${event.payload.tool_name} (${event.payload.success ? 'Success' : 'Failed'})`
-  }
-  if (event.event_type === 'Notification' && event.payload.message) {
-    return event.payload.message.substring(0, 50) + '...'
-  }
-  return 'Event details...'
+const closeEventModal = () => {
+  isEventModalOpen.value = false
+  selectedEvent.value = undefined
 }
 
-const refreshEvents = () => {
-  // Mock data generation
-  const eventTypes = ['PreToolUse', 'PostToolUse', 'Notification', 'Stop']
-  const mockEvents: Event[] = []
-
-  for (let i = 0; i < 100; i++) {
-    const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
-    mockEvents.push({
-      id: `event_${i}`,
-      timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-      event_type: eventType,
-      agent_id: `agent_${Math.floor(Math.random() * 10)}`,
-      session_id: `session_${Math.floor(Math.random() * 20)}`,
-      payload: {
-        tool_name: eventType.includes('Tool') ? `Tool_${Math.floor(Math.random() * 5)}` : undefined,
-        success: eventType === 'PostToolUse' ? Math.random() > 0.1 : undefined,
-        message: eventType === 'Notification' ? `Test notification message ${i}` : undefined
-      },
-      status: Math.random() > 0.05 ? 'completed' : 'failed'
-    })
-  }
-
-  events.value = mockEvents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  totalEvents.value = mockEvents.length
-}
-
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-const nextPage = () => {
-  if (currentPage.value * pageSize.value < totalEvents.value) {
-    currentPage.value++
-  }
-}
-
+// Lifecycle
 onMounted(() => {
-  refreshEvents()
+  // Connect to WebSocket for real-time events
+  eventsStore.connectWebSocket()
 })
 </script>

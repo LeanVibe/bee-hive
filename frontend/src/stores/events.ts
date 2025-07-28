@@ -1,6 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref, computed, onUnmounted } from 'vue'
 import { apiClient } from '@/services/api'
+import { 
+  HookType, 
+  SecurityRisk,
+  HookEvent as TypedHookEvent,
+  SecurityAlert,
+  EventFilter,
+  SessionInfo,
+  AgentInfo,
+  HookPerformanceMetrics,
+  WebSocketHookMessage,
+  ControlDecision
+} from '@/types/hooks'
 
 export interface AgentEvent {
   id: string
@@ -36,10 +48,14 @@ export const useEventsStore = defineStore('events', () => {
   // State
   const events = ref<AgentEvent[]>([])
   const realtimeEvents = ref<AgentEvent[]>([])
-  const hookEvents = ref<HookEvent[]>([])
+  const hookEvents = ref<TypedHookEvent[]>([])
+  const securityAlerts = ref<SecurityAlert[]>([])
+  const sessions = ref<SessionInfo[]>([])
+  const agents = ref<AgentInfo[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const filters = ref<EventFilters>({})
+  const hookFilters = ref<EventFilter>({})
   const pagination = ref({
     limit: 50,
     offset: 0,
@@ -51,7 +67,9 @@ export const useEventsStore = defineStore('events', () => {
   // WebSocket connection
   let websocket: WebSocket | null = null
   const wsConnected = ref(false)
-  const eventCallbacks = new Set<(event: HookEvent) => void>()
+  const eventCallbacks = new Set<(event: TypedHookEvent) => void>()
+  const securityCallbacks = new Set<(alert: SecurityAlert) => void>()
+  const performanceCallbacks = new Set<(metrics: HookPerformanceMetrics) => void>()
   
   // Computed
   const allEvents = computed(() => {
@@ -231,11 +249,15 @@ export const useEventsStore = defineStore('events', () => {
   }
   
   // Hook event management
-  const addHookEvent = (event: HookEvent) => {
+  const addHookEvent = (event: TypedHookEvent) => {
     hookEvents.value.unshift(event)
     if (hookEvents.value.length > 1000) {
       hookEvents.value = hookEvents.value.slice(0, 1000)
     }
+    
+    // Update session and agent tracking
+    updateSessionInfo(event)
+    updateAgentInfo(event)
     
     // Notify all subscribers
     eventCallbacks.forEach(callback => {
@@ -245,6 +267,103 @@ export const useEventsStore = defineStore('events', () => {
         console.error('Error in event callback:', error)
       }
     })
+  }
+  
+  // Security alert management
+  const addSecurityAlert = (alert: SecurityAlert) => {
+    securityAlerts.value.unshift(alert)
+    if (securityAlerts.value.length > 500) {
+      securityAlerts.value = securityAlerts.value.slice(0, 500)
+    }
+    
+    // Notify security subscribers
+    securityCallbacks.forEach(callback => {
+      try {
+        callback(alert)
+      } catch (error) {
+        console.error('Error in security callback:', error)
+      }
+    })
+  }
+  
+  // Session tracking
+  const updateSessionInfo = (event: TypedHookEvent) => {
+    if (!event.session_id) return
+    
+    let session = sessions.value.find(s => s.session_id === event.session_id)
+    if (!session) {
+      session = {
+        session_id: event.session_id,
+        agent_ids: [event.agent_id],
+        start_time: event.timestamp,
+        event_count: 0,
+        error_count: 0,
+        blocked_count: 0,
+        status: 'active'
+      }
+      sessions.value.push(session)
+    }
+    
+    // Update session info
+    if (!session.agent_ids.includes(event.agent_id)) {
+      session.agent_ids.push(event.agent_id)
+    }
+    session.event_count++
+    
+    if (event.hook_type === HookType.ERROR) {
+      session.error_count++
+    }
+    
+    if (event.metadata?.security_blocked) {
+      session.blocked_count++
+    }
+    
+    if (event.hook_type === HookType.STOP || event.hook_type === HookType.AGENT_STOP) {
+      session.status = 'completed'
+      session.end_time = event.timestamp
+    }
+  }
+  
+  // Agent tracking
+  const updateAgentInfo = (event: TypedHookEvent) => {
+    let agent = agents.value.find(a => a.agent_id === event.agent_id)
+    if (!agent) {
+      agent = {
+        agent_id: event.agent_id,
+        session_ids: event.session_id ? [event.session_id] : [],
+        first_seen: event.timestamp,
+        last_seen: event.timestamp,
+        event_count: 0,
+        tool_usage_count: 0,
+        error_count: 0,
+        blocked_count: 0,
+        status: 'active'
+      }
+      agents.value.push(agent)
+    }
+    
+    // Update agent info
+    if (event.session_id && !agent.session_ids.includes(event.session_id)) {
+      agent.session_ids.push(event.session_id)
+    }
+    agent.last_seen = event.timestamp
+    agent.event_count++
+    
+    if (event.hook_type === HookType.PRE_TOOL_USE || event.hook_type === HookType.POST_TOOL_USE) {
+      agent.tool_usage_count++
+    }
+    
+    if (event.hook_type === HookType.ERROR) {
+      agent.error_count++
+      agent.status = 'error'
+    }
+    
+    if (event.metadata?.security_blocked) {
+      agent.blocked_count++
+      if (event.metadata?.security_decision === ControlDecision.DENY) {
+        agent.status = 'blocked'
+      }
+    }
   }
   
   const clearHookEvents = () => {
@@ -270,22 +389,47 @@ export const useEventsStore = defineStore('events', () => {
       
       websocket.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data)
+          const message: WebSocketHookMessage = JSON.parse(event.data)
           
-          if (message.type === 'event' && message.data) {
-            const hookEvent: HookEvent = {
-              event_id: message.data.event_id || Date.now().toString(),
-              event_type: message.data.event_type,
-              session_id: message.data.session_id,
-              agent_id: message.data.agent_id,
-              tool_name: message.data.tool_name,
-              success: message.data.success,
-              execution_time_ms: message.data.execution_time_ms,
-              performance_score: message.data.performance_score,
-              timestamp: message.data.timestamp || new Date().toISOString()
-            }
-            
-            addHookEvent(hookEvent)
+          switch (message.type) {
+            case 'hook_event':
+              if (message.data) {
+                const hookEvent: TypedHookEvent = {
+                  hook_type: message.data.hook_type || HookType.NOTIFICATION,
+                  agent_id: message.data.agent_id,
+                  session_id: message.data.session_id,
+                  timestamp: message.data.timestamp || new Date().toISOString(),
+                  payload: message.data.payload || {},
+                  correlation_id: message.data.correlation_id,
+                  priority: message.data.priority || 5,
+                  metadata: message.data.metadata || {},
+                  event_id: message.data.event_id
+                }
+                
+                addHookEvent(hookEvent)
+              }
+              break
+              
+            case 'security_alert':
+              if (message.data) {
+                addSecurityAlert(message.data as SecurityAlert)
+              }
+              break
+              
+            case 'performance_metric':
+              if (message.data) {
+                performanceCallbacks.forEach(callback => {
+                  try {
+                    callback(message.data as HookPerformanceMetrics)
+                  } catch (error) {
+                    console.error('Error in performance callback:', error)
+                  }
+                })
+              }
+              break
+              
+            default:
+              console.log('Unknown WebSocket message type:', message.type)
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error)
@@ -322,12 +466,28 @@ export const useEventsStore = defineStore('events', () => {
   }
   
   // Event subscription for components
-  const onEvent = (callback: (event: HookEvent) => void) => {
+  const onEvent = (callback: (event: TypedHookEvent) => void) => {
     eventCallbacks.add(callback)
   }
   
-  const offEvent = (callback: (event: HookEvent) => void) => {
+  const offEvent = (callback: (event: TypedHookEvent) => void) => {
     eventCallbacks.delete(callback)
+  }
+  
+  const onSecurityAlert = (callback: (alert: SecurityAlert) => void) => {
+    securityCallbacks.add(callback)
+  }
+  
+  const offSecurityAlert = (callback: (alert: SecurityAlert) => void) => {
+    securityCallbacks.delete(callback)
+  }
+  
+  const onPerformanceMetric = (callback: (metrics: HookPerformanceMetrics) => void) => {
+    performanceCallbacks.add(callback)
+  }
+  
+  const offPerformanceMetric = (callback: (metrics: HookPerformanceMetrics) => void) => {
+    performanceCallbacks.delete(callback)
   }
   
   // Hook performance metrics
@@ -349,14 +509,95 @@ export const useEventsStore = defineStore('events', () => {
     disconnectWebSocket()
   })
   
+  // Filtered hook events based on current filters
+  const filteredHookEvents = computed(() => {
+    let filtered = hookEvents.value
+    
+    if (hookFilters.value.agent_ids?.length) {
+      filtered = filtered.filter(event => 
+        hookFilters.value.agent_ids!.includes(event.agent_id)
+      )
+    }
+    
+    if (hookFilters.value.session_ids?.length) {
+      filtered = filtered.filter(event => 
+        event.session_id && hookFilters.value.session_ids!.includes(event.session_id)
+      )
+    }
+    
+    if (hookFilters.value.hook_types?.length) {
+      filtered = filtered.filter(event => 
+        hookFilters.value.hook_types!.includes(event.hook_type)
+      )
+    }
+    
+    if (hookFilters.value.from_time) {
+      filtered = filtered.filter(event => 
+        event.timestamp >= hookFilters.value.from_time!
+      )
+    }
+    
+    if (hookFilters.value.to_time) {
+      filtered = filtered.filter(event => 
+        event.timestamp <= hookFilters.value.to_time!
+      )
+    }
+    
+    if (hookFilters.value.min_priority) {
+      filtered = filtered.filter(event => 
+        event.priority >= hookFilters.value.min_priority!
+      )
+    }
+    
+    if (hookFilters.value.only_errors) {
+      filtered = filtered.filter(event => 
+        event.hook_type === HookType.ERROR ||
+        event.metadata?.error ||
+        event.payload?.error
+      )
+    }
+    
+    if (hookFilters.value.only_blocked) {
+      filtered = filtered.filter(event => 
+        event.metadata?.security_blocked === true
+      )
+    }
+    
+    if (hookFilters.value.search_query) {
+      const query = hookFilters.value.search_query.toLowerCase()
+      filtered = filtered.filter(event => 
+        JSON.stringify(event.payload).toLowerCase().includes(query) ||
+        event.agent_id.toLowerCase().includes(query) ||
+        (event.session_id && event.session_id.toLowerCase().includes(query))
+      )
+    }
+    
+    return filtered.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  })
+  
+  // Update hook filters
+  const updateHookFilters = (newFilters: EventFilter) => {
+    hookFilters.value = { ...hookFilters.value, ...newFilters }
+  }
+  
+  const clearHookFilters = () => {
+    hookFilters.value = {}
+  }
+  
   return {
     // State
     events,
     realtimeEvents,
     hookEvents,
+    securityAlerts,
+    sessions,
+    agents,
     loading,
     error,
     filters,
+    hookFilters,
     pagination,
     wsConnected,
     
@@ -364,6 +605,7 @@ export const useEventsStore = defineStore('events', () => {
     allEvents,
     eventStats,
     recentEvents,
+    filteredHookEvents,
     
     // Actions
     fetchEvents,
@@ -380,9 +622,18 @@ export const useEventsStore = defineStore('events', () => {
     
     // Hook events
     addHookEvent,
+    addSecurityAlert,
     clearHookEvents,
+    updateHookFilters,
+    clearHookFilters,
+    
+    // Event subscriptions
     onEvent,
     offEvent,
+    onSecurityAlert,
+    offSecurityAlert,
+    onPerformanceMetric,
+    offPerformanceMetric,
     
     // WebSocket
     connectWebSocket,
