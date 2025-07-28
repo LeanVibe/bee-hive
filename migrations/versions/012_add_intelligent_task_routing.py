@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '012_add_intelligent_task_routing'
-down_revision = '011_vector_search_optimization'
+revision = '012'
+down_revision = '011'
 branch_labels = None
 depends_on = None
 
