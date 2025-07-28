@@ -138,6 +138,17 @@ class Settings(BaseSettings):
     SLEEP_CYCLE_INTERVAL: int = Field(default=3600, env="SLEEP_CYCLE_INTERVAL")  # seconds
     CONSOLIDATION_THRESHOLD: float = Field(default=0.85, env="CONSOLIDATION_THRESHOLD")
     
+    # Hook Lifecycle System Configuration
+    HOOK_BATCH_SIZE: int = Field(default=100, env="HOOK_BATCH_SIZE")
+    HOOK_FLUSH_INTERVAL_MS: int = Field(default=1000, env="HOOK_FLUSH_INTERVAL_MS")
+    HOOK_PERFORMANCE_THRESHOLD_MS: float = Field(default=50.0, env="HOOK_PERFORMANCE_THRESHOLD_MS")
+    HOOK_MAX_PAYLOAD_SIZE: int = Field(default=100000, env="HOOK_MAX_PAYLOAD_SIZE")
+    HOOK_SECURITY_VALIDATION_ENABLED: bool = Field(default=True, env="HOOK_SECURITY_VALIDATION_ENABLED")
+    HOOK_EVENT_AGGREGATION_ENABLED: bool = Field(default=True, env="HOOK_EVENT_AGGREGATION_ENABLED")
+    HOOK_WEBSOCKET_STREAMING_ENABLED: bool = Field(default=True, env="HOOK_WEBSOCKET_STREAMING_ENABLED")
+    HOOK_REDIS_STREAMING_ENABLED: bool = Field(default=True, env="HOOK_REDIS_STREAMING_ENABLED")
+    HOOK_DANGEROUS_COMMAND_BLOCKING: bool = Field(default=True, env="HOOK_DANGEROUS_COMMAND_BLOCKING")
+    
     # Self-Modification
     SELF_MODIFICATION_ENABLED: bool = Field(default=True, env="SELF_MODIFICATION_ENABLED")
     SAFE_MODIFICATION_ONLY: bool = Field(default=True, env="SAFE_MODIFICATION_ONLY")
