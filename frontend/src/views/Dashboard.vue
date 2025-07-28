@@ -115,6 +115,18 @@
       </div>
     </div>
     
+    <!-- Real-Time Agent Performance Chart -->
+    <div>
+      <RealTimeAgentPerformanceChart 
+        :height="300"
+        :show-legend="true"
+        :show-stats="true"
+        @series-toggled="handleSeriesToggled"
+        @time-range-changed="handleChartTimeRangeChanged"
+        @metric-changed="handleChartMetricChanged"
+      />
+    </div>
+    
     <!-- Recent Activity and System Status -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Recent Events -->
@@ -128,11 +140,21 @@
       </div>
     </div>
     
-    <!-- Agent Status Grid -->
-    <div class="glass-card rounded-xl p-6">
-      <div class="flex items-center justify-between mb-6">
+    <!-- Real-Time Performance Monitoring -->
+    <div>
+      <RealTimePerformanceCard 
+        :show-chart="true"
+        :max-connections="100"
+        @performance-alert="handlePerformanceAlert"
+        @metrics-updated="handleMetricsUpdated"
+      />
+    </div>
+    
+    <!-- Real-Time Agent Status Grid -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-          Active Agents
+          Agent Monitoring
         </h3>
         <router-link
           to="/agents"
@@ -141,7 +163,11 @@
           View All →
         </router-link>
       </div>
-      <AgentStatusGrid />
+      <RealTimeAgentStatusGrid 
+        :show-recent-events="true"
+        @agent-selected="handleAgentSelected"
+        @connection-status-changed="handleConnectionStatusChanged"
+      />
     </div>
   </div>
 </template>
@@ -149,7 +175,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useMetricsStore } from '@/stores/metrics'
-import { useEventStore } from '@/stores/events'
+import { useEventsStore } from '@/stores/events'
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -160,11 +186,13 @@ import EventTimelineChart from '@/components/charts/EventTimelineChart.vue'
 import PerformanceChart from '@/components/charts/PerformanceChart.vue'
 import RecentEventsCard from '@/components/dashboard/RecentEventsCard.vue'
 import SystemComponentsCard from '@/components/dashboard/SystemComponentsCard.vue'
-import AgentStatusGrid from '@/components/dashboard/AgentStatusGrid.vue'
+import RealTimeAgentStatusGrid from '@/components/dashboard/RealTimeAgentStatusGrid.vue'
+import RealTimePerformanceCard from '@/components/dashboard/RealTimePerformanceCard.vue'
+import RealTimeAgentPerformanceChart from '@/components/charts/RealTimeAgentPerformanceChart.vue'
 
 // Stores
 const metricsStore = useMetricsStore()
-const eventStore = useEventStore()
+const eventStore = useEventsStore()
 
 // Local state
 const loading = ref(false)
@@ -225,6 +253,41 @@ const stopAutoRefresh = () => {
     clearInterval(refreshInterval)
     refreshInterval = null
   }
+}
+
+// Agent monitoring event handlers
+const handleAgentSelected = (agent: any) => {
+  console.log('🔍 Agent selected:', agent)
+  // Could navigate to agent details page or show modal
+}
+
+const handleConnectionStatusChanged = (status: string) => {
+  console.log('🔌 Connection status changed:', status)
+  // Could show notification or update UI accordingly
+}
+
+// Performance monitoring event handlers
+const handlePerformanceAlert = (alert: any) => {
+  console.log('⚠️ Performance alert:', alert)
+  // Could show notification or add to alert system
+}
+
+const handleMetricsUpdated = (metrics: any) => {
+  console.log('📊 Metrics updated:', metrics)
+  // Could update other components or trigger actions
+}
+
+// Chart event handlers
+const handleSeriesToggled = (series: string, visible: boolean) => {
+  console.log(`📈 Series ${series} toggled:`, visible)
+}
+
+const handleChartTimeRangeChanged = (range: string) => {
+  console.log('⏰ Chart time range changed:', range)
+}
+
+const handleChartMetricChanged = (metric: string) => {
+  console.log('📊 Chart metric changed:', metric)
 }
 
 // Lifecycle

@@ -21,6 +21,7 @@ from .core.database import init_database
 from .core.redis import init_redis, get_redis
 from .core.orchestrator import AgentOrchestrator
 from .core.event_processor import initialize_event_processor, shutdown_event_processor
+from .core.performance_metrics_publisher import get_performance_publisher, stop_performance_publisher
 from .api.routes import router as api_router
 from .api.sleep_management import router as sleep_management_router
 from .api.intelligent_scheduling import router as intelligent_scheduling_router
@@ -77,6 +78,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await orchestrator.start()
         app.state.orchestrator = orchestrator
         
+        # Start performance metrics publisher for real-time monitoring
+        performance_publisher = await get_performance_publisher()
+        app.state.performance_publisher = performance_publisher
+        
         logger.info("✅ Agent Hive initialized successfully")
         
         yield  # Application runs here
@@ -90,6 +95,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Graceful shutdown
         if hasattr(app.state, 'orchestrator'):
             await app.state.orchestrator.shutdown()
+        
+        # Stop performance metrics publisher
+        await stop_performance_publisher()
         
         # Shutdown observability system
         await shutdown_event_processor()
