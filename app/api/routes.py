@@ -24,6 +24,7 @@ from .v1.sleep_wake import router as sleep_wake_router
 from .v1.communication import router as communication_router
 from .v1.github_integration import router as github_integration_router
 from .v1.self_modification import router as self_modification_router
+from .v1.context_monitoring import router as context_monitoring_router
 
 # Main API router
 router = APIRouter()
@@ -45,6 +46,7 @@ router.include_router(sleep_wake_router, tags=["sleep-wake"])
 router.include_router(communication_router, tags=["communication"])
 router.include_router(github_integration_router, tags=["github-integration"])
 router.include_router(self_modification_router, tags=["self-modification"])
+router.include_router(context_monitoring_router, tags=["context-monitoring"])
 
 
 @router.get("/")
