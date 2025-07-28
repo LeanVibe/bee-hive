@@ -42,6 +42,13 @@ from ..core.context_analytics import ContextAnalyticsManager
 from ..core.redis import get_redis_client
 from ..core.config import get_settings
 
+# Import optimization components
+from ..core.advanced_vector_search import AdvancedVectorSearchEngine, SimilarityAlgorithm
+from ..core.optimized_embedding_pipeline import OptimizedEmbeddingPipeline, get_optimized_embedding_pipeline
+from ..core.search_analytics import SearchAnalytics, get_search_analytics
+from ..core.index_management import IndexManager
+from ..core.hybrid_search_engine import HybridSearchEngine
+
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +173,13 @@ class ContextEngineIntegration:
         self._search_engine: Optional[EnhancedVectorSearchEngine] = None
         self._analytics_manager: Optional[ContextAnalyticsManager] = None
         
+        # Optimization components (initialized lazily for performance)
+        self._advanced_search_engine: Optional[AdvancedVectorSearchEngine] = None
+        self._optimized_embedding_pipeline: Optional[OptimizedEmbeddingPipeline] = None
+        self._search_analytics: Optional[SearchAnalytics] = None
+        self._index_manager: Optional[IndexManager] = None
+        self._hybrid_search_engine: Optional[HybridSearchEngine] = None
+        
         # State management
         self.status = ContextEngineStatus.INITIALIZING
         self.start_time = datetime.utcnow()
@@ -208,6 +222,9 @@ class ContextEngineIntegration:
                 db_session=db_session,
                 redis_client=self.redis_client
             )
+            
+            # Initialize optimization components
+            await self._initialize_optimization_components(db_session)
             
             # Start background services
             if self.config.auto_consolidation_enabled:
@@ -253,6 +270,9 @@ class ContextEngineIntegration:
         if self._background_tasks:
             await asyncio.gather(*self._background_tasks, return_exceptions=True)
         
+        # Cleanup optimization components
+        await self._cleanup_optimization_components()
+        
         # Cleanup resources
         await self.context_manager.cleanup()
         self._context_cache.clear()
@@ -262,6 +282,66 @@ class ContextEngineIntegration:
         self._initialized = False
         
         logger.info("Context Engine Integration Service shutdown complete")
+    
+    async def _initialize_optimization_components(self, db_session: AsyncSession) -> None:
+        """Initialize optimization components for enhanced performance."""
+        try:
+            logger.info("Initializing optimization components")
+            
+            # Initialize search analytics
+            self._search_analytics = await get_search_analytics()
+            
+            # Initialize optimized embedding pipeline
+            self._optimized_embedding_pipeline = await get_optimized_embedding_pipeline()
+            
+            # Initialize index manager
+            self._index_manager = IndexManager(
+                db_session=db_session,
+                redis_client=self.redis_client
+            )
+            
+            # Initialize advanced vector search engine
+            self._advanced_search_engine = AdvancedVectorSearchEngine(
+                db_session=db_session,
+                embedding_service=self.embedding_service,
+                redis_client=self.redis_client
+            )
+            
+            # Initialize hybrid search engine
+            self._hybrid_search_engine = HybridSearchEngine(
+                db_session=db_session,
+                vector_search_engine=self._advanced_search_engine,
+                redis_client=self.redis_client
+            )
+            
+            logger.info("Optimization components initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize optimization components: {e}")
+            raise
+    
+    async def _cleanup_optimization_components(self) -> None:
+        """Cleanup optimization components."""
+        try:
+            # Cleanup search analytics
+            if self._search_analytics:
+                await self._search_analytics.stop()
+                self._search_analytics = None
+            
+            # Cleanup optimized embedding pipeline
+            if self._optimized_embedding_pipeline:
+                await self._optimized_embedding_pipeline.stop()
+                self._optimized_embedding_pipeline = None
+            
+            # Clear other references
+            self._index_manager = None
+            self._advanced_search_engine = None
+            self._hybrid_search_engine = None
+            
+            logger.info("Optimization components cleaned up")
+            
+        except Exception as e:
+            logger.error(f"Error cleaning up optimization components: {e}")
     
     async def store_context_enhanced(
         self,
@@ -395,6 +475,179 @@ class ContextEngineIntegration:
             self._error_counts["search_contexts"] += 1
             logger.error(f"Enhanced context search failed: {e}")
             raise
+    
+    async def search_contexts_optimized(
+        self,
+        request: ContextSearchRequest,
+        use_advanced_search: bool = True,
+        use_hybrid_search: bool = False,
+        enable_analytics: bool = True
+    ) -> Tuple[List[ContextMatch], Dict[str, Any]]:
+        """
+        Perform optimized context search with advanced algorithms.
+        
+        Args:
+            request: Search request parameters
+            use_advanced_search: Whether to use advanced vector search engine
+            use_hybrid_search: Whether to use hybrid search (vector + text)
+            enable_analytics: Whether to record analytics
+            
+        Returns:
+            Tuple of (search results, search metadata with performance metrics)
+        """
+        start_time = time.perf_counter()
+        
+        try:
+            # Ensure optimization components are initialized
+            if not self._initialized:
+                await self.initialize()
+            
+            # Record search event for analytics
+            if enable_analytics and self._search_analytics:
+                from ..core.search_analytics import SearchEventType
+                await self._search_analytics.record_search_event(
+                    event_type=SearchEventType.QUERY_SUBMITTED,
+                    query=request.query,
+                    agent_id=str(request.agent_id) if request.agent_id else None
+                )
+            
+            search_results = []
+            search_metadata = {}
+            
+            # Choose search method based on preferences
+            if use_hybrid_search and self._hybrid_search_engine:
+                # Use hybrid search (vector + text)
+                search_results, search_metadata = await self._hybrid_search_engine.hybrid_search(
+                    query=request.query,
+                    agent_id=request.agent_id,
+                    limit=request.limit or 10,
+                    filters=SearchFilters(
+                        context_type=request.context_type,
+                        agent_id=request.agent_id,
+                        importance_threshold=request.importance_threshold,
+                        date_range=(request.start_date, request.end_date)
+                    ) if any([request.context_type, request.importance_threshold, request.start_date]) else None
+                )
+                search_metadata["search_method"] = "hybrid"
+                
+            elif use_advanced_search and self._advanced_search_engine:
+                # Use advanced vector search
+                search_results, search_metadata = await self._advanced_search_engine.ultra_fast_search(
+                    query=request.query,
+                    agent_id=request.agent_id,
+                    limit=request.limit or 10,
+                    filters=SearchFilters(
+                        context_type=request.context_type,
+                        agent_id=request.agent_id,
+                        importance_threshold=request.importance_threshold,
+                        date_range=(request.start_date, request.end_date)
+                    ) if any([request.context_type, request.importance_threshold, request.start_date]) else None,
+                    similarity_algorithm=SimilarityAlgorithm.MIXED,
+                    performance_target_ms=25.0
+                )
+                search_metadata["search_method"] = "advanced_vector"
+                
+            else:
+                # Fallback to enhanced search
+                search_results, search_metadata = await self.search_contexts_enhanced(
+                    request=request,
+                    use_cache=True,
+                    enable_analytics=False  # Already recorded above
+                )
+                search_metadata["search_method"] = "enhanced_fallback"
+            
+            # Record results for analytics
+            if enable_analytics and self._search_analytics:
+                processing_time_ms = (time.perf_counter() - start_time) * 1000
+                await self._search_analytics.record_search_results(
+                    query=request.query,
+                    results=search_results,
+                    processing_time_ms=processing_time_ms,
+                    search_metadata=search_metadata,
+                    agent_id=str(request.agent_id) if request.agent_id else None
+                )
+            
+            # Add optimization metrics
+            search_metadata.update({
+                "optimization_enabled": True,
+                "advanced_search_used": use_advanced_search and self._advanced_search_engine is not None,
+                "hybrid_search_used": use_hybrid_search and self._hybrid_search_engine is not None,
+                "processing_time_ms": (time.perf_counter() - start_time) * 1000,
+                "results_count": len(search_results)
+            })
+            
+            return search_results, search_metadata
+            
+        except Exception as e:
+            self._error_counts["search_contexts_optimized"] += 1
+            logger.error(f"Optimized context search failed: {e}")
+            
+            # Fallback to enhanced search
+            try:
+                return await self.search_contexts_enhanced(request=request, enable_analytics=enable_analytics)
+            except Exception as fallback_error:
+                logger.error(f"Fallback search also failed: {fallback_error}")
+                raise
+    
+    async def generate_embedding_optimized(
+        self,
+        text: str,
+        priority: int = 1,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> List[float]:
+        """
+        Generate embedding using optimized pipeline.
+        
+        Args:
+            text: Text to embed
+            priority: Processing priority (1=high, 2=medium, 3=low)  
+            metadata: Additional metadata
+            
+        Returns:
+            Generated embedding vector
+        """
+        try:
+            # Use optimized embedding pipeline if available
+            if self._optimized_embedding_pipeline:
+                result = await self._optimized_embedding_pipeline.generate_embedding_optimized(
+                    text=text,
+                    priority=priority,
+                    metadata=metadata
+                )
+                if result.embedding:
+                    return result.embedding
+            
+            # Fallback to standard embedding service
+            return await self.embedding_service.generate_embedding(text)
+            
+        except Exception as e:
+            logger.error(f"Optimized embedding generation failed: {e}")
+            # Fallback to standard embedding service
+            return await self.embedding_service.generate_embedding(text)
+    
+    async def get_optimization_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive optimization metrics."""
+        metrics = {
+            "optimization_components_status": {
+                "advanced_search_engine": self._advanced_search_engine is not None,
+                "optimized_embedding_pipeline": self._optimized_embedding_pipeline is not None,
+                "search_analytics": self._search_analytics is not None,
+                "index_manager": self._index_manager is not None,
+                "hybrid_search_engine": self._hybrid_search_engine is not None
+            }
+        }
+        
+        # Add performance metrics from each component
+        if self._optimized_embedding_pipeline:
+            metrics["embedding_pipeline"] = self._optimized_embedding_pipeline.get_performance_metrics()
+        
+        if self._search_analytics:
+            metrics["search_analytics"] = await self._search_analytics.get_performance_summary()
+        
+        if self._index_manager:
+            metrics["index_management"] = await self._index_manager.get_index_status()
+        
+        return metrics
     
     async def trigger_consolidation(
         self,
