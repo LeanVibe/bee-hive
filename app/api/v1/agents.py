@@ -3,13 +3,14 @@ Agent management API endpoints for LeanVibe Agent Hive 2.0
 
 Provides CRUD operations for managing AI agents in the multi-agent system.
 Supports agent spawning, monitoring, configuration, and lifecycle management.
+Enhanced with Vertical Slice 1.1 capabilities.
 """
 
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
@@ -18,15 +19,28 @@ import structlog
 
 from ...core.database import get_session_dependency
 from ...core.orchestrator import AgentOrchestrator, AgentRole, AgentCapability
+from ...core.vertical_slice_orchestrator import VerticalSliceOrchestrator
+from ...core.agent_lifecycle_manager import AgentLifecycleManager
+from ...core.task_execution_engine import TaskExecutionEngine
 from ...models.agent import Agent, AgentStatus, AgentType
+from ...models.task import Task, TaskStatus, TaskType, TaskPriority
 from ...schemas.agent import (
     AgentCreate, AgentUpdate, AgentResponse, AgentListResponse,
     AgentCapabilityCreate, AgentStatsResponse
 )
-from fastapi import BackgroundTasks
 
 logger = structlog.get_logger()
 router = APIRouter()
+
+# Global vertical slice orchestrator (would be dependency-injected in production)
+_vertical_slice_orchestrator: Optional[VerticalSliceOrchestrator] = None
+
+def get_vertical_slice_orchestrator() -> VerticalSliceOrchestrator:
+    """Get the vertical slice orchestrator instance."""
+    global _vertical_slice_orchestrator
+    if _vertical_slice_orchestrator is None:
+        _vertical_slice_orchestrator = VerticalSliceOrchestrator()
+    return _vertical_slice_orchestrator
 
 
 @router.post("/", response_model=AgentResponse, status_code=201)
@@ -256,6 +270,294 @@ async def agent_heartbeat(
         logger.error("Failed to update heartbeat", agent_id=str(agent_id), error=str(e))
         await db.rollback()
         raise HTTPException(status_code=500, detail="Failed to update heartbeat")
+
+
+# === VERTICAL SLICE 1.1 LIFECYCLE ENDPOINTS ===
+
+@router.post("/lifecycle/register", status_code=201)
+async def register_agent_lifecycle(
+    agent_data: Dict[str, Any],
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Register an agent using the enhanced lifecycle manager.
+    
+    This endpoint demonstrates the complete agent registration flow
+    with persona assignment and capability matching.
+    """
+    try:
+        if not orchestrator.is_running:
+            await orchestrator.start_system()
+        
+        registration_result = await orchestrator.lifecycle_manager.register_agent(
+            name=agent_data.get("name"),
+            agent_type=AgentType(agent_data.get("type", "claude")),
+            role=agent_data.get("role"),
+            capabilities=agent_data.get("capabilities", []),
+            system_prompt=agent_data.get("system_prompt"),
+            config=agent_data.get("config", {}),
+            tmux_session=agent_data.get("tmux_session")
+        )
+        
+        if registration_result.success:
+            return {
+                "success": True,
+                "agent_id": str(registration_result.agent_id),
+                "capabilities_assigned": registration_result.capabilities_assigned,
+                "persona_assigned": registration_result.persona_assigned,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Registration failed: {registration_result.error_message}"
+            )
+            
+    except Exception as e:
+        logger.error("Agent lifecycle registration failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+
+
+@router.delete("/lifecycle/{agent_id}/deregister", status_code=200)
+async def deregister_agent_lifecycle(
+    agent_id: uuid.UUID,
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Deregister an agent using the enhanced lifecycle manager.
+    
+    This endpoint demonstrates proper agent shutdown with task cleanup
+    and resource deallocation.
+    """
+    try:
+        success = await orchestrator.lifecycle_manager.deregister_agent(agent_id)
+        
+        if success:
+            return {
+                "success": True,
+                "agent_id": str(agent_id),
+                "message": "Agent deregistered successfully",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Agent not found or deregistration failed"
+            )
+            
+    except Exception as e:
+        logger.error("Agent lifecycle deregistration failed", agent_id=str(agent_id), error=str(e))
+        raise HTTPException(status_code=500, detail=f"Deregistration failed: {str(e)}")
+
+
+@router.post("/lifecycle/tasks/{task_id}/assign", status_code=200)
+async def assign_task_lifecycle(
+    task_id: uuid.UUID,
+    assignment_data: Optional[Dict[str, Any]] = None,
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Assign a task using the intelligent task assignment system.
+    
+    This endpoint demonstrates persona-based task routing with
+    performance tracking and capability matching.
+    """
+    try:
+        assignment_data = assignment_data or {}
+        preferred_agent_id = None
+        
+        if assignment_data.get("preferred_agent_id"):
+            preferred_agent_id = uuid.UUID(assignment_data["preferred_agent_id"])
+        
+        assignment_result = await orchestrator.lifecycle_manager.assign_task_to_agent(
+            task_id=task_id,
+            preferred_agent_id=preferred_agent_id,
+            max_assignment_time_ms=assignment_data.get("max_assignment_time_ms", 500.0)
+        )
+        
+        if assignment_result.success:
+            return {
+                "success": True,
+                "task_id": str(assignment_result.task_id),
+                "agent_id": str(assignment_result.agent_id),
+                "assignment_time": assignment_result.assignment_time.isoformat(),
+                "confidence_score": assignment_result.confidence_score,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Task assignment failed: {assignment_result.error_message}"
+            )
+            
+    except Exception as e:
+        logger.error("Task lifecycle assignment failed", task_id=str(task_id), error=str(e))
+        raise HTTPException(status_code=500, detail=f"Assignment failed: {str(e)}")
+
+
+@router.post("/lifecycle/tasks/{task_id}/complete", status_code=200)
+async def complete_task_lifecycle(
+    task_id: uuid.UUID,
+    completion_data: Dict[str, Any],
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Complete a task using the lifecycle manager.
+    
+    This endpoint demonstrates task completion tracking with
+    performance metrics and result storage.
+    """
+    try:
+        agent_id = uuid.UUID(completion_data["agent_id"])
+        result = completion_data.get("result", {})
+        success = completion_data.get("success", True)
+        
+        completion_success = await orchestrator.lifecycle_manager.complete_task(
+            task_id=task_id,
+            agent_id=agent_id,
+            result=result,
+            success=success
+        )
+        
+        if completion_success:
+            return {
+                "success": True,
+                "task_id": str(task_id),
+                "agent_id": str(agent_id),
+                "completion_success": success,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Task completion failed"
+            )
+            
+    except Exception as e:
+        logger.error("Task lifecycle completion failed", task_id=str(task_id), error=str(e))
+        raise HTTPException(status_code=500, detail=f"Completion failed: {str(e)}")
+
+
+@router.get("/lifecycle/{agent_id}/status", status_code=200)
+async def get_agent_lifecycle_status(
+    agent_id: uuid.UUID,
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Get comprehensive agent status from the lifecycle manager.
+    
+    This endpoint provides detailed agent metrics, current tasks,
+    and performance statistics.
+    """
+    try:
+        status = await orchestrator.lifecycle_manager.get_agent_status(agent_id)
+        
+        if status:
+            return {
+                "success": True,
+                "agent_status": status,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Agent not found"
+            )
+            
+    except Exception as e:
+        logger.error("Failed to get agent lifecycle status", agent_id=str(agent_id), error=str(e))
+        raise HTTPException(status_code=500, detail=f"Status retrieval failed: {str(e)}")
+
+
+@router.get("/lifecycle/system/metrics", status_code=200)
+async def get_lifecycle_system_metrics(
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Get comprehensive system metrics from the lifecycle system.
+    
+    This endpoint provides system-wide performance metrics,
+    agent statistics, and operational insights.
+    """
+    try:
+        metrics = await orchestrator.get_comprehensive_status()
+        return {
+            "success": True,
+            "metrics": metrics,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error("Failed to get lifecycle system metrics", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Metrics retrieval failed: {str(e)}")
+
+
+@router.post("/lifecycle/demo/complete-flow", status_code=200)
+async def demonstrate_complete_lifecycle(
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """
+    Demonstrate the complete agent lifecycle flow.
+    
+    This endpoint runs the full vertical slice demonstration including:
+    - Agent registration with personas
+    - Task assignment and execution
+    - Hook system integration
+    - Performance metrics collection
+    """
+    try:
+        if not orchestrator.is_running:
+            await orchestrator.start_system()
+        
+        demo_results = await orchestrator.demonstrate_complete_lifecycle()
+        
+        return {
+            "success": demo_results["success"],
+            "demonstration": demo_results,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error("Complete lifecycle demonstration failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Demonstration failed: {str(e)}")
+
+
+@router.post("/lifecycle/system/start", status_code=200)
+async def start_lifecycle_system(
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """Start the vertical slice lifecycle system."""
+    try:
+        success = await orchestrator.start_system()
+        
+        return {
+            "success": success,
+            "message": "Lifecycle system started" if success else "Failed to start system",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error("Failed to start lifecycle system", error=str(e))
+        raise HTTPException(status_code=500, detail=f"System start failed: {str(e)}")
+
+
+@router.post("/lifecycle/system/stop", status_code=200)
+async def stop_lifecycle_system(
+    orchestrator: VerticalSliceOrchestrator = Depends(get_vertical_slice_orchestrator)
+) -> Dict[str, Any]:
+    """Stop the vertical slice lifecycle system gracefully."""
+    try:
+        success = await orchestrator.stop_system()
+        
+        return {
+            "success": success,
+            "message": "Lifecycle system stopped" if success else "Failed to stop system",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error("Failed to stop lifecycle system", error=str(e))
+        raise HTTPException(status_code=500, detail=f"System stop failed: {str(e)}")
 
 
 @router.get("/{agent_id}/stats", response_model=AgentStatsResponse)

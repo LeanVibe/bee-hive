@@ -73,7 +73,7 @@ class PromptTemplate(Base):
     created_by: Mapped[Optional[str]] = mapped_column(String(255))
     description: Mapped[Optional[str]] = mapped_column(Text)
     tags: Mapped[List[str]] = mapped_column(JSON, default=list)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+    template_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -486,7 +486,7 @@ class PromptTestCase(Base):
     evaluation_criteria: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
     difficulty_level: Mapped[Optional[str]] = mapped_column(String(50))
     tags: Mapped[List[str]] = mapped_column(JSON, default=list)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
+    template_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_by: Mapped[Optional[str]] = mapped_column(String(255))
     

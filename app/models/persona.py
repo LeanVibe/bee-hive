@@ -14,10 +14,10 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .base import BaseModel
+from ..core.database import Base
 
 
-class PersonaDefinitionModel(BaseModel):
+class PersonaDefinitionModel(Base):
     """Database model for persona definitions."""
     
     __tablename__ = "persona_definitions"
@@ -94,7 +94,7 @@ class PersonaDefinitionModel(BaseModel):
         }
 
 
-class PersonaAssignmentModel(BaseModel):
+class PersonaAssignmentModel(Base):
     """Database model for persona assignments to agents."""
     
     __tablename__ = "persona_assignments"
@@ -150,7 +150,7 @@ class PersonaAssignmentModel(BaseModel):
         }
 
 
-class PersonaPerformanceModel(BaseModel):
+class PersonaPerformanceModel(Base):
     """Database model for tracking persona performance over time."""
     
     __tablename__ = "persona_performance"
@@ -219,7 +219,7 @@ class PersonaPerformanceModel(BaseModel):
         }
 
 
-class PersonaCapabilityHistoryModel(BaseModel):
+class PersonaCapabilityHistoryModel(Base):
     """Database model for tracking capability evolution over time."""
     
     __tablename__ = "persona_capability_history"
@@ -274,7 +274,7 @@ class PersonaCapabilityHistoryModel(BaseModel):
         }
 
 
-class PersonaAnalyticsModel(BaseModel):
+class PersonaAnalyticsModel(Base):
     """Database model for storing aggregated persona analytics."""
     
     __tablename__ = "persona_analytics"
