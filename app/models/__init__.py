@@ -24,6 +24,11 @@ from .self_modification import (
     SandboxExecution, ModificationFeedback, ModificationSafety,
     ModificationStatus, ModificationType, SandboxExecutionType
 )
+from .prompt_optimization import (
+    PromptTemplate, PromptVariant, OptimizationExperiment, PromptEvaluation,
+    ABTestResult, PromptFeedback, PromptTestCase, OptimizationMetric,
+    PromptStatus, ExperimentStatus, OptimizationMethod
+)
 
 __all__ = [
     "Agent", "AgentStatus", "AgentType",
@@ -43,5 +48,8 @@ __all__ = [
     "PullRequestStatus", "IssueState", "ReviewStatus", "BranchOperationType",
     "ModificationSession", "CodeModification", "ModificationMetric", 
     "SandboxExecution", "ModificationFeedback", "ModificationSafety",
-    "ModificationStatus", "ModificationType", "SandboxExecutionType"
+    "ModificationStatus", "ModificationType", "SandboxExecutionType",
+    "PromptTemplate", "PromptVariant", "OptimizationExperiment", "PromptEvaluation",
+    "ABTestResult", "PromptFeedback", "PromptTestCase", "OptimizationMetric",
+    "PromptStatus", "ExperimentStatus", "OptimizationMethod"
 ]

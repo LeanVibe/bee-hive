@@ -28,6 +28,16 @@ from .self_modification import (
     ModificationSafetySchema, ModificationStatusSchema, ModificationTypeSchema,
     SandboxExecutionTypeSchema
 )
+from .prompt_optimization import (
+    PromptTemplateCreate, PromptTemplateUpdate, PromptTemplateResponse, PromptTemplateListResponse,
+    OptimizationExperimentCreate, OptimizationExperimentUpdate, OptimizationExperimentResponse,
+    OptimizationExperimentListResponse, PromptVariantResponse, PromptVariantListResponse,
+    PromptEvaluationCreate, PromptEvaluationResponse, PromptEvaluationBatchResponse,
+    ABTestCreate, ABTestResponse, PromptFeedbackCreate, PromptFeedbackResponse,
+    PromptTestCaseCreate, PromptTestCaseResponse, PromptGenerationRequest, PromptGenerationResponse,
+    OptimizationMetricResponse, SystemMetricsResponse, PromptOptimizationError,
+    BulkEvaluationRequest, BulkEvaluationResponse, PromptSearchRequest
+)
 
 __all__ = [
     "AgentCreate", "AgentUpdate", "AgentResponse", "AgentListResponse",
@@ -45,5 +55,13 @@ __all__ = [
     "GetSessionsResponse", "ModificationMetricsResponse", "SystemHealthResponse",
     "ErrorDetail", "ErrorResponse", "PaginationParams", "FilterParams",
     "ModificationSafetySchema", "ModificationStatusSchema", "ModificationTypeSchema",
-    "SandboxExecutionTypeSchema"
+    "SandboxExecutionTypeSchema",
+    "PromptTemplateCreate", "PromptTemplateUpdate", "PromptTemplateResponse", "PromptTemplateListResponse",
+    "OptimizationExperimentCreate", "OptimizationExperimentUpdate", "OptimizationExperimentResponse",
+    "OptimizationExperimentListResponse", "PromptVariantResponse", "PromptVariantListResponse",
+    "PromptEvaluationCreate", "PromptEvaluationResponse", "PromptEvaluationBatchResponse",
+    "ABTestCreate", "ABTestResponse", "PromptFeedbackCreate", "PromptFeedbackResponse",
+    "PromptTestCaseCreate", "PromptTestCaseResponse", "PromptGenerationRequest", "PromptGenerationResponse",
+    "OptimizationMetricResponse", "SystemMetricsResponse", "PromptOptimizationError",
+    "BulkEvaluationRequest", "BulkEvaluationResponse", "PromptSearchRequest"
 ]
