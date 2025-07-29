@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field(..., env="REDIS_URL")
     REDIS_STREAM_MAX_LEN: int = Field(default=10000, env="REDIS_STREAM_MAX_LEN")
     
+    # Message Processing
+    MAX_MESSAGE_SIZE_BYTES: int = Field(default=1024*1024, env="MAX_MESSAGE_SIZE_BYTES")  # 1MB default
+    
     # Redis Performance Optimization
     REDIS_CONNECTION_POOL_SIZE: int = Field(default=50, env="REDIS_CONNECTION_POOL_SIZE")
     REDIS_MAX_CONNECTIONS: int = Field(default=200, env="REDIS_MAX_CONNECTIONS")
