@@ -1,5 +1,5 @@
 """
-Enhanced Workflow Execution Engine for LeanVibe Agent Hive 2.0 - Vertical Slice 3.2
+Enhanced Workflow Execution Engine for LeanVibe Agent Hive 2.0 - Vertical Slice 3.2 + Semantic Memory Integration
 
 Production-ready workflow execution engine with advanced DAG capabilities:
 - Multi-step workflow engine with DAG task dependencies
@@ -7,6 +7,8 @@ Production-ready workflow execution engine with advanced DAG capabilities:
 - State persistence and recovery with checkpoint management
 - Advanced batch execution with resource management
 - Dynamic workflow modification during runtime
+- Semantic memory integration for context-aware execution
+- Intelligent context injection and knowledge management
 """
 
 import asyncio
@@ -26,6 +28,13 @@ from .task_batch_executor import TaskBatchExecutor, TaskExecutionRequest, BatchE
 from .workflow_state_manager import WorkflowStateManager, WorkflowStateSnapshot, SnapshotType, RecoveryPlan
 from .agent_registry import AgentRegistry
 from .agent_communication_service import AgentCommunicationService
+
+# Semantic Memory Integration
+from .semantic_memory_task_processor import SemanticMemoryTaskProcessor, SemanticMemoryTask, SemanticTaskType
+from .workflow_context_manager import WorkflowContextManager, ContextFragment, ContextType, ContextInjectionConfig
+from .agent_knowledge_manager import AgentKnowledgeManager
+from ..workflow.semantic_nodes import SemanticWorkflowNode, SemanticNodeFactory, SemanticMemoryConfig
+
 from ..models.workflow import Workflow, WorkflowStatus, WorkflowPriority
 from ..models.task import Task, TaskStatus, TaskPriority
 from sqlalchemy import select, update, func, and_
@@ -104,18 +113,26 @@ class WorkflowEngine:
         self, 
         orchestrator: Optional['AgentOrchestrator'] = None,
         agent_registry: Optional[AgentRegistry] = None,
-        communication_service: Optional[AgentCommunicationService] = None
+        communication_service: Optional[AgentCommunicationService] = None,
+        enable_semantic_memory: bool = True
     ):
-        """Initialize the enhanced workflow engine."""
+        """Initialize the enhanced workflow engine with semantic memory integration."""
         self.orchestrator = orchestrator
         self.agent_registry = agent_registry
         self.communication_service = communication_service
         self.message_broker: Optional[AgentMessageBroker] = None
+        self.enable_semantic_memory = enable_semantic_memory
         
         # Core DAG components
         self.dependency_graph_builder = DependencyGraphBuilder()
         self.task_batch_executor: Optional[TaskBatchExecutor] = None
         self.state_manager = WorkflowStateManager()
+        
+        # Semantic Memory Integration Components
+        self.semantic_memory_processor: Optional[SemanticMemoryTaskProcessor] = None
+        self.workflow_context_manager: Optional[WorkflowContextManager] = None
+        self.agent_knowledge_manager: Optional[AgentKnowledgeManager] = None
+        self.semantic_node_factory: Optional[SemanticNodeFactory] = None
         
         # Active workflow executions with enhanced tracking
         self.active_workflows: Dict[str, asyncio.Task] = {}
@@ -126,7 +143,14 @@ class WorkflowEngine:
         self.task_executions: Dict[str, TaskResult] = {}
         self.task_dependencies: Dict[str, Set[str]] = {}
         
-        # Enhanced performance monitoring
+        # Semantic workflow execution tracking
+        self.semantic_node_executions: Dict[str, Any] = {}
+        self.workflow_contexts: Dict[str, Any] = {}
+        
+        # Workflow state tracking (legacy compatibility)
+        self.workflow_states: Dict[str, Dict[str, Any]] = {}
+        
+        # Enhanced performance monitoring with semantic metrics
         self.execution_metrics = {
             'workflows_executed': 0,
             'workflows_completed': 0,
@@ -139,7 +163,13 @@ class WorkflowEngine:
             'checkpoint_creation_count': 0,
             'recovery_operations_count': 0,
             'dynamic_modifications_count': 0,
-            'critical_path_optimizations': 0
+            'critical_path_optimizations': 0,
+            # Semantic memory metrics
+            'semantic_nodes_executed': 0,
+            'context_injections': 0,
+            'knowledge_items_created': 0,
+            'average_context_retrieval_time': 0.0,
+            'semantic_memory_integration_enabled': enable_semantic_memory
         }
         
         # Enhanced configuration
@@ -184,7 +214,12 @@ class WorkflowEngine:
                     communication_service=mock_comm
                 )
             
-            logger.info("✅ Enhanced WorkflowEngine resources initialized")
+            # Initialize semantic memory integration if enabled
+            if self.enable_semantic_memory:
+                await self._initialize_semantic_memory_components()
+            
+            logger.info("✅ Enhanced WorkflowEngine resources initialized", 
+                       semantic_memory_enabled=self.enable_semantic_memory)
         except Exception as e:
             logger.error("❌ Failed to initialize Enhanced WorkflowEngine", error=str(e))
             raise
@@ -1633,3 +1668,298 @@ class WorkflowEngine:
                     )
                 )
                 await db_session.commit()
+    
+    async def _initialize_semantic_memory_components(self) -> None:
+        """Initialize semantic memory integration components."""
+        try:
+            # Initialize semantic memory configuration
+            semantic_memory_config = SemanticMemoryConfig(
+                service_url="http://semantic-memory-service:8001/api/v1",
+                timeout_seconds=30,
+                max_retries=3,
+                performance_targets={
+                    "context_retrieval_ms": 50.0,
+                    "memory_task_processing_ms": 100.0,
+                    "workflow_overhead_ms": 10.0
+                }
+            )
+            
+            # Initialize semantic memory task processor
+            self.semantic_memory_processor = SemanticMemoryTaskProcessor(
+                redis_url="redis://localhost:6379",
+                consumer_group="workflow_engine_semantic_memory",
+                consumer_name=f"workflow_engine_{uuid.uuid4().hex[:8]}",
+                max_concurrent_tasks=5,
+                enable_dead_letter_queue=True
+            )
+            await self.semantic_memory_processor.initialize()
+            
+            # Initialize workflow context manager
+            self.workflow_context_manager = WorkflowContextManager(
+                semantic_memory_processor=self.semantic_memory_processor,
+                max_context_fragments=100,
+                default_compression_threshold=0.7,
+                enable_intelligent_routing=True
+            )
+            await self.workflow_context_manager.initialize()
+            
+            # Initialize agent knowledge manager
+            self.agent_knowledge_manager = AgentKnowledgeManager(
+                semantic_memory_processor=self.semantic_memory_processor,
+                default_knowledge_retention_days=30,
+                max_knowledge_items_per_agent=1000,
+                enable_cross_agent_sharing=True,
+                confidence_threshold=0.6
+            )
+            await self.agent_knowledge_manager.initialize()
+            
+            # Initialize semantic node factory
+            self.semantic_node_factory = SemanticNodeFactory(semantic_memory_config)
+            
+            logger.info(
+                "✅ Semantic memory components initialized successfully",
+                processor_enabled=bool(self.semantic_memory_processor),
+                context_manager_enabled=bool(self.workflow_context_manager),
+                knowledge_manager_enabled=bool(self.agent_knowledge_manager),
+                node_factory_enabled=bool(self.semantic_node_factory)
+            )
+            
+        except Exception as e:
+            logger.error("❌ Failed to initialize semantic memory components", error=str(e))
+            # Don't raise - semantic memory is optional, workflow engine should still work
+            self.enable_semantic_memory = False
+            logger.warning("Semantic memory integration disabled due to initialization failure")
+    
+    async def execute_semantic_workflow(
+        self,
+        workflow_id: str,
+        agent_id: str,
+        context_data: Dict[str, Any] = None,
+        enable_context_injection: bool = True,
+        enable_knowledge_learning: bool = True
+    ) -> WorkflowResult:
+        """
+        Execute a workflow with full semantic memory integration.
+        
+        Args:
+            workflow_id: ID of the workflow to execute
+            agent_id: ID of the agent executing the workflow
+            context_data: Additional context data for semantic operations
+            enable_context_injection: Enable intelligent context injection
+            enable_knowledge_learning: Enable learning from workflow outcomes
+            
+        Returns:
+            WorkflowResult with semantic memory metrics
+        """
+        if not self.enable_semantic_memory:
+            logger.warning("Semantic workflow execution requested but semantic memory disabled - falling back to standard execution")
+            return await self.execute_workflow_with_dag(workflow_id)
+        
+        workflow_id_str = str(workflow_id)
+        execution_id = str(uuid.uuid4())
+        
+        logger.info(
+            "🧠 Starting semantic workflow execution",
+            workflow_id=workflow_id_str,
+            agent_id=agent_id,
+            context_injection=enable_context_injection,
+            knowledge_learning=enable_knowledge_learning
+        )
+        
+        start_time = datetime.utcnow()
+        
+        try:
+            # Load workflow and tasks
+            workflow, tasks = await self._load_workflow_and_tasks(workflow_id_str)
+            
+            # Build dependency analysis
+            dependency_analysis = self.dependency_graph_builder.build_graph(workflow, tasks)
+            
+            # Inject context if enabled
+            enhanced_context_data = context_data or {}
+            if enable_context_injection and self.workflow_context_manager:
+                enhanced_context_data = await self.workflow_context_manager.inject_context(
+                    workflow_id=workflow_id_str,
+                    task_data=enhanced_context_data,
+                    injection_config=None  # Use defaults
+                )
+                self.execution_metrics['context_injections'] += 1
+            
+            # Store workflow context for semantic nodes
+            self.workflow_contexts[workflow_id_str] = {
+                'agent_id': agent_id,
+                'execution_id': execution_id,
+                'context_data': enhanced_context_data,
+                'enable_knowledge_learning': enable_knowledge_learning,
+                'start_time': start_time
+            }
+            
+            # Execute workflow with semantic memory support
+            result = await self._execute_dag_workflow_internal(
+                workflow=workflow,
+                tasks=tasks,
+                dependency_analysis=dependency_analysis,
+                execution_id=execution_id,
+                execution_strategy=BatchExecutionStrategy.ADAPTIVE,
+                max_parallel_tasks=self.max_parallel_tasks_default
+            )
+            
+            # Learn from workflow outcome if enabled
+            if enable_knowledge_learning and self.agent_knowledge_manager:
+                try:
+                    knowledge_items = await self.agent_knowledge_manager.learn_from_workflow_outcome(
+                        workflow_id=workflow_id_str,
+                        agent_id=agent_id,
+                        outcome={
+                            'status': result.status.value,
+                            'execution_time': result.execution_time,
+                            'completed_tasks': result.completed_tasks,
+                            'failed_tasks': result.failed_tasks,
+                            'task_results': [
+                                {
+                                    'task_id': tr.task_id,
+                                    'status': tr.status.value,
+                                    'execution_time': tr.execution_time
+                                }
+                                for tr in result.task_results
+                            ]
+                        },
+                        execution_context=enhanced_context_data
+                    )
+                    
+                    self.execution_metrics['knowledge_items_created'] += len(knowledge_items)
+                    
+                    logger.info(
+                        "📚 Knowledge learning completed",
+                        workflow_id=workflow_id_str,
+                        knowledge_items_created=len(knowledge_items)
+                    )
+                    
+                except Exception as e:
+                    logger.warning(f"Knowledge learning failed: {e}")
+            
+            # Update semantic metrics
+            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            self._update_semantic_execution_metrics(result, execution_time)
+            
+            logger.info(
+                "✅ Semantic workflow execution completed",
+                workflow_id=workflow_id_str,
+                status=result.status.value,
+                execution_time=execution_time,
+                semantic_features_used=bool(enhanced_context_data != context_data)
+            )
+            
+            return result
+            
+        except Exception as e:
+            logger.error(
+                "❌ Semantic workflow execution failed",
+                workflow_id=workflow_id_str,
+                error=str(e)
+            )
+            raise
+        finally:
+            # Cleanup workflow context
+            self.workflow_contexts.pop(workflow_id_str, None)
+    
+    def _update_semantic_execution_metrics(self, result: WorkflowResult, execution_time: float) -> None:
+        """Update semantic memory execution metrics."""
+        self.execution_metrics['semantic_nodes_executed'] += 1
+        
+        # Update average context retrieval time if we have semantic components
+        if self.semantic_memory_processor:
+            # Get metrics from semantic processor
+            processor_metrics = self.semantic_memory_processor.get_metrics()
+            if 'average_processing_time_ms' in processor_metrics:
+                current_avg = self.execution_metrics['average_context_retrieval_time']
+                new_time = processor_metrics['average_processing_time_ms']
+                
+                # Simple rolling average
+                self.execution_metrics['average_context_retrieval_time'] = (current_avg + new_time) / 2
+    
+    async def create_semantic_workflow_node(
+        self,
+        node_type: str,
+        node_id: str,
+        **kwargs
+    ) -> Optional[SemanticWorkflowNode]:
+        """
+        Create a semantic workflow node for dynamic workflow enhancement.
+        
+        Args:
+            node_type: Type of semantic node to create
+            node_id: Unique ID for the node
+            **kwargs: Additional configuration for the node
+            
+        Returns:
+            Created semantic workflow node or None if not available
+        """
+        if not self.enable_semantic_memory or not self.semantic_node_factory:
+            logger.warning("Semantic node creation requested but semantic memory not available")
+            return None
+        
+        try:
+            from ..workflow.semantic_nodes import SemanticNodeType
+            
+            # Map string types to enum values
+            node_type_mapping = {
+                'semantic_search': SemanticNodeType.SEMANTIC_SEARCH,
+                'contextualize': SemanticNodeType.CONTEXTUALIZE,
+                'ingest_memory': SemanticNodeType.INGEST_MEMORY,
+                'cross_agent_knowledge': SemanticNodeType.CROSS_AGENT_KNOWLEDGE
+            }
+            
+            semantic_node_type = node_type_mapping.get(node_type)
+            if not semantic_node_type:
+                logger.error(f"Unknown semantic node type: {node_type}")
+                return None
+            
+            # Create the appropriate semantic node
+            if semantic_node_type == SemanticNodeType.SEMANTIC_SEARCH:
+                return self.semantic_node_factory.create_semantic_search_node(node_id, **kwargs)
+            elif semantic_node_type == SemanticNodeType.CONTEXTUALIZE:
+                return self.semantic_node_factory.create_contextualize_node(node_id, **kwargs)
+            elif semantic_node_type == SemanticNodeType.INGEST_MEMORY:
+                return self.semantic_node_factory.create_ingest_memory_node(node_id, **kwargs)
+            elif semantic_node_type == SemanticNodeType.CROSS_AGENT_KNOWLEDGE:
+                return self.semantic_node_factory.create_cross_agent_knowledge_node(node_id, **kwargs)
+            
+        except Exception as e:
+            logger.error(f"Failed to create semantic workflow node", node_type=node_type, error=str(e))
+            return None
+    
+    async def cleanup(self) -> None:
+        """Cleanup workflow engine resources including semantic memory components."""
+        try:
+            # Cleanup semantic memory components
+            if self.enable_semantic_memory:
+                if self.semantic_memory_processor:
+                    await self.semantic_memory_processor.cleanup()
+                if self.workflow_context_manager:
+                    await self.workflow_context_manager.cleanup()
+                if self.agent_knowledge_manager:
+                    await self.agent_knowledge_manager.cleanup()
+                if self.semantic_node_factory:
+                    await self.semantic_node_factory.cleanup_all_nodes()
+            
+            # Cleanup other components
+            if self.task_batch_executor:
+                await self.task_batch_executor.cleanup()
+            
+            # Cancel active workflows
+            for workflow_id, task in self.active_workflows.items():
+                if not task.done():
+                    task.cancel()
+                    logger.info(f"Cancelled active workflow {workflow_id}")
+            
+            self.active_workflows.clear()
+            self.workflow_executions.clear()
+            self.execution_analyses.clear()
+            self.semantic_node_executions.clear()
+            self.workflow_contexts.clear()
+            
+            logger.info("✅ WorkflowEngine cleanup completed")
+            
+        except Exception as e:
+            logger.error("❌ Error during WorkflowEngine cleanup", error=str(e))
