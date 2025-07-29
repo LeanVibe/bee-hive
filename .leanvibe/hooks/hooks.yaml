@@ -1,0 +1,36 @@
+leanvibe_hooks:
+  PostAgentTask:
+  - command: python .leanvibe/hooks/format_code.py
+    description: Auto-format code according to project standards
+    execution_mode: async
+    matcher: '*_specialist'
+    name: code_formatting
+    timeout_seconds: 120
+  - command: python .leanvibe/hooks/run_tests.py
+    description: Run relevant tests for changed code
+    execution_mode: blocking
+    matcher: '*'
+    name: test_execution
+    required: true
+    timeout_seconds: 300
+  PreAgentTask:
+  - command: python .leanvibe/hooks/validate_security.py
+    description: Validate task doesn't access sensitive files
+    execution_mode: blocking
+    matcher: '*'
+    name: security_validation
+    required: true
+    timeout_seconds: 30
+  - command: python .leanvibe/hooks/check_dependencies.py
+    description: Ensure required dependencies are available
+    execution_mode: non_blocking
+    matcher: backend_*
+    name: dependency_check
+    timeout_seconds: 60
+  WorkflowComplete:
+  - command: python .leanvibe/hooks/generate_quality_report.py
+    description: Generate comprehensive quality and progress report
+    execution_mode: async
+    matcher: '*'
+    name: quality_report
+    timeout_seconds: 180
