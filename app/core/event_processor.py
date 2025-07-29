@@ -1,22 +1,29 @@
 """
-Event Stream Processor for LeanVibe Agent Hive 2.0 Observability System
+Enhanced Event Stream Processor for LeanVibe Agent Hive 2.0 - VS 6.1
 
-Handles real-time event processing, Redis Streams integration, database persistence,
-and metrics generation for comprehensive agent monitoring.
+High-performance event processing with MessagePack serialization and dynamic sampling:
+- <5ms processing overhead with >1000 events/second throughput
+- MessagePack binary serialization for minimal network overhead
+- Dynamic sampling based on system state and verbosity levels
+- Batch processing and efficient database operations
+- Memory-efficient event buffering and processing
+- Integration with semantic memory for context enrichment
 """
 
 import asyncio
 import json
+import time
 import uuid
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Union
-
+import msgpack
 import structlog
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.database import get_session
 from app.models.observability import AgentEvent, EventType
+from ..schemas.observability import BaseObservabilityEvent, EventCategory
 
 logger = structlog.get_logger()
 
