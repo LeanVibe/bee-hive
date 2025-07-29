@@ -103,8 +103,7 @@ def mock_agent_registry():
             capabilities=[
                 {"name": "coding", "specialization": "python"},
                 {"name": "testing", "specialization": "pytest"}
-            ],
-            health_score=0.95
+            ]
         ),
         Agent(
             id=uuid.UUID("22222222-2222-2222-2222-222222222222"),
@@ -115,8 +114,7 @@ def mock_agent_registry():
             capabilities=[
                 {"name": "test_automation", "specialization": "testing"},
                 {"name": "validation", "specialization": "quality"}
-            ],
-            health_score=0.90
+            ]
         )
     ]
     
@@ -281,7 +279,7 @@ class TestTaskDistributor:
         distributor.agent_performance_cache = {
             "11111111-1111-1111-1111-111111111111": MagicMock(
                 current_tasks=0, cpu_usage=10.0, memory_usage=20.0,
-                context_usage=30.0, health_score=0.95
+                context_usage=30.0
             )
         }
         

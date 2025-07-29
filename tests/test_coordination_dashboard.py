@@ -320,20 +320,20 @@ class TestCoordinationDashboard:
         await dashboard.process_lifecycle_event(sample_lifecycle_event)
         
         # Check that agent node was created
-        agent_node_id = f"agent_{sample_lifecycle_event.metadata['agent_id']}"
+        agent_node_id = f"agent_{sample_lifecycle_event.agent_id}"
         assert agent_node_id in dashboard.nodes
         
         node = dashboard.nodes[agent_node_id]
         assert node.type == AgentNodeType.AGENT
         assert node.status == AgentNodeStatus.ACTIVE
-        assert node.metadata["agent_id"] == sample_lifecycle_event.metadata["agent_id"]
-        assert node.metadata["session_id"] == sample_lifecycle_event.metadata["session_id"]
+        assert node.metadata["agent_id"] == sample_lifecycle_event.agent_id
+        assert node.metadata["session_id"] == sample_lifecycle_event.session_id
         
         # Check communication event was recorded
         assert len(dashboard.communication_history) == 1
         comm_event = dashboard.communication_history[0]
-        assert comm_event.source_agent_id == sample_lifecycle_event.metadata["agent_id"]
-        assert comm_event.session_id == sample_lifecycle_event.metadata["session_id"]
+        assert comm_event.source_agent_id == sample_lifecycle_event.agent_id
+        assert comm_event.session_id == sample_lifecycle_event.session_id
     
     @pytest.mark.asyncio
     async def test_agent_sleep_processing(self, dashboard):

@@ -55,15 +55,15 @@ settings = get_settings()
 
 # VS 7.1 Circuit breakers for different operations
 checkpoint_circuit_breaker = CircuitBreaker(
+    name="checkpoint_operations",
     failure_threshold=5,
-    recovery_timeout=30,
-    expected_exception=Exception
+    timeout_seconds=30
 )
 
 recovery_circuit_breaker = CircuitBreaker(
+    name="recovery_operations",
     failure_threshold=3,
-    recovery_timeout=60,  # Longer recovery for critical operations
-    expected_exception=Exception
+    timeout_seconds=60  # Longer recovery for critical operations
 )
 
 

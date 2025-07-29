@@ -321,9 +321,11 @@ class CoordinationDashboard:
             self.nodes[node_id].status = AgentNodeStatus.ACTIVE
             self.nodes[node_id].last_updated = datetime.utcnow()
             self.nodes[node_id].metadata.update({
+                "agent_id": agent_id,
                 "session_id": session_id,
                 "last_activity": event.timestamp,
-                "uptime": self._calculate_uptime(self.nodes[node_id].created_at)
+                "uptime": self._calculate_uptime(self.nodes[node_id].created_at),
+                **event.payload
             })
         else:
             # Create new agent node
@@ -351,14 +353,14 @@ class CoordinationDashboard:
             session_id=session_id,
             source_agent_id=agent_id,
             message_type="agent_activation",
-            content={"event_type": event.event_type.value, "metadata": event.metadata}
+            content={"event_type": event.event_type.value, "payload": event.payload}
         )
         
         await self._add_communication_event(comm_event)
     
     async def _handle_agent_sleep(self, event: LifecycleEventData) -> None:
         """Handle agent sleep events."""
-        agent_id = event.payload.get("agent_id")
+        agent_id = event.agent_id
         if not agent_id:
             return
         
@@ -374,7 +376,7 @@ class CoordinationDashboard:
     
     async def _handle_tool_interaction(self, event: LifecycleEventData) -> None:
         """Handle tool interaction events."""
-        agent_id = event.payload.get("agent_id")
+        agent_id = event.agent_id
         tool_id = event.payload.get("tool_id")
         
         if not agent_id or not tool_id:
@@ -434,7 +436,7 @@ class CoordinationDashboard:
     async def _handle_context_creation(self, event: LifecycleEventData) -> None:
         """Handle context creation and sharing events."""
         context_id = event.payload.get("context_id")
-        agent_id = event.payload.get("agent_id")
+        agent_id = event.agent_id
         
         if not context_id or not agent_id:
             return
@@ -486,7 +488,7 @@ class CoordinationDashboard:
     
     async def _handle_error_event(self, event: LifecycleEventData) -> None:
         """Handle error and failure events."""
-        agent_id = event.payload.get("agent_id")
+        agent_id = event.agent_id
         if not agent_id:
             return
         
