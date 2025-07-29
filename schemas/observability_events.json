@@ -1,0 +1,741 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leanvibe.com/schemas/observability_events.json",
+  "title": "LeanVibe Agent Hive 2.0 Observability Event Schema",
+  "description": "Comprehensive event schema contract for multi-agent system observability",
+  "version": "1.0.0",
+  
+  "definitions": {
+    "base_event": {
+      "type": "object",
+      "required": ["event_id", "timestamp", "event_type", "event_category"],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique event identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO8601 event timestamp"
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Specific event type from predefined enums"
+        },
+        "event_category": {
+          "type": "string",
+          "enum": ["workflow", "agent", "tool", "memory", "communication", "recovery", "system"],
+          "description": "High-level event category"
+        },
+        "workflow_id": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Optional workflow identifier"
+        },
+        "agent_id": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Optional agent identifier"
+        },
+        "session_id": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Optional session identifier"
+        },
+        "context_id": {
+          "type": ["string", "null"],
+          "format": "uuid",
+          "description": "Optional context identifier"
+        },
+        "semantic_embedding": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 1536,
+          "maxItems": 1536,
+          "description": "Optional 1536-dimensional semantic embedding vector"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Event-specific data payload"
+        },
+        "performance_metrics": {
+          "type": "object",
+          "properties": {
+            "execution_time_ms": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "description": "Execution time in milliseconds"
+            },
+            "memory_usage_mb": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "description": "Memory usage in megabytes"
+            },
+            "cpu_usage_percent": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 100,
+              "description": "CPU usage percentage"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["schema_version"],
+          "properties": {
+            "schema_version": {
+              "type": "string",
+              "description": "Event schema version"
+            },
+            "correlation_id": {
+              "type": ["string", "null"],
+              "format": "uuid",
+              "description": "Request correlation identifier"
+            },
+            "source_service": {
+              "type": ["string", "null"],
+              "description": "Source service name"
+            },
+            "trace_id": {
+              "type": ["string", "null"],
+              "description": "Distributed tracing identifier"
+            },
+            "span_id": {
+              "type": ["string", "null"],
+              "description": "Tracing span identifier"
+            },
+            "sampling_probability": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Event sampling probability"
+            }
+          }
+        }
+      }
+    },
+    
+    "workflow_events": {
+      "workflow_started": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "WorkflowStarted"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["workflow_name", "workflow_definition"],
+                "properties": {
+                  "workflow_name": {"type": "string"},
+                  "workflow_definition": {"type": "object"},
+                  "initial_context": {"type": "object"},
+                  "estimated_duration_ms": {"type": ["number", "null"]},
+                  "priority": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+                  "initiating_agent": {"type": ["string", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "workflow_ended": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "WorkflowEnded"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["status", "completion_reason"],
+                "properties": {
+                  "status": {"type": "string", "enum": ["completed", "failed", "cancelled"]},
+                  "completion_reason": {"type": "string"},
+                  "final_result": {"type": "object"},
+                  "total_tasks_executed": {"type": "integer", "minimum": 0},
+                  "failed_tasks": {"type": "integer", "minimum": 0},
+                  "actual_duration_ms": {"type": ["number", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "workflow_paused": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "WorkflowPaused"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["pause_reason"],
+                "properties": {
+                  "pause_reason": {"type": "string"},
+                  "current_task": {"type": ["string", "null"]},
+                  "pending_tasks": {"type": "array", "items": {"type": "string"}},
+                  "checkpoint_data": {"type": "object"}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "workflow_resumed": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "WorkflowResumed"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["resume_reason"],
+                "properties": {
+                  "resume_reason": {"type": "string"},
+                  "resumed_from_task": {"type": ["string", "null"]},
+                  "restored_checkpoint": {"type": "object"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "task_node_events": {
+      "node_executing": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "NodeExecuting"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["node_id", "node_type"],
+                "properties": {
+                  "node_id": {"type": "string"},
+                  "node_type": {"type": "string"},
+                  "node_name": {"type": "string"},
+                  "input_data": {"type": "object"},
+                  "dependencies_satisfied": {"type": "array", "items": {"type": "string"}},
+                  "assigned_agent": {"type": ["string", "null"]},
+                  "estimated_execution_time_ms": {"type": ["number", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "node_completed": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "NodeCompleted"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["node_id", "success"],
+                "properties": {
+                  "node_id": {"type": "string"},
+                  "success": {"type": "boolean"},
+                  "output_data": {"type": "object"},
+                  "error_details": {"type": ["object", "null"]},
+                  "retry_count": {"type": "integer", "minimum": 0},
+                  "downstream_nodes": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "node_failed": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "NodeFailed"},
+              "event_category": {"const": "workflow"},
+              "workflow_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["node_id", "error_type", "error_message"],
+                "properties": {
+                  "node_id": {"type": "string"},
+                  "error_type": {"type": "string"},
+                  "error_message": {"type": "string"},
+                  "error_details": {"type": "object"},
+                  "retry_count": {"type": "integer", "minimum": 0},
+                  "max_retries": {"type": "integer", "minimum": 0},
+                  "will_retry": {"type": "boolean"},
+                  "recovery_strategy": {"type": ["string", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "agent_events": {
+      "agent_state_changed": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "AgentStateChanged"},
+              "event_category": {"const": "agent"},
+              "agent_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["previous_state", "new_state"],
+                "properties": {
+                  "previous_state": {"type": "string"},
+                  "new_state": {"type": "string"},
+                  "state_transition_reason": {"type": "string"},
+                  "capabilities": {"type": "array", "items": {"type": "string"}},
+                  "resource_allocation": {"type": "object"},
+                  "persona_data": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "agent_capability_utilized": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "AgentCapabilityUtilized"},
+              "event_category": {"const": "agent"},
+              "agent_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["capability_name", "utilization_context"],
+                "properties": {
+                  "capability_name": {"type": "string"},
+                  "utilization_context": {"type": "string"},
+                  "input_parameters": {"type": "object"},
+                  "capability_result": {"type": "object"},
+                  "efficiency_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "agent_lifecycle": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"enum": ["AgentStarted", "AgentStopped", "AgentPaused", "AgentResumed"]},
+              "event_category": {"const": "agent"},
+              "agent_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["lifecycle_event"],
+                "properties": {
+                  "lifecycle_event": {"type": "string"},
+                  "reason": {"type": ["string", "null"]},
+                  "parent_agent": {"type": ["string", "null"]},
+                  "child_agents": {"type": "array", "items": {"type": "string"}},
+                  "initialization_data": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "tool_events": {
+      "pre_tool_use": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "PreToolUse"},
+              "event_category": {"const": "tool"},
+              "agent_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["tool_name", "parameters"],
+                "properties": {
+                  "tool_name": {"type": "string"},
+                  "parameters": {"type": "object"},
+                  "tool_version": {"type": ["string", "null"]},
+                  "expected_output_type": {"type": ["string", "null"]},
+                  "timeout_ms": {"type": ["integer", "null"]},
+                  "retry_policy": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "post_tool_use": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "PostToolUse"},
+              "event_category": {"const": "tool"},
+              "agent_id": {"type": "string", "format": "uuid"},
+              "payload": {
+                "type": "object",
+                "required": ["tool_name", "success"],
+                "properties": {
+                  "tool_name": {"type": "string"},
+                  "success": {"type": "boolean"},
+                  "result": {},
+                  "error": {"type": ["string", "null"]},
+                  "error_type": {"type": ["string", "null"]},
+                  "retry_count": {"type": "integer", "minimum": 0},
+                  "result_truncated": {"type": "boolean", "default": false},
+                  "full_result_size": {"type": ["integer", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "tool_registry_event": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"enum": ["ToolRegistered", "ToolUnregistered", "ToolUpdated"]},
+              "event_category": {"const": "tool"},
+              "payload": {
+                "type": "object",
+                "required": ["tool_name", "action"],
+                "properties": {
+                  "tool_name": {"type": "string"},
+                  "action": {"type": "string"},
+                  "tool_metadata": {"type": "object"},
+                  "capabilities": {"type": "array", "items": {"type": "string"}},
+                  "performance_characteristics": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "memory_events": {
+      "semantic_query": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "SemanticQuery"},
+              "event_category": {"const": "memory"},
+              "payload": {
+                "type": "object",
+                "required": ["query_text", "query_embedding"],
+                "properties": {
+                  "query_text": {"type": "string"},
+                  "query_embedding": {"type": "array", "items": {"type": "number"}},
+                  "similarity_threshold": {"type": ["number", "null"]},
+                  "max_results": {"type": ["integer", "null"]},
+                  "filter_criteria": {"type": ["object", "null"]},
+                  "results_count": {"type": ["integer", "null"]},
+                  "search_strategy": {"type": ["string", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "semantic_update": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "SemanticUpdate"},
+              "event_category": {"const": "memory"},
+              "payload": {
+                "type": "object",
+                "required": ["operation_type", "content"],
+                "properties": {
+                  "operation_type": {"type": "string", "enum": ["insert", "update", "delete"]},
+                  "content": {"type": "object"},
+                  "content_embedding": {"type": "array", "items": {"type": "number"}},
+                  "content_id": {"type": ["string", "null"]},
+                  "content_type": {"type": ["string", "null"]},
+                  "metadata": {"type": ["object", "null"]},
+                  "affected_records": {"type": ["integer", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "memory_consolidation": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "MemoryConsolidation"},
+              "event_category": {"const": "memory"},
+              "payload": {
+                "type": "object",
+                "required": ["consolidation_type", "trigger_reason"],
+                "properties": {
+                  "consolidation_type": {"type": "string", "enum": ["incremental", "full", "selective"]},
+                  "trigger_reason": {"type": "string"},
+                  "memory_segments_processed": {"type": "integer", "minimum": 0},
+                  "compression_ratio": {"type": ["number", "null"]},
+                  "knowledge_extracted": {"type": ["object", "null"]},
+                  "optimization_metrics": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "communication_events": {
+      "message_published": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "MessagePublished"},
+              "event_category": {"const": "communication"},
+              "payload": {
+                "type": "object",
+                "required": ["message_id", "from_agent", "to_agent", "message_type"],
+                "properties": {
+                  "message_id": {"type": "string", "format": "uuid"},
+                  "from_agent": {"type": "string"},
+                  "to_agent": {"type": "string"},
+                  "message_type": {"type": "string"},
+                  "message_content": {"type": "object"},
+                  "priority": {"type": ["string", "null"]},
+                  "delivery_method": {"type": ["string", "null"]},
+                  "expected_response": {"type": "boolean", "default": false}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "message_received": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "MessageReceived"},
+              "event_category": {"const": "communication"},
+              "payload": {
+                "type": "object",
+                "required": ["message_id", "from_agent", "processing_status"],
+                "properties": {
+                  "message_id": {"type": "string", "format": "uuid"},
+                  "from_agent": {"type": "string"},
+                  "processing_status": {"type": "string", "enum": ["accepted", "rejected", "deferred"]},
+                  "processing_reason": {"type": ["string", "null"]},
+                  "response_generated": {"type": "boolean", "default": false},
+                  "delivery_latency_ms": {"type": ["number", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "broadcast_event": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "BroadcastEvent"},
+              "event_category": {"const": "communication"},
+              "payload": {
+                "type": "object",
+                "required": ["broadcast_id", "from_agent", "broadcast_type"],
+                "properties": {
+                  "broadcast_id": {"type": "string", "format": "uuid"},
+                  "from_agent": {"type": "string"},
+                  "broadcast_type": {"type": "string"},
+                  "broadcast_content": {"type": "object"},
+                  "target_agents": {"type": "array", "items": {"type": "string"}},
+                  "delivery_count": {"type": ["integer", "null"]},
+                  "acknowledgment_required": {"type": "boolean", "default": false}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "recovery_events": {
+      "failure_detected": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "FailureDetected"},
+              "event_category": {"const": "recovery"},
+              "payload": {
+                "type": "object",
+                "required": ["failure_type", "failure_description", "affected_component"],
+                "properties": {
+                  "failure_type": {"type": "string"},
+                  "failure_description": {"type": "string"},
+                  "affected_component": {"type": "string"},
+                  "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+                  "error_details": {"type": "object"},
+                  "detection_method": {"type": ["string", "null"]},
+                  "impact_assessment": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "recovery_initiated": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "RecoveryInitiated"},
+              "event_category": {"const": "recovery"},
+              "payload": {
+                "type": "object",
+                "required": ["recovery_strategy", "trigger_failure"],
+                "properties": {
+                  "recovery_strategy": {"type": "string"},
+                  "trigger_failure": {"type": "string"},
+                  "recovery_steps": {"type": "array", "items": {"type": "string"}},
+                  "estimated_recovery_time_ms": {"type": ["number", "null"]},
+                  "backup_systems_activated": {"type": "array", "items": {"type": "string"}},
+                  "rollback_checkpoint": {"type": ["string", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "recovery_completed": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "RecoveryCompleted"},
+              "event_category": {"const": "recovery"},
+              "payload": {
+                "type": "object",
+                "required": ["recovery_success", "final_state"],
+                "properties": {
+                  "recovery_success": {"type": "boolean"},
+                  "final_state": {"type": "string"},
+                  "recovery_summary": {"type": "object"},
+                  "lessons_learned": {"type": "array", "items": {"type": "string"}},
+                  "system_improvements": {"type": "array", "items": {"type": "string"}},
+                  "actual_recovery_time_ms": {"type": ["number", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+    "system_events": {
+      "system_health_check": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "SystemHealthCheck"},
+              "event_category": {"const": "system"},
+              "payload": {
+                "type": "object",
+                "required": ["health_status", "check_type"],
+                "properties": {
+                  "health_status": {"type": "string", "enum": ["healthy", "degraded", "unhealthy"]},
+                  "check_type": {"type": "string"},
+                  "component_statuses": {"type": "object"},
+                  "performance_indicators": {"type": "object"},
+                  "alerts_triggered": {"type": "array", "items": {"type": "string"}},
+                  "recommended_actions": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        ]
+      },
+      "configuration_change": {
+        "allOf": [
+          {"$ref": "#/definitions/base_event"},
+          {
+            "properties": {
+              "event_type": {"const": "ConfigurationChange"},
+              "event_category": {"const": "system"},
+              "payload": {
+                "type": "object",
+                "required": ["component", "change_type"],
+                "properties": {
+                  "component": {"type": "string"},
+                  "change_type": {"type": "string", "enum": ["create", "update", "delete"]},
+                  "previous_config": {"type": ["object", "null"]},
+                  "new_config": {"type": ["object", "null"]},
+                  "change_reason": {"type": ["string", "null"]},
+                  "changed_by": {"type": ["string", "null"]},
+                  "impact_analysis": {"type": ["object", "null"]}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  
+  "anyOf": [
+    {"$ref": "#/definitions/workflow_events/workflow_started"},
+    {"$ref": "#/definitions/workflow_events/workflow_ended"},
+    {"$ref": "#/definitions/workflow_events/workflow_paused"},
+    {"$ref": "#/definitions/workflow_events/workflow_resumed"},
+    {"$ref": "#/definitions/task_node_events/node_executing"},
+    {"$ref": "#/definitions/task_node_events/node_completed"},
+    {"$ref": "#/definitions/task_node_events/node_failed"},
+    {"$ref": "#/definitions/agent_events/agent_state_changed"},
+    {"$ref": "#/definitions/agent_events/agent_capability_utilized"},
+    {"$ref": "#/definitions/agent_events/agent_lifecycle"},
+    {"$ref": "#/definitions/tool_events/pre_tool_use"},
+    {"$ref": "#/definitions/tool_events/post_tool_use"},
+    {"$ref": "#/definitions/tool_events/tool_registry_event"},
+    {"$ref": "#/definitions/memory_events/semantic_query"},
+    {"$ref": "#/definitions/memory_events/semantic_update"},
+    {"$ref": "#/definitions/memory_events/memory_consolidation"},
+    {"$ref": "#/definitions/communication_events/message_published"},
+    {"$ref": "#/definitions/communication_events/message_received"},
+    {"$ref": "#/definitions/communication_events/broadcast_event"},
+    {"$ref": "#/definitions/recovery_events/failure_detected"},
+    {"$ref": "#/definitions/recovery_events/recovery_initiated"},
+    {"$ref": "#/definitions/recovery_events/recovery_completed"},
+    {"$ref": "#/definitions/system_events/system_health_check"},
+    {"$ref": "#/definitions/system_events/configuration_change"}
+  ]
+}
