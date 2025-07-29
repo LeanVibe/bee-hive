@@ -144,6 +144,9 @@ class ApiClient {
 // Create singleton instance
 export const apiClient = new ApiClient()
 
+// Default export for backward compatibility
+export const api = apiClient
+
 // Global error interceptor
 const originalRequest = (apiClient as any).request.bind(apiClient)
 ;(apiClient as any).request = async function<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

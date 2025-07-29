@@ -319,6 +319,82 @@ export interface AnalysisUpdateMessage extends WebSocketMessage {
   }
 }
 
+// Workflow-specific WebSocket message types
+export interface WorkflowExecutionUpdateMessage extends WebSocketMessage {
+  type: 'workflow_execution_update'
+  data: {
+    execution_id: string
+    status: string
+    progress: number
+    current_step?: string
+    step_results?: any[]
+    agent_assignments?: any[]
+    logs?: any[]
+    errors?: any[]
+    estimated_completion?: string
+  }
+}
+
+export interface NodeStatusUpdateMessage extends WebSocketMessage {
+  type: 'node_status_update'
+  data: {
+    node_id: string
+    status: string
+    progress?: number
+    agent_id?: string
+    execution_id?: string
+    metadata?: Record<string, any>
+  }
+}
+
+export interface AgentAssignmentUpdateMessage extends WebSocketMessage {
+  type: 'agent_assignment_update'
+  data: {
+    agent_id: string
+    assignments: any[]
+    workload: number
+    status: string
+    utilization: number
+  }
+}
+
+export interface CommandUpdateMessage extends WebSocketMessage {
+  type: 'command_update'
+  data: {
+    command_name: string
+    action: 'created' | 'updated' | 'deleted'
+    command_data?: any
+  }
+}
+
+export interface SystemMetricsUpdateMessage extends WebSocketMessage {
+  type: 'system_metrics_update'
+  data: {
+    totalExecutions: number
+    activeExecutions: number
+    successfulExecutions: number
+    failedExecutions: number
+    averageExecutionTime: number
+    agentUtilization: number
+    systemThroughput: number
+    timestamp: string
+  }
+}
+
+export interface ResourceUsageUpdateMessage extends WebSocketMessage {
+  type: 'resource_usage_update'
+  data: {
+    execution_id?: string
+    usage: {
+      cpu: number
+      memory: number
+      networkIO: number
+      diskIO?: number
+    }
+    timestamp: string
+  }
+}
+
 // Search and filtering types
 export interface SearchQuery {
   query: string
