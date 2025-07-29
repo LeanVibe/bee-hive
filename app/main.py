@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .core.config import settings
 from .core.database import init_database
@@ -29,6 +30,10 @@ from .api.monitoring_reporting import router as monitoring_router
 from .api.analytics import router as analytics_router
 from .observability.middleware import ObservabilityMiddleware, ObservabilityHookMiddleware
 from .observability.hooks import HookInterceptor, set_hook_interceptor
+from .core.error_handling_middleware import ErrorHandlingMiddleware, create_error_handling_middleware
+from .core.error_handling_config import initialize_error_handling_config, ErrorHandlingEnvironment, get_config_manager
+from .core.error_handling_integration import initialize_error_handling_integration
+from .api.v1.error_handling_health import router as error_handling_router
 
 
 # Configure structured logging
@@ -73,6 +78,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         set_hook_interceptor(hook_interceptor)
         app.state.hook_interceptor = hook_interceptor
         
+        # Initialize error handling system
+        environment = ErrorHandlingEnvironment.PRODUCTION if not settings.DEBUG else ErrorHandlingEnvironment.DEVELOPMENT
+        error_config_manager = initialize_error_handling_config(
+            environment=environment,
+            enable_hot_reload=settings.DEBUG
+        )
+        app.state.error_config_manager = error_config_manager
+        
+        # Initialize error handling observability integration
+        error_integration = initialize_error_handling_integration(
+            enable_detailed_logging=settings.DEBUG
+        )
+        app.state.error_integration = error_integration
+        
+        # Start configuration hot-reload if enabled
+        if settings.DEBUG:
+            await error_config_manager.start_hot_reload()
+        
         # Start agent orchestrator
         orchestrator = AgentOrchestrator()
         await orchestrator.start()
@@ -95,6 +118,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Graceful shutdown
         if hasattr(app.state, 'orchestrator'):
             await app.state.orchestrator.shutdown()
+        
+        # Stop error handling hot-reload
+        if hasattr(app.state, 'error_config_manager'):
+            await app.state.error_config_manager.stop_hot_reload()
         
         # Stop performance metrics publisher
         await stop_performance_publisher()
@@ -132,6 +159,30 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
+    # Error handling middleware (high priority - before other middleware)
+    # Will be initialized during app startup if available
+    try:
+        from .core.error_handling_config import get_error_handling_config
+        from .core.error_handling_middleware import ErrorHandlingMiddleware
+        
+        # Try to get config - may not be available during import
+        try:
+            config = get_error_handling_config()
+            if config and getattr(config, 'middleware_enabled', True):
+                # Create error handling middleware instance
+                error_middleware = ErrorHandlingMiddleware(config)
+                app.add_middleware(BaseHTTPMiddleware, dispatch=error_middleware.dispatch)
+                logger.info("✅ Error handling middleware initialized")
+        except Exception as config_error:
+            # Configuration not ready - middleware will be initialized later
+            logger.debug(f"Error handling middleware will be initialized during startup: {config_error}")
+            pass
+            
+    except ImportError as import_error:
+        # Error handling module not available
+        logger.warning(f"⚠️ Error handling middleware not available: {import_error}")
+        pass
+    
     # Observability middleware for monitoring agent interactions
     app.add_middleware(ObservabilityMiddleware)
     
@@ -140,6 +191,7 @@ def create_app() -> FastAPI:
     
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(error_handling_router, prefix="/api/v1")  # Error handling health endpoints
     app.include_router(sleep_management_router)
     app.include_router(intelligent_scheduling_router)
     app.include_router(monitoring_router)
@@ -246,6 +298,33 @@ def create_app() -> FastAPI:
                 "status": "unhealthy",
                 "error": str(e),
                 "details": "Event processor not available"
+            }
+            health_status["summary"]["unhealthy"] += 1
+            health_status["status"] = "degraded"
+        
+        # Check Error Handling System
+        try:
+            error_config_manager = getattr(app.state, 'error_config_manager', None)
+            if error_config_manager:
+                config_status = error_config_manager.get_status()
+                health_status["components"]["error_handling"] = {
+                    "status": "healthy",
+                    "details": "Error handling system running",
+                    "environment": config_status.get("current_environment", "unknown"),
+                    "hot_reload_active": config_status.get("hot_reload_active", False)
+                }
+                health_status["summary"]["healthy"] += 1
+            else:
+                # Error handling is optional, so this is not a hard failure
+                health_status["components"]["error_handling"] = {
+                    "status": "not_configured",
+                    "details": "Error handling system not initialized"
+                }
+        except Exception as e:
+            health_status["components"]["error_handling"] = {
+                "status": "unhealthy",
+                "error": str(e),
+                "details": "Error handling system failed"
             }
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
