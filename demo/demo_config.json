@@ -1,0 +1,36 @@
+{
+  "api_base_url": "http://localhost:8000",
+  "database_url": "postgresql://postgres:password@localhost:5432/leanvibe",
+  "redis_url": "redis://localhost:6379",
+  "performance_targets": {
+    "availability": 99.95,
+    "response_time_ms": 2000,
+    "recovery_time_s": 30,
+    "efficiency_improvement": 70,
+    "system_overhead": 1.0,
+    "checkpoint_time_s": 5,
+    "decision_accuracy": 80
+  },
+  "chaos_testing": {
+    "enabled": true,
+    "duration_minutes": 10,
+    "failure_scenarios": [
+      "redis_failure",
+      "database_slowdown",
+      "network_partition",
+      "memory_pressure",
+      "poison_messages"
+    ]
+  },
+  "load_testing": {
+    "concurrent_users": 100,
+    "duration_minutes": 5,
+    "ramp_up_seconds": 30
+  },
+  "enterprise_validation": {
+    "security_compliance_required": true,
+    "scalability_target_users": 500,
+    "uptime_requirement_hours": 24,
+    "self_healing_target_percent": 95
+  }
+}
