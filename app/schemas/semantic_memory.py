@@ -235,7 +235,7 @@ class BatchIngestRequest(BaseModel):
 class BatchIngestResult(BaseModel):
     """Result for individual document in batch."""
     index: int = Field(..., description="Index in the original batch")
-    status: str = Field(..., regex=r'^(success|error)$', description="Processing status")
+    status: str = Field(..., pattern=r'^(success|error)$', description="Processing status")
     document_id: Optional[uuid.UUID] = Field(None, description="Document ID if successful")
     error_message: Optional[str] = Field(None, description="Error message if failed")
 
