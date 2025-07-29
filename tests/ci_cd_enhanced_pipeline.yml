@@ -1,0 +1,653 @@
+# Enhanced CI/CD Pipeline for LeanVibe Agent Hive 2.0 Testing
+# This pipeline provides comprehensive testing with multiple quality gates
+
+name: LeanVibe Agent Hive 2.0 - Enhanced Testing Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*', 'release/*' ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run nightly performance and chaos tests
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.12'
+  POSTGRES_VERSION: '15'
+  REDIS_VERSION: '7'
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================================================
+  # STAGE 1: Code Quality and Static Analysis
+  # ============================================================================
+  code-quality:
+    name: Code Quality & Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better analysis
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Run code formatting check (Black)
+      run: black --check --diff .
+    
+    - name: Run import sorting check (isort)
+      run: isort --check-only --diff .
+    
+    - name: Run linting (Ruff)
+      run: ruff check . --output-format=github
+    
+    - name: Run type checking (MyPy)
+      run: mypy app/ --show-error-codes --pretty
+    
+    - name: Run security scanning (Bandit)
+      run: bandit -r app/ -f json -o bandit-report.json
+      continue-on-error: true
+    
+    - name: Run dependency vulnerability scan (Safety)
+      run: safety check --json --output safety-report.json
+      continue-on-error: true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+    
+    - name: Comment PR with quality issues
+      if: github.event_name == 'pull_request' && failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '❌ Code quality checks failed. Please fix the issues and push again.'
+          })
+
+  # ============================================================================
+  # STAGE 2: Unit Tests with Coverage
+  # ============================================================================
+  unit-tests:
+    name: Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: code-quality
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_leanvibe
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Set up test environment
+      run: |
+        export TEST_DATABASE_URL="postgresql+asyncpg://test_user:test_password@localhost:5432/test_leanvibe"
+        export TEST_REDIS_URL="redis://localhost:6379/1"
+        export TEST_WITH_POSTGRES=true
+        export TEST_WITH_REDIS=true
+    
+    - name: Run database migrations
+      run: |
+        export DATABASE_URL="postgresql+asyncpg://test_user:test_password@localhost:5432/test_leanvibe"
+        alembic upgrade head
+    
+    - name: Apply test infrastructure fixes
+      run: python tests/infrastructure_fixes.py --fix
+    
+    - name: Run unit tests with coverage
+      run: |
+        pytest tests/ \
+          -m "unit" \
+          --cov=app \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --cov-fail-under=85 \
+          --junit-xml=pytest-unit.xml \
+          --maxfail=10 \
+          -n auto
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unit-tests
+        name: unit-test-coverage
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results
+        path: |
+          pytest-unit.xml
+          htmlcov/
+          coverage.xml
+
+  # ============================================================================
+  # STAGE 3: Integration Tests
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: unit-tests
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_leanvibe
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Set up test environment
+      run: |
+        export TEST_DATABASE_URL="postgresql+asyncpg://test_user:test_password@localhost:5432/test_leanvibe"
+        export TEST_REDIS_URL="redis://localhost:6379/1"
+        export TEST_WITH_POSTGRES=true
+        export TEST_WITH_REDIS=true
+    
+    - name: Run database migrations
+      run: |
+        export DATABASE_URL="postgresql+asyncpg://test_user:test_password@localhost:5432/test_leanvibe"
+        alembic upgrade head
+    
+    - name: Run integration tests
+      run: |
+        pytest tests/ \
+          -m "integration" \
+          --cov=app \
+          --cov-append \
+          --cov-report=xml \
+          --junit-xml=pytest-integration.xml \
+          --maxfail=5 \
+          -v
+    
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          pytest-integration.xml
+          coverage.xml
+
+  # ============================================================================
+  # STAGE 4: Security Tests
+  # ============================================================================
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: integration-tests
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_leanvibe
+        ports:
+          - 5432:5432
+      
+      redis:  
+        image: redis:${{ env.REDIS_VERSION }}
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Run security tests
+      run: |
+        pytest tests/security/ \
+          -m "security" \
+          --junit-xml=pytest-security.xml \
+          --maxfail=3 \
+          -v
+    
+    - name: Run OWASP ZAP security scan
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        # Start the application in background
+        uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000 &
+        sleep 10
+        
+        # Run ZAP baseline scan
+        docker run -v $(pwd):/zap/wrk/:rw \
+          -t ghcr.io/zaproxy/zaproxy:stable \
+          zap-baseline.py \
+          -t http://host.docker.internal:8000 \
+          -J zap-report.json || true
+    
+    - name: Upload security test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-test-results
+        path: |
+          pytest-security.xml
+          zap-report.json
+
+  # ============================================================================
+  # STAGE 5: Performance Tests (Conditional)
+  # ============================================================================
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: security-tests
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[perf-test]')
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_leanvibe
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Run performance tests
+      run: |
+        pytest tests/performance/ \
+          -m "performance" \
+          --junit-xml=pytest-performance.xml \
+          --benchmark-json=benchmark-results.json \
+          -v
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-test-results
+        path: |
+          pytest-performance.xml
+          benchmark-results.json
+    
+    - name: Performance regression check
+      run: |
+        # Compare with baseline performance metrics
+        python scripts/check_performance_regression.py \
+          --current benchmark-results.json \
+          --baseline performance_baseline.json \
+          --threshold 0.20
+
+  # ============================================================================
+  # STAGE 6: Chaos Engineering Tests (Nightly Only)
+  # ============================================================================
+  chaos-tests:
+    name: Chaos Engineering Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: security-tests
+    if: github.event_name == 'schedule'
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_leanvibe
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Run chaos engineering tests
+      run: |
+        pytest tests/chaos/ \
+          -m "chaos" \
+          --junit-xml=pytest-chaos.xml \
+          --maxfail=2 \
+          -v
+    
+    - name: Upload chaos test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: chaos-test-results
+        path: pytest-chaos.xml
+
+  # ============================================================================
+  # STAGE 7: End-to-End Tests
+  # ============================================================================
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: [security-tests]
+    
+    services:
+      postgres:
+        image: postgres:${{ env.POSTGRES_VERSION }}
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_leanvibe
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Set up Node.js (for frontend testing)
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+    
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+    
+    - name: Start application services
+      run: |
+        # Start backend
+        export DATABASE_URL="postgresql+asyncpg://test_user:test_password@localhost:5432/test_leanvibe"
+        export REDIS_URL="redis://localhost:6379"
+        alembic upgrade head
+        uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000 &
+        
+        # Start frontend
+        cd frontend
+        npm run preview --host 0.0.0.0 --port 3000 &
+        
+        # Wait for services to be ready
+        sleep 15
+    
+    - name: Run E2E tests
+      run: |
+        pytest tests/ \
+          -m "e2e" \
+          --junit-xml=pytest-e2e.xml \
+          --maxfail=3 \
+          -v
+    
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: e2e-test-results
+        path: pytest-e2e.xml
+
+  # ============================================================================
+  # STAGE 8: Coverage Report and Quality Gate
+  # ============================================================================
+  coverage-report:
+    name: Coverage Report & Quality Gate
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download all coverage artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: coverage-artifacts
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install coverage tools
+      run: pip install coverage codecov
+    
+    - name: Combine coverage reports
+      run: |
+        coverage combine coverage-artifacts/*/coverage.xml
+        coverage report --show-missing
+        coverage html
+    
+    - name: Upload combined coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        flags: combined
+        name: combined-coverage
+    
+    - name: Quality gate check
+      run: |
+        # Check coverage threshold
+        COVERAGE=$(coverage report --format=total)
+        echo "Total coverage: ${COVERAGE}%"
+        
+        if [ $COVERAGE -lt 85 ]; then
+          echo "❌ Coverage ${COVERAGE}% is below threshold (85%)"
+          exit 1
+        fi
+        
+        echo "✅ Coverage ${COVERAGE}% meets threshold"
+    
+    - name: Upload final coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: final-coverage-report
+        path: htmlcov/
+
+  # ============================================================================
+  # STAGE 9: Deployment (Production Branch Only)
+  # ============================================================================
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [coverage-report]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to staging environment
+      run: |
+        echo "🚀 Deploying to staging environment"
+        # Add actual deployment steps here
+    
+    - name: Run post-deployment health checks
+      run: |
+        echo "🔍 Running post-deployment health checks"
+        # Add health check steps here
+    
+    - name: Notify deployment status
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        text: |
+          Deployment to staging: ${{ job.status }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ============================================================================
+  # Notification and Cleanup
+  # ============================================================================
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [coverage-report, deploy]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: needs.coverage-report.result == 'success'
+      run: |
+        echo "✅ All quality gates passed successfully!"
+    
+    - name: Notify on failure
+      if: needs.coverage-report.result != 'success'
+      run: |
+        echo "❌ Some quality gates failed. Check the logs for details."
+        exit 1

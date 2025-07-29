@@ -67,7 +67,7 @@ class IntelligenceKPIRequest(BaseModel):
     """Request for intelligence KPI metrics."""
     kpi_names: Optional[List[str]] = Field(default=None, description="Specific KPI names to retrieve")
     time_range_hours: int = Field(default=24, ge=1, le=168, description="Time range in hours")
-    aggregation_interval: str = Field(default="1h", regex="^(1m|5m|15m|1h|6h|1d)$", description="Aggregation interval")
+    aggregation_interval: str = Field(default="1h", pattern="^(1m|5m|15m|1h|6h|1d)$", description="Aggregation interval")
     include_trends: bool = Field(default=True, description="Include trend analysis")
     include_forecasts: bool = Field(default=False, description="Include forecasted values")
 

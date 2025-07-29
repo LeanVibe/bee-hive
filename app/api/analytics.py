@@ -344,10 +344,10 @@ async def update_daily_analytics(
 
 @router.get("/export")
 async def export_analytics_report(
-    report_type: str = Query("comprehensive", regex="^(comprehensive|summary|trends)$", description="Type of report to export"),
+    report_type: str = Query("comprehensive", pattern="^(comprehensive|summary|trends)$", description="Type of report to export"),
     agent_id: Optional[UUID] = Query(None, description="Agent ID for agent-specific report"),
     days: int = Query(30, ge=1, le=365, description="Number of days for analysis"),
-    format: str = Query("json", regex="^(json|csv)$", description="Export format"),
+    format: str = Query("json", pattern="^(json|csv)$", description="Export format"),
     analytics_engine: SleepAnalyticsEngine = Depends(get_sleep_analytics_engine),
     session: AsyncSession = Depends(get_async_session)
 ):

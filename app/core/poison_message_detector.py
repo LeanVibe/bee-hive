@@ -209,7 +209,7 @@ class PoisonMessageDetector:
             DetectionPattern(
                 pattern_id="malformed_json_1",
                 poison_type=PoisonMessageType.MALFORMED_JSON,
-                detection_regex=r'.*[{,]\s*["}]\s*[,}].*',  # Missing keys/values
+                detection_pattern=r'.*[{,]\s*["}]\s*[,}].*',  # Missing keys/values
                 confidence_weight=0.8,
                 description="Detect JSON with missing keys or values"
             ),
@@ -217,7 +217,7 @@ class PoisonMessageDetector:
             DetectionPattern(
                 pattern_id="malformed_json_2",
                 poison_type=PoisonMessageType.MALFORMED_JSON,
-                detection_regex=r'.*[^"]\s*:\s*[^"\d\[\{tfn].*',  # Invalid value types
+                detection_pattern=r'.*[^"]\s*:\s*[^"\d\[\{tfn].*',  # Invalid value types
                 confidence_weight=0.7,
                 description="Detect JSON with invalid value types"
             ),
@@ -244,7 +244,7 @@ class PoisonMessageDetector:
             DetectionPattern(
                 pattern_id="invalid_uuid",
                 poison_type=PoisonMessageType.INVALID_AGENT_ID,
-                detection_regex=r'.*"(?:agent_id|session_id)"\s*:\s*"(?![\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}").*".*',
+                detection_pattern=r'.*"(?:agent_id|session_id)"\s*:\s*"(?![\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}").*".*',
                 confidence_weight=0.85,
                 description="Detect invalid UUID format for agent/session IDs"
             ),
@@ -253,7 +253,7 @@ class PoisonMessageDetector:
             DetectionPattern(
                 pattern_id="sql_injection_attempt",
                 poison_type=PoisonMessageType.DATABASE_CONSTRAINT,
-                detection_regex=r'.*(union\s+select|drop\s+table|delete\s+from|insert\s+into).*',
+                detection_pattern=r'.*(union\s+select|drop\s+table|delete\s+from|insert\s+into).*',
                 confidence_weight=0.95,
                 description="Detect potential SQL injection attempts"
             ),
