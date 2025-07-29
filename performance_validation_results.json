@@ -1,0 +1,40 @@
+{
+  "overall_passed": true,
+  "detailed_results": {
+    "command_parsing": {
+      "average_ms": 0.01954076054971665,
+      "max_ms": 0.04112499300390482,
+      "p95_ms": 0.026743736816570163,
+      "target_ms": 100,
+      "passed": true
+    },
+    "task_distribution": {
+      "average_ms_per_agent": 0.02171733552434792,
+      "max_ms_per_agent": 0.0493125116918236,
+      "target_ms_per_agent": 200,
+      "passed": true
+    },
+    "command_validation": {
+      "average_ms": 0.0020478983060456812,
+      "max_ms": 0.0036249984987080097,
+      "target_ms": 50,
+      "passed": true
+    },
+    "concurrent_operations": {
+      "total_operations": 20,
+      "successful_operations": 20,
+      "total_time_seconds": 0.0007391660183202475,
+      "operations_per_second": 27057.52091451652,
+      "target_concurrent": 15,
+      "passed": true
+    },
+    "memory_usage": {
+      "start_memory_mb": 84.90625,
+      "current_memory_mb": 84.96875,
+      "memory_increase_mb": 0.0625,
+      "target_max_mb": 100,
+      "passed": true
+    }
+  },
+  "timestamp": "2025-07-29T09:38:34.780648"
+}
