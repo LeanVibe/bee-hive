@@ -317,7 +317,7 @@ class ErrorHandlingConfiguration(BaseSettings):
             
         logger.info(
             "📝 Applied environment-specific configuration overrides",
-            environment=self.environment.value,
+            environment=self.environment if isinstance(self.environment, str) else self.environment.value,
             debug_mode=self.debug_mode,
             detailed_logging=self.observability.detailed_logging
         )
