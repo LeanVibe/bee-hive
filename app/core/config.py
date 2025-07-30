@@ -165,8 +165,7 @@ class Settings(BaseSettings):
     GRAFANA_PORT: int = Field(default=3000, env="GRAFANA_PORT")
     METRICS_ENABLED: bool = Field(default=True, env="METRICS_ENABLED")
     
-    # External Tools Configuration
-    GITHUB_TOKEN: Optional[str] = Field(default=None, env="GITHUB_TOKEN")
+    # External Tools Configuration  
     GITHUB_API_URL: str = Field(default="https://api.github.com", env="GITHUB_API_URL")
     DOCKER_HOST: Optional[str] = Field(default=None, env="DOCKER_HOST")
     DOCKER_REGISTRY: str = Field(default="docker.io", env="DOCKER_REGISTRY")

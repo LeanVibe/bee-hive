@@ -19,24 +19,7 @@ depends_on = None
 def upgrade() -> None:
     """Upgrade database schema with GitHub Integration tables."""
     
-    # Create custom enums for GitHub Integration
-    op.execute("""
-        CREATE TYPE work_tree_status AS ENUM (
-            'active', 'cleaning', 'archived', 'error'
-        );
-    """)
-    
-    op.execute("""
-        CREATE TYPE pr_status AS ENUM (
-            'open', 'closed', 'merged', 'draft'
-        );
-    """)
-    
-    op.execute("""
-        CREATE TYPE issue_state AS ENUM (
-            'open', 'closed'
-        );
-    """)
+    # Note: Enum types will be created automatically by SQLAlchemy when tables are created
     
     # GitHub repository configurations
     op.create_table(

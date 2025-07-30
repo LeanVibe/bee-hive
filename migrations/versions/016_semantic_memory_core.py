@@ -18,7 +18,7 @@ from sqlalchemy.dialects import postgresql
 from pgvector.sqlalchemy import Vector
 
 # revision identifiers, used by Alembic.
-revision = '016'
+revision = '016_semantic_memory_core'
 down_revision = '015'
 branch_labels = None
 depends_on = None

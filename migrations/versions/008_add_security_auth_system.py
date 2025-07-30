@@ -22,19 +22,8 @@ depends_on = None
 def upgrade() -> None:
     """Add security and authentication tables."""
     
-    # Create agent_status enum for agent identities
-    op.execute("""
-        CREATE TYPE agent_status AS ENUM (
-            'active', 'inactive', 'suspended', 'revoked'
-        );
-    """)
-    
-    # Create role_scope enum for agent roles
-    op.execute("""
-        CREATE TYPE role_scope AS ENUM (
-            'global', 'session', 'context', 'resource'
-        );
-    """)
+    # Note: agent_status and role_scope enums will be created automatically 
+    # by SQLAlchemy when the tables using them are created
     
     # Agent identities table - OAuth 2.0/OIDC credentials and metadata
     op.create_table(
@@ -229,19 +218,19 @@ def upgrade() -> None:
     op.create_index('idx_security_events_resolved', 'security_events', ['is_resolved', 'timestamp'])
     op.create_index('idx_security_events_risk_score', 'security_events', ['risk_score'])
     
-    # Create partial indexes for active records
+    # Create partial indexes for active records (note: expires_at check removed due to now() immutability)
     op.create_index(
         'idx_active_role_assignments',
         'agent_role_assignments',
         ['agent_id', 'role_id'],
-        postgresql_where=sa.text("is_active = true AND (expires_at IS NULL OR expires_at > now())")
+        postgresql_where=sa.text("is_active = true")
     )
     
     op.create_index(
         'idx_valid_tokens',
         'agent_tokens',
         ['agent_id', 'token_type'],
-        postgresql_where=sa.text("is_revoked = false AND expires_at > now()")
+        postgresql_where=sa.text("is_revoked = false")
     )
     
     # Create views for common security queries

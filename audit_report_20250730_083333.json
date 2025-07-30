@@ -1,0 +1,150 @@
+{
+  "timestamp": "2025-07-30T08:33:33.464554",
+  "overall_status": "FAIL",
+  "checks": {
+    "environment_variables": {
+      "status": "FAIL",
+      "required_present": {},
+      "missing_required": [
+        "DATABASE_URL",
+        "REDIS_URL",
+        "SECRET_KEY",
+        "ALLOWED_HOSTS",
+        "CORS_ORIGINS"
+      ],
+      "missing_optional": [
+        "JWT_SECRET",
+        "ANTHROPIC_API_KEY",
+        "GITHUB_TOKEN"
+      ],
+      "config_issues": [],
+      "settings_debug": true,
+      "settings_environment": "development"
+    },
+    "database_configuration": {
+      "status": "WARN",
+      "connection": "SUCCESS",
+      "database_version": "PostgreSQL 15.13 (Debian 15.13-1.pgdg120+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+      "pgvector_available": true,
+      "table_count": 0,
+      "existing_tables": [],
+      "missing_tables": [
+        "agents",
+        "tasks",
+        "sessions",
+        "workflows",
+        "contexts"
+      ],
+      "migrations_current": null
+    },
+    "redis_configuration": {
+      "status": "PASS",
+      "connection": "SUCCESS",
+      "redis_version": "7.4.2",
+      "memory_used": "1.41M",
+      "connected_clients": 1,
+      "streams_functional": true,
+      "max_memory": "0",
+      "persistence_config": "3600 1 300 100 60 10000"
+    },
+    "docker_services": {
+      "status": "PASS",
+      "docker_running": true,
+      "containers": [
+        {
+          "name": "leanvibe_redis",
+          "image": "redis:7-alpine",
+          "status": "running",
+          "health": "healthy"
+        },
+        {
+          "name": "leanvibe_postgres",
+          "image": "pgvector/pgvector:pg15",
+          "status": "running",
+          "health": "healthy"
+        },
+        {
+          "name": "leanvibe-neo4j",
+          "image": "neo4j:5.17-community",
+          "status": "running",
+          "health": "unknown"
+        },
+        {
+          "name": "buildx_buildkit_jovial_kapitsa0",
+          "image": "moby/buildkit:buildx-stable-1",
+          "status": "running",
+          "health": "unknown"
+        },
+        {
+          "name": "leanvibe-redis",
+          "image": "redis:7-alpine",
+          "status": "running",
+          "health": "unknown"
+        },
+        {
+          "name": "leanvibe-chroma",
+          "image": "chromadb/chroma:latest",
+          "status": "running",
+          "health": "unknown"
+        }
+      ],
+      "found_services": [
+        "postgres",
+        "redis"
+      ],
+      "missing_services": [],
+      "compose_file_exists": true
+    },
+    "file_system_structure": {
+      "status": "PASS",
+      "existing_dirs": [
+        "app",
+        "app/core",
+        "app/api",
+        "app/models",
+        "migrations",
+        "tests",
+        "docs"
+      ],
+      "missing_dirs": [],
+      "existing_files": [
+        "app/main.py",
+        "app/core/config.py",
+        "app/core/database.py",
+        "app/core/redis.py",
+        "docker-compose.yml",
+        "pyproject.toml",
+        "alembic.ini"
+      ],
+      "missing_files": [],
+      "permission_issues": []
+    },
+    "security_configuration": {
+      "status": "PASS",
+      "security_issues": [],
+      "security_warnings": [],
+      "debug_mode": true,
+      "cors_origins_count": 3,
+      "allowed_hosts_count": 3
+    }
+  },
+  "warnings": [
+    "Missing optional environment variables: JWT_SECRET, ANTHROPIC_API_KEY, GITHUB_TOKEN",
+    "Missing database tables: agents, tasks, sessions, workflows, contexts - run migrations",
+    "Database migrations may not be current - run 'alembic upgrade head'",
+    "Redis max memory not set - may cause memory issues under load"
+  ],
+  "errors": [
+    "Missing required environment variables: DATABASE_URL, REDIS_URL, SECRET_KEY, ALLOWED_HOSTS, CORS_ORIGINS"
+  ],
+  "recommendations": [
+    "IMPORTANT: Fix failing checks before proceeding with integration"
+  ],
+  "summary": {
+    "total_checks": 6,
+    "passed": 4,
+    "warnings": 1,
+    "failures": 1,
+    "errors": 0
+  }
+}

@@ -24,33 +24,7 @@ depends_on = None
 def upgrade() -> None:
     """Upgrade database schema with Self-Modification Engine tables."""
     
-    # Create custom enums for self-modification engine
-    op.execute("""
-        CREATE TYPE modification_safety AS ENUM (
-            'conservative', 'moderate', 'aggressive'
-        );
-    """)
-    
-    op.execute("""
-        CREATE TYPE modification_status AS ENUM (
-            'analyzing', 'suggestions_ready', 'applying', 'applied', 
-            'failed', 'rolled_back', 'archived'
-        );
-    """)
-    
-    op.execute("""
-        CREATE TYPE modification_type AS ENUM (
-            'bug_fix', 'performance', 'feature_add', 'refactor', 
-            'security_fix', 'style_improvement', 'dependency_update'
-        );
-    """)
-    
-    op.execute("""
-        CREATE TYPE sandbox_execution_type AS ENUM (
-            'unit_test', 'integration_test', 'security_scan', 
-            'performance_benchmark', 'linting', 'type_check'
-        );
-    """)
+    # Note: Enum types will be created automatically by SQLAlchemy when tables are created
     
     # Self-modification sessions - tracks analysis and modification attempts
     op.create_table(
@@ -68,8 +42,8 @@ def upgrade() -> None:
         sa.Column('analysis_context', postgresql.JSON, nullable=True, server_default='{}'),  # Context about codebase patterns
         sa.Column('total_suggestions', sa.Integer, nullable=False, server_default='0'),
         sa.Column('applied_modifications', sa.Integer, nullable=False, server_default='0'),
-        sa.Column('success_rate', sa.Decimal(5,2), nullable=True),  # Percentage success rate
-        sa.Column('performance_improvement', sa.Decimal(5,2), nullable=True),  # Overall performance gain/loss
+        sa.Column('success_rate', sa.Numeric(5,2), nullable=True),  # Percentage success rate
+        sa.Column('performance_improvement', sa.Numeric(5,2), nullable=True),  # Overall performance gain/loss
         sa.Column('error_message', sa.Text, nullable=True),
         sa.Column('session_metadata', postgresql.JSON, nullable=True, server_default='{}'),
         sa.Column('started_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), index=True),
@@ -93,9 +67,9 @@ def upgrade() -> None:
         sa.Column('content_diff', sa.Text, nullable=True),  # Unified diff for the change
         sa.Column('modification_reason', sa.Text, nullable=False),  # Explanation of why this change was made
         sa.Column('llm_reasoning', sa.Text, nullable=True),  # Detailed LLM reasoning
-        sa.Column('safety_score', sa.Decimal(3,2), nullable=False),  # 0.0 to 1.0 safety assessment
-        sa.Column('complexity_score', sa.Decimal(3,2), nullable=True),  # 0.0 to 1.0 complexity assessment
-        sa.Column('performance_impact', sa.Decimal(5,2), nullable=True),  # Expected percentage change
+        sa.Column('safety_score', sa.Numeric(3,2), nullable=False),  # 0.0 to 1.0 safety assessment
+        sa.Column('complexity_score', sa.Numeric(3,2), nullable=True),  # 0.0 to 1.0 complexity assessment
+        sa.Column('performance_impact', sa.Numeric(5,2), nullable=True),  # Expected percentage change
         sa.Column('lines_added', sa.Integer, nullable=True),
         sa.Column('lines_removed', sa.Integer, nullable=True),
         sa.Column('functions_modified', sa.Integer, nullable=True),
@@ -123,16 +97,16 @@ def upgrade() -> None:
         sa.Column('modification_id', postgresql.UUID(as_uuid=True), nullable=False, index=True),
         sa.Column('metric_name', sa.String(100), nullable=False, index=True),  # 'execution_time', 'memory_usage', 'error_rate', 'throughput'
         sa.Column('metric_category', sa.String(50), nullable=False, index=True),  # 'performance', 'quality', 'security'
-        sa.Column('baseline_value', sa.Decimal(15,6), nullable=True),  # Value before modification
-        sa.Column('modified_value', sa.Decimal(15,6), nullable=True),  # Value after modification
-        sa.Column('improvement_percentage', sa.Decimal(8,4), nullable=True),  # Calculated improvement
+        sa.Column('baseline_value', sa.Numeric(15,6), nullable=True),  # Value before modification
+        sa.Column('modified_value', sa.Numeric(15,6), nullable=True),  # Value after modification
+        sa.Column('improvement_percentage', sa.Numeric(8,4), nullable=True),  # Calculated improvement
         sa.Column('measurement_unit', sa.String(50), nullable=True),  # 'ms', 'MB', 'percent', 'count'
         sa.Column('measurement_context', sa.String(200), nullable=True),  # Test case or scenario
         sa.Column('measurement_tool', sa.String(100), nullable=True),  # Tool used for measurement
-        sa.Column('confidence_score', sa.Decimal(3,2), nullable=True),  # 0.0 to 1.0 confidence in measurement
+        sa.Column('confidence_score', sa.Numeric(3,2), nullable=True),  # 0.0 to 1.0 confidence in measurement
         sa.Column('statistical_significance', sa.Boolean, nullable=True),  # Whether improvement is statistically significant
         sa.Column('sample_size', sa.Integer, nullable=True),  # Number of measurements taken
-        sa.Column('standard_deviation', sa.Decimal(10,6), nullable=True),
+        sa.Column('standard_deviation', sa.Numeric(10,6), nullable=True),
         sa.Column('measurement_metadata', postgresql.JSON, nullable=True, server_default='{}'),
         sa.Column('measured_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), index=True),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()')),
@@ -159,7 +133,7 @@ def upgrade() -> None:
         sa.Column('exit_code', sa.Integer, nullable=True, index=True),
         sa.Column('execution_time_ms', sa.Integer, nullable=True),  # Execution time in milliseconds
         sa.Column('memory_usage_mb', sa.Integer, nullable=True),  # Peak memory usage
-        sa.Column('cpu_usage_percent', sa.Decimal(5,2), nullable=True),  # CPU utilization
+        sa.Column('cpu_usage_percent', sa.Numeric(5,2), nullable=True),  # CPU utilization
         sa.Column('disk_usage_mb', sa.Integer, nullable=True),  # Disk space used
         sa.Column('network_attempts', sa.Integer, nullable=False, server_default='0'),  # Network access attempts (should be 0)
         sa.Column('security_violations', postgresql.JSON, nullable=True, server_default='[]'),  # Security issues detected
@@ -190,7 +164,7 @@ def upgrade() -> None:
         sa.Column('improvement_suggestions', postgresql.JSON, nullable=True, server_default='[]'),
         sa.Column('user_preferences', postgresql.JSON, nullable=True, server_default='{}'),  # Learned user preferences
         sa.Column('project_conventions', postgresql.JSON, nullable=True, server_default='{}'),  # Project-specific conventions
-        sa.Column('impact_score', sa.Decimal(3,2), nullable=True),  # 0.0 to 1.0 impact assessment
+        sa.Column('impact_score', sa.Numeric(3,2), nullable=True),  # 0.0 to 1.0 impact assessment
         sa.Column('applied_to_learning', sa.Boolean, nullable=False, server_default='false'),
         sa.Column('feedback_metadata', postgresql.JSON, nullable=True, server_default='{}'),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), index=True),
@@ -209,7 +183,7 @@ def upgrade() -> None:
     op.create_index('idx_modification_metrics_improvement', 'modification_metrics', ['improvement_percentage', 'measured_at'])
     op.create_index('idx_sandbox_executions_type_exit_code', 'sandbox_executions', ['execution_type', 'exit_code'])
     op.create_index('idx_sandbox_executions_security_violations', 'sandbox_executions', ['modification_id'], 
-                    postgresql_where=sa.text("jsonb_array_length(security_violations) > 0"))
+                    postgresql_where=sa.text("jsonb_array_length(security_violations::jsonb) > 0"))
     op.create_index('idx_sandbox_executions_performance', 'sandbox_executions', ['execution_time_ms', 'memory_usage_mb'])
     op.create_index('idx_modification_feedback_source_type', 'modification_feedback', ['feedback_source', 'feedback_type'])
     op.create_index('idx_modification_feedback_rating', 'modification_feedback', ['rating', 'created_at'])
@@ -220,7 +194,7 @@ def upgrade() -> None:
     op.create_index('idx_applied_modifications', 'code_modifications', ['applied_at', 'performance_impact'], 
                     postgresql_where=sa.text("applied_at IS NOT NULL"))
     op.create_index('idx_failed_executions', 'sandbox_executions', ['modification_id', 'executed_at'], 
-                    postgresql_where=sa.text("exit_code != 0 OR jsonb_array_length(security_violations) > 0"))
+                    postgresql_where=sa.text("exit_code != 0 OR jsonb_array_length(security_violations::jsonb) > 0"))
 
 
 def downgrade() -> None:
