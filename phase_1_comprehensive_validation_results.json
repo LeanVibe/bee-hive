@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-07-30T06:56:01.013364",
+  "timestamp": "2025-07-30T10:02:56.768353",
   "test_suite_version": "1.0",
   "overall_success": false,
   "infrastructure_tests": {
@@ -11,17 +11,17 @@
   "redis_streams_tests": {
     "basic_operations": {
       "success": false,
-      "latency_ms": 4.889726638793945,
+      "latency_ms": 8.974790573120117,
       "messages_created": 1
     },
     "consumer_groups": {
       "success": true,
-      "latency_ms": 0.6430149078369141,
+      "latency_ms": 1.8999576568603516,
       "messages_consumed": 4
     },
     "throughput": {
       "success": true,
-      "messages_per_second": 7232.805656147611,
+      "messages_per_second": 6945.361814870012,
       "test_message_count": 50
     },
     "stream_management": {
@@ -38,9 +38,9 @@
   },
   "multi_agent_coordination_tests": {},
   "performance_benchmarks": {
-    "redis_basic_operations_ms": 4.889726638793945,
-    "redis_consumer_groups_ms": 0.6430149078369141,
-    "message_throughput_per_second": 7232.805656147611
+    "redis_basic_operations_ms": 8.974790573120117,
+    "redis_consumer_groups_ms": 1.8999576568603516,
+    "message_throughput_per_second": 6945.361814870012
   },
   "total_test_categories": 5,
   "passed_categories": 3,
