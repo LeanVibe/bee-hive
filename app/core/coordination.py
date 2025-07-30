@@ -797,14 +797,18 @@ class MultiAgentCoordinator:
     async def initialize(self):
         """Initialize the coordination engine."""
         
-        # Initialize message bus
-        self.coordination_bus = get_message_broker()
-        
-        # Register for agent events
-        await self.coordination_bus.subscribe("agent_events", self._handle_agent_event)
-        await self.coordination_bus.subscribe("project_updates", self._handle_project_update)
-        
-        logger.info("Multi-Agent Coordination Engine initialized")
+        try:
+            # Initialize message bus
+            self.coordination_bus = get_message_broker()
+            
+            # Note: The coordination bus from redis.py doesn't have a subscribe method
+            # The message bus is for sending messages, not subscribing to them
+            # We'll handle events through the orchestrator instead
+            
+            logger.info("Multi-Agent Coordination Engine initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize coordination engine: {e}")
+            raise
     
     async def create_coordinated_project(
         self,

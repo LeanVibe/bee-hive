@@ -59,9 +59,15 @@ class RedisStreamMessage:
         """Get the message payload."""
         payload_str = self.fields.get('payload', '{}')
         try:
-            return json.loads(payload_str) if isinstance(payload_str, str) else payload_str
+            if isinstance(payload_str, str):
+                # Try JSON parsing first
+                result = json.loads(payload_str)
+                return result if isinstance(result, dict) else {'data': result}
+            else:
+                return {'data': payload_str}
         except json.JSONDecodeError:
-            return {}
+            # If JSON parsing fails, treat as string data
+            return {'data': payload_str}
     
     @property
     def correlation_id(self) -> str:
@@ -93,23 +99,48 @@ class AgentMessageBroker:
         message_id = str(uuid.uuid4())
         correlation_id = correlation_id or str(uuid.uuid4())
         
+        # Properly serialize payload to ensure Redis compatibility
+        try:
+            serialized_payload = self._serialize_for_redis(payload)
+        except Exception as e:
+            logger.error(f"Failed to serialize payload for Redis: {e}", payload_type=type(payload))
+            raise ValueError(f"Invalid payload for Redis serialization: {e}")
+        
         message_data = {
             'message_id': message_id,
             'from_agent': from_agent,
             'to_agent': to_agent,
             'type': message_type,
-            'payload': json.dumps(payload),
+            'payload': serialized_payload,
             'correlation_id': correlation_id,
             'timestamp': datetime.utcnow().isoformat()
         }
         
-        # Send to agent-specific stream
+        # Send to agent-specific stream with retry logic
         stream_name = f"agent_messages:{to_agent}"
-        stream_id = await self.redis.xadd(
-            stream_name,
-            message_data,
-            maxlen=settings.REDIS_STREAM_MAX_LEN
-        )
+        max_retries = 3
+        retry_delay = 0.1
+        
+        for attempt in range(max_retries):
+            try:
+                stream_id = await self.redis.xadd(
+                    stream_name,
+                    message_data,
+                    maxlen=settings.REDIS_STREAM_MAX_LEN
+                )
+                break  # Success, exit retry loop
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"Redis stream write attempt {attempt + 1} failed, retrying: {e}",
+                        stream_name=stream_name,
+                        retry_delay=retry_delay
+                    )
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error(f"Failed to add message to Redis stream after {max_retries} attempts: {e}", stream_name=stream_name)
+                    raise
         
         # Also publish to real-time pub/sub for immediate notifications
         await self.redis.publish(f"agent_events:{to_agent}", json.dumps(message_data))
@@ -137,22 +168,46 @@ class AgentMessageBroker:
         message_id = str(uuid.uuid4())
         correlation_id = correlation_id or str(uuid.uuid4())
         
+        # Properly serialize payload to ensure Redis compatibility
+        try:
+            serialized_payload = self._serialize_for_redis(payload)
+        except Exception as e:
+            logger.error(f"Failed to serialize broadcast payload for Redis: {e}", payload_type=type(payload))
+            raise ValueError(f"Invalid payload for Redis serialization: {e}")
+        
         message_data = {
             'message_id': message_id,
             'from_agent': from_agent,
             'to_agent': 'broadcast',
             'type': message_type,
-            'payload': json.dumps(payload),
+            'payload': serialized_payload,
             'correlation_id': correlation_id,
             'timestamp': datetime.utcnow().isoformat()
         }
         
-        # Send to broadcast stream
-        stream_id = await self.redis.xadd(
-            "agent_messages:broadcast",
-            message_data,
-            maxlen=settings.REDIS_STREAM_MAX_LEN
-        )
+        # Send to broadcast stream with retry logic
+        max_retries = 3
+        retry_delay = 0.1
+        
+        for attempt in range(max_retries):
+            try:
+                stream_id = await self.redis.xadd(
+                    "agent_messages:broadcast",
+                    message_data,
+                    maxlen=settings.REDIS_STREAM_MAX_LEN
+                )
+                break  # Success, exit retry loop
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        f"Redis broadcast write attempt {attempt + 1} failed, retrying: {e}",
+                        retry_delay=retry_delay
+                    )
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error(f"Failed to add broadcast message to Redis stream after {max_retries} attempts: {e}")
+                    raise
         
         # Publish to system events
         await self.redis.publish("system_events", json.dumps(message_data))
@@ -282,11 +337,11 @@ class AgentMessageBroker:
         try:
             coordination_key = f"workflow_coordination:{workflow_id}"
             
-            # Store workflow coordination data
+            # Store workflow coordination data with proper serialization
             coordination_data = {
                 'workflow_id': workflow_id,
-                'tasks': json.dumps(tasks),
-                'agent_assignments': json.dumps(agent_assignments),
+                'tasks': self._serialize_for_redis(tasks),
+                'agent_assignments': self._serialize_for_redis(agent_assignments),
                 'created_at': datetime.utcnow().isoformat(),
                 'status': 'coordinating'
             }
@@ -352,7 +407,7 @@ class AgentMessageBroker:
                         if agent_id:
                             sync_responses[agent_id] = {
                                 'status': fields.get('status'),
-                                'data': json.loads(fields.get('data', '{}')),
+                                'data': self._deserialize_from_redis(fields.get('data', '{}')),
                                 'timestamp': fields.get('timestamp')
                             }
                 
@@ -360,8 +415,8 @@ class AgentMessageBroker:
                 coordination_key = f"workflow_coordination:{workflow_id}"
                 coordination_data = await self.redis.hgetall(coordination_key)
                 if coordination_data:
-                    agent_assignments = json.loads(coordination_data.get('agent_assignments', '{}'))
-                    expected_agents = set(agent_assignments.values())
+                    agent_assignments = self._deserialize_from_redis(coordination_data.get('agent_assignments', '{}'))
+                    expected_agents = set(agent_assignments.values()) if isinstance(agent_assignments, dict) else set()
                     
                     if set(sync_responses.keys()) >= expected_agents:
                         break
@@ -412,6 +467,83 @@ class AgentMessageBroker:
         except Exception as e:
             logger.error(f"❌ Failed to handle agent failure", error=str(e))
             return False
+    
+    def _serialize_for_redis(self, data: Any) -> str:
+        """
+        Serialize data for Redis storage with proper type handling.
+        
+        Handles complex Python data types that need to be serialized as strings
+        for Redis compatibility.
+        
+        Args:
+            data: Data to serialize (dict, list, str, int, float, bool, None)
+            
+        Returns:
+            String representation suitable for Redis storage
+            
+        Raises:
+            ValueError: If data contains unsupported types
+        """
+        try:
+            # Handle None
+            if data is None:
+                return ""
+            
+            # Handle simple types that Redis accepts directly
+            if isinstance(data, (str, int, float, bool)):
+                return str(data)
+            
+            # Handle complex types that need JSON serialization
+            if isinstance(data, (dict, list, tuple)):
+                return json.dumps(data, default=self._json_serializer, separators=(',', ':'))
+            
+            # For other types, try to convert to string
+            return str(data)
+            
+        except (TypeError, ValueError) as e:
+            logger.error(f"Serialization error: {e}", data_type=type(data))
+            raise ValueError(f"Cannot serialize data of type {type(data)}: {e}")
+    
+    def _json_serializer(self, obj: Any) -> str:
+        """
+        Custom JSON serializer for complex Python objects.
+        
+        Handles datetime, UUID, and other common objects that need
+        special serialization for Redis storage.
+        """
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        elif hasattr(obj, '__dict__'):
+            # Handle objects with dictionaries (like dataclasses)
+            return obj.__dict__
+        elif hasattr(obj, '_asdict'):
+            # Handle namedtuples
+            return obj._asdict()
+        else:
+            # Fallback to string representation
+            return str(obj)
+    
+    def _deserialize_from_redis(self, data: str) -> Any:
+        """
+        Deserialize data retrieved from Redis.
+        
+        Attempts to parse JSON first, falls back to string if parsing fails.
+        
+        Args:
+            data: String data from Redis
+            
+        Returns:
+            Deserialized Python object
+        """
+        try:
+            if not data:
+                return None
+            
+            # Try JSON deserialization first
+            return json.loads(data)
+        except (json.JSONDecodeError, ValueError):
+            # If JSON parsing fails, return as string
+            return data
 
 
 class SessionCache:
