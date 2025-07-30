@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-07-30T03:53:03.694588",
+  "infrastructure_tests": {
+    "postgres": true,
+    "redis": false
+  },
+  "api_endpoints_tests": {
+    "/health": {
+      "method": "GET",
+      "success": false,
+      "note": "Server not accessible for testing",
+      "response_time_ms": 0
+    },
+    "/status": {
+      "method": "GET",
+      "success": false,
+      "note": "Server not accessible for testing",
+      "response_time_ms": 0
+    },
+    "/metrics": {
+      "method": "GET",
+      "success": false,
+      "note": "Server not accessible for testing",
+      "response_time_ms": 0
+    }
+  },
+  "redis_communication_tests": {
+    "basic_operations": {
+      "success": true,
+      "latency_ms": 5.447864532470703
+    },
+    "streams": {
+      "success": true,
+      "latency_ms": 0.5712509155273438
+    }
+  },
+  "performance_metrics": {
+    "redis_basic_latency_ms": 5.447864532470703,
+    "redis_streams_latency_ms": 0.5712509155273438
+  },
+  "overall_success": false,
+  "recommendations": [],
+  "critical_issues": [
+    "Infrastructure components failing: redis"
+  ]
+}

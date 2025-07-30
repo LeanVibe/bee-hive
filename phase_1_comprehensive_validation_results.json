@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-07-30T06:56:01.013364",
+  "test_suite_version": "1.0",
+  "overall_success": false,
+  "infrastructure_tests": {
+    "postgres": true,
+    "pgvector": true,
+    "redis": true,
+    "docker_services": true
+  },
+  "redis_streams_tests": {
+    "basic_operations": {
+      "success": false,
+      "latency_ms": 4.889726638793945,
+      "messages_created": 1
+    },
+    "consumer_groups": {
+      "success": true,
+      "latency_ms": 0.6430149078369141,
+      "messages_consumed": 4
+    },
+    "throughput": {
+      "success": true,
+      "messages_per_second": 7232.805656147611,
+      "test_message_count": 50
+    },
+    "stream_management": {
+      "success": true,
+      "final_stream_length": 5
+    }
+  },
+  "dashboard_integration_tests": {
+    "frontend_structure": true,
+    "realtime_components": true,
+    "coordination_dashboard": true,
+    "integration_tests": true,
+    "build_system": true
+  },
+  "multi_agent_coordination_tests": {},
+  "performance_benchmarks": {
+    "redis_basic_operations_ms": 4.889726638793945,
+    "redis_consumer_groups_ms": 0.6430149078369141,
+    "message_throughput_per_second": 7232.805656147611
+  },
+  "total_test_categories": 5,
+  "passed_categories": 3,
+  "critical_issues": [
+    "Redis Streams issues: basic_operations"
+  ],
+  "recommendations": [
+    "\ud83d\udd27 System needs significant work before production"
+  ],
+  "phase_1_readiness": "NEEDS_WORK"
+}
