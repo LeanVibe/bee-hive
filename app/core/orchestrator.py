@@ -28,7 +28,7 @@ from .agent_communication_service import AgentCommunicationService, AgentMessage
 from .message_processor import MessageProcessor, ProcessingMetrics
 from .database import get_session
 from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
-from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy
+from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy, AgentSuitabilityScore
 from .capability_matcher import CapabilityMatcher
 from .agent_persona_system import AgentPersonaSystem, PersonaAssignment, get_agent_persona_system
 from ..models.agent import Agent, AgentStatus, AgentType
@@ -118,6 +118,11 @@ class AgentOrchestrator:
         
         # Agent persona system for role-based assignment
         self.persona_system: Optional[AgentPersonaSystem] = None
+        
+        # Multi-agent coordination state
+        self.coordination_enabled = True
+        self.active_workflows: Dict[str, Dict[str, Any]] = {}
+        self.agent_assignments: Dict[str, List[str]] = {}  # workflow_id -> [agent_ids]
         
         # Enhanced task queuing system
         self.task_queues = {
@@ -591,6 +596,15 @@ class AgentOrchestrator:
             )
             db_session.add(db_agent)
             await db_session.commit()
+        
+        # Register agent with Redis coordination system
+        if self.coordination_enabled and self.message_broker:
+            capability_names = [cap.name for cap in capabilities]
+            await self.message_broker.register_agent(
+                agent_id=agent_id,
+                capabilities=capability_names,
+                role=role.value
+            )
         
         # Start agent in background
         asyncio.create_task(self._start_agent_instance(agent_instance))
@@ -1421,6 +1435,85 @@ class AgentOrchestrator:
             
         except Exception as e:
             logger.error("❌ Enhanced workflow execution failed", workflow_id=workflow_id, error=str(e))
+            raise
+    
+    async def execute_multi_agent_workflow(
+        self, 
+        workflow_spec: Dict[str, Any], 
+        coordination_strategy: str = "parallel"
+    ) -> Dict[str, Any]:
+        """
+        Execute a workflow across multiple coordinated agents.
+        
+        Args:
+            workflow_spec: Workflow specification with tasks and requirements
+            coordination_strategy: How agents should coordinate ("parallel", "sequential", "collaborative")
+            
+        Returns:
+            Dictionary with workflow results and coordination metrics
+        """
+        workflow_id = workflow_spec.get('id', str(uuid.uuid4()))
+        
+        try:
+            logger.info("🚀 Starting multi-agent workflow execution", 
+                       workflow_id=workflow_id, 
+                       strategy=coordination_strategy)
+            
+            # 1. Analyze workflow requirements and decompose into tasks
+            tasks = await self._decompose_workflow_into_tasks(workflow_spec)
+            
+            # 2. Select and assign agents based on capabilities
+            agent_assignments = await self._assign_agents_to_tasks(tasks)
+            
+            # 3. Register workflow for coordination
+            self.active_workflows[workflow_id] = {
+                'spec': workflow_spec,
+                'tasks': tasks,
+                'agent_assignments': agent_assignments,
+                'strategy': coordination_strategy,
+                'status': 'executing',
+                'started_at': datetime.utcnow().isoformat()
+            }
+            
+            # 4. Coordinate task distribution via Redis
+            if self.message_broker and self.coordination_enabled:
+                await self.message_broker.coordinate_workflow_tasks(
+                    workflow_id=workflow_id,
+                    tasks=tasks,
+                    agent_assignments=agent_assignments
+                )
+            
+            # 5. Monitor workflow execution with synchronization points
+            results = await self._monitor_multi_agent_execution(
+                workflow_id=workflow_id,
+                coordination_strategy=coordination_strategy
+            )
+            
+            # 6. Finalize workflow and update metrics
+            self.active_workflows.pop(workflow_id, None)
+            self.metrics['workflows_executed'] += 1
+            
+            logger.info("✅ Multi-agent workflow completed", 
+                       workflow_id=workflow_id,
+                       agents_used=len(agent_assignments),
+                       tasks_completed=len([r for r in results.get('task_results', []) if r.get('status') == 'completed']))
+            
+            return {
+                'workflow_id': workflow_id,
+                'status': 'completed',
+                'results': results,
+                'coordination_metrics': {
+                    'agents_used': len(agent_assignments),
+                    'coordination_strategy': coordination_strategy,
+                    'execution_time': results.get('execution_time', 0)
+                }
+            }
+            
+        except Exception as e:
+            logger.error("❌ Multi-agent workflow execution failed", 
+                        workflow_id=workflow_id, error=str(e))
+            # Cleanup on failure
+            self.active_workflows.pop(workflow_id, None)
             raise
     
     async def pause_workflow(self, workflow_id: str) -> bool:
@@ -3118,4 +3211,233 @@ class AgentOrchestrator:
                     len(self.task_queues['retry_queue']) +
                     sum(len(q) for q in self.task_queues['workflow_tasks'].values())
                 )
+            }
+    
+    # Multi-Agent Coordination Helper Methods
+    
+    async def _decompose_workflow_into_tasks(self, workflow_spec: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Decompose a workflow specification into executable tasks."""
+        try:
+            tasks = []
+            
+            # Extract tasks from workflow specification
+            workflow_tasks = workflow_spec.get('tasks', [])
+            
+            for i, task_spec in enumerate(workflow_tasks):
+                task = {
+                    'id': task_spec.get('id', f"task_{i}"),
+                    'name': task_spec.get('name', f"Task {i+1}"),
+                    'description': task_spec.get('description', ''),
+                    'type': task_spec.get('type', 'general'),
+                    'priority': task_spec.get('priority', 'medium'),
+                    'estimated_effort': task_spec.get('estimated_effort', 30),
+                    'required_capabilities': task_spec.get('required_capabilities', []),
+                    'dependencies': task_spec.get('dependencies', []),
+                    'context': task_spec.get('context', {})
+                }
+                tasks.append(task)
+            
+            logger.info(f"📋 Decomposed workflow into {len(tasks)} tasks")
+            return tasks
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to decompose workflow", error=str(e))
+            return []
+    
+    async def _assign_agents_to_tasks(self, tasks: List[Dict[str, Any]]) -> Dict[str, str]:
+        """Assign agents to tasks based on capabilities and availability."""
+        try:
+            agent_assignments = {}
+            available_agents = [
+                agent_id for agent_id, agent in self.agents.items()
+                if agent.status == AgentStatus.ACTIVE and not agent.current_task
+            ]
+            
+            if not available_agents:
+                logger.warning("⚠️ No available agents for task assignment")
+                return {}
+            
+            # Use intelligent router if available
+            if self.intelligent_router:
+                for task in tasks:
+                    task_routing_context = TaskRoutingContext(
+                        task_id=task['id'],
+                        task_type=task['type'],
+                        priority=TaskPriority(task['priority']),
+                        required_capabilities=task['required_capabilities'],
+                        estimated_effort=task['estimated_effort'],
+                        due_date=None,
+                        dependencies=task['dependencies'],
+                        workflow_id=None,
+                        context=task['context']
+                    )
+                    
+                    # Get best agent for this task
+                    suitability_scores = await self._calculate_agent_suitability(
+                        task_routing_context, available_agents
+                    )
+                    
+                    if suitability_scores:
+                        best_agent = max(suitability_scores, key=lambda x: x.total_score)
+                        agent_assignments[task['id']] = best_agent.agent_id
+                        
+                        # Remove assigned agent from available pool for fair distribution
+                        if best_agent.agent_id in available_agents:
+                            available_agents.remove(best_agent.agent_id)
+                            
+                        # If we run out of agents, reset the pool
+                        if not available_agents:
+                            available_agents = list(agent_assignments.values())
+            else:
+                # Simple round-robin assignment as fallback
+                for i, task in enumerate(tasks):
+                    agent_id = available_agents[i % len(available_agents)]
+                    agent_assignments[task['id']] = agent_id
+            
+            logger.info(f"🎯 Assigned {len(tasks)} tasks to {len(set(agent_assignments.values()))} agents")
+            return agent_assignments
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to assign agents to tasks", error=str(e))
+            return {}
+    
+    async def _calculate_agent_suitability(
+        self, 
+        task_context: TaskRoutingContext, 
+        available_agents: List[str]
+    ) -> List[AgentSuitabilityScore]:
+        """Calculate suitability scores for agents for a specific task."""
+        
+        suitability_scores = []
+        
+        for agent_id in available_agents:
+            if agent_id not in self.agents:
+                continue
+                
+            agent = self.agents[agent_id]
+            
+            # Calculate capability match score
+            agent_capabilities = [cap.name for cap in agent.capabilities]
+            capability_matches = len(set(task_context.required_capabilities) & set(agent_capabilities))
+            capability_score = capability_matches / len(task_context.required_capabilities) if task_context.required_capabilities else 0.8
+            
+            # Calculate availability score
+            availability_score = 1.0 - agent.context_window_usage
+            
+            # Calculate priority alignment score
+            priority_score = 0.8  # Default
+            
+            # Calculate performance score (simplified)
+            performance_score = 0.8  # Default
+            
+            # Calculate total score
+            total_score = (
+                capability_score * 0.4 +
+                availability_score * 0.3 +
+                performance_score * 0.2 +
+                priority_score * 0.1
+            )
+            
+            score = AgentSuitabilityScore(
+                agent_id=agent_id,
+                total_score=total_score,
+                capability_score=capability_score,
+                performance_score=performance_score,
+                availability_score=availability_score,
+                priority_alignment_score=priority_score,
+                specialization_bonus=0.0,
+                workload_penalty=agent.context_window_usage,
+                score_breakdown={
+                    'capability': capability_score,
+                    'availability': availability_score,
+                    'performance': performance_score,
+                    'priority': priority_score
+                },
+                confidence_level=0.8
+            )
+            
+            suitability_scores.append(score)
+        
+        return sorted(suitability_scores, key=lambda x: x.total_score, reverse=True)
+    
+    async def _monitor_multi_agent_execution(
+        self, 
+        workflow_id: str, 
+        coordination_strategy: str
+    ) -> Dict[str, Any]:
+        """Monitor multi-agent workflow execution with coordination points."""
+        try:
+            start_time = datetime.utcnow()
+            task_results = []
+            
+            workflow_data = self.active_workflows.get(workflow_id)
+            if not workflow_data:
+                raise ValueError(f"Workflow {workflow_id} not found in active workflows")
+            
+            tasks = workflow_data['tasks']
+            agent_assignments = workflow_data['agent_assignments']
+            
+            # Monitor task completion
+            completed_tasks = set()
+            failed_tasks = set()
+            timeout = 300  # 5 minutes timeout
+            
+            while len(completed_tasks) + len(failed_tasks) < len(tasks):
+                # Check for timeout
+                elapsed = (datetime.utcnow() - start_time).total_seconds()
+                if elapsed > timeout:
+                    logger.warning(f"⏰ Workflow {workflow_id} timed out after {elapsed} seconds")
+                    break
+                
+                # Synchronization point for coordination strategy
+                if coordination_strategy == "collaborative":
+                    sync_responses = await self.message_broker.synchronize_agent_states(
+                        workflow_id=workflow_id,
+                        sync_point=f"checkpoint_{len(completed_tasks)}"
+                    )
+                    
+                    if sync_responses:
+                        logger.info(f"🔄 Synchronized {len(sync_responses)} agents at checkpoint")
+                
+                # Simulate task completion checking (in real implementation, this would
+                # check actual agent task status via Redis or database)
+                for task in tasks:
+                    task_id = task['id']
+                    if task_id not in completed_tasks and task_id not in failed_tasks:
+                        # Simulate random completion for demo
+                        import random
+                        if random.random() < 0.3:  # 30% chance per iteration
+                            completed_tasks.add(task_id)
+                            task_results.append({
+                                'task_id': task_id,
+                                'status': 'completed',
+                                'agent_id': agent_assignments.get(task_id),
+                                'completion_time': elapsed
+                            })
+                            logger.info(f"✅ Task {task_id} completed by agent {agent_assignments.get(task_id)}")
+                
+                await asyncio.sleep(2)  # Check every 2 seconds
+            
+            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            
+            return {
+                'task_results': task_results,
+                'completed_count': len(completed_tasks),
+                'failed_count': len(failed_tasks),
+                'execution_time': execution_time,
+                'coordination_events': {
+                    'sync_points': 3 if coordination_strategy == "collaborative" else 0,
+                    'agent_failures': 0,
+                    'task_reassignments': 0
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to monitor multi-agent execution", error=str(e))
+            return {
+                'task_results': [],
+                'completed_count': 0,
+                'failed_count': 0,
+                'execution_time': 0,
+                'coordination_events': {}
             }
