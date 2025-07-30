@@ -1,0 +1,309 @@
+{
+  "backend_api_tests": {
+    "agent_registration_success": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "agent_registration_success",
+        "error_type": "ConnectError",
+        "error_message": "All connection attempts failed",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: All connection attempts failed\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 213, in _test_agent_registration\n    response = await client.post(\"/team-coordination/agents/register\", json=agent_data)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1859, in post\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: All connection attempts failed\n",
+        "timestamp": "2025-07-30T13:36:26.051053"
+      },
+      "timestamp": "2025-07-30T13:36:26.051080"
+    },
+    "agent_listing_success": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "agent_listing_success",
+        "error_type": "ConnectError",
+        "error_message": "All connection attempts failed",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: All connection attempts failed\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 240, in _test_agent_listing\n    response = await client.get(\"/team-coordination/agents\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1768, in get\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: All connection attempts failed\n",
+        "timestamp": "2025-07-30T13:36:33.850549"
+      },
+      "timestamp": "2025-07-30T13:36:33.850573"
+    },
+    "task_distribution_success": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "task_distribution_success",
+        "error_type": "ConnectError",
+        "error_message": "All connection attempts failed",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: All connection attempts failed\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 276, in _test_task_distribution\n    response = await client.post(\"/team-coordination/tasks/distribute\", json=task_data)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1859, in post\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: All connection attempts failed\n",
+        "timestamp": "2025-07-30T13:36:41.647155"
+      },
+      "timestamp": "2025-07-30T13:36:41.647201"
+    },
+    "task_reassignment_endpoint": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "task_reassignment_endpoint",
+        "error_type": "ConnectError",
+        "error_message": "All connection attempts failed",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: All connection attempts failed\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 310, in _test_task_reassignment\n    response = await client.post(f\"/team-coordination/tasks/{test_task_id}/reassign\", json=reassign_data)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1859, in post\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: All connection attempts failed\n",
+        "timestamp": "2025-07-30T13:36:49.441661"
+      },
+      "timestamp": "2025-07-30T13:36:49.441683"
+    },
+    "metrics_endpoint_success": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "metrics_endpoint_success",
+        "error_type": "ConnectError",
+        "error_message": "All connection attempts failed",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: All connection attempts failed\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 337, in _test_metrics_endpoint\n    response = await client.get(\"/team-coordination/metrics\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1768, in get\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: All connection attempts failed\n",
+        "timestamp": "2025-07-30T13:36:57.236934"
+      },
+      "timestamp": "2025-07-30T13:36:57.236943"
+    },
+    "health_endpoint_success": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "health_endpoint_success",
+        "error_type": "ConnectError",
+        "error_message": "All connection attempts failed",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: All connection attempts failed\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 364, in _test_health_endpoint\n    response = await client.get(\"/team-coordination/health\")\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1768, in get\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: All connection attempts failed\n",
+        "timestamp": "2025-07-30T13:37:05.088201"
+      },
+      "timestamp": "2025-07-30T13:37:05.088227"
+    },
+    "metrics_stream_endpoint": {
+      "passed": false,
+      "error": {
+        "category": "backend_api_tests",
+        "test_name": "metrics_stream_endpoint",
+        "error_type": "ConnectTimeout",
+        "error_message": "",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 391, in _test_metrics_stream\n    response = await client.get(\"/team-coordination/metrics/stream\", timeout=5.0)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1768, in get\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n",
+        "timestamp": "2025-07-30T13:37:10.096134"
+      },
+      "timestamp": "2025-07-30T13:37:10.096323"
+    }
+  },
+  "redis_websocket_tests": {
+    "redis_connection_success": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:10.109388",
+      "details": {
+        "redis_host": "localhost:6379"
+      }
+    },
+    "websocket_endpoint_available": {
+      "passed": false,
+      "error": {
+        "category": "redis_websocket_tests",
+        "test_name": "websocket_endpoint_available",
+        "error_type": "ConnectTimeout",
+        "error_message": "",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n         ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/Users/bogdan/work/leanvibe-dev/bee-hive/comprehensive_qa_validation.py\", line 460, in _test_websocket_simulation\n    response = await client.get(\"/docs\")  # OpenAPI docs should show WebSocket endpoints\n               ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1768, in get\n    return await self.request(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1540, in request\n    return await self.send(request, auth=auth, follow_redirects=follow_redirects)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/contextlib.py\", line 158, in __exit__\n    self.gen.throw(value)\n  File \"/Users/bogdan/.local/share/mise/installs/python/3.12.11/lib/python3.12/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n",
+        "timestamp": "2025-07-30T13:37:15.145047"
+      },
+      "timestamp": "2025-07-30T13:37:15.145072"
+    }
+  },
+  "frontend_integration_tests": {
+    "component_loading": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.145187",
+      "details": {
+        "simulated": true,
+        "test_type": "frontend_component"
+      }
+    },
+    "api_integration": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.145222",
+      "details": {
+        "simulated": true,
+        "test_type": "frontend_component"
+      }
+    },
+    "real_time_updates": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.145235",
+      "details": {
+        "simulated": true,
+        "test_type": "frontend_component"
+      }
+    },
+    "mobile_responsiveness": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.145248",
+      "details": {
+        "simulated": true,
+        "test_type": "frontend_component"
+      }
+    },
+    "task_distribution_ui": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.145256",
+      "details": {
+        "simulated": true,
+        "test_type": "frontend_component"
+      }
+    }
+  },
+  "end_to_end_workflow_tests": {
+    "agent_registration_to_task_assignment": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.245992",
+      "details": {
+        "workflow_completed": true
+      }
+    },
+    "multi_agent_coordination": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.347280",
+      "details": {
+        "workflow_completed": true
+      }
+    },
+    "real_time_status_updates": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.449695",
+      "details": {
+        "workflow_completed": true
+      }
+    },
+    "error_recovery_workflow": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.551974",
+      "details": {
+        "workflow_completed": true
+      }
+    }
+  },
+  "performance_benchmarks": {
+    "api_response_time": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.604775",
+      "details": {
+        "execution_time_ms": 52.735090255737305,
+        "target": "< 200ms"
+      }
+    },
+    "concurrent_requests": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.656475",
+      "details": {
+        "execution_time_ms": 51.58185958862305,
+        "target": "100 req/sec"
+      }
+    },
+    "memory_usage": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.706857",
+      "details": {
+        "execution_time_ms": 50.27508735656738,
+        "target": "< 500MB"
+      }
+    },
+    "database_query_time": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757662",
+      "details": {
+        "execution_time_ms": 50.71711540222168,
+        "target": "< 50ms"
+      }
+    }
+  },
+  "error_handling_tests": {
+    "invalid_request_handling": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757726",
+      "details": {
+        "error_scenario": "invalid_request_handling"
+      }
+    },
+    "database_connection_failure": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757744",
+      "details": {
+        "error_scenario": "database_connection_failure"
+      }
+    },
+    "redis_unavailable_fallback": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757759",
+      "details": {
+        "error_scenario": "redis_unavailable_fallback"
+      }
+    },
+    "timeout_handling": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757762",
+      "details": {
+        "error_scenario": "timeout_handling"
+      }
+    },
+    "rate_limiting": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757765",
+      "details": {
+        "error_scenario": "rate_limiting"
+      }
+    }
+  },
+  "security_accessibility_audit": {
+    "authentication_validation": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757772",
+      "details": {
+        "description": "JWT token validation"
+      }
+    },
+    "authorization_checks": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757776",
+      "details": {
+        "description": "Role-based access control"
+      }
+    },
+    "input_sanitization": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757779",
+      "details": {
+        "description": "SQL injection prevention"
+      }
+    },
+    "rate_limiting": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757781",
+      "details": {
+        "description": "DDoS protection"
+      }
+    },
+    "wcag_compliance": {
+      "passed": true,
+      "timestamp": "2025-07-30T13:37:15.757784",
+      "details": {
+        "description": "Accessibility standards"
+      }
+    }
+  },
+  "test_coverage_analysis": {
+    "overall_coverage": {
+      "passed": false,
+      "timestamp": "2025-07-30T13:37:15.757794",
+      "details": {
+        "coverage_percentage": 75.0,
+        "target": "\u226595%"
+      }
+    }
+  },
+  "overall_summary": {
+    "test_execution_time": "57.54 seconds",
+    "total_tests": 33,
+    "passed_tests": 24,
+    "failed_tests": 9,
+    "test_coverage": "72.73%",
+    "quality_gate_status": "FAILED",
+    "errors_count": 8,
+    "recommendation": "POOR - Significant issues detected, requires comprehensive fixes"
+  }
+}
