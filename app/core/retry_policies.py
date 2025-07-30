@@ -11,7 +11,7 @@ Production-ready retry policies with exponential backoff and jitter:
 
 import asyncio
 import time
-import random
+import secrets  # Secure random for jitter calculation
 import math
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union, Callable, Type
@@ -148,12 +148,14 @@ class RetryPolicy(ABC):
             return delay_ms
         
         elif self.config.jitter_type == JitterType.FULL:
-            # Random between 0 and delay
-            return random.uniform(0, delay_ms)
+            # Secure random between 0 and delay
+            return secrets.randbelow(int(delay_ms * 1000)) / 1000.0
         
         elif self.config.jitter_type == JitterType.EQUAL:
-            # Random between delay/2 and delay
-            return random.uniform(delay_ms / 2, delay_ms)
+            # Secure random between delay/2 and delay
+            min_delay = delay_ms / 2
+            range_size = delay_ms - min_delay
+            return min_delay + (secrets.randbelow(int(range_size * 1000)) / 1000.0)
         
         elif self.config.jitter_type == JitterType.DECORRELATED:
             # Decorrelated jitter algorithm
@@ -161,10 +163,10 @@ class RetryPolicy(ABC):
                 self._last_delay = delay_ms
             
             # sleep = min(cap, random_between(base, last_sleep * 3))
-            jittered_delay = random.uniform(
-                self.config.base_delay_ms,
-                min(self.config.max_delay_ms, self._last_delay * 3)
-            )
+            min_delay = self.config.base_delay_ms
+            max_delay = min(self.config.max_delay_ms, self._last_delay * 3)
+            range_size = max_delay - min_delay
+            jittered_delay = min_delay + (secrets.randbelow(int(range_size * 1000)) / 1000.0)
             self._last_delay = jittered_delay
             return jittered_delay
         

@@ -5,6 +5,7 @@ Implements OAuth 2.0/OIDC endpoints, permission checking APIs,
 and comprehensive audit query interfaces.
 """
 
+import os
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
@@ -40,42 +41,60 @@ router = APIRouter(prefix="/security", tags=["security"])
 security = HTTPBearer(auto_error=False)
 
 
+# Global service instances (initialized at startup)
+_identity_service: Optional[AgentIdentityService] = None
+_authorization_engine: Optional[AuthorizationEngine] = None
+_audit_logger: Optional[AuditLogger] = None
+_secret_manager: Optional[SecretManager] = None
+
+def initialize_security_services(
+    identity_service: AgentIdentityService,
+    authorization_engine: AuthorizationEngine,
+    audit_logger: AuditLogger,
+    secret_manager: SecretManager
+):
+    """Initialize security services at application startup."""
+    global _identity_service, _authorization_engine, _audit_logger, _secret_manager
+    _identity_service = identity_service
+    _authorization_engine = authorization_engine
+    _audit_logger = audit_logger
+    _secret_manager = secret_manager
+
 # Dependency injection helpers
 async def get_identity_service() -> AgentIdentityService:
     """Get agent identity service instance."""
-    # In production, this would be injected via dependency container
-    # For now, return a placeholder
-    raise HTTPException(
-        status_code=500,
-        detail="Identity service not configured"
-    )
-
+    if _identity_service is None:
+        # Fallback: Create basic implementation
+        from ...core.agent_identity_service import create_basic_identity_service
+        return await create_basic_identity_service()
+    return _identity_service
 
 async def get_authorization_engine() -> AuthorizationEngine:
     """Get authorization engine instance."""
-    # In production, this would be injected via dependency container
-    raise HTTPException(
-        status_code=500,
-        detail="Authorization engine not configured"
-    )
-
+    if _authorization_engine is None:
+        # Fallback: Create basic implementation
+        from ...core.authorization_engine import create_basic_authorization_engine
+        return await create_basic_authorization_engine()
+    return _authorization_engine
 
 async def get_audit_logger() -> AuditLogger:
     """Get audit logger instance."""
-    # In production, this would be injected via dependency container
-    raise HTTPException(
-        status_code=500,
-        detail="Audit logger not configured"
-    )
-
+    if _audit_logger is None:
+        # Fallback: Create basic implementation
+        from ...core.audit_logger import create_basic_audit_logger
+        return await create_basic_audit_logger()
+    return _audit_logger
 
 async def get_secret_manager() -> SecretManager:
     """Get secret manager instance."""
-    # In production, this would be injected via dependency container
-    raise HTTPException(
-        status_code=500,
-        detail="Secret manager not configured"
-    )
+    if _secret_manager is None:
+        # Fallback: Create basic implementation
+        from ...core.secret_manager import create_secret_manager
+        from ...core.redis import get_redis_client
+        redis_client = await get_redis_client()
+        master_key = os.getenv("SECRET_MANAGER_MASTER_KEY", "dev-master-key-change-in-production")
+        return await create_secret_manager(redis_client, master_key)
+    return _secret_manager
 
 
 async def get_current_agent(

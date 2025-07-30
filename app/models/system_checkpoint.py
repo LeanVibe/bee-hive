@@ -8,10 +8,10 @@ from typing import Dict, Any
 from enum import Enum
 
 from sqlalchemy import Column, String, DateTime, JSON, Enum as SQLEnum, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class CheckpointType(Enum):
@@ -27,7 +27,7 @@ class SystemCheckpoint(Base):
     
     __tablename__ = "system_checkpoints"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     checkpoint_type = Column(SQLEnum(CheckpointType), nullable=False, index=True)
     state = Column(JSON, nullable=False)
     git_commit_hash = Column(String(255), nullable=True)

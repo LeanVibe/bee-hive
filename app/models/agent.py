@@ -11,11 +11,11 @@ from typing import Dict, Any, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class AgentStatus(Enum):
@@ -48,7 +48,7 @@ class Agent(Base):
     __tablename__ = "agents"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
     type = Column(SQLEnum(AgentType), nullable=False, default=AgentType.CLAUDE)
     

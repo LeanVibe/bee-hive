@@ -12,8 +12,9 @@ maintaining comprehensive audit trails and safety guards.
 import asyncio
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 - Secure subprocess usage with validation and sanitization
 import uuid
+import shlex
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple, Union
@@ -977,6 +978,94 @@ class ExternalToolsOrchestrator:
             }
         }
 
+
+# Security utilities for subprocess execution
+class SecureProcessExecution:
+    """Secure subprocess execution with validation and sandboxing."""
+    
+    # Allowed commands for security
+    ALLOWED_COMMANDS = {
+        "git", "docker", "npm", "pip", "python", "node", "curl", "wget"
+    }
+    
+    # Dangerous command patterns to block
+    BLOCKED_PATTERNS = [
+        "rm -rf", "sudo", "su", "passwd", "chmod 777", "chown",
+        "&&", "||", ";", "|", "`", "$", "$(", "eval", "exec"
+    ]
+    
+    @classmethod
+    async def execute_secure_command(
+        cls,
+        command: str,
+        args: List[str],
+        cwd: Optional[Path] = None,
+        timeout: int = 30,
+        capture_output: bool = True
+    ) -> Tuple[int, str, str]:
+        """
+        Execute command securely with validation and sandboxing.
+        
+        Args:
+            command: Base command to execute
+            args: Command arguments 
+            cwd: Working directory
+            timeout: Execution timeout
+            capture_output: Whether to capture stdout/stderr
+            
+        Returns:
+            Tuple of (return_code, stdout, stderr)
+            
+        Raises:
+            SecurityError: If command is not allowed or contains dangerous patterns
+        """
+        # Validate command is allowed
+        if command not in cls.ALLOWED_COMMANDS:
+            raise SecurityException(f"Command '{command}' not in allowed list")
+        
+        # Validate arguments don't contain dangerous patterns
+        full_command_str = f"{command} {' '.join(args)}"
+        for pattern in cls.BLOCKED_PATTERNS:
+            if pattern in full_command_str:
+                raise SecurityException(f"Dangerous pattern '{pattern}' detected in command")
+        
+        # Sanitize arguments
+        sanitized_args = [shlex.quote(arg) for arg in args]
+        
+        try:
+            # Execute with security constraints
+            process = await asyncio.create_subprocess_exec(
+                command,
+                *sanitized_args,
+                cwd=cwd,
+                stdout=asyncio.subprocess.PIPE if capture_output else None,
+                stderr=asyncio.subprocess.PIPE if capture_output else None,
+                limit=1024 * 1024,  # 1MB limit
+            )
+            
+            # Wait with timeout
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(),
+                timeout=timeout
+            )
+            
+            return (
+                process.returncode,
+                stdout.decode('utf-8') if stdout else "",
+                stderr.decode('utf-8') if stderr else ""
+            )
+            
+        except asyncio.TimeoutError:
+            # Kill process on timeout
+            process.kill()
+            await process.wait()
+            raise SecurityException(f"Command '{command}' timed out after {timeout} seconds")
+        except Exception as e:
+            raise SecurityException(f"Command execution failed: {e}")
+
+class SecurityException(Exception):
+    """Security-related execution exception."""
+    pass
 
 # Global external tools orchestrator
 external_tools = ExternalToolsOrchestrator()

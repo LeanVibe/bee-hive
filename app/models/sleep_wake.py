@@ -11,11 +11,11 @@ from sqlalchemy import (
     Column, DateTime, JSON, Enum as SQLEnum, Text, ForeignKey, 
     String, Boolean, Integer, Float, BigInteger, Time, Date, Index
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class SleepState(Enum):
@@ -52,7 +52,7 @@ class SleepWindow(Base):
     __tablename__ = "sleep_windows"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=True, index=True)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id", ondelete="CASCADE"), nullable=True, index=True)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
     timezone = Column(String(64), nullable=False, default="UTC")
@@ -94,8 +94,8 @@ class Checkpoint(Base):
     
     __tablename__ = "checkpoints"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id", ondelete="CASCADE"), nullable=True, index=True)
     checkpoint_type = Column(SQLEnum(CheckpointType), nullable=False, index=True)
     path = Column(Text, nullable=False)
     sha256 = Column(String(64), nullable=False)
@@ -152,15 +152,15 @@ class SleepWakeCycle(Base):
     __tablename__ = "sleep_wake_cycles"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
     cycle_type = Column(String(50), nullable=False, index=True)  # Keep flexible for new types
     sleep_state = Column(SQLEnum(SleepState), nullable=False, default=SleepState.AWAKE, index=True)
     sleep_time = Column(DateTime(timezone=True), nullable=True)
     wake_time = Column(DateTime(timezone=True), nullable=True)
     expected_wake_time = Column(DateTime(timezone=True), nullable=True)
-    pre_sleep_checkpoint_id = Column(UUID(as_uuid=True), ForeignKey("checkpoints.id", ondelete="SET NULL"), nullable=True)
-    post_wake_checkpoint_id = Column(UUID(as_uuid=True), ForeignKey("checkpoints.id", ondelete="SET NULL"), nullable=True)
+    pre_sleep_checkpoint_id = Column(DatabaseAgnosticUUID(), ForeignKey("checkpoints.id", ondelete="SET NULL"), nullable=True)
+    post_wake_checkpoint_id = Column(DatabaseAgnosticUUID(), ForeignKey("checkpoints.id", ondelete="SET NULL"), nullable=True)
     consolidation_summary = Column(Text, nullable=True)
     context_changes = Column(JSON, nullable=True, default=dict)
     performance_metrics = Column(JSON, nullable=True, default=dict)
@@ -225,8 +225,8 @@ class ConsolidationJob(Base):
     
     __tablename__ = "consolidation_jobs"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cycle_id = Column(UUID(as_uuid=True), ForeignKey("sleep_wake_cycles.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    cycle_id = Column(DatabaseAgnosticUUID(), ForeignKey("sleep_wake_cycles.id", ondelete="CASCADE"), nullable=False, index=True)
     job_type = Column(String(50), nullable=False, index=True)  # context_compression, vector_update, etc.
     status = Column(SQLEnum(ConsolidationStatus), nullable=False, default=ConsolidationStatus.PENDING, index=True)
     input_data = Column(JSON, nullable=True, default=dict)
@@ -285,8 +285,8 @@ class SleepWakeAnalytics(Base):
     
     __tablename__ = "sleep_wake_analytics"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id", ondelete="CASCADE"), nullable=True, index=True)
     date = Column(Date, nullable=False, index=True)
     total_cycles = Column(Integer, nullable=False, default=0)
     successful_cycles = Column(Integer, nullable=False, default=0)

@@ -321,7 +321,7 @@ class SecurityValidator:
             "context_hash": hash(str(sorted(context.items()))) if context else None
         }
         key_string = json.dumps(key_data, sort_keys=True)
-        return hashlib.md5(key_string.encode()).hexdigest()
+        return hashlib.sha256(key_string.encode()).hexdigest()
     
     def _get_cached_validation(self, cache_key: str) -> Optional[Tuple[bool, SecurityRisk, str]]:
         """Get cached validation result if still valid."""

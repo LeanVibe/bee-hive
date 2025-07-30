@@ -8,11 +8,11 @@ from typing import Dict, Any
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class MessageType(Enum):
@@ -30,10 +30,10 @@ class Conversation(Base):
     
     __tablename__ = "conversations"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=True, index=True)
-    from_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
-    to_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    session_id = Column(DatabaseAgnosticUUID(), ForeignKey("sessions.id"), nullable=True, index=True)
+    from_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
+    to_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True, index=True)
     
     message_type = Column(SQLEnum(MessageType), nullable=False, index=True)
     content = Column(Text, nullable=False)

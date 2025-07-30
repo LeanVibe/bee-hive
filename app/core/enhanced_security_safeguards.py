@@ -453,7 +453,7 @@ class DeterministicControlEngine:
             "risk_score_bucket": int(context.current_risk_score * 10) / 10  # Round to 0.1
         }
         key_string = json.dumps(key_data, sort_keys=True)
-        return hashlib.md5(key_string.encode()).hexdigest()
+        return hashlib.sha256(key_string.encode()).hexdigest()
     
     def _get_cached_decision(self, cache_key: str) -> Optional[Tuple[ControlDecision, str]]:
         """Get cached decision if still valid."""

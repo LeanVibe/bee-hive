@@ -11,11 +11,11 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Integer
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray
 
 
 class WorkflowStatus(Enum):
@@ -49,7 +49,7 @@ class Workflow(Base):
     __tablename__ = "workflows"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     
@@ -59,7 +59,7 @@ class Workflow(Base):
     
     # Workflow definition and execution
     definition = Column(JSON, nullable=False, default=dict)
-    task_ids = Column(ARRAY(UUID(as_uuid=True)), nullable=True, default=list)
+    task_ids = Column(UUIDArray(), nullable=True, default=list)
     dependencies = Column(JSON, nullable=True, default=dict)  # task_id -> [dependency_task_ids]
     
     # Execution context

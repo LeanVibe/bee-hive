@@ -14,10 +14,10 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, validator
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class MessageType(str, Enum):
@@ -161,11 +161,11 @@ class MessageAudit(Base):
     
     __tablename__ = "message_audit"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     message_id = Column(String(255), nullable=False, index=True)
     stream_name = Column(String(255), nullable=False, index=True)
-    from_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
-    to_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True, index=True)
+    from_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
+    to_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True, index=True)
     
     message_type = Column(SQLEnum(MessageType), nullable=False, index=True)
     priority = Column(SQLEnum(MessagePriority), nullable=False, default=MessagePriority.NORMAL)

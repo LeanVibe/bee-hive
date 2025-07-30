@@ -958,7 +958,7 @@ class ConversationSearchEngine:
         query_str = f"{query.query_text}_{query.search_type.value}_{query.session_filters}_{query.agent_filters}_{query.time_range}_{query.limit}_{query.offset}"
         
         # Generate hash
-        return hashlib.md5(query_str.encode()).hexdigest()
+        return hashlib.sha256(query_str.encode()).hexdigest()
     
     def _is_cache_valid(self, cached_result: SearchResults) -> bool:
         """Check if cached result is still valid."""

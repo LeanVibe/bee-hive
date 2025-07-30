@@ -529,7 +529,7 @@ class VectorSearchEngine:
             ])
         
         key_string = "|".join(key_parts)
-        return hashlib.md5(key_string.encode()).hexdigest()
+        return hashlib.sha256(key_string.encode()).hexdigest()
     
     def _get_from_cache(self, cache_key: str) -> Optional[List[ContextMatch]]:
         """Get results from cache if not expired."""

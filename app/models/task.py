@@ -11,11 +11,11 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class TaskStatus(Enum):
@@ -66,7 +66,7 @@ class Task(Base):
     __tablename__ = "tasks"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     
@@ -76,16 +76,16 @@ class Task(Base):
     priority = Column(SQLEnum(TaskPriority), nullable=False, default=TaskPriority.MEDIUM, index=True)
     
     # Assignment and ownership
-    assigned_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True, index=True)
-    created_by_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True)
+    assigned_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True, index=True)
+    created_by_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True)
     
     # Task relationships
-    dependencies = Column(ARRAY(UUID(as_uuid=True)), nullable=True, default=list)
-    blocking_tasks = Column(ARRAY(UUID(as_uuid=True)), nullable=True, default=list)
+    dependencies = Column(UUIDArray(), nullable=True, default=list)
+    blocking_tasks = Column(UUIDArray(), nullable=True, default=list)
     
     # Task context and configuration
     context = Column(JSON, nullable=True, default=dict)
-    required_capabilities = Column(ARRAY(String), nullable=True, default=list)
+    required_capabilities = Column(StringArray(), nullable=True, default=list)
     estimated_effort = Column(Integer, nullable=True)  # in minutes
     actual_effort = Column(Integer, nullable=True)     # in minutes
     

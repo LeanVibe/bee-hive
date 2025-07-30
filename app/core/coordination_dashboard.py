@@ -158,7 +158,7 @@ class SessionColorManager:
         """Get consistent color for a session ID."""
         if session_id not in self.session_colors:
             # Use hash for deterministic color assignment
-            hash_value = int(hashlib.md5(session_id.encode()).hexdigest()[:8], 16)
+            hash_value = int(hashlib.sha256(session_id.encode()).hexdigest()[:8], 16)
             color_index = hash_value % len(self.color_palette)
             self.session_colors[session_id] = self.color_palette[color_index]
         

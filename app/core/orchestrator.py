@@ -15,7 +15,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
 import time
-import random
+import secrets  # Secure random for jitter calculation
 import heapq
 import threading
 
@@ -2816,9 +2816,11 @@ class AgentOrchestrator:
                     )
                     raise
                 
-                # Calculate delay with jitter
+                # Calculate delay with cryptographically secure jitter
                 delay = base_delay * (self.error_thresholds['exponential_backoff_base'] ** attempt)
-                jitter = random.uniform(0.1, 0.3) * delay
+                # Use secure random for jitter to prevent timing attacks
+                jitter_factor = 0.1 + (secrets.randbelow(200) / 1000.0)  # 0.1 to 0.3
+                jitter = jitter_factor * delay
                 total_delay = delay + jitter
                 
                 logger.warning(

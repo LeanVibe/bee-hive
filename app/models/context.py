@@ -11,11 +11,11 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Float, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class ContextType(Enum):
@@ -42,20 +42,20 @@ class Context(Base):
     __tablename__ = "contexts"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False, index=True)
     content = Column(Text, nullable=False)
     
     # Classification and relationships
     context_type = Column(SQLEnum(ContextType), nullable=False, index=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=True, index=True)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=True, index=True)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True, index=True)
+    session_id = Column(DatabaseAgnosticUUID(), ForeignKey("sessions.id"), nullable=True, index=True)
     
     # Semantic search
     embedding = Column(Vector(1536), nullable=True)  # OpenAI embedding dimension
     
     # Context hierarchy and relationships
-    parent_context_id = Column(UUID(as_uuid=True), ForeignKey("contexts.id"), nullable=True)
+    parent_context_id = Column(DatabaseAgnosticUUID(), ForeignKey("contexts.id"), nullable=True)
     related_context_ids = Column(JSON, nullable=True, default=list)
     
     # Importance and relevance

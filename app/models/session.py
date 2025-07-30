@@ -11,10 +11,10 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Boolean
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.sql import func
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class SessionStatus(Enum):
@@ -51,7 +51,7 @@ class Session(Base):
     __tablename__ = "sessions"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
     
@@ -60,13 +60,13 @@ class Session(Base):
     status = Column(SQLEnum(SessionStatus), nullable=False, default=SessionStatus.INACTIVE, index=True)
     
     # Agent coordination
-    participant_agents = Column(ARRAY(UUID(as_uuid=True)), nullable=True, default=list)
-    lead_agent_id = Column(UUID(as_uuid=True), nullable=True)
+    participant_agents = Column(UUIDArray(), nullable=True, default=list)
+    lead_agent_id = Column(DatabaseAgnosticUUID(), nullable=True)
     
     # Session state and context
     state = Column(JSON, nullable=True, default=dict)
     shared_context = Column(JSON, nullable=True, default=dict)
-    objectives = Column(ARRAY(String), nullable=True, default=list)
+    objectives = Column(StringArray(), nullable=True, default=list)
     
     # tmux integration
     tmux_session_id = Column(String(255), nullable=True, unique=True)

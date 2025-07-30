@@ -11,11 +11,11 @@ from typing import Dict, Any, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Float, DateTime, JSON, ForeignKey, Integer, Boolean
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class PerformanceCategory(Enum):
@@ -39,9 +39,9 @@ class AgentPerformanceHistory(Base):
     __tablename__ = "agent_performance_history"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
-    task_id = Column(UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=True, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
+    task_id = Column(DatabaseAgnosticUUID(), ForeignKey("tasks.id"), nullable=True, index=True)
     
     # Performance metrics
     task_type = Column(String(100), nullable=True, index=True)
@@ -129,9 +129,9 @@ class TaskRoutingDecision(Base):
     __tablename__ = "task_routing_decisions"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    task_id = Column(UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=False, index=True)
-    selected_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    task_id = Column(DatabaseAgnosticUUID(), ForeignKey("tasks.id"), nullable=False, index=True)
+    selected_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
     
     # Routing context
     routing_strategy = Column(String(100), nullable=True)
@@ -212,8 +212,8 @@ class AgentCapabilityScore(Base):
     __tablename__ = "agent_capability_scores"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
     
     # Capability identification
     capability_name = Column(String(255), nullable=False, index=True)
@@ -328,8 +328,8 @@ class WorkloadSnapshot(Base):
     __tablename__ = "workload_snapshots"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
     
     # Workload metrics
     active_tasks = Column(Integer, nullable=False, default=0)

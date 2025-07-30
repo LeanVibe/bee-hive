@@ -11,11 +11,11 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import structlog
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, func
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, func, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 logger = structlog.get_logger()
 
@@ -47,8 +47,8 @@ class AgentEvent(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     
     # Core event identifiers
-    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    session_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), nullable=False)
+    agent_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), nullable=False)
     
     # Event type from enum
     event_type: Mapped[EventType] = mapped_column(nullable=False)
@@ -325,19 +325,19 @@ class ChatTranscript(Base):
     
     # Primary key
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+        DatabaseAgnosticUUID(), 
         primary_key=True, 
-        server_default=func.gen_random_uuid()
+        default=uuid.uuid4
     )
     
     # Session and agent references
     session_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+        DatabaseAgnosticUUID(), 
         ForeignKey("sessions.id"),
         nullable=False
     )
     agent_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+        DatabaseAgnosticUUID(), 
         ForeignKey("agents.id"),
         nullable=False
     )

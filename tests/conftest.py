@@ -279,13 +279,25 @@ async def complex_workflow_with_tasks(test_db_session: AsyncSession, sample_agen
 @pytest.fixture(autouse=True)
 def setup_test_environment():
     """Setup test environment variables."""
+    # Load test environment file
+    from dotenv import load_dotenv
+    load_dotenv('.env.test', override=True)
+    
+    # Ensure critical test environment variables are set
     os.environ.update({
         "DEBUG": "true",
         "DATABASE_URL": TEST_DATABASE_URL,
         "REDIS_URL": "redis://localhost:6379/1",
-        "ANTHROPIC_API_KEY": "test-key",
-        "SECRET_KEY": "test-secret-key",
-        "ENVIRONMENT": "test"
+        "ANTHROPIC_API_KEY": "test-key-12345",
+        "OPENAI_API_KEY": "test-key-12345",
+        "SECRET_KEY": "test-secret-key-for-testing-purposes-only",
+        "JWT_SECRET_KEY": "test-jwt-secret-key-for-testing-purposes-only",
+        "ENVIRONMENT": "test",
+        "LOG_LEVEL": "WARNING",
+        "SELF_MODIFICATION_ENABLED": "false",
+        "METRICS_ENABLED": "false",
+        "JWT_ALGORITHM": "HS256",
+        "JWT_ACCESS_TOKEN_EXPIRE_MINUTES": "30"
     })
 
 

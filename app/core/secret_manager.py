@@ -5,6 +5,7 @@ Implements enterprise-grade secret management with encryption,
 automatic rotation, and secure access controls.
 """
 
+import os
 import uuid
 import secrets
 import base64
@@ -117,7 +118,8 @@ class SecretManager:
     def __init__(
         self,
         redis_client: RedisClient,
-        master_key: str,
+        master_key: Optional[str] = None,
+        kms_key_id: Optional[str] = None,
         enable_rotation: bool = True,
         default_rotation_days: int = 90,
         cache_ttl_seconds: int = 300
@@ -127,7 +129,8 @@ class SecretManager:
         
         Args:
             redis_client: Redis client for caching and storage
-            master_key: Master encryption key (should be from KMS in production)
+            master_key: Master encryption key (deprecated - use KMS)
+            kms_key_id: KMS key ID for enterprise encryption
             enable_rotation: Enable automatic rotation
             default_rotation_days: Default rotation interval
             cache_ttl_seconds: Cache TTL for frequently accessed secrets
@@ -137,8 +140,9 @@ class SecretManager:
         self.default_rotation_days = default_rotation_days
         self.cache_ttl = cache_ttl_seconds
         
-        # Initialize encryption
-        self.master_key = master_key.encode('utf-8')
+        # Initialize encryption with KMS support
+        self.kms_key_id = kms_key_id
+        self.master_key = self._get_or_generate_master_key(master_key)
         self.encryption_suite = self._initialize_encryption()
         
         # Secret storage configuration
@@ -667,14 +671,146 @@ class SecretManager:
     
     # Private helper methods
     
+    def _get_or_generate_master_key(self, provided_key: Optional[str]) -> bytes:
+        """
+        Get or generate master encryption key with KMS support.
+        
+        Args:
+            provided_key: Provided master key (fallback)
+            
+        Returns:
+            Master key bytes
+        """
+        # Check for KMS integration first
+        if self.kms_key_id:
+            try:
+                # In production, this would use AWS KMS, Azure Key Vault, etc.
+                kms_key = self._get_kms_key(self.kms_key_id)
+                if kms_key:
+                    logger.info("Using KMS-managed encryption key")
+                    return kms_key
+            except Exception as e:
+                logger.warning(f"KMS key retrieval failed, falling back to master key: {e}")
+        
+        # Check environment variable
+        env_key = os.getenv("SECRET_MANAGER_MASTER_KEY")
+        if env_key and env_key != "dev-master-key-change-in-production":
+            return env_key.encode('utf-8')
+        
+        # Use provided key (deprecated)
+        if provided_key and provided_key != "dev-master-key-change-in-production":
+            logger.warning("Using provided master key - consider migrating to KMS")
+            return provided_key.encode('utf-8')
+        
+        # Generate secure key if none provided
+        if not provided_key or provided_key == "dev-master-key-change-in-production":
+            logger.info("Generating new secure master key")
+            secure_key = secrets.token_urlsafe(64)
+            # In production, this should be stored securely
+            logger.warning(f"Generated master key: {secure_key[:16]}... (store this securely!)")
+            return secure_key.encode('utf-8')
+        
+        return provided_key.encode('utf-8')
+    
+    def _get_kms_key(self, kms_key_id: str) -> Optional[bytes]:
+        """
+        Retrieve encryption key from KMS.
+        
+        Args:
+            kms_key_id: KMS key identifier
+            
+        Returns:
+            Encryption key bytes or None if not available
+        """
+        # Placeholder for KMS integration
+        # In production, implement integration with:
+        # - AWS KMS
+        # - Azure Key Vault  
+        # - Google Cloud KMS
+        # - HashiCorp Vault
+        # - etc.
+        
+        kms_provider = os.getenv("KMS_PROVIDER", "").lower()
+        
+        if kms_provider == "aws":
+            return self._get_aws_kms_key(kms_key_id)
+        elif kms_provider == "azure":
+            return self._get_azure_kv_key(kms_key_id)
+        elif kms_provider == "gcp":
+            return self._get_gcp_kms_key(kms_key_id)
+        elif kms_provider == "vault":
+            return self._get_vault_key(kms_key_id)
+        else:
+            logger.info(f"KMS provider '{kms_provider}' not configured")
+            return None
+    
+    def _get_aws_kms_key(self, key_id: str) -> Optional[bytes]:
+        """Get key from AWS KMS."""
+        try:
+            # Example implementation - requires boto3
+            # import boto3
+            # kms = boto3.client('kms')
+            # response = kms.decrypt(CiphertextBlob=base64.b64decode(key_id))
+            # return response['Plaintext']
+            logger.info("AWS KMS integration not implemented")
+            return None
+        except Exception as e:
+            logger.error(f"AWS KMS error: {e}")
+            return None
+    
+    def _get_azure_kv_key(self, key_id: str) -> Optional[bytes]:
+        """Get key from Azure Key Vault."""
+        try:
+            # Example implementation - requires azure-keyvault-secrets
+            # from azure.keyvault.secrets import SecretClient
+            # from azure.identity import DefaultAzureCredential
+            # credential = DefaultAzureCredential()
+            # client = SecretClient(vault_url=vault_url, credential=credential)
+            # secret = client.get_secret(key_id)
+            # return secret.value.encode('utf-8')
+            logger.info("Azure Key Vault integration not implemented")
+            return None
+        except Exception as e:
+            logger.error(f"Azure Key Vault error: {e}")
+            return None
+    
+    def _get_gcp_kms_key(self, key_id: str) -> Optional[bytes]:
+        """Get key from Google Cloud KMS."""
+        try:
+            # Example implementation - requires google-cloud-kms
+            logger.info("Google Cloud KMS integration not implemented")
+            return None
+        except Exception as e:
+            logger.error(f"Google Cloud KMS error: {e}")
+            return None
+    
+    def _get_vault_key(self, key_id: str) -> Optional[bytes]:
+        """Get key from HashiCorp Vault."""
+        try:
+            # Example implementation - requires hvac
+            logger.info("HashiCorp Vault integration not implemented")
+            return None
+        except Exception as e:
+            logger.error(f"HashiCorp Vault error: {e}")
+            return None
+    
     def _initialize_encryption(self) -> Fernet:
-        """Initialize encryption suite."""
-        # Use PBKDF2 to derive key from master key
+        """Initialize encryption suite with enhanced security."""
+        # Generate cryptographically secure salt
+        salt = os.getenv("SECRET_MANAGER_SALT")
+        if not salt:
+            # Generate and warn about ephemeral salt
+            salt_bytes = secrets.token_bytes(32)
+            logger.warning("No persistent salt configured - using ephemeral salt")
+        else:
+            salt_bytes = base64.b64decode(salt) if len(salt) > 32 else salt.encode('utf-8')
+        
+        # Use PBKDF2 with high iteration count
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b'leanvibe_secret_salt',  # Use proper random salt in production
-            iterations=100000,
+            salt=salt_bytes,
+            iterations=200000,  # Increased from 100000 for better security
         )
         key = base64.urlsafe_b64encode(kdf.derive(self.master_key))
         return Fernet(key)

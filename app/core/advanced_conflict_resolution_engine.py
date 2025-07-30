@@ -1055,7 +1055,7 @@ class AdvancedConflictResolver:
         ]
         
         key_string = "|".join(key_components)
-        return hashlib.md5(key_string.encode()).hexdigest()
+        return hashlib.sha256(key_string.encode()).hexdigest()
     
     async def _execute_automated_resolution(
         self,

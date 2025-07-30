@@ -11,12 +11,12 @@ from typing import Dict, Any, Optional, List
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Boolean, Integer, BigInteger, Float
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey, UniqueConstraint, Index
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class WorkTreeStatus(Enum):
@@ -70,7 +70,7 @@ class GitHubRepository(Base):
     __tablename__ = "github_repositories"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     repository_full_name = Column(String(255), nullable=False, unique=True, index=True)  # "owner/repo"
     repository_url = Column(String(500), nullable=False)
     clone_url = Column(String(500), nullable=True)  # SSH/HTTPS clone URL
@@ -142,9 +142,9 @@ class AgentWorkTree(Base):
     __tablename__ = "agent_work_trees"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agents.id', ondelete='CASCADE'), nullable=False, index=True)
-    repository_id = Column(UUID(as_uuid=True), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agents.id', ondelete='CASCADE'), nullable=False, index=True)
+    repository_id = Column(DatabaseAgnosticUUID(), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
                           nullable=False, index=True)
     
     # Work tree configuration
@@ -230,12 +230,12 @@ class PullRequest(Base):
     __tablename__ = "pull_requests"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    repository_id = Column(UUID(as_uuid=True), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    repository_id = Column(DatabaseAgnosticUUID(), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
                           nullable=False, index=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agents.id', ondelete='CASCADE'), 
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agents.id', ondelete='CASCADE'), 
                      nullable=False, index=True)
-    work_tree_id = Column(UUID(as_uuid=True), ForeignKey('agent_work_trees.id', ondelete='SET NULL'), 
+    work_tree_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_work_trees.id', ondelete='SET NULL'), 
                          nullable=True, index=True)
     
     # GitHub PR identification
@@ -333,8 +333,8 @@ class GitHubIssue(Base):
     __tablename__ = "github_issues"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    repository_id = Column(UUID(as_uuid=True), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    repository_id = Column(DatabaseAgnosticUUID(), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
                           nullable=False, index=True)
     
     # GitHub issue identification
@@ -347,7 +347,7 @@ class GitHubIssue(Base):
     labels = Column(JSON, nullable=True, default=list)  # ["bug", "enhancement", "priority:high"]
     
     # Assignment
-    assignee_agent_id = Column(UUID(as_uuid=True), ForeignKey('agents.id', ondelete='SET NULL'), 
+    assignee_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agents.id', ondelete='SET NULL'), 
                               nullable=True, index=True)
     assignee_github_username = Column(String(255), nullable=True)
     
@@ -448,10 +448,10 @@ class CodeReview(Base):
     __tablename__ = "code_reviews"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    pull_request_id = Column(UUID(as_uuid=True), ForeignKey('pull_requests.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    pull_request_id = Column(DatabaseAgnosticUUID(), ForeignKey('pull_requests.id', ondelete='CASCADE'), 
                             nullable=False, index=True)
-    reviewer_agent_id = Column(UUID(as_uuid=True), ForeignKey('agents.id', ondelete='SET NULL'), 
+    reviewer_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agents.id', ondelete='SET NULL'), 
                               nullable=True, index=True)
     
     # Review configuration
@@ -543,12 +543,12 @@ class GitCommit(Base):
     __tablename__ = "git_commits"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    repository_id = Column(UUID(as_uuid=True), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    repository_id = Column(DatabaseAgnosticUUID(), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
                           nullable=False, index=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agents.id', ondelete='SET NULL'), 
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agents.id', ondelete='SET NULL'), 
                      nullable=True, index=True)
-    work_tree_id = Column(UUID(as_uuid=True), ForeignKey('agent_work_trees.id', ondelete='SET NULL'), 
+    work_tree_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_work_trees.id', ondelete='SET NULL'), 
                          nullable=True, index=True)
     
     # Git commit identification
@@ -640,12 +640,12 @@ class BranchOperation(Base):
     __tablename__ = "branch_operations"
     
     # Primary identification
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    repository_id = Column(UUID(as_uuid=True), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    repository_id = Column(DatabaseAgnosticUUID(), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
                           nullable=False, index=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agents.id', ondelete='SET NULL'), 
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agents.id', ondelete='SET NULL'), 
                      nullable=True, index=True)
-    work_tree_id = Column(UUID(as_uuid=True), ForeignKey('agent_work_trees.id', ondelete='SET NULL'), 
+    work_tree_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_work_trees.id', ondelete='SET NULL'), 
                          nullable=True, index=True)
     
     # Operation details

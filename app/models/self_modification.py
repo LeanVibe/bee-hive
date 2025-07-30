@@ -12,13 +12,13 @@ from decimal import Decimal
 from enum import Enum as PyEnum
 
 import sqlalchemy as sa
-from sqlalchemy import Column, String, Text, Integer, Boolean, DateTime
+from sqlalchemy import Column, String, Text, Integer, Boolean, DateTime, JSON
 from sqlalchemy.types import Numeric as SQLDecimal
-from sqlalchemy.dialects.postgresql import UUID, JSON, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class ModificationSafety(PyEnum):
@@ -70,10 +70,10 @@ class ModificationSession(Base):
     
     __tablename__ = "modification_sessions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()'))
-    agent_id = Column(UUID(as_uuid=True), sa.ForeignKey('agents.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=sa.text('gen_random_uuid()'))
+    agent_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('agents.id', ondelete='CASCADE'), 
                       nullable=False, index=True)
-    repository_id = Column(UUID(as_uuid=True), sa.ForeignKey('github_repositories.id', ondelete='SET NULL'), 
+    repository_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('github_repositories.id', ondelete='SET NULL'), 
                           nullable=True, index=True)
     
     # Session configuration
@@ -136,8 +136,8 @@ class CodeModification(Base):
     
     __tablename__ = "code_modifications"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()'))
-    session_id = Column(UUID(as_uuid=True), sa.ForeignKey('modification_sessions.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=sa.text('gen_random_uuid()'))
+    session_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('modification_sessions.id', ondelete='CASCADE'), 
                         nullable=False, index=True)
     
     # File information
@@ -230,8 +230,8 @@ class ModificationMetric(Base):
     
     __tablename__ = "modification_metrics"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()'))
-    modification_id = Column(UUID(as_uuid=True), sa.ForeignKey('code_modifications.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=sa.text('gen_random_uuid()'))
+    modification_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('code_modifications.id', ondelete='CASCADE'), 
                             nullable=False, index=True)
     
     # Metric identification
@@ -293,10 +293,10 @@ class SandboxExecution(Base):
     
     __tablename__ = "sandbox_executions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()'))
-    modification_id = Column(UUID(as_uuid=True), sa.ForeignKey('code_modifications.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=sa.text('gen_random_uuid()'))
+    modification_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('code_modifications.id', ondelete='CASCADE'), 
                             nullable=False, index=True)
-    session_id = Column(UUID(as_uuid=True), sa.ForeignKey('modification_sessions.id', ondelete='CASCADE'), 
+    session_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('modification_sessions.id', ondelete='CASCADE'), 
                        nullable=True, index=True)
     
     # Execution configuration
@@ -376,10 +376,10 @@ class ModificationFeedback(Base):
     
     __tablename__ = "modification_feedback"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()'))
-    modification_id = Column(UUID(as_uuid=True), sa.ForeignKey('code_modifications.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=sa.text('gen_random_uuid()'))
+    modification_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('code_modifications.id', ondelete='CASCADE'), 
                             nullable=False, index=True)
-    session_id = Column(UUID(as_uuid=True), sa.ForeignKey('modification_sessions.id', ondelete='CASCADE'), 
+    session_id = Column(DatabaseAgnosticUUID(), sa.ForeignKey('modification_sessions.id', ondelete='CASCADE'), 
                        nullable=True, index=True)
     
     # Feedback source and type

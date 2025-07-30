@@ -10,11 +10,11 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from sqlalchemy import Column, String, Text, DateTime, Boolean, Float, Integer, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class PersonaDefinitionModel(Base):
@@ -32,19 +32,19 @@ class PersonaDefinitionModel(Base):
     adaptation_mode = Column(String(30), nullable=False, default="adaptive")
     
     # Core capabilities and preferences (stored as JSON)
-    capabilities = Column(JSONB, nullable=False, default=dict)
-    preferred_task_types = Column(JSONB, nullable=False, default=list)
-    expertise_domains = Column(JSONB, nullable=False, default=list)
+    capabilities = Column(JSON, nullable=False, default=dict)
+    preferred_task_types = Column(JSON, nullable=False, default=list)
+    expertise_domains = Column(JSON, nullable=False, default=list)
     
     # Behavioral characteristics
-    communication_style = Column(JSONB, nullable=False, default=dict)
-    decision_making_style = Column(JSONB, nullable=False, default=dict)
-    problem_solving_approach = Column(JSONB, nullable=False, default=dict)
+    communication_style = Column(JSON, nullable=False, default=dict)
+    decision_making_style = Column(JSON, nullable=False, default=dict)
+    problem_solving_approach = Column(JSON, nullable=False, default=dict)
     
     # Collaboration preferences
     min_team_size = Column(Integer, nullable=False, default=1)
     max_team_size = Column(Integer, nullable=False, default=8)
-    collaboration_patterns = Column(JSONB, nullable=False, default=list)
+    collaboration_patterns = Column(JSON, nullable=False, default=list)
     mentoring_capability = Column(Boolean, nullable=False, default=False)
     
     # Performance characteristics
@@ -100,10 +100,10 @@ class PersonaAssignmentModel(Base):
     __tablename__ = "persona_assignments"
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4, index=True)
     
     # Assignment details
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
     persona_id = Column(String(100), ForeignKey("persona_definitions.id"), nullable=False, index=True)
     session_id = Column(String(100), nullable=False, index=True)
     
@@ -118,7 +118,7 @@ class PersonaAssignmentModel(Base):
     avg_completion_time = Column(Float, nullable=False, default=0.0)
     
     # Context adaptations
-    active_adaptations = Column(JSONB, nullable=False, default=dict)
+    active_adaptations = Column(JSON, nullable=False, default=dict)
     
     # Status tracking
     active = Column(Boolean, nullable=False, default=True)
@@ -156,13 +156,13 @@ class PersonaPerformanceModel(Base):
     __tablename__ = "persona_performance"
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4, index=True)
     
     # Foreign keys
     persona_id = Column(String(100), ForeignKey("persona_definitions.id"), nullable=False, index=True)
-    assignment_id = Column(UUID(as_uuid=True), ForeignKey("persona_assignments.id"), nullable=False, index=True)
-    task_id = Column(UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=True, index=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
+    assignment_id = Column(DatabaseAgnosticUUID(), ForeignKey("persona_assignments.id"), nullable=False, index=True)
+    task_id = Column(DatabaseAgnosticUUID(), ForeignKey("tasks.id"), nullable=True, index=True)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
     
     # Performance metrics
     task_success = Column(Boolean, nullable=False)
@@ -170,13 +170,13 @@ class PersonaPerformanceModel(Base):
     complexity_score = Column(Float, nullable=False, default=0.5)
     
     # Capability tracking
-    capabilities_used = Column(JSONB, nullable=False, default=list)
-    capability_performance = Column(JSONB, nullable=False, default=dict)
+    capabilities_used = Column(JSON, nullable=False, default=list)
+    capability_performance = Column(JSON, nullable=False, default=dict)
     
     # Context information
     task_type = Column(String(50), nullable=True, index=True)
-    context_data = Column(JSONB, nullable=False, default=dict)
-    adaptations_applied = Column(JSONB, nullable=False, default=dict)
+    context_data = Column(JSON, nullable=False, default=dict)
+    adaptations_applied = Column(JSON, nullable=False, default=dict)
     
     # Quality metrics
     quality_score = Column(Float, nullable=True)  # If available
@@ -225,11 +225,11 @@ class PersonaCapabilityHistoryModel(Base):
     __tablename__ = "persona_capability_history"
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4, index=True)
     
     # Foreign keys
     persona_id = Column(String(100), ForeignKey("persona_definitions.id"), nullable=False, index=True)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False, index=True)
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=False, index=True)
     
     # Capability details
     capability_name = Column(String(100), nullable=False, index=True)
@@ -280,7 +280,7 @@ class PersonaAnalyticsModel(Base):
     __tablename__ = "persona_analytics"
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4, index=True)
     
     # Analytics scope
     persona_id = Column(String(100), ForeignKey("persona_definitions.id"), nullable=True, index=True)
@@ -300,20 +300,20 @@ class PersonaAnalyticsModel(Base):
     avg_collaboration_score = Column(Float, nullable=True)
     
     # Capability metrics
-    capability_improvements = Column(JSONB, nullable=False, default=dict)
-    most_used_capabilities = Column(JSONB, nullable=False, default=list)
-    capability_success_rates = Column(JSONB, nullable=False, default=dict)
+    capability_improvements = Column(JSON, nullable=False, default=dict)
+    most_used_capabilities = Column(JSON, nullable=False, default=list)
+    capability_success_rates = Column(JSON, nullable=False, default=dict)
     
     # Assignment patterns
-    preferred_task_types = Column(JSONB, nullable=False, default=list)
+    preferred_task_types = Column(JSON, nullable=False, default=list)
     avg_team_size = Column(Float, nullable=True)
     collaboration_frequency = Column(Float, nullable=False, default=0.0)
     
     # Trends and insights
     performance_trend = Column(String(20), nullable=True)  # improving, declining, stable
     trend_confidence = Column(Float, nullable=False, default=0.0)
-    insights = Column(JSONB, nullable=False, default=list)
-    recommendations = Column(JSONB, nullable=False, default=list)
+    insights = Column(JSON, nullable=False, default=list)
+    recommendations = Column(JSON, nullable=False, default=list)
     
     # Metadata
     generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)

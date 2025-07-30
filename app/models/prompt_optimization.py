@@ -14,12 +14,12 @@ from sqlalchemy import (
     Column, String, Text, Integer, Float, Boolean, DateTime, JSON,
     ForeignKey, CheckConstraint, Index
 )
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 
 class PromptStatus(str, Enum):
@@ -53,8 +53,7 @@ class PromptTemplate(Base):
     
     __tablename__ = "prompt_templates"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
@@ -110,15 +109,13 @@ class OptimizationExperiment(Base):
     
     __tablename__ = "optimization_experiments"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
     experiment_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    base_prompt_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    base_prompt_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_templates.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -192,20 +189,17 @@ class PromptVariant(Base):
     
     __tablename__ = "prompt_variants"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
-    experiment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    experiment_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("optimization_experiments.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
-    parent_prompt_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    parent_prompt_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_templates.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -275,20 +269,17 @@ class PromptEvaluation(Base):
     
     __tablename__ = "prompt_evaluations"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
-    prompt_variant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    prompt_variant_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_variants.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
-    test_case_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), 
+    test_case_id: Mapped[Optional[uuid.UUID]] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_test_cases.id", ondelete="SET NULL"),
         index=True
     )
@@ -332,26 +323,22 @@ class ABTestResult(Base):
     
     __tablename__ = "ab_test_results"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
-    experiment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    experiment_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("optimization_experiments.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     test_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    prompt_a_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    prompt_a_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_variants.id", ondelete="CASCADE"),
         nullable=False
     )
-    prompt_b_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    prompt_b_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_variants.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -365,8 +352,7 @@ class ABTestResult(Base):
     effect_size: Mapped[Optional[float]] = mapped_column(Float)
     confidence_interval_lower: Mapped[Optional[float]] = mapped_column(Float)
     confidence_interval_upper: Mapped[Optional[float]] = mapped_column(Float)
-    winner_variant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), 
+    winner_variant_id: Mapped[Optional[uuid.UUID]] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_variants.id", ondelete="SET NULL")
     )
     test_power: Mapped[Optional[float]] = mapped_column(Float)
@@ -413,14 +399,12 @@ class PromptFeedback(Base):
     
     __tablename__ = "prompt_feedback"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
-    prompt_variant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    prompt_variant_id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("prompt_variants.id", ondelete="CASCADE"),
         nullable=False,
         index=True
@@ -471,8 +455,7 @@ class PromptTestCase(Base):
     
     __tablename__ = "prompt_test_cases"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
@@ -519,14 +502,12 @@ class OptimizationMetric(Base):
     
     __tablename__ = "optimization_metrics"
     
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), 
+    id: Mapped[uuid.UUID] = mapped_column(DatabaseAgnosticUUID(), 
         primary_key=True, 
         default=uuid.uuid4,
         server_default=func.gen_random_uuid()
     )
-    experiment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), 
+    experiment_id: Mapped[Optional[uuid.UUID]] = mapped_column(DatabaseAgnosticUUID(), 
         ForeignKey("optimization_experiments.id", ondelete="CASCADE"),
         index=True
     )

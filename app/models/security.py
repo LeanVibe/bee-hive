@@ -10,13 +10,13 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from enum import Enum
 
-from sqlalchemy import Column, String, Text, Boolean, Integer, Float, DateTime, ForeignKey, text
-from sqlalchemy.dialects.postgresql import UUID, JSON, ARRAY, INET
+from sqlalchemy import Column, String, Text, Boolean, Integer, Float, DateTime, ForeignKey, text, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from ..core.database import Base
+from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray, DatabaseAgnosticIPAddress
 
 
 class AgentStatus(Enum):
@@ -52,7 +52,7 @@ class AgentIdentity(Base):
     """
     __tablename__ = 'agent_identities'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=func.gen_random_uuid())
     agent_name = Column(String(255), nullable=False, index=True)
     human_controller = Column(String(255), nullable=False, index=True)
     
@@ -63,12 +63,12 @@ class AgentIdentity(Base):
     private_key_encrypted = Column(Text, nullable=True)  # Encrypted RSA private key
     
     # Authorization and rate limiting
-    scopes = Column(ARRAY(String), nullable=True, server_default='{}')
+    scopes = Column(StringArray(), nullable=True, server_default='{}')
     rate_limit_per_minute = Column(Integer, nullable=False, server_default='10')
     token_expires_in_seconds = Column(Integer, nullable=False, server_default='3600')  # 1 hour
     refresh_token_expires_in_seconds = Column(Integer, nullable=False, server_default='604800')  # 7 days
     max_concurrent_tokens = Column(Integer, nullable=False, server_default='5')
-    allowed_redirect_uris = Column(ARRAY(String), nullable=True, server_default='{}')
+    allowed_redirect_uris = Column(StringArray(), nullable=True, server_default='{}')
     
     # Status and metadata
     status = Column(String(20), nullable=False, server_default='active', index=True)
@@ -133,7 +133,7 @@ class AgentRole(Base):
     """
     __tablename__ = 'agent_roles'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=func.gen_random_uuid())
     role_name = Column(String(100), nullable=False, unique=True, index=True)
     display_name = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
@@ -143,7 +143,7 @@ class AgentRole(Base):
     permissions = Column(JSON, nullable=False, server_default='{}')
     # Structure: {"resources": ["github", "files"], "actions": ["read", "write"], "conditions": {}}
     
-    resource_patterns = Column(ARRAY(String), nullable=True, server_default='{}')
+    resource_patterns = Column(StringArray(), nullable=True, server_default='{}')
     # e.g., ["github/repos/org/*", "files/workspace/*"]
     
     max_access_level = Column(String(20), nullable=False, server_default='read')
@@ -230,10 +230,10 @@ class AgentRoleAssignment(Base):
     """
     __tablename__ = 'agent_role_assignments'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agent_identities.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=func.gen_random_uuid())
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_identities.id', ondelete='CASCADE'), 
                       nullable=False, index=True)
-    role_id = Column(UUID(as_uuid=True), ForeignKey('agent_roles.id', ondelete='CASCADE'), 
+    role_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_roles.id', ondelete='CASCADE'), 
                      nullable=False, index=True)
     
     # Assignment metadata
@@ -323,11 +323,11 @@ class SecurityAuditLog(Base):
     """
     __tablename__ = 'security_audit_log'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agent_identities.id', ondelete='SET NULL'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=func.gen_random_uuid())
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_identities.id', ondelete='SET NULL'), 
                       nullable=True, index=True)
     human_controller = Column(String(255), nullable=False, index=True)
-    session_id = Column(UUID(as_uuid=True), ForeignKey('sessions.id', ondelete='SET NULL'), 
+    session_id = Column(DatabaseAgnosticUUID(), ForeignKey('sessions.id', ondelete='SET NULL'), 
                         nullable=True, index=True)
     request_id = Column(String(255), nullable=True, index=True)  # For request correlation
     
@@ -343,7 +343,7 @@ class SecurityAuditLog(Base):
     response_data = Column(JSON, nullable=True)
     
     # Network and client information
-    ip_address = Column(INET, nullable=True, index=True)
+    ip_address = Column(DatabaseAgnosticIPAddress(), nullable=True, index=True)
     user_agent = Column(Text, nullable=True)
     geo_location = Column(String(100), nullable=True)  # Country/region
     
@@ -359,7 +359,7 @@ class SecurityAuditLog(Base):
     permission_checked = Column(String(255), nullable=True)
     authorization_result = Column(String(50), nullable=True, index=True)  # granted, denied, error
     risk_score = Column(Float, nullable=True)  # Calculated risk score
-    security_labels = Column(ARRAY(String), nullable=True, server_default='{}')
+    security_labels = Column(StringArray(), nullable=True, server_default='{}')
     # e.g., ["suspicious", "bulk_access", "privilege_escalation"]
     
     # Integrity and correlation
@@ -451,15 +451,15 @@ class AgentToken(Base):
     """
     __tablename__ = 'agent_tokens'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agent_identities.id', ondelete='CASCADE'), 
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=func.gen_random_uuid())
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_identities.id', ondelete='CASCADE'), 
                       nullable=False, index=True)
     
     # Token information
     token_type = Column(String(20), nullable=False, index=True)  # access, refresh
     token_hash = Column(String(255), nullable=False, unique=True, index=True)  # SHA-256 hash
     jti = Column(String(255), nullable=False, unique=True, index=True)  # JWT ID
-    scopes = Column(ARRAY(String), nullable=True, server_default='{}')
+    scopes = Column(StringArray(), nullable=True, server_default='{}')
     
     # Lifecycle management
     issued_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
@@ -468,7 +468,7 @@ class AgentToken(Base):
     usage_count = Column(Integer, nullable=False, server_default=text('0'))
     
     # Client information
-    ip_address = Column(INET, nullable=True)
+    ip_address = Column(DatabaseAgnosticIPAddress(), nullable=True)
     user_agent = Column(Text, nullable=True)
     
     # Revocation
@@ -530,15 +530,15 @@ class SecurityEvent(Base):
     """
     __tablename__ = 'security_events'
     
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, server_default=func.gen_random_uuid())
     event_type = Column(String(50), nullable=False, index=True)
     # e.g., "failed_auth", "suspicious_activity", "privilege_escalation"
     
     severity = Column(String(20), nullable=False, index=True)  # low, medium, high, critical
-    agent_id = Column(UUID(as_uuid=True), ForeignKey('agent_identities.id', ondelete='SET NULL'), 
+    agent_id = Column(DatabaseAgnosticUUID(), ForeignKey('agent_identities.id', ondelete='SET NULL'), 
                       nullable=True, index=True)
     human_controller = Column(String(255), nullable=True, index=True)
-    source_ip = Column(INET, nullable=True, index=True)
+    source_ip = Column(DatabaseAgnosticIPAddress(), nullable=True, index=True)
     
     # Event details
     description = Column(Text, nullable=False)
@@ -554,7 +554,7 @@ class SecurityEvent(Base):
     false_positive = Column(Boolean, nullable=False, server_default=text('false'))
     
     # Correlation
-    related_audit_log_ids = Column(ARRAY(UUID(as_uuid=True)), nullable=True, server_default='{}')
+    related_audit_log_ids = Column(UUIDArray(), nullable=True, server_default='{}')
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     agent_metadata = Column(JSON, nullable=True, server_default='{}')
     
