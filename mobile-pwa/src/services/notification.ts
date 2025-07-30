@@ -1,4 +1,6 @@
 import { EventEmitter } from '../utils/event-emitter'
+import { initializeApp } from 'firebase/app'
+import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging'
 
 export interface NotificationData {
   id: string
@@ -36,15 +38,18 @@ export class NotificationService extends EventEmitter {
   private pushSubscription: PushSubscription | null = null
   private permission: NotificationPermission = 'default'
   private isInitialized: boolean = false
+  private messaging: any = null
+  private fcmToken: string | null = null
   
   // FCM configuration (these would come from environment variables)
   private readonly fcmConfig = {
-    apiKey: process.env.VITE_FCM_API_KEY || '',
-    authDomain: process.env.VITE_FCM_AUTH_DOMAIN || '',
-    projectId: process.env.VITE_FCM_PROJECT_ID || '',
-    messagingSenderId: process.env.VITE_FCM_SENDER_ID || '',
-    appId: process.env.VITE_FCM_APP_ID || '',
-    vapidKey: process.env.VITE_FCM_VAPID_KEY || ''
+    apiKey: process.env.VITE_FCM_API_KEY || 'demo-key',
+    authDomain: process.env.VITE_FCM_AUTH_DOMAIN || 'agent-hive-demo.firebaseapp.com',
+    projectId: process.env.VITE_FCM_PROJECT_ID || 'agent-hive-demo',
+    storageBucket: process.env.VITE_FCM_STORAGE_BUCKET || 'agent-hive-demo.appspot.com',
+    messagingSenderId: process.env.VITE_FCM_SENDER_ID || '123456789',
+    appId: process.env.VITE_FCM_APP_ID || '1:123456789:web:abcdef',
+    vapidKey: process.env.VITE_FCM_VAPID_KEY || 'demo-vapid-key'
   }
   
   static getInstance(): NotificationService {
@@ -78,6 +83,9 @@ export class NotificationService extends EventEmitter {
       
       // Setup message handling
       this.setupMessageHandling()
+      
+      // Initialize Firebase Cloud Messaging
+      await this.initializeFirebaseMessaging()
       
       // Initialize push messaging if supported
       if ('PushManager' in window) {
@@ -271,6 +279,34 @@ export class NotificationService extends EventEmitter {
     }
   }
   
+  private async initializeFirebaseMessaging(): Promise<void> {
+    try {
+      // Check if Firebase Messaging is supported
+      const messagingSupported = await isSupported()
+      if (!messagingSupported) {
+        console.log('Firebase Messaging is not supported in this browser')
+        return
+      }
+      
+      // Initialize Firebase app
+      const firebaseApp = initializeApp(this.fcmConfig)
+      
+      // Get messaging instance
+      this.messaging = getMessaging(firebaseApp)
+      
+      // Setup foreground message handling
+      onMessage(this.messaging, (payload) => {
+        console.log('📨 Foreground FCM message received:', payload)
+        this.handleForegroundMessage(payload)
+      })
+      
+      console.log('✅ Firebase Cloud Messaging initialized')
+      
+    } catch (error) {
+      console.error('Failed to initialize Firebase Messaging:', error)
+    }
+  }
+  
   private async initializePushMessaging(): Promise<void> {
     try {
       if (!this.registration || this.permission !== 'granted') {
@@ -284,8 +320,92 @@ export class NotificationService extends EventEmitter {
         console.log('✅ Existing push subscription found')
       }
       
+      // Get FCM token if Firebase messaging is available
+      if (this.messaging) {
+        await this.getFCMToken()
+      }
+      
     } catch (error) {
       console.error('Failed to initialize push messaging:', error)
+    }
+  }
+  
+  private async getFCMToken(): Promise<string | null> {
+    try {
+      if (!this.messaging) {
+        return null
+      }
+      
+      const token = await getToken(this.messaging, {
+        vapidKey: this.fcmConfig.vapidKey
+      })
+      
+      if (token) {
+        this.fcmToken = token
+        console.log('✅ FCM token obtained:', token)
+        
+        // Send token to server
+        await this.sendFCMTokenToServer(token)
+        this.emit('fcm_token_received', token)
+        
+        return token
+      } else {
+        console.log('No FCM registration token available')
+        return null
+      }
+      
+    } catch (error) {
+      console.error('Failed to get FCM token:', error)
+      return null
+    }
+  }
+  
+  private handleForegroundMessage(payload: any): void {
+    console.log('Handling foreground FCM message:', payload)
+    
+    // Extract notification data
+    const notification = payload.notification
+    const data = payload.data
+    
+    // Show notification if app is in foreground
+    if (notification) {
+      this.showNotification({
+        title: notification.title,
+        body: notification.body,
+        icon: notification.icon || '/icons/icon-192x192.png',
+        data: data,
+        tag: data?.tag,
+        category: data?.category || 'fcm',
+        priority: data?.priority || 'normal'
+      })
+    }
+    
+    this.emit('fcm_message_received', payload)
+  }
+  
+  private async sendFCMTokenToServer(token: string): Promise<void> {
+    try {
+      const response = await fetch('/api/v1/notifications/fcm-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          token,
+          device_type: 'web',
+          topics: ['build.failed', 'agent.error', 'task.completed', 'human.approval.request']
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to register FCM token with server')
+      }
+      
+      console.log('✅ FCM token sent to server')
+      
+    } catch (error) {
+      console.error('Failed to send FCM token to server:', error)
     }
   }
   

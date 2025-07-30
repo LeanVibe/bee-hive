@@ -12,34 +12,91 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 5000000, // 5MB
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
+          // API Cache - Stale While Revalidate for dynamic data
           {
-            urlPattern: /^https:\/\/api\.hive\.local\/.*$/,
+            urlPattern: /^https?:\/\/.*\/api\/v1\/(tasks|agents|events).*$/,
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'api-cache',
+              cacheName: 'api-dynamic-cache',
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 2 // 2 hours for dynamic data
+              },
+              cacheKeyWillBeUsed: async ({ request }) => {
+                // Remove auth headers from cache key
+                const url = new URL(request.url)
+                return url.pathname + url.search
               }
             }
           },
+          // WebSocket endpoints - Network Only
           {
-            urlPattern: /^wss?:\/\/api\.hive\.local\/.*$/,
+            urlPattern: /^wss?:\/\/.*$/,
             handler: 'NetworkOnly'
+          },
+          // Static API resources - Cache First
+          {
+            urlPattern: /^https?:\/\/.*\/api\/v1\/(health|status|version).*$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'api-static-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours for static resources
+              }
+            }
+          },
+          // Images - Cache First with fallback
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
+          },
+          // Fonts - Cache First
+          {
+            urlPattern: /\.(?:woff|woff2|eot|ttf|otf)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'fonts-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
           }
+        ],
+        // Background sync for offline operations
+        offlineGoogleAnalytics: false,
+        // Add notification handlers
+        additionalManifestEntries: [
+          { url: 'offline.html', revision: '1' }
         ]
       },
       manifest: {
-        name: 'LeanVibe Agent Hive',
-        short_name: 'AgentHive',
-        description: 'Mobile dashboard for multi-agent development operations',
+        name: 'LeanVibe Agent Hive - Executive Command Center',
+        short_name: 'Agent Hive',
+        description: 'Executive mobile command center for multi-agent development operations. Monitor builds, manage tasks, and control AI agents on-the-go.',
         theme_color: '#1e40af',
-        background_color: '#ffffff',
+        background_color: '#0f172a',
         display: 'standalone',
+        display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
         orientation: 'portrait-primary',
         scope: '/',
-        start_url: '/',
+        start_url: '/?source=pwa',
+        lang: 'en',
+        dir: 'ltr',
+        categories: ['productivity', 'developer', 'business', 'utilities'],
         icons: [
           {
             src: '/icons/icon-72x72.png',

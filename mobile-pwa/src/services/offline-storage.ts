@@ -196,6 +196,14 @@ export class OfflineStorageService {
     
     await this.promisifyRequest(store.add(offlineAction))
     console.log('✅ Queued offline action:', action.type)
+    
+    // Dispatch event for PWA sync
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'queue-offline-action',
+        data: offlineAction
+      })
+    }
   }
   
   async getOfflineActions(): Promise<OfflineAction[]> {

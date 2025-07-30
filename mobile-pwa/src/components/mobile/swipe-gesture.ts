@@ -73,6 +73,11 @@ export class SwipeGesture extends LitElement {
     this.startX = touch.clientX
     this.startY = touch.clientY
     this.startTime = Date.now()
+    
+    // Provide haptic feedback on supported devices
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10)
+    }
   }
   
   private handleTouchEnd(e: TouchEvent) {
@@ -114,6 +119,26 @@ export class SwipeGesture extends LitElement {
     
     // Calculate velocity (pixels per millisecond)
     const velocity = distance / duration
+    
+    // Provide successful swipe haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(25)
+    }
+    
+    // Log gesture for service worker analytics
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'gesture-analytics',
+        data: {
+          type: 'swipe',
+          direction,
+          distance,
+          velocity,
+          duration,
+          timestamp: Date.now()
+        }
+      })
+    }
     
     // Dispatch swipe event
     const swipeEvent = new CustomEvent('swipe', {
