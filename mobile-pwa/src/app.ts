@@ -11,10 +11,6 @@ import './components/layout/install-prompt'
 import './components/common/error-boundary'
 import './components/common/loading-spinner'
 import './views/dashboard-view'
-import './views/tasks-view'
-import './views/agents-view'
-import './views/events-view'
-import './views/settings-view'
 import './views/login-view'
 
 @customElement('agent-hive-app')
@@ -304,20 +300,30 @@ export class AgentHiveApp extends LitElement {
       case '/dashboard':
         return html`<dashboard-view></dashboard-view>`
       case '/tasks':
-        return html`<tasks-view></tasks-view>`
       case '/agents':
-        return html`<agents-view></agents-view>`
       case '/events':
-        return html`<events-view></events-view>`
       case '/settings':
-        return html`<settings-view></settings-view>`
-      default:
-        return html`<div class="p-4 text-center">
-          <h2 class="text-xl font-semibold text-gray-900">Page not found</h2>
-          <p class="text-gray-600 mt-2">The requested page could not be found.</p>
+        return html`<div style="padding: 2rem; text-align: center; color: #6b7280;">
+          <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">
+            Coming Soon
+          </h2>
+          <p style="margin-bottom: 1.5rem;">This feature is under development.</p>
           <button 
             @click="${() => this.router.navigate('/dashboard')}"
-            class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500;"
+          >
+            Back to Dashboard
+          </button>
+        </div>`
+      default:
+        return html`<div style="padding: 2rem; text-center; color: #6b7280;">
+          <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">
+            Page not found
+          </h2>
+          <p style="margin-bottom: 1.5rem;">The requested page could not be found.</p>
+          <button 
+            @click="${() => this.router.navigate('/dashboard')}"
+            style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500;"
           >
             Go to Dashboard
           </button>
