@@ -26,6 +26,7 @@ from .v1.github_integration import router as github_integration_router
 from .v1.self_modification import router as self_modification_router
 from .v1.context_monitoring import router as context_monitoring_router
 from .v1.custom_commands import router as custom_commands_router
+from .v1.team_coordination import router as team_coordination_router
 
 # Main API router
 router = APIRouter()
@@ -49,6 +50,7 @@ router.include_router(github_integration_router, tags=["github-integration"])
 router.include_router(self_modification_router, tags=["self-modification"])
 router.include_router(context_monitoring_router, tags=["context-monitoring"])
 router.include_router(custom_commands_router, tags=["custom-commands"])
+router.include_router(team_coordination_router, tags=["team-coordination"])
 
 
 @router.get("/")
