@@ -1,0 +1,293 @@
+# LeanVibe Agent Hive 2.0 - Development Makefile
+# Provides common development commands and shortcuts
+
+.PHONY: help setup health start stop restart clean test test-cov test-fast lint format check install dev build deploy logs ps shell db-shell redis-shell migrate rollback docs dev-container
+
+# Default target
+.DEFAULT_GOAL := help
+
+# Colors for output
+BLUE := \033[0;34m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+RED := \033[0;31m
+NC := \033[0m # No Color
+
+# Configuration
+PYTHON := python3
+PIP := pip
+PYTEST := pytest
+VENV_DIR := venv
+COMPOSE := docker compose
+
+# Help target
+help: ## Show this help message
+	@echo "$(BLUE)LeanVibe Agent Hive 2.0 - Development Commands$(NC)"
+	@echo "==============================================="
+	@echo ""
+	@echo "$(YELLOW)Setup & Environment:$(NC)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /Setup|Environment|setup|install/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(YELLOW)Development:$(NC)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /Development|dev|start|stop|restart/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(YELLOW)Testing & Quality:$(NC)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /test|lint|format|check|quality/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(YELLOW)Database & Services:$(NC)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /database|db|redis|migrate|service/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(YELLOW)Utilities:$(NC)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && !/Setup|Environment|Development|test|lint|format|check|quality|database|db|redis|migrate|service|setup|install|dev|start|stop|restart/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+# Setup & Environment
+setup: ## Run full system setup (one-command setup)
+	@echo "$(BLUE)🚀 Running full system setup...$(NC)"
+	@./setup.sh
+
+install: ## Install Python dependencies in virtual environment
+	@echo "$(BLUE)📦 Installing Python dependencies...$(NC)"
+	@if [ ! -d "$(VENV_DIR)" ]; then \
+		echo "$(YELLOW)Creating virtual environment...$(NC)"; \
+		$(PYTHON) -m venv $(VENV_DIR); \
+	fi
+	@. $(VENV_DIR)/bin/activate && \
+		$(PIP) install --upgrade pip setuptools wheel && \
+		$(PIP) install -e .[dev,monitoring,ai-extended]
+	@echo "$(GREEN)✅ Dependencies installed$(NC)"
+
+install-pre-commit: install ## Install pre-commit hooks
+	@echo "$(BLUE)🔧 Installing pre-commit hooks...$(NC)"
+	@. $(VENV_DIR)/bin/activate && pre-commit install
+	@echo "$(GREEN)✅ Pre-commit hooks installed$(NC)"
+
+# Development
+dev: ## Start development server with auto-reload
+	@echo "$(BLUE)🌟 Starting development server...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+start: ## Start all services (infrastructure + application)
+	@echo "$(BLUE)🚀 Starting all services...$(NC)"
+	@$(COMPOSE) up -d postgres redis
+	@echo "$(YELLOW)⏳ Waiting for services to be ready...$(NC)"
+	@sleep 5
+	@. $(VENV_DIR)/bin/activate && \
+		uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+start-bg: ## Start all services in background
+	@echo "$(BLUE)📦 Starting infrastructure services...$(NC)"
+	@$(COMPOSE) up -d postgres redis
+	@echo "$(GREEN)✅ Services started in background$(NC)"
+
+stop: ## Stop all services
+	@echo "$(BLUE)🛑 Stopping all services...$(NC)"
+	@$(COMPOSE) down
+	@echo "$(GREEN)✅ All services stopped$(NC)"
+
+restart: stop start-bg ## Restart all services
+
+# Testing & Quality
+test: ## Run all tests
+	@echo "$(BLUE)🧪 Running tests...$(NC)"
+	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v
+
+test-cov: ## Run tests with coverage report
+	@echo "$(BLUE)🧪 Running tests with coverage...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		$(PYTEST) --cov=app --cov-report=html --cov-report=term-missing --cov-fail-under=90
+
+test-fast: ## Run tests without slow/integration tests
+	@echo "$(BLUE)⚡ Running fast tests...$(NC)"
+	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m "not slow and not integration"
+
+test-integration: ## Run integration tests only
+	@echo "$(BLUE)🔗 Running integration tests...$(NC)"
+	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m integration
+
+test-watch: ## Run tests in watch mode
+	@echo "$(BLUE)👀 Running tests in watch mode...$(NC)"
+	@. $(VENV_DIR)/bin/activate && $(PYTEST) -f
+
+lint: ## Run code quality checks (ruff, black, mypy)
+	@echo "$(BLUE)🔍 Running code quality checks...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		ruff check . && \
+		black --check . && \
+		mypy app
+	@echo "$(GREEN)✅ Code quality checks passed$(NC)"
+
+format: ## Format code with black and fix ruff issues
+	@echo "$(BLUE)🎨 Formatting code...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		black . && \
+		ruff --fix .
+	@echo "$(GREEN)✅ Code formatted$(NC)"
+
+check: lint test ## Run all quality checks (lint + test)
+
+security: ## Run security checks
+	@echo "$(BLUE)🔒 Running security checks...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		bandit -r app && \
+		safety check
+	@echo "$(GREEN)✅ Security checks passed$(NC)"
+
+# Database & Services
+migrate: ## Run database migrations
+	@echo "$(BLUE)🗄️  Running database migrations...$(NC)"
+	@. $(VENV_DIR)/bin/activate && alembic upgrade head
+	@echo "$(GREEN)✅ Migrations completed$(NC)"
+
+rollback: ## Rollback database migration
+	@echo "$(BLUE)⏪ Rolling back database migration...$(NC)"
+	@. $(VENV_DIR)/bin/activate && alembic downgrade -1
+	@echo "$(GREEN)✅ Rollback completed$(NC)"
+
+db-shell: ## Open PostgreSQL shell
+	@echo "$(BLUE)🗄️  Opening database shell...$(NC)"
+	@$(COMPOSE) exec postgres psql -U leanvibe_user -d leanvibe_agent_hive
+
+redis-shell: ## Open Redis shell
+	@echo "$(BLUE)📦 Opening Redis shell...$(NC)"
+	@$(COMPOSE) exec redis redis-cli
+
+# Utilities
+health: ## Run comprehensive health check
+	@echo "$(BLUE)🏥 Running health check...$(NC)"
+	@./health-check.sh
+
+logs: ## Show logs from all services
+	@$(COMPOSE) logs -f
+
+ps: ## Show running services
+	@$(COMPOSE) ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+
+shell: ## Open shell in development environment
+	@echo "$(BLUE)🐚 Opening development shell...$(NC)"
+	@. $(VENV_DIR)/bin/activate && /bin/bash
+
+build: ## Build Docker images
+	@echo "$(BLUE)🏗️  Building Docker images...$(NC)"
+	@$(COMPOSE) build
+	@echo "$(GREEN)✅ Images built$(NC)"
+
+clean: ## Clean up temporary files and containers
+	@echo "$(BLUE)🧹 Cleaning up...$(NC)"
+	@$(COMPOSE) down -v --remove-orphans
+	@docker system prune -f
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	@rm -rf htmlcov/ .coverage .mypy_cache/
+	@echo "$(GREEN)✅ Cleanup completed$(NC)"
+
+docs: ## Generate and serve documentation
+	@echo "$(BLUE)📚 Generating documentation...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		mkdocs serve --dev-addr 0.0.0.0:8080
+	@echo "$(GREEN)📖 Documentation available at http://localhost:8080$(NC)"
+
+# Performance & Monitoring
+benchmark: ## Run performance benchmarks
+	@echo "$(BLUE)⚡ Running performance benchmarks...$(NC)"
+	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m benchmark
+
+load-test: ## Run load tests
+	@echo "$(BLUE)🔥 Running load tests...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		locust -f tests/performance/locust_load_tests.py --headless -u 10 -r 2 -t 60s --host=http://localhost:8000
+
+monitor: ## Start monitoring services (Prometheus + Grafana)
+	@echo "$(BLUE)📊 Starting monitoring services...$(NC)"
+	@$(COMPOSE) --profile monitoring up -d prometheus grafana
+	@echo "$(GREEN)📈 Prometheus: http://localhost:9090$(NC)"
+	@echo "$(GREEN)📊 Grafana: http://localhost:3001$(NC)"
+
+# Development Tools
+dev-tools: ## Start development tools (pgAdmin, Redis Insight, etc.)
+	@echo "$(BLUE)🛠️  Starting development tools...$(NC)"
+	@$(COMPOSE) --profile development up -d pgadmin redis-insight jupyter
+	@echo "$(GREEN)🗄️  pgAdmin: http://localhost:5050$(NC)"
+	@echo "$(GREEN)📦 Redis Insight: http://localhost:8001$(NC)"
+	@echo "$(GREEN)📓 Jupyter: http://localhost:8888$(NC)"
+
+# Frontend Development
+frontend-install: ## Install frontend dependencies
+	@echo "$(BLUE)🎨 Installing frontend dependencies...$(NC)"
+	@cd frontend && npm install
+	@echo "$(GREEN)✅ Frontend dependencies installed$(NC)"
+
+frontend-dev: ## Start frontend development server
+	@echo "$(BLUE)🎨 Starting frontend development server...$(NC)"
+	@cd frontend && npm run dev
+
+frontend-build: ## Build frontend for production
+	@echo "$(BLUE)🏗️  Building frontend...$(NC)"
+	@cd frontend && npm run build
+	@echo "$(GREEN)✅ Frontend built$(NC)"
+
+frontend-test: ## Run frontend tests
+	@echo "$(BLUE)🧪 Running frontend tests...$(NC)"
+	@cd frontend && npm run test
+
+# Mobile PWA
+pwa-dev: ## Start PWA development server
+	@echo "$(BLUE)📱 Starting PWA development server...$(NC)"
+	@cd mobile-pwa && npm run dev
+
+pwa-build: ## Build PWA for production
+	@echo "$(BLUE)🏗️  Building PWA...$(NC)"
+	@cd mobile-pwa && npm run build
+
+# CI/CD
+pre-commit: ## Run pre-commit hooks on all files
+	@echo "$(BLUE)🔧 Running pre-commit hooks...$(NC)"
+	@. $(VENV_DIR)/bin/activate && pre-commit run --all-files
+
+ci: install-pre-commit lint test security ## Run full CI pipeline locally
+
+# Release
+release: ## Create a new release (semantic versioning)
+	@echo "$(BLUE)🚀 Creating release...$(NC)"
+	@. $(VENV_DIR)/bin/activate && cz bump --changelog
+	@echo "$(GREEN)✅ Release created$(NC)"
+
+# Quick status check
+status: ## Show quick system status
+	@echo "$(BLUE)📊 System Status$(NC)"
+	@echo "==============="
+	@echo "$(YELLOW)Docker Services:$(NC)"
+	@$(COMPOSE) ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || echo "Docker Compose not available"
+	@echo ""
+	@echo "$(YELLOW)API Health:$(NC)"
+	@curl -s http://localhost:8000/health | jq -r '.status // "API not responding"' 2>/dev/null || echo "API not responding"
+	@echo ""
+	@echo "$(YELLOW)Virtual Environment:$(NC)"
+	@if [ -d "$(VENV_DIR)" ]; then echo "✅ Virtual environment exists"; else echo "❌ Virtual environment missing"; fi
+
+# Development container support
+dev-container: ## Open project in VS Code dev container
+	@echo "$(BLUE)📦 Opening in VS Code dev container...$(NC)"
+	@code --folder-uri vscode-remote://dev-container+$(shell pwd | sed 's/\//%2F/g')/workspace
+
+# Emergency/Recovery
+emergency-reset: ## Emergency reset - stop everything and clean up
+	@echo "$(RED)🚨 Emergency reset - stopping all services...$(NC)"
+	@$(COMPOSE) down -v --remove-orphans 2>/dev/null || true
+	@docker container prune -f 2>/dev/null || true
+	@docker volume prune -f 2>/dev/null || true
+	@echo "$(GREEN)✅ Emergency reset completed$(NC)"
+	@echo "$(YELLOW)⚠️  Run 'make setup' to reinitialize the system$(NC)"
+
+# Show environment info
+env-info: ## Show environment information
+	@echo "$(BLUE)🌍 Environment Information$(NC)"
+	@echo "=========================="
+	@echo "$(YELLOW)Python:$(NC) $(shell python3 --version 2>/dev/null || echo 'Not installed')"
+	@echo "$(YELLOW)Docker:$(NC) $(shell docker --version 2>/dev/null || echo 'Not installed')"
+	@echo "$(YELLOW)Docker Compose:$(NC) $(shell docker compose version --short 2>/dev/null || echo 'Not installed')"
+	@echo "$(YELLOW)Git:$(NC) $(shell git --version 2>/dev/null || echo 'Not installed')"
+	@echo "$(YELLOW)Node.js:$(NC) $(shell node --version 2>/dev/null || echo 'Not installed')"
+	@echo "$(YELLOW)Virtual Env:$(NC) $(if $(wildcard $(VENV_DIR)),✅ Exists,❌ Missing)"
+	@echo "$(YELLOW)Config File:$(NC) $(if $(wildcard .env.local),✅ Exists,❌ Missing)"

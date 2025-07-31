@@ -20,9 +20,10 @@ services:
       - leanvibe_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U leanvibe_user -d leanvibe_agent_hive"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   # Redis for Caching and Message Broker
@@ -34,14 +35,14 @@ services:
       - "6380:6379"
     volumes:
       - redis_data:/data
-      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - leanvibe_network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-leanvibe_redis_pass}", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   # FastAPI Backend Application
@@ -145,13 +146,14 @@ services:
     container_name: leanvibe_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@leanvibe.dev
-      PGLADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
     ports:
       - "5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - leanvibe_network
     profiles:
@@ -230,7 +232,7 @@ volumes:
     driver: local
   redis_data:
     driver: local
-  pgladmin_data:
+  pgadmin_data:
     driver: local
   prometheus_data:
     driver: local

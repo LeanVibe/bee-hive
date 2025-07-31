@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Development environment container
+  dev-environment:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      target: development
+    container_name: leanvibe_dev_environment
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql://leanvibe_user:leanvibe_secure_pass@postgres:5432/leanvibe_agent_hive
+      - REDIS_URL=redis://:leanvibe_redis_pass@redis:6379/0
+      - PYTHONPATH=/workspace
+      - WORKSPACE_ROOT=/workspace
+    volumes:
+      - ..:/workspace:cached
+      - leanvibe-venv:/workspace/venv
+      - leanvibe-node-modules:/workspace/frontend/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network
+    command: sleep infinity
+    user: vscode
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+
+volumes:
+  leanvibe-venv:
+    external: false
+  leanvibe-node-modules:
+    external: false
