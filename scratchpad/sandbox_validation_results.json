@@ -1,0 +1,122 @@
+{
+  "configuration": {
+    "detection": {
+      "passed": true,
+      "reason": "Required API keys missing: ANTHROPIC_API_KEY",
+      "confidence": 0.95,
+      "missing_keys": [
+        "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY"
+      ]
+    },
+    "creation": {
+      "passed": true,
+      "enabled": true,
+      "mock_services": {
+        "anthropic": true,
+        "openai": true,
+        "github": false
+      }
+    },
+    "status": {
+      "passed": true,
+      "complete_status": {
+        "sandbox_mode": {
+          "enabled": true,
+          "auto_detected": true,
+          "reason": "Required API keys missing: ANTHROPIC_API_KEY"
+        },
+        "mock_services": {
+          "anthropic": true,
+          "openai": true,
+          "github": false
+        },
+        "demo_features": {
+          "scenarios_enabled": true,
+          "realistic_timing": true,
+          "progress_simulation": true
+        },
+        "api_keys": {
+          "missing": [
+            "ANTHROPIC_API_KEY",
+            "OPENAI_API_KEY"
+          ],
+          "detection_confidence": 0.95
+        },
+        "migration": {
+          "to_production": "Set missing API keys in environment",
+          "required_keys": [
+            "ANTHROPIC_API_KEY"
+          ]
+        }
+      }
+    }
+  },
+  "mock_client": {
+    "basic_response": {
+      "passed": true,
+      "response_length": 548,
+      "has_usage": true
+    },
+    "context_awareness": {
+      "passed": true,
+      "contains_keywords": true
+    }
+  },
+  "demo_scenarios": {
+    "loading": {
+      "passed": true,
+      "count": 6,
+      "titles": [
+        "Fibonacci Number Calculator",
+        "Multi-Unit Temperature Converter",
+        "Secure User Authentication System"
+      ]
+    },
+    "filtering": {
+      "passed": true,
+      "simple_count": 2
+    },
+    "recommendations": {
+      "passed": "Fibonacci Number Calculator",
+      "recommended_title": "Fibonacci Number Calculator"
+    }
+  },
+  "orchestrator": {
+    "initialization": {
+      "passed": true,
+      "enabled": true,
+      "agent_count": 5,
+      "mock_services": [
+        "anthropic",
+        "openai"
+      ]
+    },
+    "agents": {
+      "passed": true,
+      "count": 5,
+      "roles": [
+        "architect",
+        "developer",
+        "tester",
+        "reviewer",
+        "documenter"
+      ]
+    },
+    "development": {
+      "passed": true,
+      "session_id": "validation-test-001",
+      "status": "started",
+      "tasks_created": 5
+    },
+    "tracking": {
+      "passed": true,
+      "has_status": true,
+      "progress": 0
+    }
+  },
+  "integration": {
+    "error": "name 'SandboxOrchestractor' is not defined"
+  },
+  "overall_status": "PASS"
+}
