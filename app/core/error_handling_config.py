@@ -386,7 +386,7 @@ class ErrorHandlingConfiguration(BaseSettings):
     def export_to_dict(self) -> Dict[str, Any]:
         """Export configuration to dictionary format."""
         return {
-            "environment": self.environment.value,
+            "environment": self.environment.value if hasattr(self.environment, 'value') else str(self.environment),
             "enabled": self.enabled,
             "debug_mode": self.debug_mode,
             "performance_targets": asdict(self.performance_targets),
@@ -471,7 +471,7 @@ class ConfigurationManager:
         
         logger.info(
             "⚙️ Configuration manager initialized",
-            environment=self.config.environment.value,
+            environment=self.config.environment.value if hasattr(self.config.environment, 'value') else str(self.config.environment),
             hot_reload=enable_hot_reload
         )
     
@@ -660,7 +660,7 @@ class ConfigurationManager:
     def get_status(self) -> Dict[str, Any]:
         """Get configuration manager status."""
         return {
-            "current_environment": self.config.environment.value,
+            "current_environment": self.config.environment.value if hasattr(self.config.environment, 'value') else str(self.config.environment),
             "hot_reload_enabled": self.enable_hot_reload,
             "hot_reload_active": self._hot_reload_task is not None and not self._hot_reload_task.done(),
             "config_file_path": self.config.config_file_path,
@@ -733,7 +733,7 @@ def initialize_error_handling_config(
     
     logger.info(
         "✅ Error handling configuration system initialized",
-        environment=config.environment.value,
+        environment=config.environment.value if hasattr(config.environment, 'value') else str(config.environment),
         config_file=config_file_path,
         hot_reload=enable_hot_reload
     )

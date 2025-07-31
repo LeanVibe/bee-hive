@@ -19,9 +19,41 @@ depends_on = None
 def upgrade():
     """Add intelligent task routing and performance tracking tables."""
     
-    # Create agent_performance_history table
+    # Create agent_performance_history table (use raw SQL to handle IF NOT EXISTS)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS agent_performance_history (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            agent_id UUID NOT NULL REFERENCES agents(id),
+            task_id UUID REFERENCES tasks(id),
+            task_type VARCHAR(100),
+            success BOOLEAN NOT NULL DEFAULT FALSE,
+            completion_time_minutes FLOAT,
+            estimated_time_minutes FLOAT,
+            time_variance_ratio FLOAT,
+            retry_count INTEGER NOT NULL DEFAULT 0,
+            error_rate FLOAT NOT NULL DEFAULT 0.0,
+            confidence_score FLOAT,
+            context_window_usage FLOAT,
+            memory_usage_mb FLOAT,
+            cpu_usage_percent FLOAT,
+            priority_level INTEGER,
+            complexity_score FLOAT,
+            required_capabilities JSONB DEFAULT '[]'::jsonb,
+            started_at TIMESTAMP WITH TIME ZONE,
+            completed_at TIMESTAMP WITH TIME ZONE,
+            recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+    """)
+    
+    # Create indexes if they don't exist
+    op.execute("CREATE INDEX IF NOT EXISTS idx_agent_performance_history_agent_id ON agent_performance_history(agent_id);")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_agent_performance_history_task_id ON agent_performance_history(task_id);")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_agent_performance_history_task_type ON agent_performance_history(task_type);")
+    
+    # Skip the original create_table call by commenting it out
+    """
     op.create_table(
-        'agent_performance_history',
+        'agent_performance_history_DISABLED',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=sa.text('gen_random_uuid()')),
         sa.Column('agent_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('agents.id'), nullable=False, index=True),
         sa.Column('task_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('tasks.id'), nullable=True, index=True),
@@ -53,6 +85,7 @@ def upgrade():
         sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
         sa.Column('recorded_at', sa.DateTime(timezone=True), server_default=sa.func.now(), index=True),
     )
+    """
     
     # Create task_routing_decisions table
     op.create_table(

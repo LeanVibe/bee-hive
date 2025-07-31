@@ -47,37 +47,49 @@ def upgrade() -> None:
         WHERE embedding IS NOT NULL;
     """)
     
-    # Create optimized indexes for cross-agent search performance
-    op.create_index(
-        'idx_contexts_cross_agent_search',
-        'contexts',
-        ['agent_id', 'importance_score', 'is_consolidated'],
-        postgresql_where=sa.text('embedding IS NOT NULL AND importance_score >= 0.7')
-    )
+    # Create optimized indexes for cross-agent search performance - check if exists first
+    try:
+        op.create_index(
+            'idx_contexts_cross_agent_search',
+            'contexts',
+            ['agent_id', 'importance_score', 'is_consolidated'],
+            postgresql_where=sa.text('embedding IS NOT NULL AND importance_score >= 0.7'),
+            if_not_exists=True
+        )
+    except Exception:
+        # Index might already exist, skip
+        pass
     
     # Index for efficient agent filtering with access levels
-    op.create_index(
-        'idx_contexts_agent_access_embedding',
-        'contexts', 
-        ['agent_id', 'access_level', 'importance_score'],
-        postgresql_where=sa.text('embedding IS NOT NULL')
-    )
+    try:
+        op.create_index(
+            'idx_contexts_agent_access_embedding',
+            'contexts', 
+            ['agent_id', 'access_level', 'importance_score'],
+            postgresql_where=sa.text('embedding IS NOT NULL'),
+            if_not_exists=True
+        )
+    except Exception:
+        pass
     
     # Composite index for temporal + importance filtering
-    op.create_index(
-        'idx_contexts_temporal_importance_embedding',
-        'contexts',
-        ['created_at', 'importance_score', 'accessed_at'],
-        postgresql_where=sa.text('embedding IS NOT NULL')
-    )
+    try:
+        op.create_index(
+            'idx_contexts_temporal_importance_embedding',
+            'contexts',
+            ['created_at', 'importance_score', 'accessed_at'],
+            postgresql_where=sa.text('embedding IS NOT NULL'),
+            if_not_exists=True
+        )
+    except Exception:
+        pass
     
-    # Index for context type filtering in semantic search
-    op.create_index(
-        'idx_contexts_type_importance_embedding',
-        'contexts',
-        ['context_type', 'importance_score'],
-        postgresql_where=sa.text('embedding IS NOT NULL')
-    )
+    # Index for context type filtering in semantic search - SKIP if exists from migration 007
+    op.execute("""
+        CREATE INDEX IF NOT EXISTS idx_contexts_type_importance_embedding_v2 
+        ON contexts (context_type, importance_score) 
+        WHERE embedding IS NOT NULL;
+    """)
     
     # Create search performance monitoring view
     op.execute("""
@@ -129,7 +141,7 @@ def upgrade() -> None:
             COUNT(*) as total_contexts,
             COUNT(embedding) as contexts_with_embeddings,
             ROUND(
-                (COUNT(embedding)::FLOAT / COUNT(*)) * 100, 2
+                ((COUNT(embedding)::FLOAT / COUNT(*)) * 100)::NUMERIC, 2
             ) as embedding_coverage_percent,
             AVG(CASE WHEN embedding IS NOT NULL THEN importance_score END) as avg_importance_with_embedding,
             COUNT(CASE WHEN embedding IS NOT NULL AND accessed_at >= NOW() - INTERVAL '7 days' THEN 1 END) as recently_accessed_with_embedding
@@ -377,12 +389,29 @@ def downgrade() -> None:
     op.drop_table('vector_search_cache_stats')
     op.drop_table('vector_search_batches')
     
-    # Drop performance optimization indexes
-    op.drop_index('idx_vector_search_batches_performance')
-    op.drop_index('idx_contexts_type_importance_embedding')
-    op.drop_index('idx_contexts_temporal_importance_embedding')
-    op.drop_index('idx_contexts_agent_access_embedding')
-    op.drop_index('idx_contexts_cross_agent_search')
+    # Drop performance optimization indexes (safely)
+    try:
+        op.drop_index('idx_vector_search_batches_performance')
+    except Exception:
+        pass
+    
+    # Drop the v2 index we created (not the original from migration 007)
+    op.execute('DROP INDEX IF EXISTS idx_contexts_type_importance_embedding_v2;')
+    
+    try:
+        op.drop_index('idx_contexts_temporal_importance_embedding')
+    except Exception:
+        pass
+    
+    try:
+        op.drop_index('idx_contexts_agent_access_embedding')
+    except Exception:
+        pass
+    
+    try:
+        op.drop_index('idx_contexts_cross_agent_search')
+    except Exception:  
+        pass
     
     # Drop vector indexes
     op.execute('DROP INDEX IF EXISTS idx_contexts_embedding_ivfflat_l2;')
