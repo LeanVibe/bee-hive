@@ -100,20 +100,24 @@ class Settings(BaseSettings):
     LOAD_TEST_CONCURRENT_PRODUCERS: int = Field(default=50, env="LOAD_TEST_CONCURRENT_PRODUCERS")
     LOAD_TEST_CONCURRENT_CONSUMERS: int = Field(default=25, env="LOAD_TEST_CONCURRENT_CONSUMERS")
     
-    # Anthropic Claude API
-    ANTHROPIC_API_KEY: str = Field(..., env="ANTHROPIC_API_KEY")
+    # Sandbox Mode Configuration
+    SANDBOX_MODE: bool = Field(default=False, env="SANDBOX_MODE")
+    SANDBOX_DEMO_MODE: bool = Field(default=False, env="SANDBOX_DEMO_MODE")
+    
+    # Anthropic Claude API (Optional in sandbox mode)
+    ANTHROPIC_API_KEY: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
     ANTHROPIC_MODEL: str = Field(default="claude-3-5-sonnet-20241022", env="ANTHROPIC_MODEL")
     ANTHROPIC_MAX_TOKENS: int = Field(default=4096, env="ANTHROPIC_MAX_TOKENS")
     
-    # GitHub Integration
-    GITHUB_TOKEN: str = Field(..., env="GITHUB_TOKEN")
+    # GitHub Integration (Optional in sandbox mode)
+    GITHUB_TOKEN: Optional[str] = Field(default=None, env="GITHUB_TOKEN")
     GITHUB_APP_ID: Optional[str] = Field(None, env="GITHUB_APP_ID")
     GITHUB_PRIVATE_KEY: Optional[str] = Field(None, env="GITHUB_PRIVATE_KEY")
     WORK_TREES_BASE_PATH: str = Field(default="/tmp/agent-workspaces", env="WORK_TREES_BASE_PATH")
-    BASE_URL: str = Field(..., env="BASE_URL")  # For webhook URLs
+    BASE_URL: Optional[str] = Field(default=None, env="BASE_URL")  # For webhook URLs
     
-    # OpenAI API (for embeddings)
-    OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY")
+    # OpenAI API (Optional in sandbox mode)
+    OPENAI_API_KEY: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-ada-002", env="OPENAI_EMBEDDING_MODEL")
     OPENAI_EMBEDDING_MAX_TOKENS: int = Field(default=8191, env="OPENAI_EMBEDDING_MAX_TOKENS")
     OPENAI_EMBEDDING_CACHE_TTL: int = Field(default=3600, env="OPENAI_EMBEDDING_CACHE_TTL")

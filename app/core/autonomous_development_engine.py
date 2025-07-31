@@ -24,6 +24,13 @@ from anthropic import AsyncAnthropic
 
 from .config import settings
 
+# Import sandbox components
+try:
+    from .sandbox import is_sandbox_mode, get_sandbox_config, create_mock_anthropic_client
+    SANDBOX_AVAILABLE = True
+except ImportError:
+    SANDBOX_AVAILABLE = False
+
 logger = structlog.get_logger()
 
 
@@ -107,12 +114,28 @@ class AutonomousDevelopmentEngine:
     """
     
     def __init__(self, anthropic_api_key: Optional[str] = None):
-        self.anthropic_client = AsyncAnthropic(
-            api_key=anthropic_api_key or settings.ANTHROPIC_API_KEY
+        # Check if sandbox mode is enabled
+        self.sandbox_mode = SANDBOX_AVAILABLE and (
+            settings.SANDBOX_MODE or 
+            is_sandbox_mode() or 
+            not (anthropic_api_key or settings.ANTHROPIC_API_KEY)
         )
+        
+        if self.sandbox_mode:
+            # Use mock client for sandbox mode
+            self.anthropic_client = create_mock_anthropic_client(anthropic_api_key)
+            logger.info("Sandbox mode enabled - using mock Anthropic client")
+        else:
+            # Use real client for production mode
+            self.anthropic_client = AsyncAnthropic(
+                api_key=anthropic_api_key or settings.ANTHROPIC_API_KEY
+            )
+            logger.info("Production mode enabled - using real Anthropic client")
+        
         self.workspace_dir = Path(tempfile.mkdtemp(prefix="autonomous_dev_"))
         logger.info("Autonomous Development Engine initialized", 
-                   workspace_dir=str(self.workspace_dir))
+                   workspace_dir=str(self.workspace_dir),
+                   sandbox_mode=self.sandbox_mode)
     
     async def develop_autonomously(self, task: DevelopmentTask) -> DevelopmentResult:
         """

@@ -25,8 +25,20 @@ try:
         AutonomousDevelopmentEngine, 
         DevelopmentTask, 
         TaskComplexity,
-        DevelopmentResult
+        DevelopmentResult,
+        create_autonomous_development_engine
     )
+    
+    # Import sandbox components
+    from app.core.sandbox import (
+        is_sandbox_mode,
+        get_sandbox_config,
+        get_sandbox_status,
+        create_sandbox_orchestrator
+    )
+    from app.core.sandbox.demo_scenarios import get_demo_scenario_engine
+    
+    SANDBOX_AVAILABLE = True
 except ImportError:
     # Fallback for demo-only deployment
     from demo.fallback.autonomous_engine import (
@@ -35,11 +47,20 @@ except ImportError:
         TaskComplexity, 
         DevelopmentResult
     )
+    SANDBOX_AVAILABLE = False
 
 logger = structlog.get_logger()
 
 # Create demo router
 demo_router = APIRouter(prefix="/api/demo", tags=["demo"])
+
+# Initialize sandbox orchestrator if available
+sandbox_orchestrator = None
+if SANDBOX_AVAILABLE:
+    try:
+        sandbox_orchestrator = create_sandbox_orchestrator()
+    except Exception as e:
+        logger.warning("Failed to initialize sandbox orchestrator", error=str(e))
 
 # Global demo session storage (in production, use Redis or database)
 demo_sessions: Dict[str, Dict[str, Any]] = {}
@@ -418,6 +439,108 @@ async def cleanup_session(session_id: str):
     return {"success": True, "message": "Session cleaned up"}
 
 
+# Sandbox-specific endpoints
+@demo_router.get("/sandbox/status")
+async def sandbox_status():
+    """Get sandbox mode status and configuration."""
+    if not SANDBOX_AVAILABLE:
+        return {"sandbox_available": False, "message": "Sandbox mode not available"}
+    
+    try:
+        status = get_sandbox_status()
+        return {
+            "sandbox_available": True,
+            "status": status,
+            "orchestrator_ready": sandbox_orchestrator is not None,
+            "scenarios_available": True
+        }
+    except Exception as e:
+        return {
+            "sandbox_available": True,
+            "error": str(e),
+            "message": "Sandbox mode available but configuration failed"
+        }
+
+
+@demo_router.get("/sandbox/scenarios")
+async def get_sandbox_scenarios():
+    """Get available sandbox demo scenarios."""
+    if not SANDBOX_AVAILABLE:
+        return {"error": "Sandbox mode not available"}
+    
+    try:
+        scenario_engine = get_demo_scenario_engine()
+        scenarios = scenario_engine.get_all_scenarios()
+        
+        return {
+            "sandbox_mode": True,
+            "scenarios_count": len(scenarios),
+            "scenarios": scenarios,
+            "recommended": {
+                "beginner": scenario_engine.get_recommended_scenario("beginner").to_dict(),
+                "intermediate": scenario_engine.get_recommended_scenario("intermediate").to_dict(),
+                "advanced": scenario_engine.get_recommended_scenario("advanced").to_dict()
+            }
+        }
+    except Exception as e:
+        logger.error("Failed to get sandbox scenarios", error=str(e))
+        return {"error": f"Failed to load scenarios: {str(e)}"}
+
+
+@demo_router.post("/sandbox/start")
+async def start_sandbox_demo(
+    request: DemoTaskRequest,
+    background_tasks: BackgroundTasks
+):
+    """Start sandbox autonomous development demo."""
+    if not SANDBOX_AVAILABLE or not sandbox_orchestrator:
+        return {"error": "Sandbox mode not available"}
+    
+    try:
+        session_id = request.session_id
+        task_data = request.task
+        
+        # Start autonomous development in sandbox mode
+        result = await sandbox_orchestrator.start_autonomous_development(
+            session_id=session_id,
+            task_description=task_data.get("description", ""),
+            requirements=task_data.get("requirements", []),
+            complexity=task_data.get("complexity", "simple")
+        )
+        
+        return {
+            "sandbox_mode": True,
+            "demo_started": True,
+            **result
+        }
+        
+    except Exception as e:
+        logger.error("Failed to start sandbox demo", error=str(e))
+        return {"error": f"Failed to start demo: {str(e)}"}
+
+
+@demo_router.get("/sandbox/session/{session_id}")
+async def get_sandbox_session_status(session_id: str):
+    """Get sandbox session status and progress."""
+    if not SANDBOX_AVAILABLE or not sandbox_orchestrator:
+        return {"error": "Sandbox mode not available"}
+    
+    try:
+        status = sandbox_orchestrator.get_session_status(session_id)
+        if status is None:
+            return {"error": "Session not found"}
+        
+        return {
+            "sandbox_mode": True,
+            "session_found": True,
+            **status
+        }
+        
+    except Exception as e:
+        logger.error("Failed to get sandbox session status", error=str(e))
+        return {"error": f"Failed to get session status: {str(e)}"}
+
+
 @demo_router.get("/health")
 async def demo_health_check():
     """
@@ -427,5 +550,7 @@ async def demo_health_check():
         "status": "healthy",
         "timestamp": datetime.utcnow(),
         "active_sessions": len(demo_sessions),
-        "active_connections": sum(len(conns) for conns in sse_connections.values())
+        "active_connections": sum(len(conns) for conns in sse_connections.values()),
+        "sandbox_mode": SANDBOX_AVAILABLE and is_sandbox_mode() if SANDBOX_AVAILABLE else False,
+        "sandbox_orchestrator_ready": sandbox_orchestrator is not None
     }
