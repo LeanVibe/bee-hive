@@ -403,8 +403,8 @@ start_demo() {
     # Activate virtual environment
     source venv/bin/activate 2>/dev/null || source venv/Scripts/activate 2>/dev/null
     
-    # Load sandbox environment
-    export $(cat .env.sandbox | xargs)
+    # Load sandbox environment (filter out comments)
+    export $(cat .env.sandbox | grep -v '^#' | grep -v '^$' | xargs)
     
     print_status "${GREEN}" "🌟 Demo starting on http://localhost:${DEMO_PORT}"
     print_status "${CYAN}" "📖 API Documentation: http://localhost:${DEMO_PORT}/docs"
