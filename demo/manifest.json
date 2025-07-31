@@ -1,0 +1,65 @@
+{
+  "name": "LeanVibe Agent Hive 2.0 - Autonomous Development Demo",
+  "short_name": "LeanVibe Demo",
+  "description": "Experience autonomous AI development in action - watch AI agents build complete software solutions from requirements to working code.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0066cc",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["development", "ai", "automation", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%230066cc'/><text x='50' y='60' text-anchor='middle' fill='white' font-size='40'>🚀</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%230066cc'/><text x='50' y='60' text-anchor='middle' fill='white' font-size='40'>🚀</text></svg>",
+      "sizes": "512x512", 
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'><rect width='800' height='600' fill='%23f8fafc'/><rect x='50' y='50' width='700' height='100' fill='%230066cc' rx='10'/><text x='400' y='110' text-anchor='middle' fill='white' font-size='24'>LeanVibe Autonomous Development Demo</text><rect x='50' y='200' width='220' height='150' fill='white' stroke='%23e2e8f0' rx='8'/><text x='160' y='230' text-anchor='middle' font-size='16'>Password Validator</text><rect x='290' y='200' width='220' height='150' fill='white' stroke='%23e2e8f0' rx='8'/><text x='400' y='230' text-anchor='middle' font-size='16'>API Rate Limiter</text><rect x='530' y='200' width='220' height='150' fill='white' stroke='%23e2e8f0' rx='8'/><text x='640' y='230' text-anchor='middle' font-size='16'>Caching System</text></svg>",
+      "sizes": "800x600",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Task Selection Screen"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Demo",
+      "short_name": "Demo",
+      "description": "Start a quick autonomous development demo",
+      "url": "/?quick=true",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M8 5v14l11-7z' fill='%230066cc'/></svg>",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "web",
+      "url": "https://github.com/leanvibe/agent-hive-2.0",
+      "id": "leanvibe-agent-hive"
+    }
+  ],
+  "prefer_related_applications": false,
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "protocol_handlers": [
+    {
+      "protocol": "web+leanvibe",
+      "url": "/?task=%s"
+    }
+  ]
+}

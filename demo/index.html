@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeanVibe Agent Hive 2.0 - Autonomous Development Demo</title>
+    <meta name="description" content="Experience autonomous AI development in action - watch AI agents build complete software solutions from requirements to working code.">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="assets/styles.css" as="style">
+    <link rel="preload" href="assets/demo.js" as="script">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/styles.css">
+    
+    <!-- Progressive Web App -->
+    <meta name="theme-color" content="#0066cc">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Social Media / SEO -->
+    <meta property="og:title" content="LeanVibe Agent Hive 2.0 - Autonomous Development Demo">
+    <meta property="og:description" content="Watch AI agents autonomously build complete software solutions">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://demo.leanvibe.dev">
+    
+    <!-- Analytics placeholder -->
+    <script>
+        // Performance monitoring
+        window.demoStartTime = performance.now();
+    </script>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="logo-section">
+                    <div class="logo">🚀</div>
+                    <h1>LeanVibe Agent Hive 2.0</h1>
+                    <p class="hero-subtitle">Autonomous AI Development Engine</p>
+                </div>
+                
+                <div class="value-proposition">
+                    <h2>Watch AI Agents Build Complete Software Solutions</h2>
+                    <p>From requirements to working code with tests and documentation - all autonomous, all in real-time.</p>
+                    
+                    <div class="features-grid">
+                        <div class="feature">
+                            <div class="feature-icon">💻</div>
+                            <div class="feature-text">
+                                <h3>Code Generation</h3>
+                                <p>AI writes production-ready code</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">🧪</div>
+                            <div class="feature-text">
+                                <h3>Test Creation</h3>
+                                <p>Comprehensive test suites automatically</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">📖</div>
+                            <div class="feature-text">
+                                <h3>Documentation</h3>
+                                <p>Professional docs and examples</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">✅</div>
+                            <div class="feature-text">
+                                <h3>Validation</h3>
+                                <p>Automated quality assurance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Interface -->
+    <section class="demo-section">
+        <div class="container">
+            <!-- Task Selection -->
+            <div class="demo-interface" id="demoInterface">
+                <div class="demo-header">
+                    <h2>🎯 Choose Your Development Task</h2>
+                    <p>Select a task to see autonomous AI development in action</p>
+                </div>
+
+                <div class="task-selection" id="taskSelection">
+                    <div class="task-cards">
+                        <div class="task-card" data-task="simple">
+                            <div class="task-header">
+                                <h3>🟢 Password Validator</h3>
+                                <span class="task-time">~30s</span>
+                            </div>
+                            <p>Create a function to validate password strength with comprehensive rules</p>
+                            <div class="task-complexity">Simple</div>
+                        </div>
+                        
+                        <div class="task-card" data-task="moderate">
+                            <div class="task-header">
+                                <h3>🟡 API Rate Limiter</h3>
+                                <span class="task-time">~60s</span>
+                            </div>
+                            <p>Build a REST API rate limiting system with different strategies</p>
+                            <div class="task-complexity">Moderate</div>
+                        </div>
+                        
+                        <div class="task-card" data-task="complex">
+                            <div class="task-header">
+                                <h3>🔴 Caching System</h3>
+                                <span class="task-time">~90s</span>
+                            </div>
+                            <p>Implement a multi-layer caching system with TTL and eviction policies</p>
+                            <div class="task-complexity">Complex</div>
+                        </div>
+                    </div>
+
+                    <div class="custom-task">
+                        <h3>✨ Or Create Your Own Task</h3>
+                        <div class="custom-input-group">
+                            <textarea 
+                                id="customTaskInput" 
+                                placeholder="Describe your development task (e.g., 'Create a JSON parser with error handling')"
+                                rows="3"
+                                maxlength="500"
+                            ></textarea>
+                            <div class="input-counter">
+                                <span id="charCounter">0</span>/500
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="start-demo-btn" id="startDemoBtn">
+                        <span class="btn-icon">🚀</span>
+                        Start Autonomous Development
+                    </button>
+                </div>
+            </div>
+
+            <!-- Development Progress -->
+            <div class="development-progress hidden" id="developmentProgress">
+                <div class="progress-header">
+                    <h2>🤖 AI Agents Working</h2>
+                    <div class="overall-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="overallProgressFill"></div>
+                        </div>
+                        <span class="progress-text" id="overallProgressText">0%</span>
+                    </div>
+                </div>
+
+                <div class="phases-container">
+                    <div class="phase" data-phase="understanding">
+                        <div class="phase-icon">🎯</div>
+                        <div class="phase-content">
+                            <h3>Understanding Requirements</h3>
+                            <p>AI analyzes the task and identifies core functionality</p>
+                            <div class="phase-status">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="phase" data-phase="planning">
+                        <div class="phase-icon">📋</div>
+                        <div class="phase-content">
+                            <h3>Planning Implementation</h3>
+                            <p>Creating detailed implementation strategy</p>
+                            <div class="phase-status">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="phase" data-phase="implementation">
+                        <div class="phase-icon">💻</div>
+                        <div class="phase-content">
+                            <h3>Generating Code</h3>
+                            <p>Writing production-ready code with error handling</p>
+                            <div class="phase-status">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="phase" data-phase="testing">
+                        <div class="phase-icon">🧪</div>
+                        <div class="phase-content">
+                            <h3>Creating Tests</h3>
+                            <p>Building comprehensive test suite</p>
+                            <div class="phase-status">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="phase" data-phase="documentation">
+                        <div class="phase-icon">📖</div>
+                        <div class="phase-content">
+                            <h3>Writing Documentation</h3>
+                            <p>Creating professional documentation and examples</p>
+                            <div class="phase-status">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="phase" data-phase="validation">
+                        <div class="phase-icon">✅</div>
+                        <div class="phase-content">
+                            <h3>Validating Solution</h3>
+                            <p>Running tests and quality assurance</p>
+                            <div class="phase-status">Pending</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Code Display -->
+                <div class="live-code-section">
+                    <h3>📝 Live Code Generation</h3>
+                    <div class="code-display" id="liveCodeDisplay">
+                        <div class="code-placeholder">
+                            AI agent will start generating code here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section hidden" id="resultsSection">
+                <div class="results-header">
+                    <div class="success-animation">
+                        <div class="success-icon">🎉</div>
+                        <h2>Autonomous Development Complete!</h2>
+                    </div>
+                    <div class="completion-stats">
+                        <div class="stat">
+                            <span class="stat-label">Completion Time</span>
+                            <span class="stat-value" id="completionTime">0s</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Files Generated</span>
+                            <span class="stat-value" id="filesGenerated">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Tests Passed</span>
+                            <span class="stat-value" id="testsPassed">0/0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Artifacts -->
+                <div class="artifacts-container">
+                    <div class="artifact-tabs">
+                        <button class="tab-btn active" data-tab="code">💻 Code</button>
+                        <button class="tab-btn" data-tab="tests">🧪 Tests</button>
+                        <button class="tab-btn" data-tab="docs">📖 Docs</button>
+                    </div>
+
+                    <div class="artifact-content">
+                        <div class="artifact-panel active" data-panel="code">
+                            <div class="artifact-header">
+                                <h3>Generated Code</h3>
+                                <button class="copy-btn" data-copy="code">📋 Copy</button>
+                            </div>
+                            <div class="code-display" id="generatedCode">
+                                <!-- Code will be inserted here -->
+                            </div>
+                        </div>
+
+                        <div class="artifact-panel" data-panel="tests">
+                            <div class="artifact-header">
+                                <h3>Test Suite</h3>
+                                <button class="copy-btn" data-copy="tests">📋 Copy</button>
+                            </div>
+                            <div class="code-display" id="generatedTests">
+                                <!-- Tests will be inserted here -->
+                            </div>
+                        </div>
+
+                        <div class="artifact-panel" data-panel="docs">
+                            <div class="artifact-header">
+                                <h3>Documentation</h3>
+                                <button class="copy-btn" data-copy="docs">📋 Copy</button>
+                            </div>
+                            <div class="docs-display" id="generatedDocs">
+                                <!-- Documentation will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="results-actions">
+                    <button class="action-btn primary" id="downloadBtn">
+                        <span class="btn-icon">📦</span>
+                        Download Complete Solution
+                    </button>
+                    <button class="action-btn secondary" id="tryAnotherBtn">
+                        <span class="btn-icon">🔄</span>
+                        Try Another Task
+                    </button>
+                    <button class="action-btn secondary" id="getStartedBtn">
+                        <span class="btn-icon">🚀</span>
+                        Get Started Locally
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-section hidden" id="errorSection">
+                <div class="error-content">
+                    <div class="error-icon">⚠️</div>
+                    <h2>Development Encountered an Issue</h2>
+                    <p id="errorMessage">Something went wrong during the autonomous development process.</p>
+                    <button class="retry-btn" id="retryBtn">
+                        <span class="btn-icon">🔄</span>
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Get Started Section -->
+    <section class="get-started-section">
+        <div class="container">
+            <h2>Ready to Experience Autonomous Development?</h2>
+            <p>Install LeanVibe Agent Hive 2.0 locally and unleash AI-powered development</p>
+            
+            <div class="installation-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Clone Repository</h3>
+                        <code>git clone https://github.com/leanvibe/agent-hive-2.0</code>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Quick Setup</h3>
+                        <code>./setup-ultra-fast.sh</code>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Start Development</h3>
+                        <code>python -m app.main</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="https://github.com/leanvibe/agent-hive-2.0" class="cta-btn primary" target="_blank">
+                    <span class="btn-icon">⭐</span>
+                    Star on GitHub
+                </a>
+                <a href="https://docs.leanvibe.dev" class="cta-btn secondary" target="_blank">
+                    <span class="btn-icon">📚</span>
+                    View Documentation
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>LeanVibe Agent Hive 2.0</h3>
+                    <p>Next-generation autonomous AI development platform</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="https://docs.leanvibe.dev">Documentation</a></li>
+                        <li><a href="https://github.com/leanvibe/agent-hive-2.0">GitHub</a></li>
+                        <li><a href="https://discord.gg/leanvibe">Community</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><a href="mailto:hello@leanvibe.dev">hello@leanvibe.dev</a></li>
+                        <li><a href="https://twitter.com/leanvibe">@leanvibe</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 LeanVibe. Open source under MIT License.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/syntax-highlighter.js"></script>
+    <script src="assets/demo.js"></script>
+    
+    <!-- Performance monitoring -->
+    <script>
+        window.addEventListener('load', () => {
+            const loadTime = performance.now() - window.demoStartTime;
+            console.log(`Demo page loaded in ${loadTime.toFixed(2)}ms`);
+        });
+    </script>
+</body>
+</html>
