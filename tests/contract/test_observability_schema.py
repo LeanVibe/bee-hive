@@ -42,7 +42,6 @@ from app.schemas.observability import (
     SystemEventType,
     PerformanceMetrics,
     EventMetadata,
-    ObservabilityEvent,
 )
 from app.core.event_serialization import (
     EventSerializer,

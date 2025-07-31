@@ -6,6 +6,7 @@ health monitoring, and workflow coordination with >90% coverage.
 """
 
 import pytest
+import pytest_asyncio
 import asyncio
 import uuid
 from datetime import datetime, timedelta
@@ -20,7 +21,7 @@ from app.models.workflow import Workflow, WorkflowStatus, WorkflowPriority
 class TestAgentOrchestrator:
     """Test suite for Agent Orchestrator core functionality."""
     
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def orchestrator(self):
         """Create a test orchestrator instance."""
         orchestrator = AgentOrchestrator()
@@ -57,6 +58,7 @@ class TestAgentOrchestrator:
             anthropic_client=None
         )
     
+    @pytest.mark.asyncio
     async def test_orchestrator_initialization(self, orchestrator):
         """Test orchestrator proper initialization."""
         assert orchestrator.agents == {}
@@ -66,6 +68,7 @@ class TestAgentOrchestrator:
         assert 'tasks_completed' in orchestrator.metrics
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_spawn_agent_success(self, mock_get_session, orchestrator):
         """Test successful agent spawning."""
         # Mock database session
@@ -90,6 +93,7 @@ class TestAgentOrchestrator:
         mock_db_session.add.assert_called_once()
         mock_db_session.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_spawn_agent_duplicate_error(self, orchestrator):
         """Test error when spawning duplicate agent."""
         orchestrator.agents["existing-agent"] = MagicMock()
@@ -101,6 +105,7 @@ class TestAgentOrchestrator:
             )
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_shutdown_agent_success(self, mock_get_session, orchestrator, sample_agent_instance):
         """Test successful agent shutdown."""
         # Setup
@@ -119,12 +124,14 @@ class TestAgentOrchestrator:
         assert agent_id not in orchestrator.agents
         mock_db_session.commit.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_shutdown_nonexistent_agent(self, orchestrator):
         """Test shutdown of non-existent agent."""
         result = await orchestrator.shutdown_agent("nonexistent-agent")
         assert result is False
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_delegate_task_success(self, mock_get_session, orchestrator, sample_agent_instance):
         """Test successful task delegation."""
         # Setup
@@ -149,6 +156,7 @@ class TestAgentOrchestrator:
         orchestrator._schedule_task.assert_called_once()
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_delegate_task_no_agent_available(self, mock_get_session, orchestrator):
         """Test task delegation when no agents are available."""
         # Mock database session
@@ -165,6 +173,7 @@ class TestAgentOrchestrator:
         assert task_id is not None  # Task is created but not assigned
         orchestrator._schedule_task.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_find_candidate_agents_by_role(self, orchestrator, sample_agent_instance):
         """Test finding candidate agents by role."""
         orchestrator.agents[sample_agent_instance.id] = sample_agent_instance
@@ -177,6 +186,7 @@ class TestAgentOrchestrator:
         assert len(candidates) == 1
         assert candidates[0].id == sample_agent_instance.id
     
+    @pytest.mark.asyncio
     async def test_find_candidate_agents_by_capabilities(self, orchestrator, sample_agent_instance):
         """Test finding candidate agents by required capabilities."""
         orchestrator.agents[sample_agent_instance.id] = sample_agent_instance
@@ -189,6 +199,7 @@ class TestAgentOrchestrator:
         assert len(candidates) == 1
         assert candidates[0].id == sample_agent_instance.id
     
+    @pytest.mark.asyncio
     async def test_find_candidate_agents_no_match(self, orchestrator, sample_agent_instance):
         """Test finding candidate agents with no matching capabilities."""
         sample_agent_instance.status = AgentStatus.BUSY
@@ -217,6 +228,7 @@ class TestAgentOrchestrator:
         )
         assert result is False
     
+    @pytest.mark.asyncio
     async def test_calculate_agent_suitability_score(self, orchestrator, sample_agent_instance):
         """Test agent suitability scoring algorithm."""
         score = await orchestrator._calculate_agent_suitability_score(
@@ -249,6 +261,7 @@ class TestAgentOrchestrator:
         assert score == 0.8  # Standard score for low priority
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_assign_task_to_agent_success(self, mock_get_session, orchestrator, sample_agent_instance):
         """Test successful task assignment to agent."""
         # Setup
@@ -268,6 +281,7 @@ class TestAgentOrchestrator:
         orchestrator.message_broker.send_message.assert_called_once()
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_process_task_queue(self, mock_get_session, orchestrator):
         """Test task queue processing."""
         # Mock database session with pending tasks
@@ -290,6 +304,7 @@ class TestAgentOrchestrator:
         assert assigned_count == 1
         orchestrator._schedule_task.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_initiate_sleep_cycle_high_context_usage(self, orchestrator, sample_agent_instance):
         """Test sleep cycle initiation for high context usage."""
         sample_agent_instance.context_window_usage = 0.95
@@ -301,6 +316,7 @@ class TestAgentOrchestrator:
         assert sample_agent_instance.status == AgentStatus.SLEEPING
         orchestrator.message_broker.send_message.assert_called_once()
     
+    @pytest.mark.asyncio
     async def test_initiate_sleep_cycle_low_context_usage(self, orchestrator, sample_agent_instance):
         """Test sleep cycle not initiated for low context usage."""
         sample_agent_instance.context_window_usage = 0.3
@@ -312,6 +328,7 @@ class TestAgentOrchestrator:
         
         assert result is False
     
+    @pytest.mark.asyncio
     async def test_get_system_status(self, orchestrator, sample_agent_instance):
         """Test system status reporting."""
         orchestrator.agents[sample_agent_instance.id] = sample_agent_instance
@@ -328,6 +345,7 @@ class TestAgentOrchestrator:
         assert "system_health" in status
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_handle_agent_timeout(self, mock_get_session, orchestrator, sample_agent_instance):
         """Test agent timeout handling."""
         # Mock database session
@@ -345,6 +363,7 @@ class TestAgentOrchestrator:
         mock_db_session.commit.assert_called_once()
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_monitor_agent_health_critical_context(self, mock_get_session, orchestrator, sample_agent_instance):
         """Test health monitoring for critical context usage."""
         sample_agent_instance.context_window_usage = 0.98
@@ -357,6 +376,7 @@ class TestAgentOrchestrator:
         assert "critical_context_usage" in call_args[1]
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_check_database_health_success(self, mock_get_session, orchestrator):
         """Test successful database health check."""
         # Mock database session
@@ -370,6 +390,7 @@ class TestAgentOrchestrator:
         assert result is True
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_check_database_health_failure(self, mock_get_session, orchestrator):
         """Test database health check failure."""
         # Mock database session that raises exception
@@ -379,6 +400,7 @@ class TestAgentOrchestrator:
         
         assert result is False
     
+    @pytest.mark.asyncio
     async def test_check_redis_health_success(self, orchestrator):
         """Test successful Redis health check."""
         orchestrator.message_broker = MagicMock()  # Simulate active broker
@@ -387,6 +409,7 @@ class TestAgentOrchestrator:
         
         assert result is True
     
+    @pytest.mark.asyncio
     async def test_check_redis_health_failure(self, orchestrator):
         """Test Redis health check failure."""
         orchestrator.message_broker = None
@@ -396,6 +419,7 @@ class TestAgentOrchestrator:
         assert result is False
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_check_task_processing_health_success(self, mock_get_session, orchestrator):
         """Test successful task processing health check."""
         # Mock database session
@@ -410,6 +434,7 @@ class TestAgentOrchestrator:
         assert result is True
     
     @patch('app.core.orchestrator.get_session')
+    @pytest.mark.asyncio
     async def test_check_task_processing_health_failure(self, mock_get_session, orchestrator):
         """Test task processing health check failure."""
         # Mock database session
@@ -423,6 +448,7 @@ class TestAgentOrchestrator:
         
         assert result is False
     
+    @pytest.mark.asyncio
     async def test_check_system_resources_success(self, orchestrator, sample_agent_instance):
         """Test successful system resources health check."""
         # Add multiple agents with good health
@@ -437,6 +463,7 @@ class TestAgentOrchestrator:
         
         assert result is True
     
+    @pytest.mark.asyncio
     async def test_check_system_resources_failure(self, orchestrator, sample_agent_instance):
         """Test system resources health check failure."""
         # Add agent with high memory usage
@@ -463,10 +490,10 @@ class TestAgentOrchestrator:
         assert len(capabilities) > 0  # Should have default capabilities
 
 
-@pytest.mark.asyncio
 class TestAgentOrchestratorIntegration:
     """Integration tests for orchestrator with real components."""
     
+    @pytest.mark.asyncio
     async def test_full_agent_lifecycle(self):
         """Test complete agent lifecycle from spawn to shutdown."""
         orchestrator = AgentOrchestrator()
@@ -495,6 +522,7 @@ class TestAgentOrchestratorIntegration:
             assert result is True
             assert agent_id not in orchestrator.agents
     
+    @pytest.mark.asyncio
     async def test_task_delegation_workflow(self):
         """Test complete task delegation workflow."""
         orchestrator = AgentOrchestrator()

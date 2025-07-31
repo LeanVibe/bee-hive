@@ -28,7 +28,7 @@ from app.api.v1.observability_dashboard import (
     IntelligenceKPIProcessor,
     WorkflowConstellationProcessor
 )
-from app.models.observability import ObservabilityEvent, EventType
+from app.models.observability import AgentEvent, EventType
 
 # Test fixtures and setup
 @pytest.fixture
