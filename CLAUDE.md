@@ -43,11 +43,49 @@ Build a next-gen, self-improving **autonomous software development engine**: a m
   /infra (db, redis, monitoring, docker, tmux)
   /agents (specialized agent logic, self-mod engine)
   /tests (Pytest with >90% coverage)
+  /scratchpad (temporary files, analysis, work-in-progress)
+  /docs (organized documentation - see Documentation Standards)
   pyproject.toml
   README.md
   CLAUDE.md (this file)
   .env
 ```
+
+## Documentation Standards & Organization
+
+### **Scratchpad Policy** 
+**MANDATORY**: All temporary files, analysis, work-in-progress documents MUST be created in `/scratchpad/` directory.
+
+**Never create temporary files in root or other directories**. Use scratchpad for:
+- Analysis reports and findings
+- Work-in-progress consolidation
+- Agent coordination notes  
+- Temporary implementation plans
+- Session-specific artifacts
+
+### **Documentation Organization Structure**
+```
+/docs
+├── /prd/                    # Product Requirements Documents
+├── /implementation/         # Implementation guides and status
+├── /enterprise/            # Enterprise sales and deployment materials  
+├── /api/                   # API documentation and references
+├── /user/                  # User guides and tutorials
+└── /archive/               # Historical and deprecated documents
+```
+
+### **Single Source of Truth Policy**
+- **One authoritative document per topic** - no duplicates
+- **Cross-references instead of copying** - link to canonical source
+- **Version control through git** - not multiple files
+- **Clear ownership** - each document has defined purpose and scope
+
+### **Documentation Index Requirements**
+Agents must reference the **Documentation Index** located at `docs/INDEX.md` to:
+- Find authoritative sources for any topic
+- Understand documentation hierarchy and organization
+- Avoid creating duplicate content
+- Navigate efficiently to required information
 
 ## Database (PostgreSQL + pgvector)
 

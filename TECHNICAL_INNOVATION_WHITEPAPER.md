@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now docs/enterprise/market-strategy.md**
+> ---
+
 # Autonomous Multi-Agent Development Orchestration: A Technical Whitepaper
 ## Architectural Innovations Enabling 42x Development Velocity Improvements
 

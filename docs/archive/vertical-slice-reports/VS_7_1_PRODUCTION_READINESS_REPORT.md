@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **Current implementation status: docs/implementation/progress-tracker.md**
+> ---
+
 # VS 7.1: Sleep/Wake API with Checkpointing - Production Readiness Report
 
 ## Executive Summary

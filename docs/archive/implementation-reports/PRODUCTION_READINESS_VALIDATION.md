@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **Current implementation status: docs/implementation/progress-tracker.md**
+> ---
+
 # Production Readiness Validation - LeanVibe Agent Hive 2.0
 
 **Comprehensive Checklist for Enterprise Deployment**

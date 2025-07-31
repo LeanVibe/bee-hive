@@ -1,5 +1,9 @@
 # 🎯 Phase 1 Implementation Complete: Core Multi-Agent Orchestration Engine
 
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/archive/phase-reports/phase-1-final.md](/docs/archive/phase-reports/phase-1-final.md).**
+
 ## **Executive Summary**
 
 **Phase 1 of LeanVibe Agent Hive 2.0 has been successfully implemented!** The core multi-agent orchestration engine is now functional, transforming the comprehensive scaffolding into a working multi-agent coordination system with Redis-based communication and intelligent task distribution.

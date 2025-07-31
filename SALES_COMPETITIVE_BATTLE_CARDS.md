@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now docs/enterprise/market-strategy.md**
+> ---
+
 # LeanVibe Agent Hive 2.0 - Competitive Battle Cards
 ## Sales Team Guide to Winning Against All Competitors
 

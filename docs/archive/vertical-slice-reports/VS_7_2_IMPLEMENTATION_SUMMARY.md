@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **Current implementation status: docs/implementation/progress-tracker.md**
+> ---
+
 # VS 7.2: Automated Scheduler Implementation Summary
 
 **LeanVibe Agent Hive 2.0 Phase 5.3 - Production Ready Intelligent Scheduling**

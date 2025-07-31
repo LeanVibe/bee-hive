@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **Current implementation status: docs/implementation/progress-tracker.md**
+> ---
+
 # Vertical Slice 1.1: Agent Lifecycle Implementation Summary
 
 ## 🎯 Objective Achieved

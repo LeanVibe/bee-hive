@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **Current implementation status: docs/implementation/progress-tracker.md**
+> ---
+
 # VS 4.1: Redis Pub/Sub Communication System Implementation Plan
 
 ## Executive Summary

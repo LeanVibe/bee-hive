@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now docs/enterprise/market-strategy.md**
+> ---
+
 # The Autonomous Development Revolution
 ## A Thought Leadership Manifesto for Enterprise Digital Transformation
 

@@ -1,3 +1,17 @@
+# ⚠️ DEPRECATED - Enterprise Deployment & Security Configuration Guide
+
+**NOTICE**: This file has been deprecated and consolidated into `docs/implementation/security-implementation-guide.md`
+
+**Deprecation Date**: 2025-07-31
+**Reason**: Content redundancy - consolidated with other security implementation files
+
+**For current security information, please refer to:**
+- `SECURITY.md` (root) - External security policy
+- `docs/prd/security-auth-system.md` - Technical specifications
+- `docs/implementation/security-implementation-guide.md` - Implementation procedures
+
+---
+
 # Enterprise Deployment & Security Configuration Guide
 
 ## Overview

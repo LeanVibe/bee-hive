@@ -1,5 +1,9 @@
 # LeanVibe Agent Hive 2.0 - Phase 1 QA Validation Final Report
 
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/archive/phase-reports/phase-1-final.md](/docs/archive/phase-reports/phase-1-final.md).**
+
 **Report Date:** July 30, 2025  
 **QA Validation Engineer:** Claude  
 **Validation Duration:** 2 hours  

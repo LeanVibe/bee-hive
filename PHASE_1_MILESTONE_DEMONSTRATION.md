@@ -1,5 +1,9 @@
 # Phase 1 Milestone Demonstration - LeanVibe Agent Hive 2.0
 
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/archive/phase-reports/phase-1-final.md](/docs/archive/phase-reports/phase-1-final.md).**
+
 ## Overview
 
 This demonstration validates the complete Phase 1 integration of LeanVibe Agent Hive 2.0, showcasing the seamless integration between:

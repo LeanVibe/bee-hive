@@ -1,5 +1,9 @@
 # 🎯 Phase 1 Implementation Plan: Core Multi-Agent Engine
 
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/archive/phase-reports/phase-1-final.md](/docs/archive/phase-reports/phase-1-final.md).**
+
 ## **Executive Summary**
 
 Following comprehensive evaluation of LeanVibe Agent Hive 2.0, we have established a solid foundation with comprehensive scaffolding and vision validation through the RealWorld Conduit demonstration. **Phase 1** focuses on implementing the core orchestration engine that will enable true multi-agent coordination workflows.

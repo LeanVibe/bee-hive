@@ -1,4 +1,8 @@
 # Phase 1 QA Validation Summary
+
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/implementation/qa-validation-report.md](/docs/implementation/qa-validation-report.md).**
 **LeanVibe Agent Hive 2.0 - QA Validation Agent Report**
 
 ## Validation Framework Created

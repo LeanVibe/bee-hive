@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **Current implementation status: docs/implementation/progress-tracker.md**
+> ---
+
 # VS 4.3: Dead Letter Queue (DLQ) System Implementation Summary
 
 **Strategic Context**: Phase 5.1 Foundational Reliability - Following Gemini CLI 8/10 strategy  

@@ -1,4 +1,8 @@
 # PRD: Observability & Monitoring System
+
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/prd/observability-system.md](/docs/prd/observability-system.md).**
 **Priority**: Must-Have (Phase 1) | **Estimated Effort**: 3-4 weeks | **Technical Complexity**: Medium–High
 
 ## Executive Summary

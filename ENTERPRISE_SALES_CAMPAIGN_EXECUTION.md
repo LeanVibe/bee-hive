@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now docs/enterprise/market-strategy.md**
+> ---
+
 # Enterprise Sales Campaign Execution Plan
 ## LeanVibe Agent Hive 2.0 - Fortune 500 Market Penetration Strategy
 

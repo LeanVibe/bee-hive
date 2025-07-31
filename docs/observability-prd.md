@@ -1,5 +1,9 @@
 # PRD: Real-Time Observability & Hooks
 
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now [docs/prd/observability-system.md](/docs/prd/observability-system.md).**
+
 ## Executive Summary
 
 The Observability & Hooks subsystem delivers full-stack visibility into LeanVibe Agent Hive with hook-based event interception, structured logging, distributed tracing, and WebSocket streaming dashboards. Inspired by Claude Code hooks, it allows deterministic lifecycle event tracking (PreToolUse, PostToolUse, Notification, Stop, SubAgentStop) and granular performance metrics for debugging and optimization.

@@ -1,3 +1,8 @@
+> **--- ARCHIVED DOCUMENT ---**
+> **This document is historical and no longer maintained.**
+> **The authoritative source is now docs/enterprise/market-strategy.md**
+> ---
+
 # Executive Marketing Strategy Summary
 ## Autonomous Development Revolution: Market Leadership Through Thought Leadership
 
