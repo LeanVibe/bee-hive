@@ -320,3 +320,9 @@ performance_reports/
 # Large files
 *.large
 *.big
+
+# Generated reports and logs (from root directory cleanup)
+/reports/
+
+# Development state and cache (from root directory cleanup)
+/dev-state/
