@@ -1,0 +1,142 @@
+# LeanVibe Agent Hive 2.0 - Optimized Multi-stage Dockerfile
+# Features: Dependency caching, parallel builds, minimal layers
+
+# Base Python image with system dependencies pre-installed
+FROM python:3.11-slim as base-optimized
+
+# Set environment variables for optimization
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=0 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PYTHONHASHSEED=random \
+    PYTHONFAULTHANDLER=1
+
+# Install system dependencies in single layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    g++ \
+    git \
+    tmux \
+    postgresql-client \
+    redis-tools \
+    build-essential \
+    pkg-config \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create application user early
+RUN groupadd -g 1000 leanvibe && \
+    useradd -u 1000 -g leanvibe -s /bin/bash -m leanvibe
+
+# Dependency installation stage - separate for better caching
+FROM base-optimized as dependencies
+
+# Set work directory
+WORKDIR /app
+
+# Copy only dependency files first for maximum caching
+COPY pyproject.toml requirements.txt* ./
+
+# Upgrade pip and install build tools
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install dependencies with optimizations
+RUN pip install --no-cache-dir \
+    --find-links https://download.pytorch.org/whl/cpu \
+    --trusted-host download.pytorch.org \
+    -r requirements.txt || \
+    pip install --no-cache-dir \
+    fastapi[all]>=0.104.1 \
+    uvicorn[standard]>=0.24.0 \
+    sqlalchemy[asyncio]>=2.0.23 \
+    asyncpg>=0.29.0 \
+    alembic>=1.12.1 \
+    redis[hiredis]>=5.0.1 \
+    anthropic>=0.7.8 \
+    pydantic[email]>=2.5.0 \
+    structlog>=23.2.0
+
+# Development dependencies stage
+FROM dependencies as dev-dependencies
+
+# Install development packages
+RUN pip install --no-cache-dir \
+    pytest>=7.4.3 \
+    pytest-asyncio>=0.21.1 \
+    pytest-cov>=4.1.0 \
+    black>=23.11.0 \
+    ruff>=0.1.6 \
+    mypy>=1.7.1 \
+    ipython>=8.17.2
+
+# Development stage - optimized for fast rebuilds
+FROM dev-dependencies as development
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/workspaces /app/logs /app/temp /app/dev-state && \
+    chown -R leanvibe:leanvibe /app
+
+# Copy source code (this layer changes most frequently)
+COPY --chown=leanvibe:leanvibe . .
+
+# Switch to non-root user
+USER leanvibe
+
+# Expose port
+EXPOSE 8000
+
+# Optimized development command with performance tuning
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--reload", \
+     "--reload-delay", "0.5", \
+     "--workers", "1", \
+     "--loop", "uvloop", \
+     "--http", "httptools"]
+
+# Production stage - minimal and secure
+FROM dependencies as production
+
+# Copy source code
+COPY --chown=leanvibe:leanvibe . .
+
+# Create necessary directories
+RUN mkdir -p /app/workspaces /app/logs /app/temp && \
+    chown -R leanvibe:leanvibe /app
+
+# Install production ASGI server
+RUN pip install --no-cache-dir gunicorn uvloop httptools
+
+# Switch to non-root user
+USER leanvibe
+
+# Expose port
+EXPOSE 8000
+
+# Optimized health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production command with performance optimizations
+CMD ["gunicorn", "app.main:app", \
+     "-w", "2", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "--bind", "0.0.0.0:8000", \
+     "--worker-tmp-dir", "/dev/shm", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--preload", \
+     "--timeout", "30", \
+     "--keep-alive", "2"]
+
+# Cache stage for CI/CD
+FROM dependencies as cache
+COPY --chown=leanvibe:leanvibe . .
+RUN pip install --no-cache-dir -e .
+USER leanvibe

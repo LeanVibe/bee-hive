@@ -1,0 +1,236 @@
+version: '3.8'
+
+# Optimized Docker Compose for 5-15 minute setup
+# Features: Parallel startup, health check optimization, resource tuning
+
+services:
+  # PostgreSQL Database with Vector Extension - Optimized
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: leanvibe_postgres_fast
+    environment:
+      POSTGRES_DB: leanvibe_agent_hive
+      POSTGRES_USER: leanvibe_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leanvibe_secure_pass}
+      POSTGRES_HOST_AUTH_METHOD: md5
+      # Performance optimizations
+      POSTGRES_INITDB_ARGS: "--data-checksums --encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_fast:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+      - ./database/backups:/backups
+    networks:
+      - leanvibe_network_fast
+    # Optimized health check - faster intervals
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leanvibe_user -d leanvibe_agent_hive"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+    # Resource optimization for faster startup
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    # Performance tuning
+    command: >
+      postgres
+      -c shared_preload_libraries=vector
+      -c max_connections=50
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # Redis for Caching and Message Broker - Optimized
+  redis:
+    image: redis:7-alpine
+    container_name: leanvibe_redis_fast
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-leanvibe_redis_pass}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data_fast:/data
+    networks:
+      - leanvibe_network_fast
+    # Faster health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-leanvibe_redis_pass}", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # FastAPI Backend Application - Optimized Build
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.fast
+      target: development
+      cache_from:
+        - leanvibe/agent-hive:latest
+        - leanvibe/agent-hive:dev-cache
+    container_name: leanvibe_api_fast
+    environment:
+      - DATABASE_URL=postgresql://leanvibe_user:${POSTGRES_PASSWORD:-leanvibe_secure_pass}@postgres:5432/leanvibe_agent_hive
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-leanvibe_redis_pass}@redis:6379/0
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY:-leanvibe_super_secret_key_change_in_production}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      # Performance optimizations
+      - UVICORN_WORKERS=2
+      - UVICORN_MAX_REQUESTS=1000
+      - UVICORN_MAX_REQUESTS_JITTER=100
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - agent_workspaces_fast:/app/workspaces
+      # Pip cache for faster rebuilds
+      - pip_cache:/root/.cache/pip
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network_fast
+    # Faster health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Development Tools - Only start when needed
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: leanvibe_redis_insight_fast
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network_fast
+    profiles:
+      - development
+      - monitoring
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+
+  # pgAdmin - Only for development profile
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: leanvibe_pgadmin_fast
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@leanvibe.dev
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data_fast:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - leanvibe_network_fast
+    profiles:
+      - development
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+
+# Optimized network configuration
+networks:
+  leanvibe_network_fast:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: br-leanvibe-fast
+      com.docker.network.driver.mtu: 1500
+
+# Optimized volume configuration
+volumes:
+  postgres_data_fast:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/dev-state/database/postgres-fast
+  redis_data_fast:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/dev-state/database/redis-fast
+  pgadmin_data_fast:
+    driver: local
+  agent_workspaces_fast:
+    driver: local
+  pip_cache:
+    driver: local
+
+# Extension for faster startup
+x-healthcheck-fast: &healthcheck-fast
+  interval: 5s
+  timeout: 3s
+  retries: 5
+  start_period: 10s
+
+x-resource-limits-light: &resource-limits-light
+  deploy:
+    resources:
+      limits:
+        memory: 256M
+        cpus: '0.25'
+
+x-resource-limits-medium: &resource-limits-medium
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: '0.5'
