@@ -1,0 +1,341 @@
+# Production DLQ Service Configuration for LeanVibe Agent Hive 2.0
+# 
+# Comprehensive Dead Letter Queue service deployment with:
+# - High availability and scalability
+# - Enterprise reliability components
+# - Production monitoring and alerting
+# - Performance optimization
+# - Graceful degradation capabilities
+
+version: '3.8'
+
+services:
+  # Main DLQ Service
+  dlq-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dlq-service
+    container_name: leanvibe-dlq-service
+    restart: unless-stopped
+    depends_on:
+      - redis-cluster
+      - postgres
+    environment:
+      # Service Configuration
+      - DLQ_SERVICE_NAME=leanvibe-dlq-service
+      - DLQ_SERVICE_VERSION=2.0.0
+      - ENVIRONMENT=production
+      
+      # Core DLQ Settings
+      - DLQ_MAX_RETRIES=5
+      - DLQ_INITIAL_RETRY_DELAY_MS=1000
+      - DLQ_MAX_RETRY_DELAY_MS=300000
+      - DLQ_MAX_SIZE=1000000
+      - DLQ_TTL_HOURS=168
+      - DLQ_ALERT_THRESHOLD=1000
+      
+      # Performance Settings
+      - DLQ_PERFORMANCE_TARGET_MS=10
+      - DLQ_MAX_CONCURRENT_RETRIES=1000
+      - DLQ_BATCH_SIZE=100
+      - DLQ_SCHEDULER_INTERVAL_MS=100
+      
+      # Feature Flags
+      - DLQ_ENABLE_POISON_DETECTION=true
+      - DLQ_ENABLE_INTELLIGENT_RETRY=true
+      - DLQ_ENABLE_BACKPRESSURE_INTEGRATION=true
+      - DLQ_ENABLE_CONSUMER_GROUP_INTEGRATION=true
+      - DLQ_ENABLE_MONITORING=true
+      - DLQ_ENABLE_GRACEFUL_DEGRADATION=true
+      
+      # Poison Detection Settings
+      - DLQ_POISON_DETECTION_TIMEOUT_MS=100
+      - DLQ_MAX_MESSAGE_SIZE_BYTES=1048576
+      - DLQ_ADAPTIVE_LEARNING_ENABLED=true
+      
+      # Redis Configuration
+      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_STREAM_MAX_LEN=1000000
+      - REDIS_CLUSTER_ENABLED=true
+      - REDIS_CONNECTION_POOL_SIZE=20
+      
+      # Database Configuration
+      - DATABASE_URL=postgresql://dlq_user:dlq_password@postgres:5432/leanvibe_dlq
+      - DATABASE_POOL_SIZE=10
+      - DATABASE_MAX_OVERFLOW=20
+      
+      # Monitoring Configuration
+      - MONITORING_INTERVAL_SECONDS=30
+      - HEALTH_CHECK_INTERVAL_SECONDS=60
+      - METRICS_RETENTION_HOURS=24
+      
+      # Logging Configuration
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=structured
+      - LOG_OUTPUT=stdout
+      
+      # Security Configuration
+      - SECRET_KEY=${DLQ_SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENABLE_API_AUTHENTICATION=true
+    
+    ports:
+      - "8080:8080"  # DLQ Management API
+      - "8081:8081"  # Health Check Port
+      - "9090:9090"  # Prometheus Metrics
+    
+    networks:
+      - leanvibe-network
+    
+    volumes:
+      - dlq-logs:/app/logs
+      - dlq-data:/app/data
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    resource_limits:
+      cpus: '2.0'
+      memory: 4G
+    
+    resource_reservations:
+      cpus: '1.0'
+      memory: 2G
+    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dlq-api.rule=Host(`dlq-api.leanvibe.internal`)"
+      - "traefik.http.routers.dlq-api.tls=true"
+      - "traefik.http.services.dlq-api.loadbalancer.server.port=8080"
+
+  # Redis Cluster for DLQ
+  redis-cluster:
+    image: redis:7-alpine
+    container_name: leanvibe-redis-cluster
+    restart: unless-stopped
+    command: redis-server --appendonly yes --replica-read-only no --maxmemory 2gb --maxmemory-policy allkeys-lru
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    ports:
+      - "6379:6379"
+    networks:
+      - leanvibe-network
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # PostgreSQL for DLQ Metadata
+  postgres:
+    image: postgres:15-alpine
+    container_name: leanvibe-postgres-dlq
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=leanvibe_dlq
+      - POSTGRES_USER=dlq_user
+      - POSTGRES_PASSWORD=dlq_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5432:5432"
+    networks:
+      - leanvibe-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../sql/init-dlq-db.sql:/docker-entrypoint-initdb.d/init-dlq-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dlq_user -d leanvibe_dlq"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: leanvibe-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=168h'  # 7 days retention
+      - '--web.enable-lifecycle'
+    ports:
+      - "9091:9090"
+    networks:
+      - leanvibe-network
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - dlq-service
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Grafana for Monitoring Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: leanvibe-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    networks:
+      - leanvibe-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # AlertManager for Alerting
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: leanvibe-alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    networks:
+      - leanvibe-network
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager-data:/alertmanager
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Load Balancer (Traefik)
+  traefik:
+    image: traefik:v3.0
+    container_name: leanvibe-traefik
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=admin@leanvibe.dev
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8082:8080"  # Traefik Dashboard
+    networks:
+      - leanvibe-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-data:/acme.json
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.leanvibe.internal`)"
+
+networks:
+  leanvibe-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  # DLQ Service Data
+  dlq-logs:
+    driver: local
+  dlq-data:
+    driver: local
+    
+  # Database Data
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+    
+  # Monitoring Data
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  traefik-data:
+    driver: local
+
+# Production deployment configuration
+x-deploy: &default-deploy
+  replicas: 1
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+    window: 120s
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 4G
+    reservations:
+      cpus: '1.0'
+      memory: 2G
+
+# High availability configuration for production
+x-ha-deploy: &ha-deploy
+  replicas: 3
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 5
+    window: 120s
+  resources:
+    limits:
+      cpus: '4.0'
+      memory: 8G
+    reservations:
+      cpus: '2.0'
+      memory: 4G
+  placement:
+    constraints:
+      - node.role == worker
+    preferences:
+      - spread: node.id
+
+# Environment-specific overrides
+configs:
+  dlq_production_config:
+    file: ./config/production.yml
+  dlq_staging_config:
+    file: ./config/staging.yml
+  dlq_development_config:
+    file: ./config/development.yml
+
+secrets:
+  dlq_secret_key:
+    external: true
+  jwt_secret:
+    external: true
+  postgres_password:
+    external: true
