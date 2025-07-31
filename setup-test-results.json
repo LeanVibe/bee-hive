@@ -1,0 +1,23 @@
+{
+  "test_suite": "LeanVibe Agent Hive Setup Scripts",
+  "timestamp": "2025-07-31T12:28:48Z",
+  "duration_seconds": 12,
+  "results": {
+    "total_tests": 19,
+    "passed": 13,
+    "failed": 5,
+    "warnings": 0,
+    "success_rate": "68%"
+  },
+  "performance": {
+    "setup_fast_validated": true,
+    "setup_ultra_fast_validated": true,
+    "dependencies_available": true,
+    "error_handling_tested": true
+  },
+  "recommendations": [
+    "Fix failing tests before production deployment"
+    
+    "Requires improvements before production use"
+  ]
+}

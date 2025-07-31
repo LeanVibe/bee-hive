@@ -32,17 +32,8 @@ STEP_TIMES=()
 # Log file
 LOG_FILE="${SCRIPT_DIR}/setup-fast.log"
 
-# Performance tracking
-declare -A STEP_ESTIMATES=(
-    ["system_deps"]=60
-    ["docker_check"]=30
-    ["env_config"]=20
-    ["python_env"]=90
-    ["docker_services"]=120
-    ["database_init"]=60
-    ["validation"]=30
-    ["finalization"]=15
-)
+# Performance tracking (compatible with bash 3.x)
+# Using functions instead of associative arrays for better compatibility
 
 # Function to print colored output
 print_status() {

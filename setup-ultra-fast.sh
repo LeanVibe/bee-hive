@@ -263,26 +263,59 @@ EOF
     
     print_success "Smart environment configuration created"
     
-    # API Key Setup Wizard
-    print_status "$CYAN" "    → API Key Setup (optional - press Enter to skip)"
+    # Enhanced API Key Setup Wizard
+    echo ""
+    print_status "$BOLD$YELLOW" "🔑 API KEY SETUP - REQUIRED FOR FULL FUNCTIONALITY"
+    print_status "$YELLOW" "=================================================="
+    print_status "$CYAN" "For the complete autonomous development experience, you'll need:"
+    print_status "$NC" "1. Anthropic API Key (Claude AI) - REQUIRED for agent reasoning"
+    print_status "$NC" "2. OpenAI API Key (optional) - For embeddings and GPT models"
+    print_status "$NC" "3. GitHub Token (optional) - For repository integration"
+    echo ""
+    print_status "$CYAN" "💡 You can skip these now and add them later to .env.local"
+    print_status "$CYAN" "💡 Demo mode will work without keys (limited functionality)"
     echo ""
     
-    read -p "Enter Anthropic API Key (for Claude AI): " -r anthropic_key
+    read -p "Enter Anthropic API Key (sk-ant-...): " -r anthropic_key
     if [[ -n "$anthropic_key" ]]; then
-        sed -i.bak "s/your_anthropic_api_key_here/$anthropic_key/" "$env_file"
-        print_fix "Anthropic API key configured"
+        if [[ "$anthropic_key" =~ ^sk-ant- ]]; then
+            sed -i.bak "s/your_anthropic_api_key_here/$anthropic_key/" "$env_file"
+            print_fix "✅ Anthropic API key configured and validated"
+        else
+            print_warning "⚠️  API key format looks incorrect (should start with 'sk-ant-')"
+            sed -i.bak "s/your_anthropic_api_key_here/$anthropic_key/" "$env_file"
+            print_fix "Anthropic API key configured (please verify format)"
+        fi
+    else
+        print_status "$YELLOW" "   Skipped - Demo mode available with limited features"
     fi
     
-    read -p "Enter OpenAI API Key (for embeddings): " -r openai_key
+    read -p "Enter OpenAI API Key (sk-...): " -r openai_key
     if [[ -n "$openai_key" ]]; then
-        sed -i.bak "s/your_openai_api_key_here/$openai_key/" "$env_file"
-        print_fix "OpenAI API key configured"
+        if [[ "$openai_key" =~ ^sk- ]]; then
+            sed -i.bak "s/your_openai_api_key_here/$openai_key/" "$env_file"
+            print_fix "✅ OpenAI API key configured and validated"
+        else
+            print_warning "⚠️  API key format looks incorrect (should start with 'sk-')"
+            sed -i.bak "s/your_openai_api_key_here/$openai_key/" "$env_file"
+            print_fix "OpenAI API key configured (please verify format)"
+        fi
+    else
+        print_status "$YELLOW" "   Skipped - Basic embeddings will use alternative methods"
     fi
     
-    read -p "Enter GitHub Token (for integration): " -r github_token
+    read -p "Enter GitHub Token (ghp_... or github_pat_...): " -r github_token
     if [[ -n "$github_token" ]]; then
-        sed -i.bak "s/your_github_token_here/$github_token/" "$env_file"
-        print_fix "GitHub token configured"
+        if [[ "$github_token" =~ ^(ghp_|github_pat_) ]]; then
+            sed -i.bak "s/your_github_token_here/$github_token/" "$env_file"
+            print_fix "✅ GitHub token configured and validated"
+        else
+            print_warning "⚠️  Token format looks incorrect (should start with 'ghp_' or 'github_pat_')"
+            sed -i.bak "s/your_github_token_here/$github_token/" "$env_file"
+            print_fix "GitHub token configured (please verify format)"
+        fi
+    else
+        print_status "$YELLOW" "   Skipped - GitHub integration will be disabled"
     fi
     
     # Clean up backup files
@@ -747,9 +780,55 @@ print_final_instructions() {
     print_status "$GREEN" "  • Setup success rate: $(((10 - WARNINGS_COUNT) * 100 / 10))%"
     echo ""
     
+    # Success Validation
+    print_status "$BOLD$GREEN" "✅ SETUP SUCCESS VALIDATION:"
+    if [[ -f "${SCRIPT_DIR}/.env.local" ]]; then
+        print_status "$GREEN" "  ✅ Environment configuration created"
+    else
+        print_status "$RED" "  ❌ Environment configuration missing"
+    fi
+    
+    if [[ -d "${SCRIPT_DIR}/venv" ]]; then
+        print_status "$GREEN" "  ✅ Python virtual environment ready"
+    else
+        print_status "$RED" "  ❌ Python virtual environment missing"
+    fi
+    
+    if docker compose -f docker-compose.fast.yml ps | grep -q "Up"; then
+        print_status "$GREEN" "  ✅ Docker services running"
+    else
+        print_status "$YELLOW" "  ⚠️  Docker services may need to be started"
+    fi
+    
+    # Check API key configuration
+    local api_keys_configured=0
+    if grep -q "^ANTHROPIC_API_KEY=sk-ant-" "${SCRIPT_DIR}/.env.local" 2>/dev/null; then
+        print_status "$GREEN" "  ✅ Anthropic API key configured"
+        api_keys_configured=$((api_keys_configured + 1))
+    else
+        print_status "$YELLOW" "  ⚠️  Anthropic API key not configured (demo mode only)"
+    fi
+    
+    if [[ $api_keys_configured -gt 0 ]]; then
+        print_status "$BOLD$GREEN" "  🎯 READY FOR AUTONOMOUS DEVELOPMENT!"
+    else
+        print_status "$BOLD$YELLOW" "  🔧 DEMO MODE READY (add API keys for full functionality)"
+    fi
+    echo ""
+    
     # Quick start commands
-    print_status "$YELLOW" "🚀 Quick Start Commands:"
-    print_status "$NC" "  ./start-ultra.sh           - Start with ultra optimizations"
+    print_status "$YELLOW" "🚀 IMMEDIATE NEXT STEPS:"
+    print_status "$BOLD$CYAN" "  1. Start the system:"
+    print_status "$NC" "     ./start-ultra.sh"
+    echo ""
+    print_status "$BOLD$CYAN" "  2. Test autonomous development:"
+    print_status "$NC" "     python scripts/demos/autonomous_development_demo.py"
+    echo ""
+    print_status "$BOLD$CYAN" "  3. Access web interface:"
+    print_status "$NC" "     http://localhost:8000/docs"
+    echo ""
+    
+    print_status "$YELLOW" "🔧 Additional Commands:"
     print_status "$NC" "  ./monitor-performance.sh   - Real-time performance monitoring"
     print_status "$NC" "  ./troubleshoot-auto.sh     - Automated issue resolution"
     print_status "$NC" "  ./health-check.sh          - Comprehensive health check"
