@@ -102,6 +102,12 @@ class ContextEngineConfig:
     # Analytics
     analytics_enabled: bool = True
     metrics_retention_days: int = 30
+    
+    # Sleep-Wake Integration
+    sleep_wake_integration_enabled: bool = True
+    sleep_cycle_interval_hours: int = 1
+    wake_cache_warmup_enabled: bool = True
+    sleep_consolidation_target_reduction: float = 0.70
 
 
 @dataclass
@@ -163,11 +169,11 @@ class ContextEngineIntegration:
         self.config = config or ContextEngineConfig()
         self.settings = get_settings()
         
-        # Core services
-        self.context_manager = context_manager or get_context_manager()
-        self.embedding_service = embedding_service or get_embedding_service()
-        self.consolidator = consolidator or get_ultra_compressed_context_mode()
-        self.redis_client = redis_client or get_redis_client()
+        # Core services - initialize lazily to handle missing dependencies gracefully
+        self.context_manager = context_manager
+        self.embedding_service = embedding_service
+        self.consolidator = consolidator
+        self.redis_client = redis_client
         
         # Search engine (initialized lazily)
         self._search_engine: Optional[EnhancedVectorSearchEngine] = None
@@ -208,6 +214,23 @@ class ContextEngineIntegration:
         
         try:
             logger.info("Initializing Context Engine Integration Service")
+            
+            # Initialize core services if not provided
+            if not self.context_manager:
+                self.context_manager = await get_context_manager()
+            
+            if not self.embedding_service:
+                self.embedding_service = get_embedding_service()
+            
+            if not self.consolidator:
+                self.consolidator = get_ultra_compressed_context_mode()
+            
+            if not self.redis_client:
+                try:
+                    self.redis_client = get_redis_client()
+                except RuntimeError as e:
+                    logger.warning(f"Redis not available: {e}. Context Engine will work with reduced functionality.")
+                    self.redis_client = None
             
             # Initialize database session and search engine
             db_session = await get_async_session()
@@ -877,11 +900,14 @@ class ContextEngineIntegration:
                 }
             
             # Redis health
-            try:
-                await self.redis_client.ping()
-                health["components"]["redis"] = {"status": "healthy"}
-            except Exception as e:
-                health["components"]["redis"] = {"status": "unhealthy", "error": str(e)}
+            if self.redis_client:
+                try:
+                    await self.redis_client.ping()
+                    health["components"]["redis"] = {"status": "healthy"}
+                except Exception as e:
+                    health["components"]["redis"] = {"status": "unhealthy", "error": str(e)}
+            else:
+                health["components"]["redis"] = {"status": "unavailable", "message": "Redis not configured"}
             
             # Performance metrics
             health["performance"] = await self._get_performance_metrics()
@@ -1065,12 +1091,13 @@ class ContextEngineIntegration:
             self._context_cache[cache_key] = context.to_dict()
             self._cache_timestamps[cache_key] = datetime.utcnow()
             
-            # Also cache in Redis
-            await self.redis_client.setex(
-                cache_key,
-                self.config.cache_ttl_seconds,
-                json.dumps(context.to_dict(), default=str)
-            )
+            # Also cache in Redis if available
+            if self.redis_client:
+                await self.redis_client.setex(
+                    cache_key,
+                    self.config.cache_ttl_seconds,
+                    json.dumps(context.to_dict(), default=str)
+                )
             
         except Exception as e:
             logger.warning(f"Failed to cache context {context.id}: {e}")
@@ -1115,14 +1142,15 @@ class ContextEngineIntegration:
                 self._context_cache.pop(key, None)
                 self._cache_timestamps.pop(key, None)
             
-            # Clear Redis cache
-            pattern = f"*agent:{agent_id}*"
-            keys = []
-            async for key in self.redis_client.scan_iter(match=pattern):
-                keys.append(key)
-            
-            if keys:
-                await self.redis_client.delete(*keys)
+            # Clear Redis cache if available
+            if self.redis_client:
+                pattern = f"*agent:{agent_id}*"
+                keys = []
+                async for key in self.redis_client.scan_iter(match=pattern):
+                    keys.append(key)
+                
+                if keys:
+                    await self.redis_client.delete(*keys)
                 
         except Exception as e:
             logger.warning(f"Failed to invalidate caches for agent {agent_id}: {e}")
@@ -1285,15 +1313,16 @@ class ContextEngineIntegration:
                 self._cache_timestamps.pop(key, None)
                 cleaned_items += 1
             
-            # Clear Redis caches
-            pattern = f"*{context_id}*"
-            keys = []
-            async for key in self.redis_client.scan_iter(match=pattern):
-                keys.append(key)
-            
-            if keys:
-                await self.redis_client.delete(*keys)
-                cleaned_items += len(keys)
+            # Clear Redis caches if available
+            if self.redis_client:
+                pattern = f"*{context_id}*"
+                keys = []
+                async for key in self.redis_client.scan_iter(match=pattern):
+                    keys.append(key)
+                
+                if keys:
+                    await self.redis_client.delete(*keys)
+                    cleaned_items += len(keys)
             
             return cleaned_items
             

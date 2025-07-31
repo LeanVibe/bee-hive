@@ -74,6 +74,8 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
     "cryptography>=41.0.7",
+    "authlib>=1.2.1",
+    "oauthlib>=3.2.2",
     
     # Configuration & Environment
     "python-dotenv>=1.0.0",

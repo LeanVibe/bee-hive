@@ -126,10 +126,11 @@ class UltraCompressedContextMode:
         embedding_service: Optional[EmbeddingService] = None
     ):
         self.settings = get_settings()
-        self.context_manager = context_manager or ContextManager()
-        self.consolidator = context_consolidator or get_context_consolidator()
-        self.compressor = context_compressor or get_context_compressor()
-        self.embedding_service = embedding_service or get_embedding_service()
+        # Initialize dependencies lazily to handle missing dependencies gracefully
+        self.context_manager = context_manager
+        self.consolidator = context_consolidator
+        self.compressor = context_compressor
+        self.embedding_service = embedding_service
         
         # Configuration
         self.target_compression_ratio = 0.70  # 70% reduction target
@@ -154,6 +155,34 @@ class UltraCompressedContextMode:
             "cluster_size_limit": 10,
             "compression_aggressiveness": 0.7
         }
+        
+        # Initialization flag
+        self._initialized = False
+    
+    async def initialize(self) -> None:
+        """Initialize the consolidator dependencies lazily."""
+        if self._initialized:
+            return
+            
+        try:
+            if not self.context_manager:
+                self.context_manager = ContextManager()
+            
+            if not self.consolidator:
+                self.consolidator = get_context_consolidator()
+            
+            if not self.compressor:
+                self.compressor = get_context_compressor()
+            
+            if not self.embedding_service:
+                self.embedding_service = get_embedding_service()
+            
+            self._initialized = True
+            logger.info("Enhanced Context Consolidator initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize Enhanced Context Consolidator: {e}")
+            raise
     
     async def ultra_compress_agent_contexts(
         self,
@@ -172,6 +201,9 @@ class UltraCompressedContextMode:
         Returns:
             CompressionMetrics with detailed results
         """
+        # Ensure initialization
+        await self.initialize()
+        
         start_time = datetime.utcnow()
         metrics = CompressionMetrics()
         

@@ -139,7 +139,7 @@ class EmbeddingService:
         self.rate_limit_rpm = rate_limit_rpm
         
         # Initialize OpenAI client
-        self.client = AsyncOpenAI(api_key=self.settings.openai_api_key)
+        self.client = AsyncOpenAI(api_key=self.settings.OPENAI_API_KEY)
         
         # Initialize Redis client for caching
         self.redis = redis_client or get_redis_client()

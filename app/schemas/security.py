@@ -421,3 +421,190 @@ class ValidationError(BaseModel):
                 ]
             }
         }
+
+
+# OAuth 2.0/OIDC Schemas
+
+class OAuthProviderType(str, Enum):
+    """OAuth provider types."""
+    GOOGLE = "google"
+    GITHUB = "github"
+    MICROSOFT = "microsoft"
+    AZURE_AD = "azure_ad"
+    CUSTOM_OIDC = "custom_oidc"
+
+
+class OAuthProviderConfig(BaseModel):
+    """OAuth provider configuration schema."""
+    provider_name: str = Field(..., description="Unique provider name")
+    provider_type: OAuthProviderType = Field(..., description="Provider type")
+    client_id: str = Field(..., description="OAuth client ID")
+    client_secret: str = Field(..., description="OAuth client secret")
+    scopes: List[str] = Field(default=[], description="Default scopes")
+    tenant_id: Optional[str] = Field(None, description="Tenant ID for Azure AD")
+    domain_hint: Optional[str] = Field(None, description="Domain hint for authentication")
+    redirect_uri: Optional[str] = Field(None, description="Custom redirect URI")
+    
+    # Custom endpoints for OIDC providers
+    authorization_endpoint: Optional[str] = Field(None, description="Custom authorization endpoint")
+    token_endpoint: Optional[str] = Field(None, description="Custom token endpoint")
+    userinfo_endpoint: Optional[str] = Field(None, description="Custom userinfo endpoint")
+    jwks_uri: Optional[str] = Field(None, description="JWKS endpoint")
+    issuer: Optional[str] = Field(None, description="OIDC issuer")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "provider_name": "company_google",
+                "provider_type": "google",
+                "client_id": "123456789.apps.googleusercontent.com",
+                "client_secret": "GOCSPX-abcdef123456",
+                "scopes": ["openid", "email", "profile"],
+                "domain_hint": "company.com"
+            }
+        }
+
+
+class OAuthAuthorizationRequest(BaseModel):
+    """OAuth authorization request schema."""
+    provider_name: str = Field(..., description="OAuth provider name")
+    redirect_uri: Optional[str] = Field(None, description="Custom redirect URI")
+    scopes: Optional[List[str]] = Field(None, description="Custom scopes")
+    state_data: Optional[Dict[str, Any]] = Field(None, description="Additional state data")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "provider_name": "company_google",
+                "scopes": ["openid", "email", "profile"],
+                "state_data": {"return_url": "/dashboard"}
+            }
+        }
+
+
+class OAuthCallbackRequest(BaseModel):
+    """OAuth callback request schema."""
+    code: str = Field(..., description="Authorization code")
+    state: str = Field(..., description="State parameter")
+    error: Optional[str] = Field(None, description="Error code if authorization failed")
+    error_description: Optional[str] = Field(None, description="Error description")
+
+
+class OAuthTokenResponse(BaseModel):
+    """OAuth token response schema."""
+    access_token: str = Field(..., description="Access token")
+    token_type: str = Field(default="Bearer", description="Token type")
+    expires_in: Optional[int] = Field(None, description="Token expiration in seconds")
+    refresh_token: Optional[str] = Field(None, description="Refresh token")
+    id_token: Optional[str] = Field(None, description="OIDC ID token")
+    scope: Optional[str] = Field(None, description="Granted scopes")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "access_token": "ya29.a0ARrdaM...",
+                "token_type": "Bearer",
+                "expires_in": 3599,
+                "refresh_token": "1//04rYrP9...",
+                "id_token": "eyJhbGciOiJSUzI1NiIs...",
+                "scope": "openid email profile"
+            }
+        }
+
+
+class UserProfile(BaseModel):
+    """User profile from OAuth provider."""
+    user_id: str = Field(..., description="Unique user ID from provider")
+    email: str = Field(..., description="User email address")
+    name: str = Field(..., description="User display name")
+    avatar_url: Optional[str] = Field(None, description="User avatar URL")
+    provider: str = Field(..., description="OAuth provider name")
+    raw_data: Optional[Dict[str, Any]] = Field(None, description="Raw user data from provider")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "user_id": "123456789",
+                "email": "user@company.com",
+                "name": "John Doe",
+                "avatar_url": "https://lh3.googleusercontent.com/a/...",
+                "provider": "google",
+                "raw_data": {
+                    "sub": "123456789",
+                    "email": "user@company.com",
+                    "email_verified": True,
+                    "name": "John Doe",
+                    "picture": "https://lh3.googleusercontent.com/a/..."
+                }
+            }
+        }
+
+
+class OAuthAuthorizationResponse(BaseModel):
+    """OAuth authorization initiation response."""
+    authorization_url: str = Field(..., description="Authorization URL to redirect to")
+    session_id: str = Field(..., description="OAuth session ID")
+    provider_name: str = Field(..., description="Provider name")
+    expires_at: datetime = Field(..., description="Session expiration time")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "authorization_url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=...",
+                "session_id": "oauth_sess_123e4567",
+                "provider_name": "company_google",
+                "expires_at": "2024-01-01T12:15:00Z"
+            }
+        }
+
+
+class OAuthCallbackResponse(BaseModel):
+    """OAuth callback completion response."""
+    success: bool = Field(..., description="Whether authorization was successful")
+    user_profile: Optional[UserProfile] = Field(None, description="User profile if successful")
+    access_token: Optional[str] = Field(None, description="Access token if successful")
+    expires_in: Optional[int] = Field(None, description="Token expiration in seconds")
+    error: Optional[str] = Field(None, description="Error message if failed")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "success": True,
+                "user_profile": {
+                    "user_id": "123456789",
+                    "email": "user@company.com",
+                    "name": "John Doe",
+                    "avatar_url": "https://lh3.googleusercontent.com/a/...",
+                    "provider": "google"
+                },
+                "access_token": "leanvibe_jwt_token_here",
+                "expires_in": 3600
+            }
+        }
+
+
+class OAuthProviderListResponse(BaseModel):
+    """List of configured OAuth providers."""
+    providers: List[Dict[str, Any]] = Field(..., description="List of configured providers")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "providers": [
+                    {
+                        "name": "company_google",
+                        "type": "google",
+                        "scopes": ["openid", "email", "profile"],
+                        "supports_refresh": True,
+                        "supports_pkce": True
+                    },
+                    {
+                        "name": "github_enterprise",
+                        "type": "github",
+                        "scopes": ["user:email", "read:user"],
+                        "supports_refresh": True,
+                        "supports_pkce": True
+                    }
+                ]
+            }
+        }
