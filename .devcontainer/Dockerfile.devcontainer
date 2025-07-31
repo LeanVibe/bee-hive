@@ -165,8 +165,8 @@ RUN echo '#!/bin/bash' > /home/vscode/.local/bin/welcome.sh \
     && echo 'echo "Docker: $(docker --version)"' >> /home/vscode/.local/bin/welcome.sh \
     && echo 'echo ""' >> /home/vscode/.local/bin/welcome.sh \
     && echo 'echo "Quick commands:"' >> /home/vscode/.local/bin/welcome.sh \
-    && echo 'echo "  ./setup-ultra-fast.sh  - Setup project"' >> /home/vscode/.local/bin/welcome.sh \
-    && echo 'echo "  ./start-ultra.sh       - Start services"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "  ./setup-fast.sh        - Setup project"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "  ./start-fast.sh        - Start services"' >> /home/vscode/.local/bin/welcome.sh \
     && echo 'echo "  ./health-check.sh      - Check system health"' >> /home/vscode/.local/bin/welcome.sh \
     && echo 'echo ""' >> /home/vscode/.local/bin/welcome.sh \
     && chmod +x /home/vscode/.local/bin/welcome.sh
