@@ -1,6 +1,6 @@
 {
   "name": "LeanVibe Agent Hive 2.0",
-  "dockerComposeFile": ["docker-compose.devcontainer.yml"],
+  "dockerComposeFile": ["../docker-compose.devcontainer.yml"],
   "service": "dev-environment",
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
@@ -158,7 +158,8 @@
     5050,  // pgAdmin
     8001,  // Redis Insight
     9090,  // Prometheus
-    3001   // Grafana
+    3001,  // Grafana
+    8080   // Sandbox demo
   ],
   
   // Port attributes
@@ -182,6 +183,10 @@
     },
     "8001": {
       "label": "Redis Insight"
+    },
+    "8080": {
+      "label": "Sandbox Demo",
+      "onAutoForward": "openBrowser"
     }
   },
   
