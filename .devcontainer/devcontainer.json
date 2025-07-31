@@ -1,6 +1,6 @@
 {
   "name": "LeanVibe Agent Hive 2.0",
-  "dockerComposeFile": ["../docker-compose.devcontainer.yml"],
+  "dockerComposeFile": ["docker-compose.devcontainer.yml"],
   "service": "dev-environment",
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
@@ -185,21 +185,25 @@
     }
   },
   
-  // Lifecycle scripts
-  "postCreateCommand": "bash -c 'git config --global --add safe.directory /workspace && ./setup-ultra-fast.sh'",
-  "postStartCommand": "bash -c 'source venv/bin/activate && echo \"🚀 LeanVibe Agent Hive DevContainer Ready!\"'",
+  // Lifecycle scripts - Optimized for <2 minute setup
+  "postCreateCommand": "/workspace/.devcontainer/post-create.sh",
+  "postStartCommand": "/workspace/.devcontainer/post-start.sh",
   
   // Mount the Docker socket for Docker-in-Docker
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
   
-  // Environment variables
+  // Environment variables - Sandbox mode enabled
   "containerEnv": {
     "WORKSPACE_FOLDER": "/workspace",
     "PYTHONPATH": "/workspace",
     "ENVIRONMENT": "development",
-    "DEVCONTAINER": "true"
+    "DEVCONTAINER": "true",
+    "SANDBOX_MODE": "true",
+    "ANTHROPIC_API_KEY": "demo_key_for_sandbox_only",
+    "GITHUB_TOKEN": "demo_token_for_sandbox_only",
+    "OPENAI_API_KEY": "demo_key_for_sandbox_only"
   },
   
   // Run arguments

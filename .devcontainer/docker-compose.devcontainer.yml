@@ -1,0 +1,272 @@
+# Development Container Compose Configuration
+# Optimized for VS Code DevContainer development experience
+
+services:
+  # Main development environment
+  dev-environment:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.devcontainer
+      target: development
+    container_name: leanvibe_devcontainer
+    volumes:
+      # Workspace mount
+      - .:/workspace:cached
+      - vscode-extensions:/home/vscode/.vscode-server/extensions:cached
+      - vscode-extensions-insiders:/home/vscode/.vscode-server-insiders/extensions:cached
+      
+      # Development optimizations
+      - node_modules:/workspace/frontend/node_modules:cached
+      - pip_cache:/home/vscode/.cache/pip:cached
+      - pytest_cache:/workspace/.pytest_cache:cached
+      
+      # Docker socket for Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker-host.sock
+      
+      # Git configuration persistence
+      - ~/.gitconfig:/home/vscode/.gitconfig:ro
+      - ~/.ssh:/home/vscode/.ssh:ro
+      
+      # Shell history persistence
+      - bash_history:/home/vscode/.bash_history
+      - zsh_history:/home/vscode/.zsh_history
+    
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker-host.sock
+      - DATABASE_URL=postgresql://leanvibe_user:leanvibe_secure_pass@postgres:5432/leanvibe_agent_hive
+      - REDIS_URL=redis://:leanvibe_redis_pass@redis:6379/0
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - PYTHONPATH=/workspace
+      - DEVCONTAINER=true
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    networks:
+      - leanvibe_devnet
+    
+    # Keep container running
+    command: sleep infinity
+    
+    # User configuration
+    user: vscode
+    
+    # Security options
+    security_opt:
+      - seccomp:unconfined
+    
+    # Capabilities for Docker-in-Docker
+    cap_add:
+      - SYS_PTRACE
+
+  # PostgreSQL Database - Development optimized
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: leanvibe_postgres_dev
+    environment:
+      POSTGRES_DB: leanvibe_agent_hive
+      POSTGRES_USER: leanvibe_user
+      POSTGRES_PASSWORD: leanvibe_secure_pass
+      POSTGRES_HOST_AUTH_METHOD: md5
+      # Development optimizations
+      POSTGRES_INITDB_ARGS: "--data-checksums --encoding=UTF8"
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+      - ./database/backups:/backups
+    
+    networks:
+      - leanvibe_devnet
+    
+    # Fast health check for development
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leanvibe_user -d leanvibe_agent_hive"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    
+    restart: unless-stopped
+    
+    # Performance tuning for development
+    command: >
+      postgres
+      -c shared_preload_libraries=vector
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=512MB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=32MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+
+  # Redis - Development optimized
+  redis:
+    image: redis:7-alpine
+    container_name: leanvibe_redis_dev
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass leanvibe_redis_pass
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    
+    ports:
+      - "6380:6379"
+    
+    volumes:
+      - redis_dev_data:/data
+    
+    networks:
+      - leanvibe_devnet
+    
+    # Fast health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "leanvibe_redis_pass", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+    
+    restart: unless-stopped
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: leanvibe_pgadmin_dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@leanvibe.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    
+    ports:
+      - "5050:80"
+    
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    networks:
+      - leanvibe_devnet
+    
+    restart: unless-stopped
+
+  # Redis Insight for Redis management
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: leanvibe_redis_insight_dev
+    ports:
+      - "8001:8001"
+    
+    volumes:
+      - redis_insight_data:/db
+    
+    depends_on:
+      redis:
+        condition: service_healthy
+    
+    networks:
+      - leanvibe_devnet
+    
+    restart: unless-stopped
+
+  # Prometheus for metrics (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: leanvibe_prometheus_dev
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_dev_data:/prometheus
+    
+    networks:
+      - leanvibe_devnet
+    
+    restart: unless-stopped
+    
+    profiles:
+      - monitoring
+
+  # Grafana for dashboards (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: leanvibe_grafana_dev
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    
+    ports:
+      - "3001:3000"
+    
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    
+    depends_on:
+      - prometheus
+    
+    networks:
+      - leanvibe_devnet
+    
+    restart: unless-stopped
+    
+    profiles:
+      - monitoring
+
+# Development network
+networks:
+  leanvibe_devnet:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
+
+# Development volumes
+volumes:
+  # VS Code extensions
+  vscode-extensions:
+  vscode-extensions-insiders:
+  
+  # Development data
+  postgres_dev_data:
+  redis_dev_data:
+  pgadmin_dev_data:
+  redis_insight_data:
+  prometheus_dev_data:
+  grafana_dev_data:
+  
+  # Cache volumes
+  node_modules:
+  pip_cache:
+  pytest_cache:
+  
+  # Shell history
+  bash_history:
+  zsh_history:

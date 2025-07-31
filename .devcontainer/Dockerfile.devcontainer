@@ -1,0 +1,178 @@
+# Development Container Dockerfile
+# Optimized for VS Code development experience with full toolchain
+
+FROM mcr.microsoft.com/vscode/devcontainers/python:3.11-bullseye as base
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=0 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONHASHSEED=random \
+    PYTHONFAULTHANDLER=1
+
+# Install system dependencies optimized for development
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Build tools
+    build-essential \
+    pkg-config \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    \
+    # Database clients
+    postgresql-client \
+    redis-tools \
+    \
+    # Development tools
+    git \
+    curl \
+    wget \
+    tmux \
+    htop \
+    tree \
+    jq \
+    unzip \
+    \
+    # Network tools
+    netcat \
+    telnet \
+    ping \
+    traceroute \
+    \
+    # Development libraries
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
+    \
+    # Node.js for frontend development
+    nodejs \
+    npm \
+    \
+    # Additional utilities
+    vim \
+    nano \
+    less \
+    man-db \
+    \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Install Docker CLI for Docker-in-Docker
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli docker-compose-plugin \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install gh -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python development tools globally
+RUN pip install --no-cache-dir --upgrade \
+    pip \
+    setuptools \
+    wheel \
+    pipenv \
+    poetry \
+    virtualenv
+
+# Development stage
+FROM base as development
+
+# Switch to vscode user for development
+USER vscode
+
+# Set up workspace
+WORKDIR /workspace
+
+# Create directories for development
+RUN mkdir -p /home/vscode/.local/bin \
+    /home/vscode/.cache/pip \
+    /home/vscode/.vscode-server/extensions \
+    /home/vscode/.vscode-server-insiders/extensions
+
+# Add local bin to PATH
+ENV PATH="/home/vscode/.local/bin:${PATH}"
+
+# Install user-level development tools
+RUN pip install --user --no-cache-dir \
+    # Code formatting and linting
+    black \
+    ruff \
+    mypy \
+    bandit \
+    safety \
+    \
+    # Testing tools
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    pytest-mock \
+    pytest-xdist \
+    pytest-benchmark \
+    httpx \
+    \
+    # Development utilities
+    ipython \
+    ipdb \
+    rich \
+    typer \
+    \
+    # Pre-commit hooks
+    pre-commit
+
+# Install Node.js development tools
+RUN npm install -g \
+    yarn \
+    pnpm \
+    @vue/cli \
+    vite \
+    typescript \
+    eslint \
+    prettier
+
+# Configure Git (will be overridden by mounted config)
+RUN git config --global init.defaultBranch main \
+    && git config --global pull.rebase false \
+    && git config --global user.name "DevContainer User" \
+    && git config --global user.email "dev@leanvibe.com"
+
+# Configure shell
+RUN echo 'export PATH="/home/vscode/.local/bin:$PATH"' >> /home/vscode/.bashrc \
+    && echo 'export PYTHONPATH="/workspace:$PYTHONPATH"' >> /home/vscode/.bashrc \
+    && echo 'alias ll="ls -alF"' >> /home/vscode/.bashrc \
+    && echo 'alias la="ls -A"' >> /home/vscode/.bashrc \
+    && echo 'alias l="ls -CF"' >> /home/vscode/.bashrc \
+    && echo 'alias ..="cd .."' >> /home/vscode/.bashrc \
+    && echo 'alias ...="cd ../.."' >> /home/vscode/.bashrc \
+    && echo 'alias grep="grep --color=auto"' >> /home/vscode/.bashrc
+
+# Create a welcome script
+RUN echo '#!/bin/bash' > /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "🚀 LeanVibe Agent Hive DevContainer"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "=================================="' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "Workspace: /workspace"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "Python: $(python --version)"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "Node: $(node --version)"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "Docker: $(docker --version)"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo ""' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "Quick commands:"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "  ./setup-ultra-fast.sh  - Setup project"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "  ./start-ultra.sh       - Start services"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo "  ./health-check.sh      - Check system health"' >> /home/vscode/.local/bin/welcome.sh \
+    && echo 'echo ""' >> /home/vscode/.local/bin/welcome.sh \
+    && chmod +x /home/vscode/.local/bin/welcome.sh
+
+# Add welcome message to bashrc
+RUN echo '/home/vscode/.local/bin/welcome.sh' >> /home/vscode/.bashrc
+
+# Set the default command
+CMD ["bash"]
