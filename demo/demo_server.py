@@ -8,9 +8,11 @@ import os
 import sys
 from pathlib import Path
 
-# Add demo directory to Python path
+# Add demo directory and parent directory to Python path
 demo_dir = Path(__file__).parent
+parent_dir = demo_dir.parent
 sys.path.insert(0, str(demo_dir))
+sys.path.insert(0, str(parent_dir))
 
 try:
     from fastapi import FastAPI, Request

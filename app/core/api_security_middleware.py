@@ -28,8 +28,8 @@ from enum import Enum
 import logging
 
 from fastapi import Request, Response, HTTPException, status
-from fastapi.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 import structlog
 
