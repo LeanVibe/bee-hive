@@ -51,6 +51,19 @@ make start
 
 ---
 
+## 📋 Using Legacy Scripts?
+
+**If you've used old script names** (setup.sh, setup-fast.sh, start-fast.sh, etc.), they still work but now redirect to new standardized commands:
+
+- **Old**: `./setup.sh` → **New**: `make setup`
+- **Old**: `./start-fast.sh` → **New**: `make start`
+- **Old**: `./stop-fast.sh` → **New**: `make stop`
+
+**📖 Full migration guide**: [MIGRATION.md](MIGRATION.md)  
+**🎯 Command discovery**: `make help`
+
+---
+
 ## 🏆 What Makes This Special
 
 ### ✅ Actually Working Autonomous Development
@@ -181,9 +194,9 @@ make emergency-reset    # Emergency reset - stop everything
 
 ### Automated Help
 ```bash
-./troubleshoot.sh     # Automated problem detection and fixes
-./health-check.sh     # Comprehensive system diagnostics
-./setup-fast.sh       # Reset and retry setup
+make health           # Comprehensive system diagnostics and troubleshooting
+./health-check.sh     # Direct health check script (if needed)
+make setup             # Reset and retry setup
 ```
 
 ### Get Support
