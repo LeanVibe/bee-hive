@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Optimized Docker Compose for 5-15 minute setup
 # Features: Parallel startup, health check optimization, resource tuning
 
@@ -185,28 +183,13 @@ services:
 networks:
   leanvibe_network_fast:
     driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.21.0.0/16
-    driver_opts:
-      com.docker.network.bridge.name: br-leanvibe-fast
-      com.docker.network.driver.mtu: 1500
 
-# Optimized volume configuration
+# Optimized volume configuration - using regular Docker volumes for reliability
 volumes:
   postgres_data_fast:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/dev-state/database/postgres-fast
   redis_data_fast:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/dev-state/database/redis-fast
   pgadmin_data_fast:
     driver: local
   agent_workspaces_fast:
