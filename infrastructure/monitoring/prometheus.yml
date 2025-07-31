@@ -1,0 +1,141 @@
+# Prometheus configuration for LeanVibe Agent Hive 2.0
+# Optimized for development and production monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'leanvibe-agent-hive'
+    environment: 'development'
+
+# Rules for alerting
+rule_files:
+  - "alertmanager/rules.yml"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # FastAPI application metrics
+  - job_name: 'leanvibe-api'
+    static_configs:
+      - targets: ['api:8000']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # PostgreSQL database metrics (using postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Redis metrics (using redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Docker container metrics (using cAdvisor)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 20s
+    scrape_timeout: 15s
+
+  # Node/system metrics (using node_exporter)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Custom application metrics
+  - job_name: 'leanvibe-agents'
+    static_configs:
+      - targets: ['api:8000']
+    scrape_interval: 10s
+    metrics_path: /api/v1/metrics/agents
+    scrape_timeout: 5s
+
+  - job_name: 'leanvibe-workflows'
+    static_configs:
+      - targets: ['api:8000']
+    scrape_interval: 15s
+    metrics_path: /api/v1/metrics/workflows
+    scrape_timeout: 5s
+
+  - job_name: 'leanvibe-performance'
+    static_configs:
+      - targets: ['api:8000']
+    scrape_interval: 30s
+    metrics_path: /api/v1/metrics/performance
+    scrape_timeout: 10s
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus
+    retention.time: 30d
+    retention.size: 10GB
+    wal-compression: true
+
+# Remote write configuration (for production)
+# remote_write:
+#   - url: "https://your-remote-prometheus/api/v1/write"
+#     queue_config:
+#       max_samples_per_send: 1000
+#       max_shards: 200
+#       capacity: 2500
+
+# Recording rules for performance optimization
+recording_rules:
+  - name: leanvibe.agent.performance
+    rules:
+      - record: leanvibe:agent_response_time_95th
+        expr: histogram_quantile(0.95, rate(leanvibe_agent_request_duration_seconds_bucket[5m]))
+      
+      - record: leanvibe:agent_error_rate
+        expr: rate(leanvibe_agent_errors_total[5m]) / rate(leanvibe_agent_requests_total[5m])
+      
+      - record: leanvibe:agent_throughput
+        expr: rate(leanvibe_agent_requests_total[1m])
+
+  - name: leanvibe.system.performance
+    rules:
+      - record: leanvibe:cpu_usage_percent
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      
+      - record: leanvibe:memory_usage_percent
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+      
+      - record: leanvibe:disk_usage_percent
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100
+
+  - name: leanvibe.database.performance
+    rules:
+      - record: leanvibe:db_connections_active
+        expr: pg_stat_database_numbackends
+      
+      - record: leanvibe:db_query_time_95th
+        expr: histogram_quantile(0.95, rate(pg_stat_statements_mean_time_bucket[5m]))
+      
+      - record: leanvibe:redis_memory_usage_percent
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100

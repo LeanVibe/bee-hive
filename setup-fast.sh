@@ -263,9 +263,11 @@ create_env_config_fast() {
     # Backup existing config
     if [[ -f "$env_file" ]]; then
         cp "$env_file" "${env_file}.backup.$(date +%s)"
+        print_status "$CYAN" "    → Backed up existing configuration"
     fi
     
     # Generate secure keys in parallel
+    print_status "$CYAN" "    → Generating secure keys..."
     local secret_key=$(python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || openssl rand -hex 32)
     local jwt_secret=$(python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || openssl rand -hex 32)
     

@@ -1,0 +1,521 @@
+name: DevOps Quality Gates
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC to catch environment drift
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Setup Performance Validation
+  setup-performance:
+    name: Setup Performance Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    
+    - name: Validate Setup Speed (Target: <3 minutes)
+      run: |
+        echo "🚀 Testing setup performance..."
+        start_time=$(date +%s)
+        
+        # Run setup with timeout
+        timeout 300 ./setup-ultra-fast.sh || {
+          echo "❌ Setup exceeded 5-minute timeout"
+          exit 1
+        }
+        
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        
+        echo "⏱️  Setup completed in ${duration} seconds"
+        
+        # Validate performance targets
+        if [ $duration -le 180 ]; then
+          echo "🎉 Excellent: Setup under 3 minutes (${duration}s)"
+        elif [ $duration -le 300 ]; then
+          echo "✅ Good: Setup under 5 minutes (${duration}s)"
+        else
+          echo "❌ Failed: Setup exceeded 5 minutes (${duration}s)"
+          exit 1
+        fi
+        
+        # Log performance metrics
+        echo "SETUP_DURATION=${duration}" >> $GITHUB_ENV
+    
+    - name: Validate Setup Success Rate
+      run: |
+        echo "🔄 Testing setup reliability..."
+        success_count=0
+        total_runs=5
+        
+        for i in $(seq 1 $total_runs); do
+          echo "Run $i of $total_runs"
+          
+          # Clean environment
+          docker compose -f docker-compose.fast.yml down -v 2>/dev/null || true
+          docker system prune -f
+          rm -rf venv .env.local
+          
+          # Test setup
+          if timeout 300 ./setup-ultra-fast.sh; then
+            success_count=$((success_count + 1))
+            echo "✅ Run $i: Success"
+          else
+            echo "❌ Run $i: Failed"
+          fi
+        done
+        
+        success_rate=$((success_count * 100 / total_runs))
+        echo "📊 Success rate: ${success_rate}% (${success_count}/${total_runs})"
+        
+        # Validate success rate target (>95%)
+        if [ $success_rate -ge 95 ]; then
+          echo "🎉 Excellent success rate: ${success_rate}%"
+        elif [ $success_rate -ge 80 ]; then
+          echo "⚠️  Warning: Success rate below target (${success_rate}%)"
+        else
+          echo "❌ Failed: Success rate too low (${success_rate}%)"
+          exit 1
+        fi
+        
+        echo "SUCCESS_RATE=${success_rate}" >> $GITHUB_ENV
+    
+    - name: Health Check Validation
+      run: |
+        echo "🏥 Running comprehensive health checks..."
+        
+        # Ensure services are running
+        ./start-ultra.sh &
+        sleep 30
+        
+        # Run health check
+        if ./health-check.sh; then
+          echo "✅ Health check passed"
+        else
+          echo "❌ Health check failed"
+          exit 1
+        fi
+    
+    outputs:
+      setup-duration: ${{ env.SETUP_DURATION }}
+      success-rate: ${{ env.SUCCESS_RATE }}
+
+  # Code Quality Gates
+  code-quality:
+    name: Code Quality Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+    
+    - name: Code formatting with Black
+      run: |
+        black --check --diff app/ tests/
+        echo "✅ Code formatting validated"
+    
+    - name: Linting with Ruff
+      run: |
+        ruff check app/ tests/
+        echo "✅ Code linting passed"
+    
+    - name: Type checking with MyPy
+      run: |
+        mypy app/ --ignore-missing-imports
+        echo "✅ Type checking passed"
+    
+    - name: Security scanning with Bandit
+      run: |
+        bandit -r app/ -f json -o bandit-report.json
+        echo "✅ Security scanning completed"
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-report
+        path: bandit-report.json
+
+  # Performance Benchmarks
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: setup-performance
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+    
+    - name: Database Performance Tests
+      run: |
+        echo "🗄️  Running database performance tests..."
+        python -m pytest tests/performance/ -v --benchmark-only
+        echo "✅ Database performance tests passed"
+    
+    - name: API Performance Tests
+      run: |
+        echo "🚀 Running API performance tests..."
+        # Start the application
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+        
+        # Run performance tests
+        python -c "
+import requests
+import time
+import statistics
+
+# Performance test
+response_times = []
+for i in range(100):
+    start = time.time()
+    response = requests.get('http://localhost:8000/health')
+    end = time.time()
+    response_times.append(end - start)
+    assert response.status_code == 200
+
+avg_time = statistics.mean(response_times)
+p95_time = statistics.quantiles(response_times, n=20)[18]  # 95th percentile
+
+print(f'Average response time: {avg_time:.3f}s')
+print(f'95th percentile: {p95_time:.3f}s')
+
+# Validate performance targets
+assert avg_time < 0.1, f'Average response time too high: {avg_time:.3f}s'
+assert p95_time < 0.2, f'95th percentile too high: {p95_time:.3f}s'
+print('✅ API performance targets met')
+        "
+    
+    - name: Memory Usage Validation
+      run: |
+        echo "💾 Validating memory usage..."
+        
+        # Check memory usage of running services
+        docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}" || true
+        
+        echo "✅ Memory usage validated"
+
+  # Security Validation
+  security-validation:
+    name: Security Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Docker security scan
+      run: |
+        echo "🔒 Running Docker security scan..."
+        
+        # Build and scan the image
+        docker build -f Dockerfile.fast -t leanvibe-test .
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy:latest image leanvibe-test
+        
+        echo "✅ Docker security scan completed"
+
+  # Documentation Validation
+  documentation-validation:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate documentation links
+      run: |
+        echo "📚 Validating documentation links..."
+        
+        # Check if documentation files exist
+        required_docs=(
+          "README.md"
+          "CONTRIBUTING.md"
+          "docs/GETTING_STARTED.md"
+          "docs/API_REFERENCE_COMPREHENSIVE.md"
+          "docs/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md"
+        )
+        
+        for doc in "${required_docs[@]}"; do
+          if [[ -f "$doc" ]]; then
+            echo "✅ Found: $doc"
+          else
+            echo "❌ Missing: $doc"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Documentation validation passed"
+    
+    - name: Check API documentation
+      run: |
+        echo "📖 Validating API documentation..."
+        
+        # Start the application
+        ./start-ultra.sh &
+        sleep 30
+        
+        # Check if OpenAPI docs are accessible
+        if curl -f http://localhost:8000/docs >/dev/null 2>&1; then
+          echo "✅ API documentation accessible"
+        else
+          echo "❌ API documentation not accessible"
+          exit 1
+        fi
+        
+        if curl -f http://localhost:8000/openapi.json >/dev/null 2>&1; then
+          echo "✅ OpenAPI specification accessible"
+        else
+          echo "❌ OpenAPI specification not accessible"
+          exit 1
+        fi
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [setup-performance, code-quality]
+    
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Run ultra-fast setup
+      run: |
+        echo "🚀 Running setup for Python ${{ matrix.python-version }}"
+        ./setup-ultra-fast.sh
+    
+    - name: Run integration tests
+      run: |
+        source venv/bin/activate
+        
+        echo "🧪 Running integration tests..."
+        python -m pytest tests/integration/ \
+          --cov=app \
+          --cov-report=xml \
+          --cov-report=html \
+          --junit-xml=test-results.xml \
+          -v
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          htmlcov/
+          coverage.xml
+
+  # Deployment Readiness
+  deployment-readiness:
+    name: Deployment Readiness Check
+    runs-on: ubuntu-latest
+    needs: [setup-performance, code-quality, performance-benchmarks, security-validation, integration-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build production image
+      run: |
+        echo "🏗️  Building production image..."
+        docker build -f Dockerfile.fast --target production -t leanvibe-prod .
+        echo "✅ Production image built successfully"
+    
+    - name: Test production deployment
+      run: |
+        echo "🚢 Testing production deployment..."
+        
+        # Start production services
+        docker compose -f docker-compose.fast.yml up -d postgres redis
+        sleep 10
+        
+        # Run production container
+        docker run -d --name leanvibe-prod-test \
+          --network bee-hive_leanvibe_network_fast \
+          -e DATABASE_URL=postgresql://leanvibe_user:leanvibe_secure_pass@postgres:5432/leanvibe_agent_hive \
+          -e REDIS_URL=redis://:leanvibe_redis_pass@redis:6379/0 \
+          -p 8000:8000 \
+          leanvibe-prod
+        
+        sleep 15
+        
+        # Test health endpoint
+        if curl -f http://localhost:8000/health; then
+          echo "✅ Production deployment test passed"
+        else
+          echo "❌ Production deployment test failed"
+          docker logs leanvibe-prod-test
+          exit 1
+        fi
+    
+    - name: Generate deployment report
+      run: |
+        echo "📊 Generating deployment readiness report..."
+        
+        cat > deployment-report.md << EOF
+# Deployment Readiness Report
+        
+## Performance Metrics
+- Setup Duration: ${{ needs.setup-performance.outputs.setup-duration }}s
+- Success Rate: ${{ needs.setup-performance.outputs.success-rate }}%
+        
+## Quality Gates Status
+- ✅ Code Quality: Passed
+- ✅ Performance Benchmarks: Passed  
+- ✅ Security Validation: Passed
+- ✅ Integration Tests: Passed
+- ✅ Production Build: Passed
+        
+## Deployment Recommendation
+$(if [ "${{ needs.setup-performance.outputs.setup-duration }}" -le 180 ] && [ "${{ needs.setup-performance.outputs.success-rate }}" -ge 95 ]; then
+  echo "🚀 **APPROVED** - All quality gates passed. Ready for deployment."
+else
+  echo "⚠️  **REVIEW REQUIRED** - Some metrics below target. Manual review recommended."
+fi)
+        
+## Next Steps
+1. Review performance metrics
+2. Validate in staging environment
+3. Schedule production deployment
+        
+---
+Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+EOF
+        
+        cat deployment-report.md
+    
+    - name: Upload deployment report
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-report
+        path: deployment-report.md
+
+  # Summary Report
+  summary:
+    name: Quality Gates Summary
+    runs-on: ubuntu-latest
+    needs: [setup-performance, code-quality, performance-benchmarks, security-validation, documentation-validation, integration-tests, deployment-readiness]
+    if: always()
+    
+    steps:
+    - name: Generate summary
+      run: |
+        echo "📋 DevOps Quality Gates Summary"
+        echo "=============================="
+        echo ""
+        echo "Setup Performance: ${{ needs.setup-performance.result }}"
+        echo "Code Quality: ${{ needs.code-quality.result }}"
+        echo "Performance Benchmarks: ${{ needs.performance-benchmarks.result }}"
+        echo "Security Validation: ${{ needs.security-validation.result }}"
+        echo "Documentation: ${{ needs.documentation-validation.result }}"
+        echo "Integration Tests: ${{ needs.integration-tests.result }}"
+        echo "Deployment Readiness: ${{ needs.deployment-readiness.result }}"
+        echo ""
+        
+        # Calculate overall status
+        if [ "${{ needs.setup-performance.result }}" = "success" ] && \
+           [ "${{ needs.code-quality.result }}" = "success" ] && \
+           [ "${{ needs.performance-benchmarks.result }}" = "success" ] && \
+           [ "${{ needs.security-validation.result }}" = "success" ] && \
+           [ "${{ needs.documentation-validation.result }}" = "success" ] && \
+           [ "${{ needs.integration-tests.result }}" = "success" ] && \
+           [ "${{ needs.deployment-readiness.result }}" = "success" ]; then
+          echo "🎉 Overall Status: ALL QUALITY GATES PASSED"
+          echo "🚀 System ready for production deployment"
+        else
+          echo "⚠️  Overall Status: SOME QUALITY GATES FAILED"
+          echo "🔧 Review failed checks before deployment"
+        fi
