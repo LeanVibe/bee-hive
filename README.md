@@ -1,149 +1,141 @@
 # 🚀 LeanVibe Agent Hive 2.0
 
-**Autonomous software development that actually works. See AI agents build complete features in real-time.**
+**Autonomous software development that actually works. Watch AI agents build complete features from start to finish.**
 
-[![Setup Time](https://img.shields.io/badge/Setup_Time-5--12_min-brightgreen.svg)]()
+[![Setup Time](https://img.shields.io/badge/Setup_Time-2--12_min-brightgreen.svg)]()
 [![Quality Score](https://img.shields.io/badge/Quality_Score-8.0/10-success.svg)]()
 [![Success Rate](https://img.shields.io/badge/Success_Rate-100%25-success.svg)]()
 [![Autonomous](https://img.shields.io/badge/Autonomous_Development-✅_Working-success.svg)]()
 
-**New here?** → **[Start with WELCOME.md](WELCOME.md)** ← **Complete entry point with role-based paths**
+---
+
+## ⚡ See It Working Right Now (No Setup Required)
+
+**Choose your 2-minute proof:**
+
+🎮 **[Try Sandbox Mode](docs/SANDBOX_MODE_GUIDE.md)** → Interactive autonomous development in your browser  
+🎥 **[Watch Live Demo](scripts/demos/autonomous_development_demo.py)** → See AI agents coordinate in real-time  
+📹 **[Video Showcase](docs/AUTONOMOUS_DEVELOPMENT_DEMO.md)** → 2-minute autonomous development overview
+
+*Experience the future of software development before any setup commitment*
 
 ---
 
-## ⚡ Instant Demo (No Installation)
+## 🚀 Ready to Build? Choose Your Experience
 
-**Want to see autonomous development right now?**
+**Convinced by the demos above? Pick your setup:**
 
-- 🌐 **[Browser Demo](http://localhost:8000/demo)** - Watch AI agents coordinate in real-time
-- 🎥 **[Autonomous Development Showcase](scripts/demos/autonomous_development_demo.py)** - Complete feature development cycle
-
-*2 minutes to see the future of software development*
-
----
-
-## 🚀 One-Click Setup (<2 minutes) - NEW!
-
-**🎯 DevContainer: The fastest way to autonomous development**
-
-### Option 1: VS Code DevContainer (Recommended - <2 minutes)
+### 🎯 DevContainer (Recommended - <2 minutes)
+**Zero-configuration autonomous development:**
 ```bash
 git clone https://github.com/LeanVibe/bee-hive.git
 code bee-hive  # Opens in VS Code
 # Click "Reopen in Container" when prompted
-# ✅ DONE! All services, demos, and AI agents ready
+# ✅ DONE! Autonomous AI agents ready to build
 ```
+*Prerequisites: [VS Code](https://code.visualstudio.com/) + [DevContainers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) + [Docker Desktop](https://www.docker.com/products/docker-desktop/)*
 
-**Prerequisites**: [VS Code](https://code.visualstudio.com/) + [DevContainers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) + [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-
-### Option 2: Traditional Setup (5-12 minutes)
+### ⚡ Fast Setup (5-12 minutes)
+**Optimized one-command setup:**
 ```bash
-# 1. Clone and setup (handles everything automatically)
 git clone https://github.com/LeanVibe/bee-hive.git && cd bee-hive
 ./setup-fast.sh
-
-# 2. Add your API key (required for AI agents)
 echo "ANTHROPIC_API_KEY=your_key_here" >> .env.local
-
-# 3. Start the system
 ./start-fast.sh
-
-# 4. See autonomous development in action
-python scripts/demos/autonomous_development_demo.py
 ```
 
-**Result**: Working multi-agent system building complete features autonomously.
+### 🎮 Keep Trying Sandbox
+**Not ready to install? [Continue in Sandbox Mode](docs/SANDBOX_MODE_GUIDE.md)**
+
+**✅ Success Indicator**: All methods result in working autonomous development at http://localhost:8000
 
 ---
 
-## 📊 What You Get
+## 🏆 What Makes This Special
 
-### ✅ Verified Autonomous Development
-- **Multi-agent coordination**: Architect, developer, tester, reviewer agents working together
-- **Complete feature cycles**: Requirements → Implementation → Testing → Deployment
-- **Self-healing system**: Automatic error recovery and retry logic
-- **Context memory**: Agents learn and remember project context
+### ✅ Actually Working Autonomous Development
+- **Multi-agent coordination**: Architect, developer, tester, reviewer agents collaborate
+- **Complete feature cycles**: Requirements → Code → Tests → Deployment
+- **Context memory**: Agents learn and remember your project patterns
+- **Self-healing**: Automatic error recovery and intelligent retry logic
 
-### ⚡ Optimized Performance  
-- **<2 minute DevContainer setup** (NEW - one-click solution)
-- **5-second Docker startup** (vs industry 60+ seconds)
-- **5-12 minute traditional setup** (75% faster than typical)
-- **100% success rate** in comprehensive testing
-- **8.0/10 quality score** validated by external assessment
+### ⚡ Optimized for Modern Development
+- **<2 minute DevContainer setup** - Zero configuration required
+- **5-second Docker startup** - 92% faster than industry standard
+- **8.0/10 quality score** - Validated by external AI assessment
+- **100% success rate** - Comprehensive testing across environments
 
-### 🛡️ Production Ready
-- **Enterprise security**: JWT auth, RBAC, audit trails
-- **Real-time monitoring**: Live dashboards and observability
-- **Mobile PWA**: Progressive web app for monitoring
-- **GitHub integration**: Automated PR creation and code review
-
----
-
-## 🎯 Need More Info?
-
-**Choose based on your role and goals:**
-
-### 🛠️ **I'm a Developer**
-→ **[Developer Fast Track](docs/paths/DEVELOPER_PATH.md)** - Hands-on setup, architecture, customization
-
-### 💼 **I'm an Executive/PM** 
-→ **[Executive Brief](docs/paths/EXECUTIVE_PATH.md)** - ROI analysis, timeline, resource requirements
-
-### 🏢 **I'm Evaluating for Enterprise**
-→ **[Enterprise Assessment](docs/paths/ENTERPRISE_PATH.md)** - Security, scalability, deployment
-
-### 🔍 **I Want Technical Deep Dive**
-→ **[Technical Analysis](docs/paths/EVALUATOR_PATH.md)** - Benchmarks, comparisons, architecture
-
-### 📖 **I Want Full Documentation**
-→ **[Complete Documentation](docs/README.md)** - Comprehensive reference
+### 🛡️ Production-Ready Platform
+- **Enterprise security**: JWT auth, RBAC, comprehensive audit trails
+- **Real-time monitoring**: Live dashboards and system observability
+- **GitHub integration**: Automated PR creation and intelligent code review
+- **Mobile PWA**: Progressive web app for on-the-go monitoring
 
 ---
 
-## 🛠️ Quick Access
+## 🎯 Need More Information?
 
-### Development Commands
-- `./start-fast.sh` - Start the system
-- `./health-check.sh` - Validate system health  
-- `python scripts/demos/autonomous_development_demo.py` - See autonomous development
+### 📖 **Want Complete Details?**
+→ **[Full Documentation Guide](WELCOME.md)** - Comprehensive information with role-based paths
 
-### Key URLs (after setup)
-- **API Docs**: http://localhost:8000/docs
-- **Health Status**: http://localhost:8000/health
+### 🏢 **Enterprise Evaluation?**
+→ **[Enterprise Assessment](docs/enterprise/)** - Security, compliance, scalability analysis
+
+### 🛠️ **Developer Deep Dive?**
+→ **[Developer Resources](docs/developer/)** - Architecture, APIs, customization guides
+
+### 📊 **Executive Overview?**
+→ **[Business Case & ROI](docs/executive/)** - Value proposition, competitive analysis, implementation planning
+
+---
+
+## ✅ Quick Validation (After Setup)
+
+**Verify everything is working:**
+```bash
+./health-check.sh                                          # System health check
+curl http://localhost:8000/health                          # API health status  
+python scripts/demos/autonomous_development_demo.py        # See autonomous development
+```
+
+**Key URLs:**
+- **API Documentation**: http://localhost:8000/docs
+- **System Health**: http://localhost:8000/health
 - **Web Dashboard**: http://localhost:3000 (optional)
-- **Mobile PWA**: http://localhost:3001 (optional)
 
 ---
 
-## 🆘 Need Help?
+## 🆘 Something Not Working?
 
-### Troubleshooting
-- `./health-check.sh` - Diagnose common issues
-- `./troubleshoot.sh` - Automated problem resolution
-- [Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md) - Complete solutions
+### Automated Help
+```bash
+./troubleshoot.sh     # Automated problem detection and fixes
+./health-check.sh     # Comprehensive system diagnostics
+./setup-fast.sh       # Reset and retry setup
+```
 
-### Support & Community
-- **GitHub Issues**: [Report bugs or request features](https://github.com/LeanVibe/bee-hive/issues)
-- **GitHub Discussions**: [Ask questions and get help](https://github.com/LeanVibe/bee-hive/discussions)
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) - Join the development
-
----
-
-## 🚀 What's Next?
-
-**You've got LeanVibe Agent Hive 2.0 running. Now what?**
-
-1. **🎯 Try the autonomous demo**: `python scripts/demos/autonomous_development_demo.py`
-2. **📖 Explore documentation**: Choose your path above based on your role
-3. **🔧 Customize for your needs**: Check the role-specific guides
-4. **🤝 Join the community**: Contribute to the future of autonomous development
+### Get Support
+- **Issues & Bugs**: [GitHub Issues](https://github.com/LeanVibe/bee-hive/issues)
+- **Questions & Discussion**: [GitHub Discussions](https://github.com/LeanVibe/bee-hive/discussions)
+- **Troubleshooting**: [Complete Guide](docs/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md)
 
 ---
 
-**Ready to revolutionize software development with autonomous AI agents?** 
+## 🎉 Success! What's Next?
 
-**Start here**: [WELCOME.md](WELCOME.md) → Choose your path → See autonomous development in action
+**You now have working autonomous development. Here's how to maximize it:**
+
+1. **🎯 Run the Demo**: `python scripts/demos/autonomous_development_demo.py`
+2. **📖 Learn More**: [Complete Documentation](WELCOME.md) with role-based guidance
+3. **🔧 Customize**: Adapt the system for your specific development needs
+4. **🤝 Contribute**: [Help build the future](CONTRIBUTING.md) of autonomous development
 
 ---
 
-*Built with ❤️ by the LeanVibe team • Licensed under MIT • Powered by autonomous AI agents*
+**Ready to transform software development with AI agents?**
+
+**🚀 Start with the demos above, then explore [WELCOME.md](WELCOME.md) for your role-specific journey.**
+
+---
+
+*Built with ❤️ by the LeanVibe team • [MIT Licensed](LICENSE) • Powered by autonomous AI agents*
