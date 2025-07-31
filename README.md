@@ -36,12 +36,12 @@ code bee-hive  # Opens in VS Code
 *Prerequisites: [VS Code](https://code.visualstudio.com/) + [DevContainers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) + [Docker Desktop](https://www.docker.com/products/docker-desktop/)*
 
 ### ⚡ Fast Setup (5-12 minutes)
-**Optimized one-command setup:**
+**Professional one-command setup:**
 ```bash
 git clone https://github.com/LeanVibe/bee-hive.git && cd bee-hive
-./setup-fast.sh
+make setup
 echo "ANTHROPIC_API_KEY=your_key_here" >> .env.local
-./start-fast.sh
+make start
 ```
 
 ### 🎮 Keep Trying Sandbox
@@ -93,10 +93,82 @@ echo "ANTHROPIC_API_KEY=your_key_here" >> .env.local
 
 **Verify everything is working:**
 ```bash
-./health-check.sh                                          # System health check
+make health                                                # System health check
 curl http://localhost:8000/health                          # API health status  
-python scripts/demos/autonomous_development_demo.py        # See autonomous development
+make sandbox                                               # Interactive autonomous demo
 ```
+
+---
+
+## 🛠️ Professional Developer Commands
+
+**All common operations available through standardized Makefile:**
+
+### Core Commands
+```bash
+make setup          # Complete system setup (fast profile)
+make start          # Start all services  
+make test           # Run comprehensive test suite
+make sandbox        # Interactive autonomous development demo
+make clean          # Clean up resources
+make help           # Show all available commands
+```
+
+### Setup Profiles
+```bash
+make setup              # Fast setup (5-8 min) [default]
+make setup-minimal      # Minimal setup for CI/CD (2-3 min)
+make setup-full         # Complete setup with all tools (10-15 min)
+make setup-devcontainer # DevContainer initialization (1-2 min)
+```
+
+### Service Management
+```bash
+make start              # Start services (fast profile)
+make start-minimal      # Start minimal services for CI/CD
+make start-full         # Start all services including monitoring
+make start-bg           # Start services in background
+make stop               # Stop all services
+make restart            # Restart all services
+```
+
+### Testing & Quality
+```bash
+make test               # Run all test suites
+make test-unit          # Run unit tests only
+make test-integration   # Run integration tests
+make test-performance   # Run performance benchmarks
+make test-security      # Run security scans
+make test-e2e           # Run end-to-end tests
+make test-smoke         # Run smoke tests
+```
+
+### Sandbox & Demonstrations
+```bash
+make sandbox            # Interactive sandbox mode
+make sandbox-demo       # Automated demo (5-minute presentation)
+make sandbox-auto       # Autonomous development showcase
+make sandbox-showcase   # Best-of showcase for external audiences
+```
+
+### Development & Monitoring
+```bash
+make dev                # Start development server with auto-reload
+make health             # Run comprehensive health check
+make logs               # View service logs
+make ps                 # Show service status
+make monitor            # Start monitoring (Prometheus + Grafana)
+```
+
+### Utilities
+```bash
+make clean              # Clean up temporary files and containers
+make status             # Show quick system status
+make env-info           # Show environment information
+make emergency-reset    # Emergency reset - stop everything
+```
+
+**🔧 All commands include professional error handling, progress indicators, and detailed logging.**
 
 **Key URLs:**
 - **API Documentation**: http://localhost:8000/docs

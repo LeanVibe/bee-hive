@@ -43,7 +43,19 @@ help: ## Show this help message
 # Setup & Environment
 setup: ## Run full system setup (one-command setup)
 	@echo "$(BLUE)🚀 Running full system setup...$(NC)"
-	@./setup.sh
+	@./scripts/setup.sh fast
+
+setup-minimal: ## Run minimal setup for CI/CD environments
+	@echo "$(BLUE)⚡ Running minimal setup...$(NC)"
+	@./scripts/setup.sh minimal
+
+setup-full: ## Run complete setup with all tools
+	@echo "$(BLUE)🔧 Running full setup...$(NC)"
+	@./scripts/setup.sh full
+
+setup-devcontainer: ## Run devcontainer setup
+	@echo "$(BLUE)📦 Running devcontainer setup...$(NC)"
+	@./scripts/setup.sh devcontainer
 
 install: ## Install Python dependencies in virtual environment
 	@echo "$(BLUE)📦 Installing Python dependencies...$(NC)"
@@ -69,16 +81,19 @@ dev: ## Start development server with auto-reload
 
 start: ## Start all services (infrastructure + application)
 	@echo "$(BLUE)🚀 Starting all services...$(NC)"
-	@$(COMPOSE) up -d postgres redis
-	@echo "$(YELLOW)⏳ Waiting for services to be ready...$(NC)"
-	@sleep 5
-	@. $(VENV_DIR)/bin/activate && \
-		uvicorn app.main:app --host 0.0.0.0 --port 8000
+	@./scripts/start.sh fast
 
-start-bg: ## Start all services in background
-	@echo "$(BLUE)📦 Starting infrastructure services...$(NC)"
-	@$(COMPOSE) up -d postgres redis
-	@echo "$(GREEN)✅ Services started in background$(NC)"
+start-minimal: ## Start minimal services for CI/CD
+	@echo "$(BLUE)⚡ Starting minimal services...$(NC)"
+	@./scripts/start.sh minimal
+
+start-full: ## Start all services including monitoring
+	@echo "$(BLUE)🔧 Starting full services...$(NC)"
+	@./scripts/start.sh full
+
+start-bg: ## Start services in background
+	@echo "$(BLUE)📦 Starting services in background...$(NC)"
+	@BACKGROUND=true ./scripts/start.sh fast
 
 stop: ## Stop all services
 	@echo "$(BLUE)🛑 Stopping all services...$(NC)"
@@ -87,12 +102,53 @@ stop: ## Stop all services
 
 restart: stop start-bg ## Restart all services
 
+# Sandbox & Demonstrations
+sandbox: ## Start interactive sandbox mode
+	@echo "$(BLUE)🎮 Starting interactive sandbox...$(NC)"
+	@./scripts/sandbox.sh interactive
+
+sandbox-demo: ## Run automated demo mode
+	@echo "$(BLUE)🎬 Starting demo mode...$(NC)"
+	@./scripts/sandbox.sh demo
+
+sandbox-auto: ## Run autonomous development showcase
+	@echo "$(BLUE)🤖 Starting autonomous showcase...$(NC)"
+	@./scripts/sandbox.sh auto
+
+sandbox-showcase: ## Run best-of showcase
+	@echo "$(BLUE)🏆 Starting showcase mode...$(NC)"
+	@./scripts/sandbox.sh showcase
+
 # Testing & Quality
 test: ## Run all tests
-	@echo "$(BLUE)🧪 Running tests...$(NC)"
-	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v
+	@echo "$(BLUE)🧪 Running comprehensive test suite...$(NC)"
+	@./scripts/test.sh all
 
-test-cov: ## Run tests with coverage report
+test-unit: ## Run unit tests only
+	@echo "$(BLUE)⚡ Running unit tests...$(NC)"
+	@./scripts/test.sh unit
+
+test-integration: ## Run integration tests
+	@echo "$(BLUE)🔗 Running integration tests...$(NC)"
+	@./scripts/test.sh integration
+
+test-performance: ## Run performance tests
+	@echo "$(BLUE)🚀 Running performance tests...$(NC)"
+	@./scripts/test.sh performance
+
+test-security: ## Run security tests
+	@echo "$(BLUE)🔒 Running security tests...$(NC)"
+	@./scripts/test.sh security
+
+test-e2e: ## Run end-to-end tests
+	@echo "$(BLUE)🌐 Running end-to-end tests...$(NC)"
+	@./scripts/test.sh e2e
+
+test-smoke: ## Run smoke tests
+	@echo "$(BLUE)💨 Running smoke tests...$(NC)"
+	@./scripts/test.sh smoke
+
+test-cov: ## Run tests with coverage report (legacy)
 	@echo "$(BLUE)🧪 Running tests with coverage...$(NC)"
 	@. $(VENV_DIR)/bin/activate && \
 		$(PYTEST) --cov=app --cov-report=html --cov-report=term-missing --cov-fail-under=90
