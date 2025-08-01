@@ -59,6 +59,15 @@ class BranchOperationType(Enum):
     DELETE = "delete"
 
 
+class RepositoryStatus(Enum):
+    """Repository synchronization status."""
+    PENDING = "pending"
+    SYNCING = "syncing"
+    ACTIVE = "active"
+    ERROR = "error"
+    ARCHIVED = "archived"
+
+
 class GitHubRepository(Base):
     """
     GitHub repository configuration and access management.

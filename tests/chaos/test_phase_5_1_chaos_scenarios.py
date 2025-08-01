@@ -15,7 +15,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from unittest.mock import Mock, patch, AsyncMock
-import aioredis
+import redis.asyncio as aioredis
 import httpx
 from sqlalchemy.exc import DisconnectionError
 import psutil

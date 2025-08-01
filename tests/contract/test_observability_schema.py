@@ -51,7 +51,7 @@ from app.core.event_serialization import (
     deserialize_from_stream,
     deserialize_from_storage,
 )
-from mock_servers.observability_events_mock import (
+from resources.mock_servers.observability_events_mock import (
     MockEventGenerator,
     WorkflowScenario,
     generate_sample_events,
