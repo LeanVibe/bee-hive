@@ -1,7 +1,16 @@
 # LeanVibe Agent Hive 2.0 - Development Makefile
 # Provides common development commands and shortcuts
 
-.PHONY: help setup health start stop restart clean test test-cov test-fast lint format check install dev build deploy logs ps shell db-shell redis-shell migrate rollback docs dev-container
+.PHONY: help setup setup-minimal setup-full setup-devcontainer install install-pre-commit \
+	dev start start-minimal start-full start-bg stop restart \
+	sandbox sandbox-demo sandbox-auto sandbox-showcase \
+	test test-unit test-integration test-performance test-security test-e2e test-smoke test-cov test-fast test-integration-pytest test-watch \
+	lint format check security benchmark load-test \
+	migrate rollback db-shell redis-shell monitor dev-tools \
+	logs ps shell build clean docs health status \
+	frontend-install frontend-dev frontend-build frontend-test \
+	pwa-dev pwa-build \
+	pre-commit ci release dev-container emergency-reset env-info
 
 # Default target
 .DEFAULT_GOAL := help
@@ -26,19 +35,19 @@ help: ## Show this help message
 	@echo "==============================================="
 	@echo ""
 	@echo "$(YELLOW)Setup & Environment:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'setup|install|env' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'setup|install|env' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' || true
 	@echo ""
 	@echo "$(YELLOW)Development:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'dev|start|stop|restart|sandbox' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'dev|start|stop|restart|sandbox' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' || true
 	@echo ""
 	@echo "$(YELLOW)Testing & Quality:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'test|lint|format|check|security|benchmark' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'test|lint|format|check|security|benchmark' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' || true
 	@echo ""
 	@echo "$(YELLOW)Database & Services:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'db|redis|migrate|monitor' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'db|redis|migrate|monitor' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' || true
 	@echo ""
 	@echo "$(YELLOW)Utilities & Tools:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -vE 'setup|install|env|dev|start|stop|restart|sandbox|test|lint|format|check|security|benchmark|db|redis|migrate|monitor' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -vE 'setup|install|env|dev|start|stop|restart|sandbox|test|lint|format|check|security|benchmark|db|redis|migrate|monitor' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' || true
 	@echo ""
 	@echo "$(BLUE)Quick Start:$(NC)"
 	@echo "  $(GREEN)make setup$(NC)           # One-command setup"
@@ -163,8 +172,8 @@ test-fast: ## Run tests without slow/integration tests
 	@echo "$(BLUE)⚡ Running fast tests...$(NC)"
 	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m "not slow and not integration"
 
-test-integration-legacy: ## Run integration tests only (legacy)
-	@echo "$(BLUE)🔗 Running integration tests (legacy)...$(NC)"
+test-integration-pytest: ## Run integration tests with pytest (legacy method)
+	@echo "$(BLUE)🔗 Running integration tests with pytest...$(NC)"
 	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m integration
 
 test-watch: ## Run tests in watch mode
