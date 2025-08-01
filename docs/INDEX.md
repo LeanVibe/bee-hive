@@ -6,6 +6,7 @@
 
 ### New Users
 - **Start Here**: [../README.md](../README.md) - Main entry point with demos and setup
+- **System Status**: [../SYSTEM_STATUS.md](../SYSTEM_STATUS.md) - Current working features and limitations
 - **Need Guidance**: [../WELCOME.md](../WELCOME.md) - Choose your experience path
 - **Try First**: [SANDBOX_MODE_GUIDE.md](SANDBOX_MODE_GUIDE.md) - No installation required
 
@@ -74,9 +75,9 @@ docs/archive/
 
 ### By Use Case
 - **First Time Setup**: [../README.md](../README.md) → Choose setup method
+- **System Status**: [../SYSTEM_STATUS.md](../SYSTEM_STATUS.md) → Current working features and limitations
 - **Understanding Features**: [AUTONOMOUS_DEVELOPMENT_DEMO.md](AUTONOMOUS_DEVELOPMENT_DEMO.md)
 - **Customization**: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
-- **Production Deployment**: [PRODUCTION_DEPLOYMENT_RUNBOOK.md](PRODUCTION_DEPLOYMENT_RUNBOOK.md)
 - **Troubleshooting**: [TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md](TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md)
 
 ### By Technical Topic
