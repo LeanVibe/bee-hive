@@ -1,0 +1,133 @@
+{
+  "validation_metadata": {
+    "test_date": "2025-08-01T10:49:56.328963",
+    "target_claim": "Setup completes in <120 seconds",
+    "test_methodology": "Multiple isolated runs with statistical analysis",
+    "validator": "The Guardian QA Framework"
+  },
+  "fresh_setup_results": {
+    "test_name": "Fresh Setup Performance",
+    "statistics": {
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "std_dev": 0.0,
+      "successful_runs": 0,
+      "total_runs": 3,
+      "success_rate": 0.0,
+      "target_time": 120,
+      "mean_under_target": false,
+      "all_under_target": false
+    },
+    "detailed_runs": [
+      {
+        "run": 1,
+        "success": false,
+        "duration": 5.880879878997803,
+        "under_target": true,
+        "stdout_length": 2674,
+        "stderr_length": 3435,
+        "error_summary": "  error: subprocess-exited-with-error\n  \n  \u00d7 Preparing editable metadata (pyproject.toml) did not run successfully.\n  \u2502 exit code: 1\n  \u2570\u2500> [29 lines of output]\n      Traceback (most recent call last):"
+      },
+      {
+        "run": 2,
+        "success": false,
+        "duration": 5.732851028442383,
+        "under_target": true,
+        "stdout_length": 2674,
+        "stderr_length": 3435,
+        "error_summary": "  error: subprocess-exited-with-error\n  \n  \u00d7 Preparing editable metadata (pyproject.toml) did not run successfully.\n  \u2502 exit code: 1\n  \u2570\u2500> [29 lines of output]\n      Traceback (most recent call last):"
+      },
+      {
+        "run": 3,
+        "success": false,
+        "duration": 5.725612163543701,
+        "under_target": true,
+        "stdout_length": 2674,
+        "stderr_length": 3435,
+        "error_summary": "  error: subprocess-exited-with-error\n  \n  \u00d7 Preparing editable metadata (pyproject.toml) did not run successfully.\n  \u2502 exit code: 1\n  \u2570\u2500> [29 lines of output]\n      Traceback (most recent call last):"
+      }
+    ],
+    "measurements": [],
+    "assessment": {
+      "target_claim": "<120s (2 minutes)",
+      "actual_mean": "0.0s",
+      "claim_validated": false,
+      "consistency": "HIGH",
+      "reliability": "0%",
+      "performance_grade": "F - Unreliable"
+    }
+  },
+  "existing_setup_results": {
+    "test_name": "Existing Setup Performance",
+    "statistics": {
+      "mean": 0.0,
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "std_dev": 0.0,
+      "successful_runs": 0,
+      "total_runs": 3,
+      "success_rate": 0.0,
+      "target_time": 120,
+      "mean_under_target": false,
+      "all_under_target": false
+    },
+    "detailed_runs": [
+      {
+        "run": 1,
+        "success": false,
+        "duration": 8.301612138748169,
+        "under_target": true,
+        "stdout_length": 41302,
+        "stderr_length": 9179,
+        "error_summary": " Container leanvibe_redis_fast  Running\n Container leanvibe_postgres_fast  Running\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transact"
+      },
+      {
+        "run": 2,
+        "success": false,
+        "duration": 7.664696216583252,
+        "under_target": true,
+        "stdout_length": 41302,
+        "stderr_length": 9179,
+        "error_summary": " Container leanvibe_redis_fast  Running\n Container leanvibe_postgres_fast  Running\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transact"
+      },
+      {
+        "run": 3,
+        "success": false,
+        "duration": 8.62308382987976,
+        "under_target": true,
+        "stdout_length": 41302,
+        "stderr_length": 9179,
+        "error_summary": " Container leanvibe_redis_fast  Running\n Container leanvibe_postgres_fast  Running\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transact"
+      }
+    ],
+    "measurements": [],
+    "assessment": {
+      "target_claim": "<120s (2 minutes)",
+      "actual_mean": "0.0s",
+      "claim_validated": false,
+      "consistency": "HIGH",
+      "reliability": "0%",
+      "performance_grade": "F - Unreliable"
+    }
+  },
+  "overall_assessment": {
+    "claim_validated": false,
+    "confidence_level": "MEDIUM",
+    "summary": "\u274c CLAIM NOT VALIDATED: Fresh setup averages 0.0s, existing setup averages 0.0s - both exceed 2-minute target",
+    "recommendations": [
+      "Improve fresh setup reliability - only 0% success rate",
+      "Improve existing setup reliability - only 0% success rate",
+      "Optimize fresh setup time - currently 0.0s, target <120s",
+      "Optimize existing setup time - currently 0.0s, target <120s"
+    ]
+  },
+  "statistical_evidence": {
+    "fresh_setup_mean": 0.0,
+    "existing_setup_mean": 0.0,
+    "combined_success_rate": 0.0,
+    "target_threshold": 120
+  }
+}
