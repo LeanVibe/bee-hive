@@ -63,11 +63,14 @@ def mock_workflow_engine():
     """Create a mock workflow engine for testing."""
     engine = AsyncMock()
     workflow_result = WorkflowResult(
-        workflow_id=uuid.uuid4(),
-        status=TaskExecutionState.COMPLETED,
-        result_data={"success": True},
+        workflow_id=str(uuid.uuid4()),
+        status=WorkflowStatus.COMPLETED,
         execution_time=1.5,
-        error_details=None
+        completed_tasks=1,
+        failed_tasks=0,
+        total_tasks=1,
+        task_results=[],
+        error=None
     )
     engine.execute_workflow.return_value = workflow_result
     return engine
