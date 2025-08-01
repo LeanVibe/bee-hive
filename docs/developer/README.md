@@ -18,14 +18,14 @@ code bee-hive  # Opens in VS Code
 **Fast Setup (5-12 minutes):**
 ```bash
 git clone https://github.com/LeanVibe/bee-hive.git && cd bee-hive
-./setup-fast.sh
+make setup
 echo "ANTHROPIC_API_KEY=your_key_here" >> .env.local
-./start-fast.sh
+make start
 ```
 
 ### 2. Validate Everything Works
 ```bash
-./health-check.sh                                    # System health
+make health                                          # System health
 curl http://localhost:8000/health                    # API status
 python scripts/demos/autonomous_development_demo.py  # See autonomous development
 ```
@@ -57,18 +57,17 @@ python scripts/demos/autonomous_development_demo.py  # See autonomous developmen
 ### Daily Development Commands
 ```bash
 # Start development environment
-./start-fast.sh
+make start
 
 # Run tests with coverage
-pytest -v --cov=app
+make test
 
 # Check code quality
-ruff check app/ tests/
-black app/ tests/
-mypy app/
+make lint
+make format
 
 # Health monitoring
-./health-check.sh
+make health
 ```
 
 ### Database Operations

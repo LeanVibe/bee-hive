@@ -386,10 +386,10 @@ alembic upgrade head
 After setup, validate your installation:
 ```bash
 # Quick setup validation
-./validate-setup.sh
+make test-smoke
 
 # Comprehensive health check
-./health-check.sh
+make health
 
 # Check system status
 make status
@@ -399,10 +399,10 @@ make status
 If you encounter issues:
 ```bash
 # Automated diagnostics and fixes
-./troubleshoot.sh
+make health
 
 # Reset and retry
-./setup.sh
+make clean && make setup
 ```
 
 ### Manual Verification
