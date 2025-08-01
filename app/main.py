@@ -34,6 +34,7 @@ from .core.error_handling_middleware import ErrorHandlingMiddleware, create_erro
 from .core.error_handling_config import initialize_error_handling_config, ErrorHandlingEnvironment, get_config_manager
 from .core.error_handling_integration import initialize_error_handling_integration
 from .api.v1.error_handling_health import router as error_handling_router
+from .api.v1.enhanced_coordination_api import router as enhanced_coordination_router
 
 
 # Configure structured logging
@@ -192,6 +193,7 @@ def create_app() -> FastAPI:
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
     app.include_router(error_handling_router, prefix="/api/v1")  # Error handling health endpoints
+    app.include_router(enhanced_coordination_router, prefix="/api/v1")  # Enhanced multi-agent coordination
     app.include_router(sleep_management_router)
     app.include_router(intelligent_scheduling_router)
     app.include_router(monitoring_router)
