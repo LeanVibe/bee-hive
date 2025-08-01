@@ -16,7 +16,8 @@ NC='\033[0m' # No Color
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HEALTH_LOG="${SCRIPT_DIR}/health-check.log"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+HEALTH_LOG="${PROJECT_ROOT}/health-check.log"
 PYTHON_VERSION="3.11"
 MIN_DOCKER_VERSION="20.10.0"
 
@@ -87,7 +88,7 @@ get_container_status() {
 
 # Function to test database connection
 test_database_connection() {
-    local env_file="${SCRIPT_DIR}/.env.local"
+    local env_file="${PROJECT_ROOT}/.env.local"
     
     if [[ ! -f "$env_file" ]]; then
         print_error "Environment file not found: $env_file"
@@ -200,7 +201,7 @@ check_project_structure() {
     # Check key directories
     local required_dirs=("app" "migrations" "tests" "docs" "frontend")
     for dir in "${required_dirs[@]}"; do
-        if [[ -d "${SCRIPT_DIR}/$dir" ]]; then
+        if [[ -d "${PROJECT_ROOT}/$dir" ]]; then
             print_success "Directory exists: $dir"
         else
             print_error "Missing directory: $dir"
@@ -210,7 +211,7 @@ check_project_structure() {
     # Check key files
     local required_files=("pyproject.toml" "docker-compose.yml" "alembic.ini" "app/main.py")
     for file in "${required_files[@]}"; do
-        if [[ -f "${SCRIPT_DIR}/$file" ]]; then
+        if [[ -f "${PROJECT_ROOT}/$file" ]]; then
             print_success "File exists: $file"
         else
             print_error "Missing file: $file"
@@ -221,7 +222,7 @@ check_project_structure() {
 check_environment_config() {
     print_check "Environment Configuration"
     
-    local env_file="${SCRIPT_DIR}/.env.local"
+    local env_file="${PROJECT_ROOT}/.env.local"
     
     if [[ -f "$env_file" ]]; then
         print_success "Environment file exists: .env.local"
@@ -251,7 +252,7 @@ check_environment_config() {
 check_virtual_environment() {
     print_check "Python Virtual Environment"
     
-    local venv_path="${SCRIPT_DIR}/venv"
+    local venv_path="${PROJECT_ROOT}/venv"
     
     if [[ -d "$venv_path" ]]; then
         print_success "Virtual environment exists"
@@ -422,8 +423,8 @@ check_ports() {
 check_disk_space() {
     print_check "Disk Space"
     
-    local available_space=$(df -h "$SCRIPT_DIR" | awk 'NR==2 {print $4}')
-    local available_bytes=$(df "$SCRIPT_DIR" | awk 'NR==2 {print $4}')
+    local available_space=$(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $4}')
+    local available_bytes=$(df "$PROJECT_ROOT" | awk 'NR==2 {print $4}')
     
     print_success "Available disk space: $available_space"
     
@@ -516,8 +517,8 @@ main() {
     print_status "$PURPLE" "========================================"
     print_status "$CYAN" "Checking system health and dependencies..."
     
-    # Change to script directory
-    cd "$SCRIPT_DIR"
+    # Change to project root directory
+    cd "$PROJECT_ROOT"
     
     # Run all health checks
     check_system_requirements
