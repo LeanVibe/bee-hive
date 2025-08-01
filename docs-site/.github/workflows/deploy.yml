@@ -1,0 +1,164 @@
+name: Deploy VitePress Documentation
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs-site/**']
+  pull_request:
+    branches: [main]
+    paths: ['docs-site/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # Build documentation
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: docs-site
+
+      - name: Lint code
+        run: npm run lint
+        working-directory: docs-site
+
+      - name: Check links
+        run: npm run check-links
+        working-directory: docs-site
+        continue-on-error: true
+
+      - name: Build documentation
+        run: npm run build
+        working-directory: docs-site
+        env:
+          NODE_ENV: production
+          VITE_BASE_URL: ${{ github.repository == 'LeanVibe/bee-hive' && '/bee-hive/' || '/' }}
+
+      - name: Generate search index
+        run: npm run build:search
+        working-directory: docs-site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site/.vitepress/dist
+
+  # Deploy to GitHub Pages
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Lighthouse CI for performance monitoring
+  lighthouse:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        working-directory: docs-site
+
+  # Deploy to custom domain (if configured)
+  deploy-custom:
+    if: github.ref == 'refs/heads/main' && vars.CUSTOM_DOMAIN
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to Custom Domain
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs-site/.vitepress/dist
+          cname: ${{ vars.CUSTOM_DOMAIN }}
+
+  # Update search index on external service
+  update-search:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Update Algolia Search Index
+        if: vars.ALGOLIA_APP_ID
+        run: |
+          curl -X POST \
+            -H "X-Algolia-Application-Id: ${{ vars.ALGOLIA_APP_ID }}" \
+            -H "X-Algolia-API-Key: ${{ secrets.ALGOLIA_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"url": "${{ steps.deployment.outputs.page_url }}"}' \
+            "https://crawler.algolia.com/api/1/crawlers/${{ vars.ALGOLIA_CRAWLER_ID }}/reindex"
+
+  # Notify team on deployment
+  notify:
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: [deploy, deploy-custom]
+    steps:
+      - name: Notify Discord
+        if: vars.DISCORD_WEBHOOK_URL
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "content": "📚 Documentation deployed successfully!",
+              "embeds": [{
+                "title": "LeanVibe Agent Hive Docs",
+                "url": "${{ steps.deployment.outputs.page_url || vars.CUSTOM_DOMAIN }}",
+                "color": 6366241,
+                "fields": [
+                  {"name": "Status", "value": "${{ needs.deploy.result }}", "inline": true},
+                  {"name": "Commit", "value": "`${{ github.sha }}`", "inline": true},
+                  {"name": "Author", "value": "${{ github.actor }}", "inline": true}
+                ]
+              }]
+            }' \
+            ${{ vars.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Team
+        if: failure()
+        run: |
+          echo "Documentation deployment failed. Check the workflow logs."
+          # Add additional notification logic here (Slack, email, etc.)
