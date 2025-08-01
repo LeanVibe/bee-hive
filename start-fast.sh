@@ -1,18 +1,13 @@
 #!/bin/bash
+#
+# DEPRECATED: This script will be removed in a future version.
+# Please use 'make start' instead.
+#
+echo "⚠️  WARNING: The ./start-fast.sh entry point is deprecated and will be removed."
+echo "   Please use 'make start' instead for the professional interface."
+echo "   Run 'make help' to see all available commands."
+echo ""
+sleep 2 # Give the user a moment to see the warning
 
-# ⚠️  MIGRATION WRAPPER - DEPRECATED SCRIPT NAME
-# 
-# 🚀 NEW COMMAND: make start
-# 📖 Migration guide: docs/MIGRATION.md
-
-set -euo pipefail
-
-echo "⚠️  MIGRATION NOTICE: 'start-fast.sh' is deprecated"
-echo "🚀 NEW: Use 'make start' instead"
-echo "⏳ Auto-redirecting in 2 seconds..."
-sleep 2
-
-# Log usage
-echo "$(date): Legacy start-fast.sh accessed, redirected to 'make start'" >> .migration_usage.log
-
-exec make start
+# Pass all arguments to the make command
+exec make start "$@"

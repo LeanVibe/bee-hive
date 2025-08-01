@@ -1,18 +1,13 @@
 #!/bin/bash
+#
+# DEPRECATED: This script will be removed in a future version.
+# Please use 'make setup' instead.
+#
+echo "⚠️  WARNING: The ./setup-fast.sh entry point is deprecated and will be removed."
+echo "   Please use 'make setup' instead for the professional interface."
+echo "   Run 'make help' to see all available commands."
+echo ""
+sleep 2 # Give the user a moment to see the warning
 
-# ⚠️  MIGRATION WRAPPER - DEPRECATED SCRIPT NAME
-# 
-# 🚀 NEW COMMAND: make setup
-# 📖 Migration guide: docs/MIGRATION.md
-
-set -euo pipefail
-
-echo "⚠️  MIGRATION NOTICE: 'setup-fast.sh' is deprecated"
-echo "🚀 NEW: Use 'make setup' instead"
-echo "⏳ Auto-redirecting in 3 seconds..."
-sleep 3
-
-# Log usage
-echo "$(date): Legacy setup-fast.sh accessed, redirected to 'make setup'" >> .migration_usage.log
-
-exec make setup
+# Pass all arguments to the make command
+exec make setup "$@"

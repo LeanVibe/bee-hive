@@ -226,7 +226,7 @@ redis-shell: ## Open Redis shell
 # Utilities
 health: ## Run comprehensive health check
 	@echo "$(BLUE)🏥 Running health check...$(NC)"
-	@./health-check.sh
+	@./scripts/health.sh
 
 logs: ## Show logs from all services
 	@$(COMPOSE) logs -f
