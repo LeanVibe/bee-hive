@@ -20,25 +20,31 @@ PYTEST := pytest
 VENV_DIR := venv
 COMPOSE := docker compose
 
-# Help target
+# Self-documenting help target (robust implementation)
 help: ## Show this help message
 	@echo "$(BLUE)LeanVibe Agent Hive 2.0 - Development Commands$(NC)"
 	@echo "==============================================="
 	@echo ""
 	@echo "$(YELLOW)Setup & Environment:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /Setup|Environment|setup|install/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'setup|install|env' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(YELLOW)Development:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /Development|dev|start|stop|restart/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'dev|start|stop|restart|sandbox' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(YELLOW)Testing & Quality:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /test|lint|format|check|quality/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'test|lint|format|check|security|benchmark' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(YELLOW)Database & Services:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && /database|db|redis|migrate|service/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'db|redis|migrate|monitor' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@echo ""
-	@echo "$(YELLOW)Utilities:$(NC)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / && !/Setup|Environment|Development|test|lint|format|check|quality|database|db|redis|migrate|service|setup|install|dev|start|stop|restart/ {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Utilities & Tools:$(NC)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -vE 'setup|install|env|dev|start|stop|restart|sandbox|test|lint|format|check|security|benchmark|db|redis|migrate|monitor' | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BLUE)Quick Start:$(NC)"
+	@echo "  $(GREEN)make setup$(NC)           # One-command setup"
+	@echo "  $(GREEN)make start$(NC)           # Start all services" 
+	@echo "  $(GREEN)make test$(NC)            # Run comprehensive tests"
+	@echo "  $(GREEN)make health$(NC)          # Check system health"
 
 # Setup & Environment
 setup: ## Run full system setup (one-command setup)
@@ -157,8 +163,8 @@ test-fast: ## Run tests without slow/integration tests
 	@echo "$(BLUE)⚡ Running fast tests...$(NC)"
 	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m "not slow and not integration"
 
-test-integration: ## Run integration tests only
-	@echo "$(BLUE)🔗 Running integration tests...$(NC)"
+test-integration-legacy: ## Run integration tests only (legacy)
+	@echo "$(BLUE)🔗 Running integration tests (legacy)...$(NC)"
 	@. $(VENV_DIR)/bin/activate && $(PYTEST) -v -m integration
 
 test-watch: ## Run tests in watch mode
