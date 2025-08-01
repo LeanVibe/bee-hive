@@ -8,9 +8,10 @@ global:
     cluster: 'leanvibe-agent-hive'
     environment: 'development'
 
-# Rules for alerting
+# Rules for alerting and recording
 rule_files:
   - "alertmanager/rules.yml"
+  - "recording_rules.yml"
 
 # Alertmanager configuration
 alerting:
@@ -89,14 +90,6 @@ scrape_configs:
     metrics_path: /api/v1/metrics/performance
     scrape_timeout: 10s
 
-# Storage configuration
-storage:
-  tsdb:
-    path: /prometheus
-    retention.time: 30d
-    retention.size: 10GB
-    wal-compression: true
-
 # Remote write configuration (for production)
 # remote_write:
 #   - url: "https://your-remote-prometheus/api/v1/write"
@@ -105,37 +98,3 @@ storage:
 #       max_shards: 200
 #       capacity: 2500
 
-# Recording rules for performance optimization
-recording_rules:
-  - name: leanvibe.agent.performance
-    rules:
-      - record: leanvibe:agent_response_time_95th
-        expr: histogram_quantile(0.95, rate(leanvibe_agent_request_duration_seconds_bucket[5m]))
-      
-      - record: leanvibe:agent_error_rate
-        expr: rate(leanvibe_agent_errors_total[5m]) / rate(leanvibe_agent_requests_total[5m])
-      
-      - record: leanvibe:agent_throughput
-        expr: rate(leanvibe_agent_requests_total[1m])
-
-  - name: leanvibe.system.performance
-    rules:
-      - record: leanvibe:cpu_usage_percent
-        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-      
-      - record: leanvibe:memory_usage_percent
-        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
-      
-      - record: leanvibe:disk_usage_percent
-        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100
-
-  - name: leanvibe.database.performance
-    rules:
-      - record: leanvibe:db_connections_active
-        expr: pg_stat_database_numbackends
-      
-      - record: leanvibe:db_query_time_95th
-        expr: histogram_quantile(0.95, rate(pg_stat_statements_mean_time_bucket[5m]))
-      
-      - record: leanvibe:redis_memory_usage_percent
-        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100

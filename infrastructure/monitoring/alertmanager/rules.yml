@@ -73,7 +73,7 @@ groups:
           team: engineering
         annotations:
           summary: "High HTTP error rate detected"
-          description: "HTTP error rate is {{ $value | humanizePercentage }} which is above the 5% threshold."
+          description: "HTTP error rate is {{ $value }} which is above the 5% threshold."
           runbook_url: "https://docs.leanvibe.com/runbooks/high-error-rate"
 
       - alert: CriticalErrorRate
@@ -85,7 +85,7 @@ groups:
           team: engineering
         annotations:
           summary: "Critical HTTP error rate detected"
-          description: "HTTP error rate is {{ $value | humanizePercentage }} which is above the 10% critical threshold."
+          description: "HTTP error rate is {{ $value }} which is above the 10% critical threshold."
 
       - alert: HighResponseTime
         expr: histogram_quantile(0.95, rate(leanvibe_http_request_duration_seconds_bucket[5m])) > 2
@@ -145,7 +145,7 @@ groups:
           team: infrastructure
         annotations:
           summary: "High Redis memory usage"
-          description: "Redis memory usage is {{ $value | humanizeBytes }} which is above the 1GB threshold."
+          description: "Redis memory usage is {{ $value }} bytes which is above the 1GB threshold."
           runbook_url: "https://docs.leanvibe.com/runbooks/redis-memory-high"
 
       - alert: RedisConnectionsHigh
@@ -181,7 +181,7 @@ groups:
           team: engineering
         annotations:
           summary: "Low tool execution success rate"
-          description: "Tool success rate is {{ $value | humanizePercentage }} which is below the 80% threshold."
+          description: "Tool success rate is {{ $value }} which is below the 80% threshold."
           runbook_url: "https://docs.leanvibe.com/runbooks/low-tool-success-rate"
 
       - alert: CriticalToolSuccessRate
@@ -193,7 +193,7 @@ groups:
           team: engineering
         annotations:
           summary: "Critical tool execution success rate"
-          description: "Tool success rate is {{ $value | humanizePercentage }} which is below the 50% critical threshold."
+          description: "Tool success rate is {{ $value }} which is below the 50% critical threshold."
 
       - alert: HighAgentExecutionTime
         expr: histogram_quantile(0.95, rate(leanvibe_agent_execution_duration_seconds_bucket[5m])) > 30
@@ -278,7 +278,7 @@ groups:
           team: product
         annotations:
           summary: "Long running sessions detected"
-          description: "95th percentile session duration is {{ $value | humanizeDuration }} which is above 1 hour."
+          description: "95th percentile session duration is {{ $value }} seconds which is above 1 hour."
           runbook_url: "https://docs.leanvibe.com/runbooks/long-running-sessions"
 
       - alert: HighTaskFailureRate
@@ -290,7 +290,7 @@ groups:
           team: engineering
         annotations:
           summary: "High task failure rate"
-          description: "Task failure rate is {{ $value | humanizePercentage }} which is above the 10% threshold."
+          description: "Task failure rate is {{ $value }} which is above the 10% threshold."
           runbook_url: "https://docs.leanvibe.com/runbooks/high-task-failure-rate"
 
       # === SECURITY ALERTS ===

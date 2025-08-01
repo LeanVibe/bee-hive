@@ -1,0 +1,15 @@
+# Grafana dashboard provisioning configuration for LeanVibe Agent Hive 2.0
+# Automatically loads all JSON dashboard files from the dashboards directory
+
+apiVersion: 1
+
+providers:
+  - name: 'leanvibe-dashboards'
+    orgId: 1
+    folder: 'LeanVibe Agent Hive'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
