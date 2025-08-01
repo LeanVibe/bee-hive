@@ -22,7 +22,16 @@ from enum import Enum
 import structlog
 from anthropic import AsyncAnthropic
 
-from .config import settings
+try:
+    from .config import settings
+except Exception:
+    # Fallback settings for when config fails to load
+    class FallbackSettings:
+        SANDBOX_MODE = True
+        ANTHROPIC_API_KEY = None
+        OPENAI_API_KEY = None
+        GITHUB_TOKEN = None
+    settings = FallbackSettings()
 
 # Import sandbox components
 try:
@@ -114,28 +123,67 @@ class AutonomousDevelopmentEngine:
     """
     
     def __init__(self, anthropic_api_key: Optional[str] = None):
-        # Check if sandbox mode is enabled
-        self.sandbox_mode = SANDBOX_AVAILABLE and (
-            settings.SANDBOX_MODE or 
-            is_sandbox_mode() or 
-            not (anthropic_api_key or settings.ANTHROPIC_API_KEY)
-        )
+        # Detect if we should use sandbox mode
+        self.sandbox_mode = self._should_use_sandbox_mode(anthropic_api_key)
         
         if self.sandbox_mode:
             # Use mock client for sandbox mode
-            self.anthropic_client = create_mock_anthropic_client(anthropic_api_key)
-            logger.info("Sandbox mode enabled - using mock Anthropic client")
+            if SANDBOX_AVAILABLE:
+                self.anthropic_client = create_mock_anthropic_client(anthropic_api_key)
+                logger.info("Sandbox mode enabled - using mock Anthropic client")
+            else:
+                raise ImportError("Sandbox mode requested but sandbox components not available")
         else:
             # Use real client for production mode
-            self.anthropic_client = AsyncAnthropic(
-                api_key=anthropic_api_key or settings.ANTHROPIC_API_KEY
-            )
-            logger.info("Production mode enabled - using real Anthropic client")
+            try:
+                self.anthropic_client = AsyncAnthropic(
+                    api_key=anthropic_api_key or settings.ANTHROPIC_API_KEY
+                )
+                logger.info("Production mode enabled - using real Anthropic client")
+            except Exception as e:
+                logger.warning(f"Failed to initialize real Anthropic client: {e}")
+                if SANDBOX_AVAILABLE:
+                    logger.info("Falling back to sandbox mode")
+                    self.sandbox_mode = True
+                    self.anthropic_client = create_mock_anthropic_client(anthropic_api_key)
+                else:
+                    raise
         
         self.workspace_dir = Path(tempfile.mkdtemp(prefix="autonomous_dev_"))
         logger.info("Autonomous Development Engine initialized", 
                    workspace_dir=str(self.workspace_dir),
                    sandbox_mode=self.sandbox_mode)
+    
+    def _should_use_sandbox_mode(self, anthropic_api_key: Optional[str] = None) -> bool:
+        """Determine if sandbox mode should be used based on available API keys and settings."""
+        
+        # Check if sandbox mode is explicitly enabled
+        try:
+            if hasattr(settings, 'SANDBOX_MODE') and settings.SANDBOX_MODE:
+                logger.info("Sandbox mode explicitly enabled via settings")
+                return True
+        except Exception:
+            pass
+        
+        # Check if sandbox mode is detected automatically
+        try:
+            if SANDBOX_AVAILABLE and is_sandbox_mode():
+                logger.info("Sandbox mode auto-detected")
+                return True
+        except Exception:
+            pass
+        
+        # Check API key validity
+        effective_key = anthropic_api_key or getattr(settings, 'ANTHROPIC_API_KEY', None)
+        
+        if not _is_real_api_key(effective_key):
+            logger.info("No valid Anthropic API key detected, enabling sandbox mode", 
+                       key_provided=bool(effective_key),
+                       key_appears_real=_is_real_api_key(effective_key))
+            return True
+        
+        logger.info("Valid API key detected, using production mode")
+        return False
     
     async def develop_autonomously(self, task: DevelopmentTask) -> DevelopmentResult:
         """
@@ -567,6 +615,31 @@ Make it professional and user-friendly.
             logger.info("Workspace cleaned up", workspace_dir=str(self.workspace_dir))
         except Exception as e:
             logger.error("Failed to clean up workspace", error=str(e))
+
+
+# Helper functions
+def _is_real_api_key(api_key: Optional[str]) -> bool:
+    """Check if an API key appears to be real (not a placeholder or test key)."""
+    if not api_key:
+        return False
+    
+    # Check for common placeholder patterns
+    placeholder_patterns = [
+        "your_", "test_", "demo_", "sandbox_", "mock_", "fake_", "placeholder_",
+        "example_", "sk-test", "sk-demo", "key_here", "api_key_here"
+    ]
+    
+    api_key_lower = api_key.lower()
+    for pattern in placeholder_patterns:
+        if pattern in api_key_lower:
+            return False
+    
+    # Real Anthropic keys typically start with specific patterns
+    if api_key.startswith(("sk-ant-", "sk-")) and len(api_key) > 20:
+        return True
+    
+    # If it's not obviously fake and has reasonable length, assume it could be real
+    return len(api_key) > 10
 
 
 # Factory function for easy instantiation

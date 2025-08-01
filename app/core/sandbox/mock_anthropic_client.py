@@ -36,9 +36,16 @@ class MockMessage:
     
 
 @dataclass 
+class MockContentBlock:
+    """Mock content block to match Anthropic API structure."""
+    type: str
+    text: str
+
+
+@dataclass 
 class MockResponse:
     """Mock response structure matching Anthropic API."""
-    content: List[Dict[str, Any]]
+    content: List[MockContentBlock]
     model: str
     role: str
     stop_reason: str
@@ -79,7 +86,7 @@ class MockAnthropicClient:
     def _load_demo_scenarios(self) -> Dict[TaskType, Dict[str, Any]]:
         """Load pre-defined demo scenarios with realistic responses."""
         return {
-            TaskType.SIMPLE_FUNCTION: {
+            "SIMPLE_FUNCTION": {
                 "understanding": {
                     "analysis": "I need to create a Fibonacci number calculation function with input validation and error handling.",
                     "requirements": [
@@ -164,7 +171,7 @@ if __name__ == "__main__":
                     "explanation": "Implemented iterative Fibonacci function with comprehensive input validation and error handling."
                 }
             },
-            TaskType.MODERATE_FEATURE: {
+            "MODERATE_FEATURE": {
                 "understanding": {
                     "analysis": "I need to create a temperature converter supporting Celsius, Fahrenheit, and Kelvin with validation.",
                     "requirements": [
@@ -294,46 +301,299 @@ if __name__ == "__main__":
 ''',
                     "explanation": "Implemented comprehensive temperature converter with validation and CLI interface."
                 }
+            },
+            "CALCULATOR": {
+                "understanding": {
+                    "analysis": "I need to create a calculator function that performs basic arithmetic operations with input validation.",
+                    "requirements": [
+                        "Support basic operations: add, subtract, multiply, divide",
+                        "Include comprehensive input validation", 
+                        "Handle division by zero",
+                        "Provide user-friendly interface",
+                        "Include comprehensive error handling"
+                    ],
+                    "complexity_assessment": "Simple - Basic arithmetic operations with validation"
+                },
+                "planning": {
+                    "approach": "I'll implement a Calculator class with methods for each operation and validation.",
+                    "files": ["calculator.py", "test_calculator.py", "README.md"],
+                    "architecture": "Object-oriented design with operation methods and validation"
+                },
+                "implementation": {
+                    "code": '''class Calculator:
+    """Simple calculator with basic arithmetic operations."""
+    
+    def add(self, a, b):
+        """Add two numbers."""
+        self._validate_numbers(a, b)
+        return a + b
+    
+    def subtract(self, a, b):
+        """Subtract b from a."""
+        self._validate_numbers(a, b)
+        return a - b
+    
+    def multiply(self, a, b):
+        """Multiply two numbers."""
+        self._validate_numbers(a, b)
+        return a * b
+    
+    def divide(self, a, b):
+        """Divide a by b."""
+        self._validate_numbers(a, b)
+        if b == 0:
+            raise ZeroDivisionError("Cannot divide by zero")
+        return a / b
+    
+    def _validate_numbers(self, *args):
+        """Validate that all arguments are numbers."""
+        for arg in args:
+            if not isinstance(arg, (int, float)):
+                raise TypeError(f"Expected number, got {type(arg).__name__}")
+
+
+def main():
+    """Simple calculator CLI."""
+    calc = Calculator()
+    print("Simple Calculator - Enter 'quit' to exit")
+    
+    while True:
+        try:
+            expression = input("Enter calculation (e.g., 5 + 3): ").strip()
+            if expression.lower() == 'quit':
+                break
+            
+            # Parse simple expressions
+            parts = expression.split()
+            if len(parts) != 3:
+                print("Format: number operator number")
+                continue
+            
+            a, op, b = float(parts[0]), parts[1], float(parts[2])
+            
+            if op == '+':
+                result = calc.add(a, b)
+            elif op == '-':
+                result = calc.subtract(a, b)
+            elif op == '*':
+                result = calc.multiply(a, b)
+            elif op == '/':
+                result = calc.divide(a, b)
+            else:
+                print("Supported operators: +, -, *, /")
+                continue
+            
+            print(f"Result: {result}")
+            
+        except (ValueError, TypeError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            break
+    
+    print("\\nGoodbye!")
+
+
+if __name__ == "__main__":
+    main()
+''',
+                    "explanation": "Implemented Calculator class with basic arithmetic operations, validation, and CLI interface."
+                },
+                "testing": {
+                    "test_code": '''import unittest
+from calculator import Calculator
+
+
+class TestCalculator(unittest.TestCase):
+    """Test cases for Calculator class."""
+    
+    def setUp(self):
+        """Set up test calculator instance."""
+        self.calc = Calculator()
+    
+    def test_addition(self):
+        """Test addition operation."""
+        self.assertEqual(self.calc.add(5, 3), 8)
+        self.assertEqual(self.calc.add(-2, 7), 5)
+        self.assertEqual(self.calc.add(0, 0), 0)
+    
+    def test_subtraction(self):
+        """Test subtraction operation."""
+        self.assertEqual(self.calc.subtract(10, 3), 7)
+        self.assertEqual(self.calc.subtract(-5, -2), -3)
+        self.assertEqual(self.calc.subtract(0, 5), -5)
+    
+    def test_multiplication(self):
+        """Test multiplication operation."""
+        self.assertEqual(self.calc.multiply(4, 3), 12)
+        self.assertEqual(self.calc.multiply(-2, 5), -10)
+        self.assertEqual(self.calc.multiply(0, 100), 0)
+    
+    def test_division(self):
+        """Test division operation."""
+        self.assertEqual(self.calc.divide(15, 3), 5)
+        self.assertEqual(self.calc.divide(-10, 2), -5)
+        self.assertAlmostEqual(self.calc.divide(7, 3), 2.333333, places=5)
+    
+    def test_division_by_zero(self):
+        """Test division by zero error."""
+        with self.assertRaises(ZeroDivisionError):
+            self.calc.divide(5, 0)
+    
+    def test_input_validation(self):
+        """Test input validation for all operations."""
+        with self.assertRaises(TypeError):
+            self.calc.add("5", 3)
+        
+        with self.assertRaises(TypeError):
+            self.calc.subtract(5, None)
+        
+        with self.assertRaises(TypeError):
+            self.calc.multiply([], 3)
+        
+        with self.assertRaises(TypeError):
+            self.calc.divide(5, {})
+
+
+if __name__ == "__main__":
+    unittest.main()
+''',
+                    "explanation": "Created comprehensive test suite covering all calculator operations, edge cases, and error conditions."
+                },
+                "documentation": {
+                    "readme_content": '''# Simple Calculator
+
+A Python calculator implementation with basic arithmetic operations and comprehensive error handling.
+
+## Features
+
+- **Basic Operations**: Addition, subtraction, multiplication, division
+- **Input Validation**: Type checking for all inputs
+- **Error Handling**: Proper handling of division by zero and invalid inputs
+- **CLI Interface**: Command-line interface for interactive calculations
+- **Comprehensive Testing**: Full test coverage with edge cases
+
+## Installation
+
+No additional dependencies required. Works with Python 3.6+.
+
+## Usage
+
+### As a Module
+
+```python
+from calculator import Calculator
+
+calc = Calculator()
+
+# Basic operations
+result = calc.add(5, 3)        # Returns 8
+result = calc.subtract(10, 4)  # Returns 6
+result = calc.multiply(3, 7)   # Returns 21
+result = calc.divide(15, 3)    # Returns 5.0
+```
+
+### Command Line Interface
+
+```bash
+python calculator.py
+```
+
+Then enter calculations in the format: `number operator number`
+
+Examples:
+- `5 + 3`
+- `10 - 4`
+- `6 * 7`
+- `20 / 4`
+
+Type `quit` to exit.
+
+## API Reference
+
+### Calculator Class
+
+#### Methods
+
+- `add(a, b)`: Add two numbers
+- `subtract(a, b)`: Subtract b from a
+- `multiply(a, b)`: Multiply two numbers
+- `divide(a, b)`: Divide a by b
+
+#### Error Handling
+
+- `TypeError`: Raised when non-numeric inputs are provided
+- `ZeroDivisionError`: Raised when attempting to divide by zero
+
+## Testing
+
+Run the test suite:
+
+```bash
+python -m unittest test_calculator.py
+```
+
+## License
+
+MIT License - feel free to use and modify as needed.
+''',
+                    "explanation": "Created comprehensive documentation with usage examples, API reference, and installation instructions."
+                }
             }
         }
     
-    def _detect_task_type(self, prompt: str) -> TaskType:
+    def _detect_task_type(self, prompt: str):
         """Detect task type from prompt content for context-aware responses."""
         prompt_lower = prompt.lower()
         
-        if any(word in prompt_lower for word in ["fibonacci", "calculate", "simple function"]):
-            return TaskType.SIMPLE_FUNCTION
+        # Check for specific task types with better patterns
+        if any(word in prompt_lower for word in ["fibonacci", "simple function"]):
+            return "SIMPLE_FUNCTION"
+        elif any(word in prompt_lower for word in ["calculator", "calculate", "math", "arithmetic"]):
+            return "CALCULATOR"  # Special calculator scenario
         elif any(word in prompt_lower for word in ["temperature", "converter", "multiple", "feature"]):
-            return TaskType.MODERATE_FEATURE
+            return "MODERATE_FEATURE"
         elif any(word in prompt_lower for word in ["application", "complex", "microservice"]):
-            return TaskType.COMPLEX_APPLICATION
+            return "COMPLEX_APPLICATION"
         elif any(word in prompt_lower for word in ["bug", "fix", "error", "debug"]):
-            return TaskType.BUG_FIX
+            return "BUG_FIX"
         elif any(word in prompt_lower for word in ["review", "analyze", "improve"]):
-            return TaskType.CODE_REVIEW
+            return "CODE_REVIEW"
         elif any(word in prompt_lower for word in ["document", "readme", "docs"]):
-            return TaskType.DOCUMENTATION
+            return "DOCUMENTATION"
         elif any(word in prompt_lower for word in ["test", "pytest", "unittest"]):
-            return TaskType.TESTING
+            return "TESTING"
         else:
-            return TaskType.SIMPLE_FUNCTION  # Default
+            return "SIMPLE_FUNCTION"  # Default
     
     def _detect_development_phase(self, prompt: str) -> str:
         """Detect current development phase from prompt."""
         prompt_lower = prompt.lower()
         
-        if any(word in prompt_lower for word in ["understand", "analyze", "requirements"]):
+        # More specific phase detection patterns
+        if any(word in prompt_lower for word in ["analyze this development task", "provide a json response", "structured understanding"]):
             return "understanding"
-        elif any(word in prompt_lower for word in ["plan", "design", "architecture"]):
+        elif any(word in prompt_lower for word in ["create an implementation plan", "implementation plan", "provide a json response with"]):
             return "planning" 
-        elif any(word in prompt_lower for word in ["implement", "code", "develop"]):
+        elif any(word in prompt_lower for word in ["implement the solution", "generate complete", "runnable code"]):
             return "implementation"
-        elif any(word in prompt_lower for word in ["test", "verify", "validate"]):
+        elif any(word in prompt_lower for word in ["create comprehensive unit tests", "create comprehensive tests"]):
             return "testing"
-        elif any(word in prompt_lower for word in ["document", "readme"]):
+        elif any(word in prompt_lower for word in ["create comprehensive documentation", "generate a readme"]):
             return "documentation"
         else:
-            return "understanding"  # Default
+            # Fallback: try to infer from context
+            if "json" in prompt_lower and "understanding" in prompt_lower:
+                return "understanding"
+            elif "json" in prompt_lower and "plan" in prompt_lower:
+                return "planning"
+            elif "code" in prompt_lower or "python" in prompt_lower:
+                return "implementation"
+            elif "test" in prompt_lower:
+                return "testing" 
+            elif "readme" in prompt_lower or "documentation" in prompt_lower:
+                return "documentation"
+            else:
+                return "understanding"  # Default
     
     async def _simulate_processing_delay(self, base_delay: float = 2.0):
         """Simulate realistic API processing time."""
@@ -371,10 +631,10 @@ if __name__ == "__main__":
         
         # Create mock response matching Anthropic API structure
         response = MockResponse(
-            content=[{
-                "type": "text",
-                "text": response_content
-            }],
+            content=[MockContentBlock(
+                type="text",
+                text=response_content
+            )],
             model=model,
             role="assistant",
             stop_reason="end_turn",
@@ -385,17 +645,20 @@ if __name__ == "__main__":
         )
         
         logger.info("Generated mock response", 
-                   task_type=task_type.value, 
+                   task_type=task_type, 
                    phase=phase,
                    response_length=len(response_content))
         
         return response
     
-    def _generate_response(self, task_type: TaskType, phase: str, prompt: str) -> str:
+    def _generate_response(self, task_type, phase: str, prompt: str) -> str:
         """Generate contextually appropriate response."""
         
-        if task_type in self.scenarios and phase in self.scenarios[task_type]:
-            scenario_data = self.scenarios[task_type][phase]
+        # Handle string keys
+        scenario_key = task_type
+        
+        if scenario_key in self.scenarios and phase in self.scenarios[scenario_key]:
+            scenario_data = self.scenarios[scenario_key][phase]
             
             if phase == "understanding":
                 return f"""I'll analyze this development task step by step:
@@ -452,6 +715,66 @@ Ready to proceed with implementation. Shall I start coding?"""
 • Example usage and CLI interface
 
 The implementation is complete and ready for testing. Shall I proceed to create comprehensive tests?"""
+
+            elif phase == "testing":
+                if "test_code" in scenario_data:
+                    return f"""Here are the comprehensive unit tests for the implementation:
+
+**Test Strategy:**
+{scenario_data['explanation']}
+
+**Generated Test Code:**
+
+```python
+{scenario_data['test_code']}
+```
+
+**Test Coverage:**
+• All public methods tested
+• Edge cases and error conditions covered
+• Input validation thoroughly tested
+• Comprehensive assertions for expected behavior
+
+The test suite is complete and ready to validate the implementation."""
+                else:
+                    return """I've created comprehensive unit tests that cover:
+
+• All main functionality
+• Edge cases and error conditions
+• Input validation
+• Expected behavior verification
+
+The tests are ready to run and validate the implementation."""
+
+            elif phase == "documentation":
+                if "readme_content" in scenario_data:
+                    return f"""Here's the comprehensive documentation for the project:
+
+**Documentation Strategy:**
+{scenario_data['explanation']}
+
+**Generated README.md:**
+
+{scenario_data['readme_content']}
+
+**Documentation Features:**
+• Clear installation and usage instructions
+• API reference with examples
+• Error handling documentation
+• Testing instructions
+• Professional formatting
+
+The documentation is complete and ready for users."""
+                else:
+                    return """I've created comprehensive documentation that includes:
+
+• Project overview and features
+• Installation instructions
+• Usage examples and API reference
+• Error handling documentation
+• Testing instructions
+
+The documentation is complete and user-friendly."""
 
         # Fallback responses for unmatched scenarios
         return self._generate_fallback_response(phase, prompt)
@@ -521,6 +844,78 @@ def process_input(param):
 ```
 
 The implementation is complete and ready for testing. Shall I create comprehensive tests?"""
+
+        elif phase == "testing":
+            return """Here are comprehensive unit tests for the implementation:
+
+**Test Strategy:**
+• Test all public methods and functionality
+• Cover edge cases and error conditions  
+• Validate input handling and error messages
+• Ensure comprehensive coverage
+
+**Generated Tests:**
+```python
+import unittest
+
+class TestImplementation(unittest.TestCase):
+    def setUp(self):
+        # Set up test fixtures
+        pass
+    
+    def test_main_functionality(self):
+        # Test core functionality
+        pass
+    
+    def test_edge_cases(self):
+        # Test edge cases
+        pass
+    
+    def test_error_handling(self):
+        # Test error conditions
+        pass
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+The test suite is ready to validate the implementation."""
+
+        elif phase == "documentation":
+            return """Here's comprehensive documentation for the project:
+
+**Documentation Overview:**
+I've created user-friendly documentation with examples and clear instructions.
+
+**README.md Content:**
+
+# Project Documentation
+
+## Overview
+This project provides the requested functionality with proper error handling and validation.
+
+## Installation
+No additional dependencies required. Works with Python 3.6+.
+
+## Usage
+```python
+# Example usage
+from main_module import main_function
+result = main_function(input_data)
+```
+
+## API Reference
+- Detailed method descriptions
+- Parameter specifications
+- Return value documentation
+- Error handling information
+
+## Testing
+```bash
+python -m unittest test_module.py
+```
+
+The documentation is complete and ready for users."""
 
         else:
             return f"""I'm ready to help with the {phase} phase of development. 

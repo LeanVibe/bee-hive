@@ -100,21 +100,32 @@ class AutonomousDevelopmentDemo:
         self.print_section("ENGINE SETUP", "Initializing Autonomous Development Engine...")
         
         try:
-            # Check for Anthropic API key
+            # Try to get API key, but allow for sandbox mode
             api_key = os.getenv('ANTHROPIC_API_KEY')
-            if not api_key:
-                print("❌ Error: ANTHROPIC_API_KEY environment variable not set")
-                print("   Please set your Anthropic API key to run this demo:")
-                print("   export ANTHROPIC_API_KEY='your_api_key_here'")
-                return False
             
+            # Create engine - it will auto-detect sandbox mode if needed
             self.engine = create_autonomous_development_engine(api_key)
+            
+            if self.engine.sandbox_mode:
+                print("🏖️  SANDBOX MODE ACTIVE")
+                print("   Running in demonstration mode with mock AI services")
+                print("   This provides full functionality without requiring API keys")
+                print("   To use production mode, set a valid ANTHROPIC_API_KEY")
+            else:
+                print("🚀 PRODUCTION MODE ACTIVE")
+                print("   Using real Anthropic API for AI responses")
+            
             print("✅ Autonomous Development Engine initialized successfully")
             print(f"   Workspace: {self.engine.get_workspace_path()}")
             return True
             
         except Exception as e:
             print(f"❌ Error initializing engine: {str(e)}")
+            # Show helpful troubleshooting
+            print("\n🔧 Troubleshooting:")
+            print("   • Ensure you have the required dependencies installed")
+            print("   • For production mode, set a valid ANTHROPIC_API_KEY")
+            print("   • For sandbox mode, ensure sandbox components are available")
             return False
     
     async def run_autonomous_development(self, task_description: str = None) -> bool:
@@ -270,12 +281,7 @@ class AutonomousDevelopmentDemo:
         """Run an interactive demo session."""
         self.print_banner()
         
-        # Check if API key is provided
-        if not os.getenv('ANTHROPIC_API_KEY'):
-            self.show_usage_instructions()
-            return False
-        
-        # Setup engine
+        # Setup engine (will auto-detect sandbox mode if needed)
         if not await self.setup_engine():
             return False
         
