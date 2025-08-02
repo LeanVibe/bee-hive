@@ -241,12 +241,12 @@ def upgrade() -> None:
     
     # JSONB indexes for command definitions
     op.execute("""
-        CREATE INDEX idx_command_registry_category 
-        ON command_registry USING GIN ((definition->>'category'))
+        CREATE INDEX IF NOT EXISTS idx_command_registry_category 
+        ON command_registry USING GIN ((definition->'category'))
     """)
     
     op.execute("""
-        CREATE INDEX idx_command_registry_tags 
+        CREATE INDEX IF NOT EXISTS idx_command_registry_tags 
         ON command_registry USING GIN ((definition->'tags'))
     """)
     

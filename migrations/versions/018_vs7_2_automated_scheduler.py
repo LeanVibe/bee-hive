@@ -25,97 +25,39 @@ branch_labels = None
 depends_on = None
 
 
+def create_enum_if_not_exists(enum_name: str, enum_values: list):
+    """Create enum type only if it doesn't already exist."""
+    op.execute(f"""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '{enum_name}') THEN
+                CREATE TYPE {enum_name} AS ENUM ('{("', '").join(enum_values)}');
+            END IF;
+        END$$;
+    """)
+
+
 def upgrade():
     """Create VS 7.2 Automated Scheduler database schema."""
     
-    # Create enum types for VS 7.2 components
-    automation_tier_enum = postgresql.ENUM(
-        'IMMEDIATE', 'SCHEDULED', 'PREDICTIVE',
-        name='automation_tier_enum'
-    )
-    automation_tier_enum.create(op.get_bind())
+    # Create enum types for VS 7.2 components (idempotent)
+    create_enum_if_not_exists('automation_tier_enum', ['IMMEDIATE', 'SCHEDULED', 'PREDICTIVE'])
+    create_enum_if_not_exists('scheduling_decision_enum', ['CONSOLIDATE_AGENT', 'WAKE_AGENT', 'MAINTAIN_STATUS', 'DEFER_DECISION'])
+    create_enum_if_not_exists('safety_level_enum', ['SAFE', 'CAUTIOUS', 'RESTRICTED', 'EMERGENCY_STOP'])
+    create_enum_if_not_exists('execution_mode_enum', ['SHADOW', 'LIVE', 'VALIDATION'])
     
-    scheduling_decision_enum = postgresql.ENUM(
-        'CONSOLIDATE_AGENT', 'WAKE_AGENT', 'MAINTAIN_STATUS', 'DEFER_DECISION',
-        name='scheduling_decision_enum'
-    )
-    scheduling_decision_enum.create(op.get_bind())
+    create_enum_if_not_exists('automation_status_enum', ['IDLE', 'RUNNING', 'PAUSED', 'EMERGENCY_STOP'])
+    create_enum_if_not_exists('task_type_enum', ['CONSOLIDATION', 'WAKE', 'HEALTH_CHECK', 'ROLLBACK'])
+    create_enum_if_not_exists('task_priority_enum', ['EMERGENCY', 'HIGH', 'NORMAL', 'LOW'])
+    create_enum_if_not_exists('rollout_stage_enum', ['DISABLED', 'CANARY_1PCT', 'CANARY_10PCT', 'PARTIAL_25PCT', 'PARTIAL_50PCT', 'FULL_100PCT', 'ROLLBACK'])
     
-    safety_level_enum = postgresql.ENUM(
-        'SAFE', 'CAUTIOUS', 'RESTRICTED', 'EMERGENCY_STOP',
-        name='safety_level_enum'
-    )
-    safety_level_enum.create(op.get_bind())
+    create_enum_if_not_exists('feature_type_enum', ['AUTOMATION', 'SCHEDULING', 'PREDICTION', 'COORDINATION', 'SAFETY'])
+    create_enum_if_not_exists('rollback_trigger_enum', ['ERROR_RATE', 'LATENCY', 'THROUGHPUT', 'MANUAL', 'CIRCUIT_BREAKER', 'HEALTH_CHECK'])
+    create_enum_if_not_exists('model_type_enum', ['SIMPLE_MOVING_AVERAGE', 'EXPONENTIAL_SMOOTHING', 'LINEAR_REGRESSION', 'ARIMA', 'SEASONAL_DECOMPOSITION', 'ENSEMBLE'])
+    create_enum_if_not_exists('seasonal_pattern_enum', ['HOURLY', 'DAILY', 'WEEKLY', 'NONE'])
+    create_enum_if_not_exists('alert_severity_enum', ['INFO', 'WARNING', 'CRITICAL', 'EMERGENCY'])
     
-    execution_mode_enum = postgresql.ENUM(
-        'SHADOW', 'LIVE', 'VALIDATION',
-        name='execution_mode_enum'
-    )
-    execution_mode_enum.create(op.get_bind())
-    
-    automation_status_enum = postgresql.ENUM(
-        'IDLE', 'RUNNING', 'PAUSED', 'EMERGENCY_STOP',
-        name='automation_status_enum'
-    )
-    automation_status_enum.create(op.get_bind())
-    
-    task_type_enum = postgresql.ENUM(
-        'CONSOLIDATION', 'WAKE', 'HEALTH_CHECK', 'ROLLBACK',
-        name='task_type_enum'
-    )
-    task_type_enum.create(op.get_bind())
-    
-    task_priority_enum = postgresql.ENUM(
-        'EMERGENCY', 'HIGH', 'NORMAL', 'LOW',
-        name='task_priority_enum'
-    )
-    task_priority_enum.create(op.get_bind())
-    
-    rollout_stage_enum = postgresql.ENUM(
-        'DISABLED', 'CANARY_1PCT', 'CANARY_10PCT', 'PARTIAL_25PCT', 
-        'PARTIAL_50PCT', 'FULL_100PCT', 'ROLLBACK',
-        name='rollout_stage_enum'
-    )
-    rollout_stage_enum.create(op.get_bind())
-    
-    feature_type_enum = postgresql.ENUM(
-        'AUTOMATION', 'SCHEDULING', 'PREDICTION', 'COORDINATION', 'SAFETY',
-        name='feature_type_enum'
-    )
-    feature_type_enum.create(op.get_bind())
-    
-    rollback_trigger_enum = postgresql.ENUM(
-        'ERROR_RATE', 'LATENCY', 'THROUGHPUT', 'MANUAL', 'CIRCUIT_BREAKER', 'HEALTH_CHECK',
-        name='rollback_trigger_enum'
-    )
-    rollback_trigger_enum.create(op.get_bind())
-    
-    model_type_enum = postgresql.ENUM(
-        'SIMPLE_MOVING_AVERAGE', 'EXPONENTIAL_SMOOTHING', 'LINEAR_REGRESSION', 
-        'ARIMA', 'SEASONAL_DECOMPOSITION', 'ENSEMBLE',
-        name='model_type_enum'
-    )
-    model_type_enum.create(op.get_bind())
-    
-    seasonal_pattern_enum = postgresql.ENUM(
-        'HOURLY', 'DAILY', 'WEEKLY', 'NONE',
-        name='seasonal_pattern_enum'
-    )
-    seasonal_pattern_enum.create(op.get_bind())
-    
-    alert_severity_enum = postgresql.ENUM(
-        'INFO', 'WARNING', 'CRITICAL', 'EMERGENCY',
-        name='alert_severity_enum'
-    )
-    alert_severity_enum.create(op.get_bind())
-    
-    alert_type_enum = postgresql.ENUM(
-        'PERFORMANCE_DEGRADATION', 'EFFICIENCY_TARGET_MISS', 'OVERHEAD_THRESHOLD_EXCEEDED',
-        'SAFETY_VIOLATION', 'SYSTEM_ERROR', 'FEATURE_ROLLBACK', 
-        'AUTOMATION_FAILURE', 'PREDICTION_ACCURACY_DROP',
-        name='alert_type_enum'
-    )
-    alert_type_enum.create(op.get_bind())
+    create_enum_if_not_exists('alert_type_enum', ['PERFORMANCE_DEGRADATION', 'EFFICIENCY_TARGET_MISS', 'OVERHEAD_THRESHOLD_EXCEEDED', 'SAFETY_VIOLATION', 'SYSTEM_ERROR', 'FEATURE_ROLLBACK', 'AUTOMATION_FAILURE', 'PREDICTION_ACCURACY_DROP'])
     
     # Smart Scheduler Configuration and State
     op.create_table(
@@ -123,7 +65,7 @@ def upgrade():
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('enabled', sa.Boolean, nullable=False, default=False),
         sa.Column('shadow_mode', sa.Boolean, nullable=False, default=True),
-        sa.Column('safety_level', safety_level_enum, nullable=False, default='SAFE'),
+        sa.Column('safety_level', postgresql.ENUM('SAFE', 'CAUTIOUS', 'RESTRICTED', 'EMERGENCY_STOP', name='safety_level_enum', create_type=False), nullable=False, default='SAFE'),
         sa.Column('prediction_enabled', sa.Boolean, nullable=False, default=True),
         sa.Column('max_simultaneous_consolidations_pct', sa.Float, nullable=False, default=30.0),
         sa.Column('min_agents_awake', sa.Integer, nullable=False, default=2),
@@ -141,8 +83,8 @@ def upgrade():
         'scheduling_decisions',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('agent_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('decision', scheduling_decision_enum, nullable=False),
-        sa.Column('automation_tier', automation_tier_enum, nullable=False),
+        sa.Column('decision', postgresql.ENUM('CONSOLIDATE_AGENT', 'WAKE_AGENT', 'MAINTAIN_STATUS', 'DEFER_DECISION', name='scheduling_decision_enum', create_type=False), nullable=False),
+        sa.Column('automation_tier', postgresql.ENUM('IMMEDIATE', 'SCHEDULED', 'PREDICTIVE', name='automation_tier_enum', create_type=False), nullable=False),
         sa.Column('confidence', sa.Float, nullable=False),
         sa.Column('reasoning', sa.Text, nullable=False),
         sa.Column('estimated_benefit', sa.Float, nullable=False),
@@ -160,8 +102,8 @@ def upgrade():
     op.create_table(
         'automation_engine_config',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('execution_mode', execution_mode_enum, nullable=False, default='SHADOW'),
-        sa.Column('status', automation_status_enum, nullable=False, default='IDLE'),
+        sa.Column('execution_mode', postgresql.ENUM('SHADOW', 'LIVE', 'VALIDATION', name='execution_mode_enum', create_type=False), nullable=False, default='SHADOW'),
+        sa.Column('status', postgresql.ENUM('IDLE', 'RUNNING', 'PAUSED', 'EMERGENCY_STOP', name='automation_status_enum', create_type=False), nullable=False, default='IDLE'),
         sa.Column('enabled', sa.Boolean, nullable=False, default=False),
         sa.Column('max_concurrent_tasks', sa.Integer, nullable=False, default=5),
         sa.Column('max_consolidations_per_minute', sa.Integer, nullable=False, default=10),
@@ -179,8 +121,8 @@ def upgrade():
     op.create_table(
         'automation_tasks',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('task_type', task_type_enum, nullable=False),
-        sa.Column('priority', task_priority_enum, nullable=False),
+        sa.Column('task_type', postgresql.ENUM('CONSOLIDATION', 'WAKE', 'HEALTH_CHECK', 'ROLLBACK', name='task_type_enum', create_type=False), nullable=False),
+        sa.Column('priority', postgresql.ENUM('EMERGENCY', 'HIGH', 'NORMAL', 'LOW', name='task_priority_enum', create_type=False), nullable=False),
         sa.Column('agent_id', postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('status', sa.String(50), nullable=False, default='pending'),
         sa.Column('attempts', sa.Integer, nullable=False, default=0),
@@ -203,9 +145,9 @@ def upgrade():
         'feature_flags',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('name', sa.String(255), nullable=False, unique=True),
-        sa.Column('feature_type', feature_type_enum, nullable=False),
+        sa.Column('feature_type', postgresql.ENUM('AUTOMATION', 'SCHEDULING', 'PREDICTION', 'COORDINATION', 'SAFETY', name='feature_type_enum', create_type=False), nullable=False),
         sa.Column('description', sa.Text, nullable=False),
-        sa.Column('rollout_stage', rollout_stage_enum, nullable=False, default='DISABLED'),
+        sa.Column('rollout_stage', postgresql.ENUM('DISABLED', 'CANARY_1PCT', 'CANARY_10PCT', 'PARTIAL_25PCT', 'PARTIAL_50PCT', 'FULL_100PCT', 'ROLLBACK', name='rollout_stage_enum', create_type=False), nullable=False, default='DISABLED'),
         sa.Column('target_percentage', sa.Float, nullable=False, default=0.0),
         sa.Column('enabled', sa.Boolean, nullable=False, default=True),
         sa.Column('validation_period_hours', sa.Integer, nullable=False, default=24),
@@ -223,13 +165,13 @@ def upgrade():
         'feature_rollout_history',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('feature_flag_id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('from_stage', rollout_stage_enum, nullable=False),
-        sa.Column('to_stage', rollout_stage_enum, nullable=False),
+        sa.Column('from_stage', postgresql.ENUM('DISABLED', 'CANARY_1PCT', 'CANARY_10PCT', 'PARTIAL_25PCT', 'PARTIAL_50PCT', 'FULL_100PCT', 'ROLLBACK', name='rollout_stage_enum', create_type=False), nullable=False),
+        sa.Column('to_stage', postgresql.ENUM('DISABLED', 'CANARY_1PCT', 'CANARY_10PCT', 'PARTIAL_25PCT', 'PARTIAL_50PCT', 'FULL_100PCT', 'ROLLBACK', name='rollout_stage_enum', create_type=False), nullable=False),
         sa.Column('from_percentage', sa.Float, nullable=False),
         sa.Column('to_percentage', sa.Float, nullable=False),
         sa.Column('trigger_type', sa.String(50), nullable=False),
         sa.Column('trigger_reason', sa.Text, nullable=False),
-        sa.Column('rollback_trigger', rollback_trigger_enum, nullable=True),
+        sa.Column('rollback_trigger', postgresql.ENUM('ERROR_RATE', 'LATENCY', 'THROUGHPUT', 'MANUAL', 'CIRCUIT_BREAKER', 'HEALTH_CHECK', name='rollback_trigger_enum', create_type=False), nullable=True),
         sa.Column('user_id', sa.String(255), nullable=True),
         sa.Column('automated', sa.Boolean, nullable=False, default=False),
         sa.Column('rollout_metadata', postgresql.JSONB, nullable=True),
@@ -260,7 +202,7 @@ def upgrade():
     op.create_table(
         'load_prediction_models',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('model_type', model_type_enum, nullable=False),
+        sa.Column('model_type', postgresql.ENUM('SIMPLE_MOVING_AVERAGE', 'EXPONENTIAL_SMOOTHING', 'LINEAR_REGRESSION', 'ARIMA', 'SEASONAL_DECOMPOSITION', 'ENSEMBLE', name='model_type_enum', create_type=False), nullable=False),
         sa.Column('model_name', sa.String(255), nullable=False),
         sa.Column('model_version', sa.String(50), nullable=False, default='1.0'),
         sa.Column('model_data', postgresql.JSONB, nullable=False),  # Serialized model parameters
@@ -287,7 +229,7 @@ def upgrade():
         sa.Column('predicted_load', postgresql.JSONB, nullable=False),
         sa.Column('confidence_interval', postgresql.JSONB, nullable=True),
         sa.Column('confidence_score', sa.Float, nullable=False),
-        sa.Column('seasonal_pattern', seasonal_pattern_enum, nullable=True),
+        sa.Column('seasonal_pattern', postgresql.ENUM('HOURLY', 'DAILY', 'WEEKLY', 'NONE', name='seasonal_pattern_enum', create_type=False), nullable=True),
         sa.Column('trend_direction', sa.String(50), nullable=True),
         sa.Column('actual_load', postgresql.JSONB, nullable=True),  # Filled in when actual data available
         sa.Column('prediction_accuracy', sa.Float, nullable=True),  # Calculated when actual data available
@@ -319,8 +261,8 @@ def upgrade():
     op.create_table(
         'vs7_2_alerts',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('alert_type', alert_type_enum, nullable=False),
-        sa.Column('severity', alert_severity_enum, nullable=False),
+        sa.Column('alert_type', postgresql.ENUM('PERFORMANCE_DEGRADATION', 'EFFICIENCY_TARGET_MISS', 'OVERHEAD_THRESHOLD_EXCEEDED', 'SAFETY_VIOLATION', 'SYSTEM_ERROR', 'FEATURE_ROLLBACK', 'AUTOMATION_FAILURE', 'PREDICTION_ACCURACY_DROP', name='alert_type_enum', create_type=False), nullable=False),
+        sa.Column('severity', postgresql.ENUM('INFO', 'WARNING', 'CRITICAL', 'EMERGENCY', name='alert_severity_enum', create_type=False), nullable=False),
         sa.Column('title', sa.String(500), nullable=False),
         sa.Column('description', sa.Text, nullable=False),
         sa.Column('component', sa.String(255), nullable=False),
@@ -467,26 +409,27 @@ def upgrade():
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     """))
     
-    # Create partitioning for high-volume tables
-    op.execute(text("""
-        -- Partition performance metrics by month
-        CREATE TABLE vs7_2_performance_metrics_y2025m01 
-        PARTITION OF vs7_2_performance_metrics 
-        FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
-        
-        CREATE TABLE vs7_2_performance_metrics_y2025m02 
-        PARTITION OF vs7_2_performance_metrics 
-        FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
-        
-        -- Partition load data points by month  
-        CREATE TABLE load_data_points_y2025m01 
-        PARTITION OF load_data_points 
-        FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
-        
-        CREATE TABLE load_data_points_y2025m02 
-        PARTITION OF load_data_points 
-        FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
-    """))
+    # Note: Partitioning skipped for initial implementation
+    # Tables can be converted to partitioned tables in a future migration if needed
+    # op.execute(text("""
+    #     -- Partition performance metrics by month
+    #     CREATE TABLE vs7_2_performance_metrics_y2025m01 
+    #     PARTITION OF vs7_2_performance_metrics 
+    #     FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+    #     
+    #     CREATE TABLE vs7_2_performance_metrics_y2025m02 
+    #     PARTITION OF vs7_2_performance_metrics 
+    #     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+    #     
+    #     -- Partition load data points by month  
+    #     CREATE TABLE load_data_points_y2025m01 
+    #     PARTITION OF load_data_points 
+    #     FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+    #     
+    #     CREATE TABLE load_data_points_y2025m02 
+    #     PARTITION OF load_data_points 
+    #     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+    # """))
     
     # Insert default configurations
     op.execute(text("""
