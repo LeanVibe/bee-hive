@@ -19,9 +19,12 @@ depends_on = None
 
 def upgrade() -> None:
     """Upgrade database schema."""
-    pass
+    # Enable pgvector extension for vector similarity search
+    op.execute('CREATE EXTENSION IF NOT EXISTS vector;')
 
 
 def downgrade() -> None:
     """Downgrade database schema."""
+    # Note: We don't drop the vector extension in downgrade 
+    # as it may be used by other applications
     pass

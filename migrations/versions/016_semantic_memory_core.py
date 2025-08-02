@@ -85,15 +85,15 @@ def upgrade() -> None:
     
     # High-performance tag filtering index using GIN
     op.execute("""
-        CREATE INDEX idx_semantic_documents_tags_gin 
-        ON semantic_documents USING gin (tags)
+        CREATE INDEX IF NOT EXISTS idx_semantic_documents_tags_gin 
+        ON semantic_documents USING gin ((tags::jsonb))
         WHERE embedding IS NOT NULL;
     """)
     
     # Metadata filtering index for complex queries
     op.execute("""
-        CREATE INDEX idx_semantic_documents_metadata_gin 
-        ON semantic_documents USING gin (metadata)
+        CREATE INDEX IF NOT EXISTS idx_semantic_documents_metadata_gin 
+        ON semantic_documents USING gin ((metadata::jsonb))
         WHERE embedding IS NOT NULL;
     """)
     
@@ -219,7 +219,7 @@ def upgrade() -> None:
             COUNT(*) as total_documents,
             COUNT(CASE WHEN sd.embedding IS NOT NULL THEN 1 END) as documents_with_embeddings,
             ROUND(
-                (COUNT(CASE WHEN sd.embedding IS NOT NULL THEN 1 END)::FLOAT / COUNT(*)) * 100, 2
+                ((COUNT(CASE WHEN sd.embedding IS NOT NULL THEN 1 END)::FLOAT / COUNT(*)) * 100)::NUMERIC, 2
             ) as embedding_coverage_percent,
             AVG(sd.importance_score) as avg_importance_score,
             SUM(sd.access_count) as total_access_count,

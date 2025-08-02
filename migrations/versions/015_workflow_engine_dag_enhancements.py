@@ -18,6 +18,19 @@ branch_labels = None
 depends_on = None
 
 
+def add_column_if_not_exists(table_name: str, column: sa.Column):
+    """Add column only if it doesn't already exist."""
+    connection = op.get_bind()
+    inspector = sa.inspect(connection)
+    columns = [col['name'] for col in inspector.get_columns(table_name)]
+    
+    if column.name not in columns:
+        op.add_column(table_name, column)
+        print(f"✅ Added column '{column.name}' to table '{table_name}'")
+    else:
+        print(f"✅ Column '{column.name}' already exists in table '{table_name}'")
+
+
 def upgrade() -> None:
     """Add enhanced workflow engine capabilities with DAG task dependencies."""
     
@@ -76,15 +89,15 @@ def upgrade() -> None:
     )
     
     # Extend workflows table with enhanced DAG capabilities
-    op.add_column('workflows', sa.Column('execution_mode', sa.String(20), nullable=False, server_default='mixed'))
-    op.add_column('workflows', sa.Column('max_parallel_tasks', sa.Integer, nullable=True))
-    op.add_column('workflows', sa.Column('fail_fast', sa.Boolean, nullable=False, server_default='true'))
-    op.add_column('workflows', sa.Column('retry_failed_tasks', sa.Boolean, nullable=False, server_default='false'))
-    op.add_column('workflows', sa.Column('execution_plan', postgresql.JSON, nullable=True))
-    op.add_column('workflows', sa.Column('current_batch', sa.Integer, nullable=False, server_default='0'))
-    op.add_column('workflows', sa.Column('batch_progress', postgresql.JSON, nullable=True, server_default='{}'))
-    op.add_column('workflows', sa.Column('critical_path_duration', sa.Integer, nullable=True))
-    op.add_column('workflows', sa.Column('bottleneck_tasks', postgresql.ARRAY(postgresql.UUID(as_uuid=True)), nullable=True))
+    add_column_if_not_exists('workflows', sa.Column('execution_mode', sa.String(20), nullable=False, server_default='mixed'))
+    add_column_if_not_exists('workflows', sa.Column('max_parallel_tasks', sa.Integer, nullable=True))
+    add_column_if_not_exists('workflows', sa.Column('fail_fast', sa.Boolean, nullable=False, server_default='true'))
+    add_column_if_not_exists('workflows', sa.Column('retry_failed_tasks', sa.Boolean, nullable=False, server_default='false'))
+    add_column_if_not_exists('workflows', sa.Column('execution_plan', postgresql.JSON, nullable=True))
+    add_column_if_not_exists('workflows', sa.Column('current_batch', sa.Integer, nullable=False, server_default='0'))
+    add_column_if_not_exists('workflows', sa.Column('batch_progress', postgresql.JSON, nullable=True, server_default='{}'))
+    add_column_if_not_exists('workflows', sa.Column('critical_path_duration', sa.Integer, nullable=True))
+    add_column_if_not_exists('workflows', sa.Column('bottleneck_tasks', postgresql.ARRAY(postgresql.UUID(as_uuid=True)), nullable=True))
     
     # Add indexes for new workflow columns
     op.create_index('idx_workflows_execution_mode', 'workflows', ['execution_mode'])
@@ -155,12 +168,12 @@ def upgrade() -> None:
     op.create_index('idx_workflow_state_snapshots_can_resume', 'workflow_state_snapshots', ['can_resume_from'])
     
     # Extend tasks table with DAG execution metadata
-    op.add_column('tasks', sa.Column('execution_batch', sa.Integer, nullable=True))
-    op.add_column('tasks', sa.Column('parallel_group', sa.String(100), nullable=True))
-    op.add_column('tasks', sa.Column('critical_path', sa.Boolean, nullable=False, server_default='false'))
-    op.add_column('tasks', sa.Column('dependency_depth', sa.Integer, nullable=False, server_default='0'))
-    op.add_column('tasks', sa.Column('estimated_start_time', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('tasks', sa.Column('blocking_tasks', postgresql.ARRAY(postgresql.UUID(as_uuid=True)), nullable=True))
+    add_column_if_not_exists('tasks', sa.Column('execution_batch', sa.Integer, nullable=True))
+    add_column_if_not_exists('tasks', sa.Column('parallel_group', sa.String(100), nullable=True))
+    add_column_if_not_exists('tasks', sa.Column('critical_path', sa.Boolean, nullable=False, server_default='false'))
+    add_column_if_not_exists('tasks', sa.Column('dependency_depth', sa.Integer, nullable=False, server_default='0'))
+    add_column_if_not_exists('tasks', sa.Column('estimated_start_time', sa.DateTime(timezone=True), nullable=True))
+    add_column_if_not_exists('tasks', sa.Column('blocking_tasks', postgresql.ARRAY(postgresql.UUID(as_uuid=True)), nullable=True))
     
     # Add indexes for new task columns
     op.create_index('idx_tasks_execution_batch', 'tasks', ['execution_batch'])

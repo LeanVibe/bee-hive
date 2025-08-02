@@ -20,23 +20,38 @@ depends_on = None
 def upgrade() -> None:
     """Upgrade database schema."""
     
-    # Create custom enums for prompt optimization
+    # Create custom enums for prompt optimization (idempotent)
     op.execute("""
-        CREATE TYPE prompt_status AS ENUM (
-            'draft', 'active', 'archived', 'deprecated'
-        );
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'prompt_status') THEN
+                CREATE TYPE prompt_status AS ENUM (
+                    'draft', 'active', 'archived', 'deprecated'
+                );
+            END IF;
+        END$$;
     """)
     
     op.execute("""
-        CREATE TYPE experiment_status AS ENUM (
-            'pending', 'running', 'completed', 'failed', 'cancelled'
-        );
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'experiment_status') THEN
+                CREATE TYPE experiment_status AS ENUM (
+                    'pending', 'running', 'completed', 'failed', 'cancelled'
+                );
+            END IF;
+        END$$;
     """)
     
     op.execute("""
-        CREATE TYPE optimization_method AS ENUM (
-            'meta_prompting', 'evolutionary', 'gradient_based', 'few_shot', 'manual'
-        );
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'optimization_method') THEN
+                CREATE TYPE optimization_method AS ENUM (
+                    'meta_prompting', 'evolutionary', 'gradient_based', 'few_shot', 'manual'
+                );
+            END IF;
+        END$$;
     """)
     
     # Create prompt_templates table
@@ -49,7 +64,7 @@ def upgrade() -> None:
         sa.Column('template_content', sa.Text, nullable=False),
         sa.Column('template_variables', postgresql.JSON, nullable=True, server_default='{}'),
         sa.Column('version', sa.Integer, nullable=False, server_default='1'),
-        sa.Column('status', sa.Enum('draft', 'active', 'archived', 'deprecated', name='prompt_status'), nullable=False, server_default='draft'),
+        sa.Column('status', postgresql.ENUM('draft', 'active', 'archived', 'deprecated', name='prompt_status', create_type=False), nullable=False, server_default='draft'),
         sa.Column('created_by', sa.String(255), nullable=True),
         sa.Column('description', sa.Text, nullable=True),
         sa.Column('tags', postgresql.JSON, nullable=True, server_default='[]'),
@@ -65,10 +80,10 @@ def upgrade() -> None:
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
         sa.Column('experiment_name', sa.String(255), nullable=False, index=True),
         sa.Column('base_prompt_id', postgresql.UUID(as_uuid=True), nullable=False, index=True),
-        sa.Column('optimization_method', sa.Enum('meta_prompting', 'evolutionary', 'gradient_based', 'few_shot', 'manual', name='optimization_method'), nullable=False),
+        sa.Column('optimization_method', postgresql.ENUM('meta_prompting', 'evolutionary', 'gradient_based', 'few_shot', 'manual', name='optimization_method', create_type=False), nullable=False),
         sa.Column('target_metrics', postgresql.JSON, nullable=False, server_default='{}'),
         sa.Column('experiment_config', postgresql.JSON, nullable=True, server_default='{}'),
-        sa.Column('status', sa.Enum('pending', 'running', 'completed', 'failed', 'cancelled', name='experiment_status'), nullable=False, server_default='pending'),
+        sa.Column('status', postgresql.ENUM('pending', 'running', 'completed', 'failed', 'cancelled', name='experiment_status', create_type=False), nullable=False, server_default='pending'),
         sa.Column('progress_percentage', sa.Float, nullable=False, server_default='0.0'),
         sa.Column('current_iteration', sa.Integer, nullable=False, server_default='0'),
         sa.Column('max_iterations', sa.Integer, nullable=False, server_default='50'),
