@@ -260,3 +260,152 @@ def generate_secure_secret(length: int = 64) -> str:
         URL-safe base64 encoded secret
     """
     return secrets.token_urlsafe(length)
+
+
+class SecurityManager:
+    """
+    Central security manager for authentication and authorization.
+    
+    Provides enterprise-grade security management including user authentication,
+    role-based access control, and security policy enforcement.
+    """
+    
+    def __init__(self):
+        self.token_validator = TokenValidator()
+        self.rate_limiter = RateLimiter()
+        
+    async def authenticate_user(self, credentials: HTTPAuthorizationCredentials) -> Optional[Dict[str, Any]]:
+        """Authenticate user with credentials."""
+        return await get_current_user(credentials)
+    
+    async def authorize_user(self, user: Dict[str, Any], required_roles: list = None) -> bool:
+        """Authorize user for specific roles."""
+        if not user or not required_roles:
+            return True
+            
+        user_roles = user.get("roles", [])
+        return any(role in user_roles for role in required_roles)
+    
+    def validate_token(self, token: str) -> bool:
+        """Validate JWT token."""
+        return self.token_validator.validate(token)
+    
+    def check_rate_limit(self, user_id: str, action: str) -> bool:
+        """Check rate limits for user action."""
+        return self.rate_limiter.check_limit(user_id, action)
+
+
+class TokenValidator:
+    """
+    JWT token validation and management.
+    
+    Handles token validation, expiration checking, and security policy enforcement.
+    """
+    
+    def __init__(self):
+        self.config = get_jwt_config()
+    
+    def validate(self, token: str) -> bool:
+        """Validate JWT token."""
+        try:
+            verify_token(token)
+            return True
+        except AuthenticationError:
+            return False
+    
+    def decode_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Decode and validate JWT token."""
+        try:
+            return verify_token(token)
+        except AuthenticationError:
+            return None
+    
+    def is_expired(self, token: str) -> bool:
+        """Check if token is expired."""
+        try:
+            payload = verify_token(token)
+            exp_timestamp = payload.get("exp")
+            if exp_timestamp:
+                return datetime.utcnow().timestamp() > exp_timestamp
+            return False
+        except AuthenticationError:
+            return True
+
+
+class RateLimiter:
+    """
+    Rate limiting for API endpoints and user actions.
+    
+    Provides configurable rate limiting to prevent abuse and ensure
+    fair resource usage across users and applications.
+    """
+    
+    def __init__(self, default_limit: int = 100, window_seconds: int = 3600):
+        self.default_limit = default_limit
+        self.window_seconds = window_seconds
+        self.usage_tracking = {}  # In production, use Redis
+        
+    def check_limit(self, user_id: str, action: str = "default") -> bool:
+        """Check if user is within rate limits."""
+        key = f"{user_id}:{action}"
+        now = datetime.utcnow().timestamp()
+        
+        # Clean old entries
+        self._cleanup_old_entries(now)
+        
+        if key not in self.usage_tracking:
+            self.usage_tracking[key] = []
+        
+        # Count requests in current window
+        window_start = now - self.window_seconds
+        recent_requests = [
+            timestamp for timestamp in self.usage_tracking[key]
+            if timestamp > window_start
+        ]
+        
+        if len(recent_requests) >= self.default_limit:
+            return False
+        
+        # Add current request
+        self.usage_tracking[key].append(now)
+        return True
+    
+    def get_usage(self, user_id: str, action: str = "default") -> Dict[str, Any]:
+        """Get current usage statistics for user."""
+        key = f"{user_id}:{action}"
+        now = datetime.utcnow().timestamp()
+        window_start = now - self.window_seconds
+        
+        if key not in self.usage_tracking:
+            return {
+                "requests_used": 0,
+                "requests_remaining": self.default_limit,
+                "window_start": window_start,
+                "window_end": now
+            }
+        
+        recent_requests = [
+            timestamp for timestamp in self.usage_tracking[key]
+            if timestamp > window_start
+        ]
+        
+        return {
+            "requests_used": len(recent_requests),
+            "requests_remaining": max(0, self.default_limit - len(recent_requests)),
+            "window_start": window_start,
+            "window_end": now
+        }
+    
+    def _cleanup_old_entries(self, current_time: float):
+        """Clean up old tracking entries."""
+        cutoff_time = current_time - self.window_seconds
+        
+        for key in list(self.usage_tracking.keys()):
+            self.usage_tracking[key] = [
+                timestamp for timestamp in self.usage_tracking[key]
+                if timestamp > cutoff_time
+            ]
+            
+            # Remove empty entries
+            if not self.usage_tracking[key]:
+                del self.usage_tracking[key]
