@@ -150,8 +150,8 @@ async def create_task(
 async def list_tasks(
     status: Optional[TaskStatus] = None,
     task_type: Optional[TaskType] = None,
-    limit: int = Field(50, ge=1, le=1000),
-    offset: int = Field(0, ge=0),
+    limit: int = 50,
+    offset: int = 0,
     db: AsyncSession = Depends(get_session)
 ) -> List[TaskResponse]:
     """List autonomous development tasks with filtering."""
