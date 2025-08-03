@@ -1,0 +1,730 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Executive ROI dashboard for LeanVibe Agent Hive 2.0 - Business value and financial impact metrics",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "green",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "development_velocity_multiplier",
+          "interval": "",
+          "legendFormat": "Development Speed Improvement",
+          "refId": "A"
+        }
+      ],
+      "title": "Development Velocity Multiplier",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "cost_savings_usd_per_hour",
+          "interval": "",
+          "legendFormat": "Hourly Cost Savings",
+          "refId": "A"
+        }
+      ],
+      "title": "Cost Savings Per Hour",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "developer_hours_saved_total",
+          "interval": "",
+          "legendFormat": "Total Hours Saved",
+          "refId": "A"
+        }
+      ],
+      "title": "Developer Hours Saved",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "USD",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "cost_savings_usd_per_hour * 24 * 30",
+          "interval": "",
+          "legendFormat": "Monthly Cost Savings",
+          "refId": "A"
+        },
+        {
+          "expr": "cost_savings_usd_per_hour * 24 * 365",
+          "interval": "",
+          "legendFormat": "Annual Cost Savings",
+          "refId": "B"
+        }
+      ],
+      "title": "Projected Cost Savings Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Tasks per Hour",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(autonomous_development_tasks_total{success=\"true\"}[1h]) * 3600",
+          "interval": "",
+          "legendFormat": "Successful Tasks/Hour",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(autonomous_development_tasks_total[1h]) * 3600",
+          "interval": "",
+          "legendFormat": "Total Tasks/Hour",
+          "refId": "B"
+        }
+      ],
+      "title": "Development Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "displayMode": "color-background",
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Offline"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "Online"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "agent_type"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "basic"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "version"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "basic"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Agent Type"
+          }
+        ]
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "cli_agent_availability",
+          "format": "table",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "AI Agent Status",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Status",
+              "agent_type": "Agent Type",
+              "version": "Version"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 27
+      },
+      "id": 7,
+      "options": {
+        "showHeader": true
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(code_quality_score_bucket[1h]))",
+          "format": "table",
+          "interval": "",
+          "legendFormat": "95th Percentile",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(code_quality_score_bucket[1h]))",
+          "format": "table",
+          "interval": "",
+          "legendFormat": "Median",
+          "refId": "B"
+        }
+      ],
+      "title": "Code Quality Metrics",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "Time"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "95th Percentile": "95th Percentile (%)",
+              "Median": "Median Quality (%)"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "green",
+                "value": 95
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 27
+      },
+      "id": 8,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "(rate(autonomous_development_tasks_total{success=\"true\"}[1h]) / rate(autonomous_development_tasks_total[1h])) * 100",
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Overall Success Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 27
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "9.0.0",
+      "targets": [
+        {
+          "expr": "sum(rate(autonomous_development_tasks_total{success=\"true\"}[24h])) * 24",
+          "interval": "",
+          "legendFormat": "Daily Completed Tasks",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Task Completion",
+      "type": "stat"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [
+    "leanvibe",
+    "executive",
+    "roi",
+    "business-value"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "LeanVibe Agent Hive 2.0 - Executive ROI Dashboard",
+  "uid": "leanvibe-executive-roi",
+  "version": 0,
+  "weekStart": ""
+}
