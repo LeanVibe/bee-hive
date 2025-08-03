@@ -106,7 +106,8 @@ class Task(Base):
     # Relationships
     assigned_agent = relationship("Agent", foreign_keys=[assigned_agent_id])
     created_by = relationship("Agent", foreign_keys=[created_by_agent_id])
-    persona_performance = relationship("PersonaPerformanceModel", back_populates="task")
+    # Note: persona_performance relationship removed during stabilization
+    # TODO: Implement PersonaPerformanceModel if required
     
     def __init__(self, **kwargs):
         """Initialize task with proper defaults."""

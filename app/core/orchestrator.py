@@ -566,7 +566,7 @@ class AgentOrchestrator:
         agent_instance = AgentInstance(
             id=agent_id,
             role=role,
-            status=AgentStatus.INITIALIZING,
+            status=AgentStatus.INACTIVE,
             tmux_session=None,
             capabilities=capabilities,
             current_task=None,
@@ -592,7 +592,7 @@ class AgentOrchestrator:
                 type=AgentType.CLAUDE,
                 role=role.value,
                 capabilities=[asdict(cap) for cap in capabilities],
-                status=AgentStatus.INITIALIZING
+                status=AgentStatus.INACTIVE
             )
             db_session.add(db_agent)
             await db_session.commit()

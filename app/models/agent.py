@@ -21,12 +21,10 @@ from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 class AgentStatus(Enum):
     """Agent lifecycle status."""
     INACTIVE = "inactive"
-    INITIALIZING = "initializing"
     ACTIVE = "active"
     BUSY = "busy"
-    SLEEPING = "sleeping"
     ERROR = "error"
-    SHUTTING_DOWN = "shutting_down"
+    MAINTENANCE = "maintenance"
 
 
 class AgentType(Enum):
@@ -50,7 +48,7 @@ class Agent(Base):
     # Primary identification
     id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
-    type = Column(SQLEnum(AgentType), nullable=False, default=AgentType.CLAUDE)
+    type = Column(SQLEnum(AgentType, native_enum=False), nullable=False, default=AgentType.CLAUDE)
     
     # Role and capabilities
     role = Column(String(100), nullable=True, index=True)
@@ -58,7 +56,7 @@ class Agent(Base):
     system_prompt = Column(Text, nullable=True)
     
     # Current status and configuration
-    status = Column(SQLEnum(AgentStatus), nullable=False, default=AgentStatus.INACTIVE, index=True)
+    status = Column(SQLEnum(AgentStatus, native_enum=False), nullable=False, default=AgentStatus.INACTIVE, index=True)
     config = Column(JSON, nullable=True, default=dict)
     
     # tmux integration
@@ -81,9 +79,8 @@ class Agent(Base):
     checkpoints = relationship("Checkpoint", back_populates="agent", cascade="all, delete-orphan")
     sleep_wake_cycles = relationship("SleepWakeCycle", back_populates="agent", cascade="all, delete-orphan")
     sleep_wake_analytics = relationship("SleepWakeAnalytics", back_populates="agent", cascade="all, delete-orphan")
-    performance_history = relationship("AgentPerformanceHistory", back_populates="agent", cascade="all, delete-orphan")
-    persona_assignments = relationship("PersonaAssignmentModel", back_populates="agent", cascade="all, delete-orphan")
-    persona_performance = relationship("PersonaPerformanceModel", back_populates="agent", cascade="all, delete-orphan")
+    # Note: performance_history, persona_assignments and persona_performance relationships removed during stabilization
+    # TODO: Fix import issues with AgentPerformanceHistory, PersonaAssignmentModel and PersonaPerformanceModel
     
     def __repr__(self) -> str:
         return f"<Agent(id={self.id}, name='{self.name}', role='{self.role}', status='{self.status}')>"

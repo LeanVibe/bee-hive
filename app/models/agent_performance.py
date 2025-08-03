@@ -71,7 +71,7 @@ class AgentPerformanceHistory(Base):
     recorded_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     
     # Relationships
-    agent = relationship("Agent", back_populates="performance_history")
+    agent = relationship("Agent")  # back_populates removed during stabilization
     task = relationship("Task")
     
     def to_dict(self) -> Dict[str, Any]:

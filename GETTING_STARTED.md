@@ -58,6 +58,114 @@ python scripts/demos/autonomous_development_demo.py
 - 📋 Quality gates, error recovery, and self-healing
 - 📦 GitHub integration with automated PR creation
 
+## 🏢 Enterprise Pilot Management (NEW!)
+
+**LeanVibe Agent Hive now includes comprehensive enterprise pilot management for Fortune 500 deployments:**
+
+### Quick Enterprise Setup
+
+```bash
+# After basic setup, access the enterprise features
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@leanvibe.com",
+    "password": "AdminPassword123!"
+  }'
+
+# Save your access token from the response
+export ACCESS_TOKEN="your_jwt_token_here"
+```
+
+### Create Enterprise Pilot
+
+```bash
+# Create your first Fortune 500 pilot
+curl -X POST "http://localhost:8000/api/v1/pilots/" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company_name": "Fortune 500 Company",
+    "company_tier": "fortune_500",
+    "industry": "technology",
+    "annual_revenue": 50000000000,
+    "employee_count": 25000,
+    "primary_contact": {
+      "name": "Chief Technology Officer",
+      "email": "cto@fortune500.com",
+      "title": "CTO"
+    },
+    "use_cases": [
+      "microservices_development",
+      "api_acceleration",
+      "automated_testing"
+    ],
+    "success_criteria": {
+      "velocity_improvement": 20.0,
+      "roi_percentage": 1000.0,
+      "quality_score": 95.0
+    },
+    "pilot_duration_weeks": 4
+  }'
+```
+
+### Execute Autonomous Development Task
+
+```bash
+# Create development task for the pilot (replace PILOT_ID with actual ID)
+curl -X POST "http://localhost:8000/api/v1/pilots/PILOT_ID/development-tasks" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_type": "api_endpoint_development",
+    "task_description": "Create REST API for user authentication with JWT tokens, password hashing, and role-based access control",
+    "task_complexity": "medium",
+    "task_priority": "high",
+    "requirements": {
+      "framework": "FastAPI",
+      "authentication": "JWT",
+      "database": "PostgreSQL",
+      "security": "bcrypt_hashing",
+      "features": ["login", "register", "refresh_token", "rbac"]
+    },
+    "estimated_hours": 4.0
+  }'
+```
+
+### Track ROI Metrics
+
+```bash
+# Record ROI metrics for the pilot
+curl -X POST "http://localhost:8000/api/v1/pilots/PILOT_ID/roi-metrics" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "baseline_velocity": 1.0,
+    "current_velocity": 20.0,
+    "baseline_quality_score": 85.0,
+    "current_quality_score": 95.0,
+    "baseline_development_cost": 10000.0,
+    "current_development_cost": 500.0,
+    "measurement_type": "automated"
+  }'
+```
+
+### View Pilot Analytics
+
+```bash
+# Get comprehensive pilot analytics
+curl "http://localhost:8000/api/v1/pilots/PILOT_ID/analytics" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+**Enterprise Features Available:**
+- 🏢 **Fortune 500 Pilot Management**: Complete pilot lifecycle management
+- 📊 **ROI Tracking**: Real-time velocity improvement and cost savings
+- 👔 **Executive Engagement**: C-suite stakeholder management
+- 🎯 **Demo Orchestration**: Automated demonstration scheduling
+- 🔐 **Enterprise Security**: JWT authentication with RBAC
+- 📈 **Analytics Dashboard**: Comprehensive pilot performance metrics
+
 ## Setup Methods
 
 ### 🚀 Method 1: Professional Interface (Recommended)
