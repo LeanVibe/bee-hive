@@ -208,15 +208,34 @@ class HiveStatusCommand(HiveSlashCommand):
             detailed = "--detailed" in (args or [])
             agents_only = "--agents-only" in (args or [])
             
-            # Get agent status
-            active_agents = await get_active_agents_status()
+            # Get agent status with hybrid orchestrator integration
+            spawner_agents = await get_active_agents_status()
+            spawner_count = len(spawner_agents) if spawner_agents else 0
+            
+            # Get orchestrator agents (if available)
+            orchestrator_count = 0
+            orchestrator_agents = {}
+            try:
+                from ..main import app
+                if hasattr(app.state, 'orchestrator'):
+                    orchestrator = app.state.orchestrator
+                    system_status = await orchestrator.get_system_status()
+                    orchestrator_count = system_status.get("orchestrator_agents", 0)
+                    orchestrator_agents = system_status.get("agents", {})
+            except Exception as e:
+                logger.debug(f"Could not get orchestrator status: {e}")
+            
+            total_agents = spawner_count + orchestrator_count
             
             status_result = {
                 "success": True,
-                "platform_active": len(active_agents) > 0,
-                "agent_count": len(active_agents),
-                "system_ready": len(active_agents) >= 3,
-                "timestamp": datetime.utcnow().isoformat()
+                "platform_active": total_agents > 0,
+                "agent_count": total_agents,
+                "spawner_agents": spawner_count,
+                "orchestrator_agents": orchestrator_count,
+                "system_ready": total_agents >= 3,
+                "timestamp": datetime.utcnow().isoformat(),
+                "hybrid_integration": True
             }
             
             if not agents_only:
@@ -232,11 +251,15 @@ class HiveStatusCommand(HiveSlashCommand):
                     status_result["system_health"] = "unknown"
             
             if detailed or agents_only:
-                status_result["agents"] = active_agents
+                status_result["spawner_agents_detail"] = spawner_agents or {}
+                status_result["orchestrator_agents_detail"] = orchestrator_agents
                 
                 # Add capability summary
                 capabilities_summary = {}
-                for agent_data in active_agents.values():
+                all_agents = (spawner_agents or {}).copy()
+                all_agents.update(orchestrator_agents)
+                
+                for agent_data in all_agents.values():
                     role = agent_data.get("role", "unknown")
                     capabilities = agent_data.get("capabilities", [])
                     

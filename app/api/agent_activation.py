@@ -86,16 +86,37 @@ async def activate_agent_system(
 
 @router.get("/status")
 async def get_agent_system_status():
-    """Get current status of the agent system."""
+    """Get current status of the agent system with hybrid orchestrator integration."""
     try:
+        # Get spawner agents
         manager = await get_agent_manager()
-        active_agents = await get_active_agents_status()
+        spawner_agents = await get_active_agents_status()
+        spawner_count = len(spawner_agents) if spawner_agents else 0
+        
+        # Get orchestrator agents (if available)
+        orchestrator_count = 0
+        orchestrator_agents = {}
+        try:
+            from ..main import app
+            if hasattr(app.state, 'orchestrator'):
+                orchestrator = app.state.orchestrator
+                system_status = await orchestrator.get_system_status()
+                orchestrator_count = system_status.get("orchestrator_agents", 0)
+                orchestrator_agents = system_status.get("agents", {})
+        except Exception as e:
+            logger.debug(f"Could not get orchestrator status: {e}")
+        
+        total_agents = spawner_count + orchestrator_count
         
         return {
-            "active": len(active_agents) > 0,
-            "agent_count": len(active_agents),
-            "agents": active_agents,
-            "system_ready": len(active_agents) >= 3  # Minimum viable team
+            "active": total_agents > 0,
+            "agent_count": total_agents,
+            "spawner_agents": spawner_count,
+            "orchestrator_agents": orchestrator_count,
+            "agents": spawner_agents or {},
+            "orchestrator_agents_detail": orchestrator_agents,
+            "system_ready": total_agents >= 3,  # Minimum viable team
+            "hybrid_integration": True
         }
         
     except Exception as e:
@@ -103,6 +124,8 @@ async def get_agent_system_status():
         return {
             "active": False,
             "agent_count": 0,
+            "spawner_agents": 0,
+            "orchestrator_agents": 0,
             "agents": {},
             "system_ready": False,
             "error": str(e)

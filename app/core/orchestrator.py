@@ -827,11 +827,25 @@ class AgentOrchestrator:
         else:
             workflow_engine_status = {"workflow_engine_active": False}
         
+        # Get additional agents from ActiveAgentManager (hybrid integration)
+        spawner_agents = {}
+        spawner_agent_count = 0
+        try:
+            from .agent_spawner import get_active_agents_status
+            spawner_status = await get_active_agents_status()
+            spawner_agents = spawner_status or {}
+            spawner_agent_count = len(spawner_agents)
+        except Exception as e:
+            logger.debug(f"Could not get spawner agent status: {e}")
+        
         return {
             "orchestrator_status": "running" if self.is_running else "stopped",
-            "total_agents": len(self.agents),
-            "active_agents": len([a for a in self.agents.values() if a.status == AgentStatus.ACTIVE]),
+            "total_agents": len(self.agents) + spawner_agent_count,
+            "orchestrator_agents": len(self.agents),
+            "spawner_agents": spawner_agent_count,
+            "active_agents": len([a for a in self.agents.values() if a.status == AgentStatus.ACTIVE]) + spawner_agent_count,
             "agents": agent_statuses,
+            "spawner_agents_detail": spawner_agents,
             "metrics": self.metrics,
             "system_health": await self._check_system_health(),
             **workflow_engine_status

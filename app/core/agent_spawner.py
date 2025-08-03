@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Any
 from dataclasses import dataclass, asdict
 import structlog
+from sqlalchemy import select
 
 from .orchestrator import AgentOrchestrator, AgentRole, AgentCapability, AgentInstance
 from .database import get_async_session

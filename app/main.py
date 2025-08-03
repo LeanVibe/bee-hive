@@ -207,6 +207,20 @@ def create_app() -> FastAPI:
     app.include_router(agent_activation_router, prefix="/api/agents", tags=["agent-activation"])
     app.include_router(hive_commands_router, prefix="/api/hive", tags=["hive-commands"])
     
+    @app.get("/debug-agents")
+    async def debug_agents():
+        """Debug endpoint to test agent count.""" 
+        try:
+            from .core.agent_spawner import get_active_agents_status
+            active_agents = await get_active_agents_status()
+            return {
+                "agent_count": len(active_agents),
+                "agents": active_agents,
+                "status": "debug_working"
+            }
+        except Exception as e:
+            return {"error": str(e), "status": "debug_error"}
+    
     @app.get("/health")
     async def health_check():
         """Comprehensive health check endpoint aggregating all component status."""
@@ -271,23 +285,40 @@ def create_app() -> FastAPI:
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
         
-        # Check Agent Orchestrator
+        # Check Agent System (integrated orchestrator + spawner)
         try:
             orchestrator = getattr(app.state, 'orchestrator', None)
             if orchestrator:
+                system_status = await orchestrator.get_system_status()
+                total_agents = system_status.get("total_agents", 0)
+                orchestrator_agents = system_status.get("orchestrator_agents", 0)
+                spawner_agents = system_status.get("spawner_agents", 0)
+                
                 health_status["components"]["orchestrator"] = {
-                    "status": "healthy",
-                    "details": "Agent Orchestrator running",
-                    "active_agents": 0  # Could check actual agent count
+                    "status": "healthy", 
+                    "details": f"Agent System running with {total_agents} total agents ({orchestrator_agents} orchestrator + {spawner_agents} spawner)",
+                    "total_agents": total_agents,
+                    "orchestrator_agents": orchestrator_agents,
+                    "spawner_agents": spawner_agents
                 }
                 health_status["summary"]["healthy"] += 1
             else:
-                raise Exception("Orchestrator not initialized")
+                # Fallback to direct spawner check
+                from .core.agent_spawner import get_active_agents_status
+                active_agents = await get_active_agents_status()
+                active_agent_count = len(active_agents) if active_agents else 0
+                
+                health_status["components"]["orchestrator"] = {
+                    "status": "degraded", 
+                    "details": f"Orchestrator not initialized, {active_agent_count} spawner agents active",
+                    "active_agents": active_agent_count
+                }
+                health_status["summary"]["healthy"] += 1
         except Exception as e:
             health_status["components"]["orchestrator"] = {
                 "status": "unhealthy",
                 "error": str(e),
-                "details": "Agent Orchestrator not available"
+                "details": f"Agent System error: {str(e)}"
             }
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
