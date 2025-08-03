@@ -36,6 +36,9 @@ from .core.error_handling_integration import initialize_error_handling_integrati
 from .api.v1.error_handling_health import router as error_handling_router
 from .api.v1.enhanced_coordination_api import router as enhanced_coordination_router
 from .api.v1.global_coordination import router as global_coordination_router
+from .dashboard.coordination_dashboard import router as dashboard_router
+from .api.agent_activation import router as agent_activation_router
+from .api.hive_commands import router as hive_commands_router
 
 
 # Configure structured logging
@@ -200,6 +203,9 @@ def create_app() -> FastAPI:
     app.include_router(intelligent_scheduling_router)
     app.include_router(monitoring_router)
     app.include_router(analytics_router)
+    app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
+    app.include_router(agent_activation_router, prefix="/api/agents", tags=["agent-activation"])
+    app.include_router(hive_commands_router, prefix="/api/hive", tags=["hive-commands"])
     
     @app.get("/health")
     async def health_check():

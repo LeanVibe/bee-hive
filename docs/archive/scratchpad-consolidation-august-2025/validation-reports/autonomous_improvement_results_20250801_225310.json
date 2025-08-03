@@ -1,0 +1,88 @@
+{
+  "analysis": {
+    "postgres": "\u274c Failed: connection to server at \"localhost\" (::1), port 5432 failed: FATAL:  password authentication failed for user \"postgres\"\n",
+    "redis": "\u2705 Connected",
+    "imports": [],
+    "demo": "\u2705 Validation passed"
+  },
+  "resolution_results": [
+    {
+      "issue_id": "postgres_auth_fix",
+      "success": false,
+      "actions_taken": [
+        "PostgreSQL Docker container is running",
+        "Attempting to restart PostgreSQL with fresh setup",
+        "Setup script failed: time=\"2025-08-02T01:52:54+03:00\" level=warning msg=\"Found orphan containers ([leanvibe_grafana leanvibe_prometheus]) for this project. If you removed or renamed this service in your compose file, you "
+      ],
+      "validation_results": {},
+      "execution_time": 11.271901
+    },
+    {
+      "issue_id": "test_infrastructure_repair",
+      "success": false,
+      "actions_taken": [
+        "Executed failing test to analyze root cause",
+        "Analyzed test failure - no obvious import issues"
+      ],
+      "validation_results": {},
+      "execution_time": 2.812884
+    },
+    {
+      "issue_id": "setup_optimization",
+      "success": false,
+      "actions_taken": [
+        "Found setup-fast.sh script",
+        "Ensured setup script is executable",
+        "Setup script failed: time=\"2025-08-02T01:53:07+03:00\" level=warning msg=\"Found orphan containers ([leanvibe_grafana leanvibe_prometheus]) for this project. If you removed or renamed this service in your compose file, you "
+      ],
+      "validation_results": {
+        "setup_execution": false
+      },
+      "execution_time": 9.910524
+    }
+  ],
+  "validation_summary": {
+    "total_issues": 3,
+    "resolved_issues": 0,
+    "partially_resolved": 0,
+    "unresolved_issues": 3,
+    "overall_success_rate": 0.0,
+    "details": {
+      "postgres_auth_fix": {
+        "issue_id": "postgres_auth_fix",
+        "success": false,
+        "actions_taken": [
+          "PostgreSQL Docker container is running",
+          "Attempting to restart PostgreSQL with fresh setup",
+          "Setup script failed: time=\"2025-08-02T01:52:54+03:00\" level=warning msg=\"Found orphan containers ([leanvibe_grafana leanvibe_prometheus]) for this project. If you removed or renamed this service in your compose file, you "
+        ],
+        "validation_results": {},
+        "execution_time": 11.271901
+      },
+      "test_infrastructure_repair": {
+        "issue_id": "test_infrastructure_repair",
+        "success": false,
+        "actions_taken": [
+          "Executed failing test to analyze root cause",
+          "Analyzed test failure - no obvious import issues"
+        ],
+        "validation_results": {},
+        "execution_time": 2.812884
+      },
+      "setup_optimization": {
+        "issue_id": "setup_optimization",
+        "success": false,
+        "actions_taken": [
+          "Found setup-fast.sh script",
+          "Ensured setup script is executable",
+          "Setup script failed: time=\"2025-08-02T01:53:07+03:00\" level=warning msg=\"Found orphan containers ([leanvibe_grafana leanvibe_prometheus]) for this project. If you removed or renamed this service in your compose file, you "
+        ],
+        "validation_results": {
+          "setup_execution": false
+        },
+        "execution_time": 9.910524
+      }
+    }
+  },
+  "timestamp": "2025-08-01T22:53:10.608311"
+}

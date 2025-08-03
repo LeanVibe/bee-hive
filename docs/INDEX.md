@@ -18,6 +18,12 @@
 
 ## 📚 Documentation Categories
 
+### 🚀 Current Status & Capabilities
+- [STATUS_COMPREHENSIVE.md](STATUS_COMPREHENSIVE.md) - **MASTER STATUS** - Complete platform status
+- [implementation/AUTONOMOUS_DEVELOPMENT_STATUS.md](implementation/AUTONOMOUS_DEVELOPMENT_STATUS.md) - Autonomous development capabilities
+- [enterprise/BOOTSTRAP_COMPLETION_REPORT.md](enterprise/BOOTSTRAP_COMPLETION_REPORT.md) - Enterprise bootstrap status
+- [enterprise/STRATEGIC_COMPLETION_ANALYSIS.md](enterprise/STRATEGIC_COMPLETION_ANALYSIS.md) - Strategic mission analysis
+
 ### Getting Started
 - [SANDBOX_MODE_GUIDE.md](SANDBOX_MODE_GUIDE.md) - Try autonomous development online
 - [AUTONOMOUS_DEVELOPMENT_DEMO.md](AUTONOMOUS_DEVELOPMENT_DEMO.md) - Demo walkthrough
@@ -68,15 +74,23 @@ docs/
 docs/archive/
 ├── deprecated/                       # Deprecated documentation
 ├── phase-reports/                    # Historical phase reports
-└── vertical-slice-reports/           # Implementation reports
+├── vertical-slice-reports/           # Implementation reports
+└── scratchpad-consolidation-august-2025/  # Consolidated analysis files
+    ├── analysis-reports/             # System completion analysis
+    ├── implementation-reports/       # Bootstrap and development status
+    ├── strategic-reports/            # Strategic planning analysis
+    ├── enterprise-reports/           # Enterprise deployment analysis
+    ├── gemini-analysis/              # External validation reports
+    └── validation-reports/           # QA and testing reports
 ```
 
 ## 🔍 Finding What You Need
 
 ### By Use Case
 - **First Time Setup**: [../README.md](../README.md) → Choose setup method
-- **System Status**: [../SYSTEM_STATUS.md](../SYSTEM_STATUS.md) → Current working features and limitations
+- **Current Platform Status**: [STATUS_COMPREHENSIVE.md](STATUS_COMPREHENSIVE.md) → **MASTER STATUS DOCUMENT**
 - **Understanding Features**: [AUTONOMOUS_DEVELOPMENT_DEMO.md](AUTONOMOUS_DEVELOPMENT_DEMO.md)
+- **Enterprise Information**: [enterprise/BOOTSTRAP_COMPLETION_REPORT.md](enterprise/BOOTSTRAP_COMPLETION_REPORT.md)
 - **Customization**: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
 - **Troubleshooting**: [TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md](TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md)
 

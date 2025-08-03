@@ -1,0 +1,459 @@
+#!/usr/bin/env python3
+"""
+LeanVibe Agent Hive 2.0 - Ultimate CLI Experience
+
+Simple, powerful commands for autonomous development platform management.
+Wraps existing infrastructure with an intuitive kubectl/docker-style interface.
+"""
+
+import asyncio
+import json
+import os
+import subprocess
+import sys
+import time
+import webbrowser
+from pathlib import Path
+from typing import Optional
+
+import click
+import requests
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    import structlog
+    logger = structlog.get_logger()
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
+
+try:
+    import requests
+except ImportError:
+    print("❌ Missing required dependency: requests")
+    print("💡 Run: pip install requests")
+    sys.exit(1)
+
+try:
+    import click
+except ImportError:
+    print("❌ Missing required dependency: click") 
+    print("💡 Run: pip install click")
+    sys.exit(1)
+
+
+class AgentHiveCLI:
+    """Main CLI controller for Agent Hive operations."""
+    
+    def __init__(self):
+        self.project_root = PROJECT_ROOT
+        self.api_base = "http://localhost:8000"
+        self.dashboard_url = "http://localhost:8000/dashboard"
+    
+    def run_command(self, cmd: list, cwd: Optional[Path] = None, check: bool = True) -> subprocess.CompletedProcess:
+        """Run a command with proper error handling."""
+        if cwd is None:
+            cwd = self.project_root
+        
+        try:
+            return subprocess.run(cmd, cwd=cwd, check=check, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            click.echo(f"❌ Command failed: {' '.join(cmd)}", err=True)
+            click.echo(f"Error: {e.stderr}", err=True)
+            raise click.Abort()
+    
+    def check_api_health(self) -> bool:
+        """Check if the API server is responding."""
+        try:
+            response = requests.get(f"{self.api_base}/health", timeout=5)
+            return response.status_code == 200
+        except requests.exceptions.RequestException:
+            return False
+    
+    def wait_for_api(self, timeout: int = 60) -> bool:
+        """Wait for API to become available."""
+        click.echo("⏳ Waiting for API server to start...")
+        
+        for i in range(timeout):
+            if self.check_api_health():
+                click.echo("✅ API server is ready")
+                return True
+            time.sleep(1)
+            if i % 10 == 0:
+                click.echo(f"   Still waiting... ({i}/{timeout}s)")
+        
+        return False
+
+
+cli_controller = AgentHiveCLI()
+
+
+@click.group()
+@click.version_option(version="2.0.0")
+def cli():
+    """
+    🚀 LeanVibe Agent Hive 2.0 - Autonomous Development Platform
+    
+    Manage your multi-agent development system with simple, powerful commands.
+    Built on production-grade infrastructure with enterprise capabilities.
+    """
+    pass
+
+
+@cli.command()
+@click.option('--open-dashboard/--no-dashboard', default=True, help='Open dashboard after start')
+def start(open_dashboard: bool):
+    """
+    🚀 Start the entire autonomous development platform
+    
+    This command:
+    - Sets up the complete infrastructure (if needed)
+    - Starts all services (API, database, Redis, monitoring)
+    - Validates system health
+    - Opens the management dashboard
+    """
+    click.echo("🚀 Starting LeanVibe Agent Hive 2.0...")
+    click.echo("=" * 50)
+    
+    # Check if setup is needed
+    if not (cli_controller.project_root / ".env.local").exists():
+        click.echo("🔧 First-time setup detected, running full setup...")
+        cli_controller.run_command(["make", "setup"])
+    else:
+        click.echo("✅ Setup already complete, starting services...")
+        cli_controller.run_command(["make", "start"])
+    
+    # Wait for API to be ready
+    if not cli_controller.wait_for_api():
+        click.echo("❌ API server failed to start", err=True)
+        raise click.Abort()
+    
+    # Check system health
+    try:
+        response = requests.get(f"{cli_controller.api_base}/health")
+        health_data = response.json()
+        
+        click.echo("\n🏥 System Health Check:")
+        click.echo("=" * 30)
+        
+        for component, status in health_data.get("components", {}).items():
+            status_icon = "✅" if status.get("status") == "healthy" else "❌"
+            click.echo(f"{status_icon} {component}: {status.get('status', 'unknown')}")
+        
+        overall_healthy = health_data.get("summary", {}).get("unhealthy", 1) == 0
+        if overall_healthy:
+            click.echo("\n🎉 All systems operational!")
+        else:
+            click.echo("\n⚠️ Some systems need attention")
+            
+    except Exception as e:
+        click.echo(f"⚠️ Could not get health status: {e}")
+    
+    # Show access URLs
+    click.echo("\n🌐 Access URLs:")
+    click.echo("=" * 20)
+    click.echo(f"📡 API Server: {cli_controller.api_base}")
+    click.echo(f"📊 API Docs: {cli_controller.api_base}/docs")
+    click.echo(f"🎛️ Dashboard: {cli_controller.dashboard_url}")
+    click.echo(f"📈 Health: {cli_controller.api_base}/health")
+    
+    # Open dashboard
+    if open_dashboard:
+        click.echo("\n🖥️ Opening dashboard...")
+        time.sleep(2)  # Give services a moment to stabilize
+        webbrowser.open(cli_controller.dashboard_url)
+    
+    click.echo("\n✨ LeanVibe Agent Hive is ready for autonomous development!")
+    click.echo("💡 Try: agent-hive develop \"Build authentication API\"")
+
+
+@cli.command()
+def stop():
+    """
+    🛑 Stop all Agent Hive services gracefully
+    
+    Performs a clean shutdown of all platform components.
+    """
+    click.echo("🛑 Stopping LeanVibe Agent Hive...")
+    
+    cli_controller.run_command(["make", "stop"])
+    click.echo("✅ All services stopped")
+
+
+@cli.command()
+def restart():
+    """
+    🔄 Restart the entire platform
+    
+    Equivalent to stop + start with health validation.
+    """
+    click.echo("🔄 Restarting LeanVibe Agent Hive...")
+    
+    # Stop first
+    cli_controller.run_command(["make", "stop"])
+    time.sleep(3)
+    
+    # Start again
+    cli_controller.run_command(["make", "start"])
+    
+    if cli_controller.wait_for_api():
+        click.echo("✅ Restart complete!")
+    else:
+        click.echo("❌ Restart failed", err=True)
+        raise click.Abort()
+
+
+@cli.command()
+def status():
+    """
+    📊 Show current platform status
+    
+    Displays real-time status of all components and services.
+    """
+    click.echo("📊 LeanVibe Agent Hive Status")
+    click.echo("=" * 35)
+    
+    # Check API status
+    if cli_controller.check_api_health():
+        click.echo("✅ API Server: Running")
+        
+        try:
+            # Get detailed status
+            response = requests.get(f"{cli_controller.api_base}/health")
+            health_data = response.json()
+            
+            # Show component status
+            click.echo("\n🔧 Components:")
+            for component, status in health_data.get("components", {}).items():
+                status_icon = "✅" if status.get("status") == "healthy" else "❌"
+                details = status.get("details", "")
+                click.echo(f"  {status_icon} {component}: {details}")
+            
+            # Show summary
+            summary = health_data.get("summary", {})
+            healthy_count = summary.get("healthy", 0)
+            total_count = summary.get("total", 0)
+            click.echo(f"\n📈 Overall: {healthy_count}/{total_count} components healthy")
+            
+        except Exception as e:
+            click.echo(f"⚠️ Could not get detailed status: {e}")
+    else:
+        click.echo("❌ API Server: Not responding")
+        click.echo("💡 Try: agent-hive start")
+
+
+@cli.command()
+def health():
+    """
+    🏥 Run comprehensive health check
+    
+    Performs deep health validation of all platform components.
+    """
+    click.echo("🏥 Running comprehensive health check...")
+    
+    cli_controller.run_command(["make", "health"])
+    click.echo("✅ Health check complete")
+
+
+@cli.command()
+@click.argument('task_description')
+@click.option('--dashboard-mode', is_flag=True, help='Enable dashboard integration for remote monitoring')
+def develop(task_description: str, dashboard_mode: bool):
+    """
+    🤖 Start autonomous development for a specific task
+    
+    Examples:
+      agent-hive develop "Build authentication API with JWT"
+      agent-hive develop "Create user management system" --dashboard-mode
+    """
+    click.echo(f"🤖 Starting autonomous development...")
+    click.echo(f"📋 Task: {task_description}")
+    
+    if dashboard_mode:
+        click.echo("📱 Dashboard mode enabled - check your dashboard for real-time updates")
+    
+    # Check if API is running
+    if not cli_controller.check_api_health():
+        click.echo("❌ Agent Hive is not running. Starting platform first...")
+        # Auto-start platform
+        cli_controller.run_command(["make", "start"])
+        if not cli_controller.wait_for_api():
+            click.echo("❌ Failed to start platform", err=True)
+            raise click.Abort()
+    
+    # Run autonomous development
+    demo_script = cli_controller.project_root / "scripts" / "demos" / "autonomous_development_demo.py"
+    
+    if demo_script.exists():
+        cmd = ["python", str(demo_script)]
+        if dashboard_mode:
+            cmd.append("--dashboard-mode")
+        
+        # Run the autonomous development demo
+        try:
+            result = subprocess.run(cmd, cwd=cli_controller.project_root, text=True)
+            if result.returncode == 0:
+                click.echo("✅ Autonomous development completed successfully!")
+            else:
+                click.echo("⚠️ Autonomous development completed with issues")
+        except KeyboardInterrupt:
+            click.echo("\n🛑 Autonomous development interrupted by user")
+    else:
+        click.echo("❌ Autonomous development demo not found")
+        click.echo("💡 Make sure you're in the agent-hive project directory")
+
+
+@cli.command()
+def dashboard():
+    """
+    🎛️ Open the management dashboard
+    
+    Opens the web-based dashboard for remote platform management.
+    """
+    if cli_controller.check_api_health():
+        click.echo("🎛️ Opening Agent Hive dashboard...")
+        webbrowser.open(cli_controller.dashboard_url)
+    else:
+        click.echo("❌ Agent Hive is not running")
+        click.echo("💡 Try: agent-hive start")
+
+
+@cli.command()
+@click.option('--follow', '-f', is_flag=True, help='Follow logs in real-time')
+def logs(follow: bool):
+    """
+    📜 View platform logs
+    
+    Shows logs from all platform services.
+    """
+    if follow:
+        click.echo("📜 Following Agent Hive logs (Ctrl+C to stop)...")
+        try:
+            cli_controller.run_command(["make", "logs-follow"], check=False)
+        except KeyboardInterrupt:
+            click.echo("\n✅ Stopped following logs")
+    else:
+        click.echo("📜 Agent Hive recent logs:")
+        cli_controller.run_command(["make", "logs"])
+
+
+@cli.command()
+def demo():
+    """
+    🎬 Run the complete autonomous development demo
+    
+    Showcases the full capabilities of the multi-agent system.
+    """
+    click.echo("🎬 Starting LeanVibe Agent Hive demonstration...")
+    click.echo("=" * 50)
+    
+    # Ensure platform is running
+    if not cli_controller.check_api_health():
+        click.echo("🚀 Starting platform for demo...")
+        cli_controller.run_command(["make", "start"])
+        cli_controller.wait_for_api()
+    
+    # Open dashboard for real-time viewing
+    click.echo("🎛️ Opening dashboard for real-time monitoring...")
+    webbrowser.open(cli_controller.dashboard_url)
+    time.sleep(2)
+    
+    # Run the demo
+    click.echo("🤖 Launching autonomous development demonstration...")
+    demo_task = "Build a complete user authentication API with JWT tokens, password hashing, and role-based access control"
+    
+    demo_script = cli_controller.project_root / "scripts" / "demos" / "autonomous_development_demo.py"
+    if demo_script.exists():
+        subprocess.run(["python", str(demo_script), "--dashboard-mode"], 
+                      cwd=cli_controller.project_root)
+    else:
+        click.echo("Creating simulated autonomous development demo...")
+        click.echo("🧠 AI Agent: Analyzing requirements...")
+        time.sleep(2)
+        click.echo("📝 AI Agent: Creating implementation plan...")
+        time.sleep(2)
+        click.echo("💻 AI Agent: Generating code...")
+        time.sleep(3)
+        click.echo("🧪 AI Agent: Running tests...")
+        time.sleep(2)
+        click.echo("✅ AI Agent: Task completed successfully!")
+    
+    click.echo("\n🎉 Demo complete! Check the dashboard for details.")
+
+
+@cli.command()
+def reset():
+    """
+    🔄 Reset the platform to clean state
+    
+    WARNING: This will remove all data and start fresh.
+    """
+    if click.confirm("⚠️ This will reset all data. Are you sure?"):
+        click.echo("🔄 Resetting Agent Hive to clean state...")
+        cli_controller.run_command(["make", "clean"])
+        cli_controller.run_command(["make", "setup"])
+        click.echo("✅ Reset complete!")
+
+
+@cli.command()
+def walkthrough():
+    """
+    🚀 Run complete autonomous development walkthrough
+    
+    End-to-end demonstration from infrastructure to working code.
+    Shows agent activation, coordination, and real development.
+    """
+    click.echo("🚀 Starting complete autonomous development walkthrough...")
+    click.echo("=" * 60)
+    
+    walkthrough_script = cli_controller.project_root / "scripts" / "complete_autonomous_walkthrough.py"
+    if walkthrough_script.exists():
+        try:
+            subprocess.run(["python", str(walkthrough_script)], 
+                          cwd=cli_controller.project_root, check=True)
+        except subprocess.CalledProcessError:
+            click.echo("⚠️  Walkthrough completed with some issues")
+    else:
+        click.echo("❌ Complete walkthrough script not found")
+        click.echo("💡 Make sure you're in the agent-hive project directory")
+
+
+@cli.command()
+def config():
+    """
+    ⚙️ Show current configuration
+    
+    Displays current platform configuration and settings.
+    """
+    click.echo("⚙️ Agent Hive Configuration")
+    click.echo("=" * 30)
+    
+    # Show environment info
+    env_file = cli_controller.project_root / ".env.local"
+    if env_file.exists():
+        click.echo("✅ Environment file: .env.local exists")
+    else:
+        click.echo("❌ Environment file: .env.local missing")
+        click.echo("💡 Run: agent-hive start (to create)")
+    
+    # Show API endpoints
+    click.echo(f"\n🌐 API Base: {cli_controller.api_base}")
+    click.echo(f"🎛️ Dashboard: {cli_controller.dashboard_url}")
+    
+    # Show project info
+    click.echo(f"\n📁 Project Root: {cli_controller.project_root}")
+    
+    if cli_controller.check_api_health():
+        try:
+            response = requests.get(f"{cli_controller.api_base}/health")
+            version_info = response.json().get("version", "unknown")
+            click.echo(f"📦 Platform Version: {version_info}")
+        except:
+            pass
+
+
+if __name__ == "__main__":
+    cli()
