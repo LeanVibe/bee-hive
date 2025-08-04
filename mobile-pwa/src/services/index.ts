@@ -83,6 +83,28 @@ export type {
   ChartData 
 } from './metrics';
 
+// Task Coordination Service
+export { 
+  TaskCoordinationService, 
+  getTaskCoordinationService, 
+  resetTaskCoordinationService 
+} from './task-coordination';
+export type { 
+  TaskAssignment, 
+  AgentWorkload, 
+  TaskCoordinationMetrics, 
+  CollaborationRequest, 
+  AutoAssignmentRule 
+} from './task-coordination';
+
+// Notification Service (placeholder)
+export function getNotificationService() {
+  return {
+    subscribe: () => ({ unsubscribe: () => {} }),
+    notify: () => Promise.resolve()
+  };
+}
+
 // API Types (re-export for convenience)
 export type {
   // Base API types

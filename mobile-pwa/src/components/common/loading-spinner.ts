@@ -3,9 +3,18 @@ import { customElement, property } from 'lit/decorators.js'
 
 @customElement('loading-spinner')
 export class LoadingSpinner extends LitElement {
-  @property() size: 'small' | 'medium' | 'large' = 'medium'
-  @property() color: string = '#3b82f6'
-  @property() text: string = ''
+  @property() declare size: 'small' | 'medium' | 'large'
+  @property() declare color: string
+  @property() declare text: string
+  
+  constructor() {
+    super()
+    
+    // Initialize properties
+    this.size = 'medium'
+    this.color = '#3b82f6'
+    this.text = ''
+  }
   
   static styles = css`
     :host {

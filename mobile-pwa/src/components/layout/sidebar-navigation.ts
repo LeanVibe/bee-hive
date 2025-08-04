@@ -13,10 +13,10 @@ export interface NavigationItem {
 
 @customElement('sidebar-navigation')
 export class SidebarNavigation extends LitElement {
-  @property() currentRoute: string = '/'
-  @property({ type: Boolean }) collapsed: boolean = false
-  @property({ type: Boolean }) mobile: boolean = false
-  @state() private expandedItems: Set<string> = new Set()
+  @property() declare currentRoute: string
+  @property({ type: Boolean }) declare collapsed: boolean
+  @property({ type: Boolean }) declare mobile: boolean
+  @state() declare private expandedItems: Set<string>
 
   static styles = css`
     :host {
@@ -454,6 +454,12 @@ export class SidebarNavigation extends LitElement {
 
   constructor() {
     super()
+    
+    // Initialize state properties
+    this.currentRoute = '/'
+    this.collapsed = false
+    this.mobile = false
+    this.expandedItems = new Set()
     
     // Auto-collapse on mobile by default
     if (window.innerWidth < 768) {

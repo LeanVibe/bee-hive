@@ -28,6 +28,31 @@ export class TestHelpers {
   }
 
   /**
+   * Disable API mocks to test against real backend
+   */
+  static async disableAPIMocks(page: Page) {
+    // Remove any existing route handlers that mock API calls
+    await page.unroute('**/api/**')
+    
+    // Set a flag in the page context to indicate real backend testing
+    await page.addInitScript(() => {
+      window.__TEST_REAL_BACKEND__ = true
+    })
+  }
+
+  /**
+   * Verify the backend is accessible and ready
+   */
+  static async verifyBackendConnection(page: Page, baseUrl: string = 'http://localhost:8000') {
+    try {
+      const response = await page.request.get(`${baseUrl}/health`)
+      return response.status() === 200
+    } catch (error) {
+      return false
+    }
+  }
+
+  /**
    * Simulate slow network conditions
    */
   static async simulateSlowNetwork(page: Page) {

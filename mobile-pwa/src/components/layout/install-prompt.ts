@@ -3,9 +3,17 @@ import { customElement, state } from 'lit/decorators.js'
 
 @customElement('install-prompt')
 export class InstallPrompt extends LitElement {
-  @state() private showPrompt: boolean = false
-  @state() private isInstalled: boolean = false
+  @state() declare private showPrompt: boolean
+  @state() declare private isInstalled: boolean
   private deferredPrompt: any = null
+  
+  constructor() {
+    super()
+    
+    // Initialize state properties
+    this.showPrompt = false
+    this.isInstalled = false
+  }
   
   static styles = css`
     :host {

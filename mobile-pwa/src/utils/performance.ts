@@ -141,3 +141,6 @@ export class PerformanceOptimizer {
     }
   }
 }
+
+// Export alias for compatibility
+export const PerformanceMonitor = PerformanceOptimizer

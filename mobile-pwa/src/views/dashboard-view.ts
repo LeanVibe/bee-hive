@@ -6,16 +6,7 @@ import { TimelineEvent } from '../components/dashboard/event-timeline'
 import { WebSocketService } from '../services/websocket'
 import { OfflineService } from '../services/offline'
 import { NotificationService } from '../services/notification'
-import { 
-  initializeServices, 
-  startAllMonitoring, 
-  stopAllMonitoring,
-  getSystemHealthService,
-  getAgentService,
-  getTaskService,
-  getEventService,
-  getMetricsService
-} from '../services'
+import { backendAdapter } from '../services/backend-adapter'
 import type {
   SystemHealth,
   Agent,
@@ -29,32 +20,29 @@ import '../components/dashboard/event-timeline'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
-  @property({ type: Boolean }) offline: boolean = false
+  @property({ type: Boolean }) declare offline: boolean
   
-  @state() private tasks: Task[] = []
-  @state() private agents: AgentStatus[] = []
-  @state() private events: TimelineEvent[] = []
-  @state() private systemHealth: SystemHealth | null = null
-  @state() private performanceMetrics: PerformanceSnapshot | null = null
-  @state() private healthSummary: HealthSummary | null = null
-  @state() private isLoading: boolean = true
-  @state() private error: string = ''
-  @state() private lastSync: Date | null = null
-  @state() private selectedView: 'overview' | 'kanban' | 'agents' | 'events' = 'overview'
-  @state() private servicesInitialized: boolean = false
+  @state() declare private tasks: Task[]
+  @state() declare private agents: AgentStatus[]
+  @state() declare private events: TimelineEvent[]
+  @state() declare private systemHealth: SystemHealth | null
+  @state() declare private performanceMetrics: PerformanceSnapshot | null
+  @state() declare private healthSummary: HealthSummary | null
+  @state() declare private isLoading: boolean
+  @state() declare private error: string
+  @state() declare private lastSync: Date | null
+  @state() declare private selectedView: 'overview' | 'kanban' | 'agents' | 'events'
+  @state() declare private servicesInitialized: boolean
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
   private notificationService: NotificationService
   
-  // Integrated data services
-  private systemHealthService: ReturnType<typeof getSystemHealthService>
-  private agentService: ReturnType<typeof getAgentService>
-  private taskService: ReturnType<typeof getTaskService>
-  private eventService: ReturnType<typeof getEventService>
-  private metricsService: ReturnType<typeof getMetricsService>
+  // Backend adapter for real data integration
+  private backendAdapter = backendAdapter
   
   private monitoringActive: boolean = false
+  private stopRealtimeUpdates: (() => void) | null = null
   
   static styles = css`
     :host {
@@ -342,38 +330,48 @@ export class DashboardView extends LitElement {
   
   constructor() {
     super()
+    
+    // Initialize state properties
+    this.offline = false
+    this.tasks = []
+    this.agents = []
+    this.events = []
+    this.systemHealth = null
+    this.performanceMetrics = null
+    this.healthSummary = null
+    this.isLoading = true
+    this.error = ''
+    this.lastSync = null
+    this.selectedView = 'overview'
+    this.servicesInitialized = false
+    
     this.websocketService = WebSocketService.getInstance()
     this.offlineService = OfflineService.getInstance()
     this.notificationService = NotificationService.getInstance()
     
-    // Initialize integrated services
-    this.systemHealthService = getSystemHealthService()
-    this.agentService = getAgentService()
-    this.taskService = getTaskService()
-    this.eventService = getEventService()
-    this.metricsService = getMetricsService()
+    // Backend adapter handles all data integration
     
     // Listen for offline state changes
-    this.offlineService.addEventListener('online', () => {
+    this.offlineService.on('online', () => {
       this.offline = false
       this.syncTasks()
     })
     
-    this.offlineService.addEventListener('offline', () => {
+    this.offlineService.on('offline', () => {
       this.offline = true
     })
     
     // Listen for WebSocket events
-    this.websocketService.addEventListener('task-updated', (event: CustomEvent) => {
-      this.handleTaskUpdate(event.detail)
+    this.websocketService.on('task-updated', (event: any) => {
+      this.handleTaskUpdate(event.detail || event)
     })
     
-    this.websocketService.addEventListener('task-created', (event: CustomEvent) => {
-      this.handleTaskCreated(event.detail)
+    this.websocketService.on('task-created', (event: any) => {
+      this.handleTaskCreated(event.detail || event)
     })
     
-    this.websocketService.addEventListener('task-deleted', (event: CustomEvent) => {
-      this.handleTaskDeleted(event.detail)
+    this.websocketService.on('task-deleted', (event: any) => {
+      this.handleTaskDeleted(event.detail || event)
     })
   }
   
@@ -391,78 +389,40 @@ export class DashboardView extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback()
     this.websocketService.disconnect()
-    this.stopAllMonitoring()
+    
+    // Stop real-time updates from backend adapter
+    if (this.stopRealtimeUpdates) {
+      this.stopRealtimeUpdates()
+      this.stopRealtimeUpdates = null
+    }
   }
   
   /**
-   * Initialize integrated services with event listeners
+   * Initialize backend adapter with event listeners
    */
   private async initializeIntegratedServices() {
     if (this.servicesInitialized) return
     
     try {
-      // Set up event listeners for real-time updates
-      this.systemHealthService.addEventListener('healthChanged', this.handleHealthChanged.bind(this))
-      this.agentService.addEventListener('agentsChanged', this.handleAgentsChanged.bind(this))
-      this.taskService.addEventListener('tasksChanged', this.handleTasksChanged.bind(this))
-      this.eventService.addEventListener('newEvent', this.handleNewEvent.bind(this))
-      this.metricsService.addEventListener('metricsUpdated', this.handleMetricsUpdated.bind(this))
+      // Set up event listeners for real-time updates from backend adapter
+      this.backendAdapter.on('liveDataUpdated', this.handleLiveDataUpdated.bind(this))
+      this.backendAdapter.on('error', this.handleBackendError.bind(this))
       
-      // Start monitoring if online
+      // Start real-time monitoring if online
       if (!this.offline) {
-        this.startAllMonitoring()
+        this.stopRealtimeUpdates = this.backendAdapter.startRealtimeUpdates()
       }
       
       this.servicesInitialized = true
-      console.log('Dashboard services initialized successfully')
+      console.log('✅ Backend adapter initialized successfully')
       
     } catch (error) {
-      console.error('Failed to initialize dashboard services:', error)
-      this.error = 'Failed to initialize dashboard services'
+      console.error('❌ Failed to initialize backend adapter:', error)
+      this.error = 'Failed to connect to backend services'
     }
   }
   
-  /**
-   * Start all real-time monitoring
-   */
-  private startAllMonitoring() {
-    if (this.monitoringActive) return
-    
-    try {
-      this.systemHealthService.startMonitoring()
-      this.agentService.startMonitoring()
-      this.taskService.startMonitoring()
-      this.eventService.startRealtimeMonitoring()
-      this.metricsService.startMonitoring()
-      
-      this.monitoringActive = true
-      console.log('All monitoring services started')
-      
-    } catch (error) {
-      console.error('Failed to start monitoring services:', error)
-    }
-  }
-  
-  /**
-   * Stop all monitoring
-   */
-  private stopAllMonitoring() {
-    if (!this.monitoringActive) return
-    
-    try {
-      this.systemHealthService.stopMonitoring()
-      this.agentService.stopMonitoring()
-      this.taskService.stopMonitoring()
-      this.eventService.stopRealtimeMonitoring()
-      this.metricsService.stopMonitoring()
-      
-      this.monitoringActive = false
-      console.log('All monitoring services stopped')
-      
-    } catch (error) {
-      console.error('Failed to stop monitoring services:', error)
-    }
-  }
+  // Monitoring methods removed - now handled by backend adapter
   
   /**
    * Load all dashboard data using integrated services
@@ -475,7 +435,16 @@ export class DashboardView extends LitElement {
       // Try to load from cache first
       const cachedTasks = await this.offlineService.getTasks()
       if (cachedTasks.length > 0) {
-        this.tasks = cachedTasks
+        // Convert OfflineTask format back to UI format
+        this.tasks = cachedTasks.map(task => ({
+          id: task.id,
+          title: task.title,
+          status: task.status,
+          priority: task.priority,
+          createdAt: new Date(task.created_at).toISOString(),
+          updatedAt: new Date(task.updated_at).toISOString(),
+          syncStatus: task.synced ? 'synced' : 'pending'
+        }))
         this.isLoading = false
       }
       
@@ -493,28 +462,43 @@ export class DashboardView extends LitElement {
   }
   
   /**
-   * Sync all data using integrated services instead of direct API calls
+   * Sync all data using backend adapter
    */
   private async syncAllIntegratedData() {
     try {
-      const [healthData, agentData, taskData, eventData, metricsData] = await Promise.all([
-        this.systemHealthService.getSystemHealth(),
-        this.agentService.getAgents(),
-        this.taskService.getTasks(),
-        this.eventService.getRecentEvents(100),
-        this.metricsService.getCurrentMetrics()
+      console.log('🔄 Syncing data from backend adapter...')
+      
+      // Get all data from backend adapter
+      const [taskData, agentData, systemHealthData, eventData, metricsData] = await Promise.all([
+        this.backendAdapter.getTasksFromLiveData(),
+        this.backendAdapter.getAgentsFromLiveData(),
+        this.backendAdapter.getSystemHealthFromLiveData(),
+        this.backendAdapter.getEventsFromLiveData(100),
+        this.backendAdapter.getPerformanceMetricsFromLiveData()
       ])
       
       // Update system health
-      this.systemHealth = healthData
-      this.healthSummary = await this.systemHealthService.getHealthSummary()
+      this.systemHealth = systemHealthData
+      this.healthSummary = {
+        overall: systemHealthData.overall,
+        components: systemHealthData.components
+      }
       
       // Transform agent data to UI format
       this.agents = agentData.map(this.transformAgentToUIFormat)
       
-      // Update tasks
+      // Update tasks - convert to OfflineTask format for saving
       this.tasks = taskData
-      await this.offlineService.cacheTasks(taskData)
+      const offlineTasks = taskData.map(task => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority || 'medium',
+        created_at: Date.now(),
+        updated_at: Date.now(),
+        synced: true
+      }))
+      await this.offlineService.saveTasks(offlineTasks)
       
       // Transform events to UI format  
       this.events = eventData.map(this.transformEventToUIFormat)
@@ -525,10 +509,10 @@ export class DashboardView extends LitElement {
       this.lastSync = new Date()
       this.error = ''
       
-      console.log('All integrated data synced successfully')
+      console.log('✅ All data synced successfully from backend adapter')
       
     } catch (error) {
-      console.error('Failed to sync integrated data:', error)
+      console.error('❌ Failed to sync data from backend adapter:', error)
       this.error = error instanceof Error ? error.message : 'Failed to sync data'
     }
   }
@@ -580,36 +564,17 @@ export class DashboardView extends LitElement {
   }
   
   /**
-   * Real-time event handlers for integrated services
+   * Real-time event handlers for backend adapter
    */
-  private handleHealthChanged = (event: CustomEvent) => {
-    this.systemHealth = event.detail.health
-    this.systemHealthService.getHealthSummary().then(summary => {
-      this.healthSummary = summary
-    })
-    console.log('System health updated:', event.detail.health)
+  private handleLiveDataUpdated = async (event: CustomEvent) => {
+    console.log('🔄 Live data updated from backend')
+    // Refresh all data when backend sends updates
+    await this.syncAllIntegratedData()
   }
   
-  private handleAgentsChanged = (event: CustomEvent) => {
-    this.agents = event.detail.agents.map(this.transformAgentToUIFormat)
-    console.log('Agents updated:', event.detail.agents.length, 'agents')
-  }
-  
-  private handleTasksChanged = (event: CustomEvent) => {
-    this.tasks = event.detail.tasks
-    this.offlineService.cacheTasks(event.detail.tasks)
-    console.log('Tasks updated:', event.detail.tasks.length, 'tasks')
-  }
-  
-  private handleNewEvent = (event: CustomEvent) => {
-    const newEvent = this.transformEventToUIFormat(event.detail.event)
-    this.events = [newEvent, ...this.events].slice(0, 100) // Keep latest 100 events
-    console.log('New event received:', newEvent)
-  }
-  
-  private handleMetricsUpdated = (event: CustomEvent) => {
-    this.performanceMetrics = event.detail.metrics
-    console.log('Performance metrics updated')
+  private handleBackendError = (event: CustomEvent) => {
+    console.error('❌ Backend adapter error:', event.detail)
+    this.error = 'Connection to backend lost - using cached data'
   }
   
   private async syncAllData() {
@@ -643,8 +608,9 @@ export class DashboardView extends LitElement {
         return
       }
       
-      // Use integrated TaskService instead of direct API call
-      const updatedTask = await this.taskService.updateTask(taskId, { 
+      // Use backend adapter for task updates (mock operation)
+      const updatedTask = await this.backendAdapter.mockWriteOperation('updateTask', { 
+        id: taskId,
         status: newStatus,
         updated_at: new Date() 
       })

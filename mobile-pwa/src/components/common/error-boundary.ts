@@ -3,9 +3,18 @@ import { customElement, state } from 'lit/decorators.js'
 
 @customElement('error-boundary')
 export class ErrorBoundary extends LitElement {
-  @state() private hasError: boolean = false
-  @state() private errorMessage: string = ''
-  @state() private errorStack: string = ''
+  @state() declare private hasError: boolean
+  @state() declare private errorMessage: string
+  @state() declare private errorStack: string
+  
+  constructor() {
+    super()
+    
+    // Initialize state properties
+    this.hasError = false
+    this.errorMessage = ''
+    this.errorStack = ''
+  }
   
   static styles = css`
     :host {

@@ -792,13 +792,66 @@ export class AgentsView extends LitElement {
     this.error = ''
 
     try {
-      // Load agents using integrated service
-      const agentData = await this.agentService.getAgents()
+      // Load agents using real API call
+      const systemStatus = await this.agentService.getAgentSystemStatus(false)
+      
+      // Extract agents from system status
+      const agentData: any[] = []
+      
+      // Add spawner agents
+      if (systemStatus.agents) {
+        Object.entries(systemStatus.agents).forEach(([agentId, agentInfo]: [string, any]) => {
+          agentData.push({
+            id: agentId,
+            name: agentInfo.role ? `${agentInfo.role} Agent` : `Agent ${agentId.slice(0, 8)}`,
+            role: agentInfo.role || 'unknown',
+            status: agentInfo.status || 'active',
+            capabilities: agentInfo.capabilities || [],
+            performance_metrics: {
+              tasks_completed: agentInfo.tasks_completed || 0,
+              tasks_failed: agentInfo.tasks_failed || 0,
+              cpu_usage: agentInfo.cpu_usage || 0,
+              memory_usage: agentInfo.memory_usage || 0,
+              success_rate: agentInfo.success_rate || 0.95,
+              uptime: agentInfo.uptime || 0
+            },
+            current_task_id: agentInfo.current_task,
+            last_activity: agentInfo.last_heartbeat || new Date().toISOString()
+          })
+        })
+      }
+      
+      // Add orchestrator agents
+      if (systemStatus.orchestrator_agents_detail) {
+        Object.entries(systemStatus.orchestrator_agents_detail).forEach(([agentId, agentInfo]: [string, any]) => {
+          agentData.push({
+            id: agentId,
+            name: agentInfo.role ? `${agentInfo.role} Agent` : `Orchestrator Agent ${agentId.slice(0, 8)}`,
+            role: agentInfo.role || 'orchestrator',
+            status: agentInfo.status || 'active',
+            capabilities: agentInfo.capabilities || [],
+            performance_metrics: {
+              tasks_completed: agentInfo.tasks_completed || 0,
+              tasks_failed: agentInfo.tasks_failed || 0,
+              cpu_usage: agentInfo.cpu_usage || 0,
+              memory_usage: agentInfo.memory_usage || 0,
+              success_rate: agentInfo.success_rate || 0.95,
+              uptime: agentInfo.uptime || 0
+            },
+            current_task_id: agentInfo.current_task,
+            last_activity: agentInfo.last_heartbeat || new Date().toISOString()
+          })
+        })
+      }
       
       // Transform to UI format
       this.agents = agentData.map(this.transformAgentToUIFormat)
       
-      console.log('Loaded', this.agents.length, 'agents from service')
+      console.log('Loaded', this.agents.length, 'agents from API:', {
+        spawner_agents: systemStatus.spawner_agents,
+        orchestrator_agents: systemStatus.orchestrator_agents,
+        total_from_status: systemStatus.agent_count
+      })
 
     } catch (error) {
       console.error('Failed to load agents:', error)
@@ -1075,28 +1128,24 @@ export class AgentsView extends LitElement {
   }
   
   /**
-   * Activate an agent
+   * Activate an agent (spawn a new agent with specific role)
    */
   private async handleActivateAgent(agentId: string) {
     try {
-      const options: AgentActivationOptions = {
-        role: 'developer', // Default role, could be determined by agent type
-        priority: 'normal'
-      }
+      // For individual agent activation, we'll spawn a new agent
+      // In practice, we'd determine the role from the agent data
+      const agent = this.agents.find(a => a.id === agentId)
+      const role = agent?.name?.toLowerCase().includes('backend') ? 'backend_developer' :
+                  agent?.name?.toLowerCase().includes('frontend') ? 'frontend_developer' :
+                  agent?.name?.toLowerCase().includes('qa') ? 'qa_engineer' :
+                  agent?.name?.toLowerCase().includes('devops') ? 'devops_engineer' :
+                  'backend_developer' // default
       
-      await this.agentService.activateAgent(agentId, options)
-      console.log('Agent activation requested:', agentId)
+      const response = await this.agentService.spawnAgent(role as any)
+      console.log('Agent spawned successfully:', response)
       
-      // Update local state optimistically
-      const agentIndex = this.agents.findIndex(a => a.id === agentId)
-      if (agentIndex >= 0) {
-        const updatedAgents = [...this.agents]
-        updatedAgents[agentIndex] = {
-          ...updatedAgents[agentIndex],
-          status: 'active'
-        }
-        this.agents = updatedAgents
-      }
+      // Refresh the agent list to get updated data
+      await this.loadAgents()
       
     } catch (error) {
       console.error('Failed to activate agent:', error)
@@ -1109,19 +1158,11 @@ export class AgentsView extends LitElement {
    */
   private async handleDeactivateAgent(agentId: string) {
     try {
-      await this.agentService.deactivateAgent(agentId)
-      console.log('Agent deactivation requested:', agentId)
+      const response = await this.agentService.deactivateAgent(agentId)
+      console.log('Agent deactivation requested:', response)
       
-      // Update local state optimistically
-      const agentIndex = this.agents.findIndex(a => a.id === agentId)
-      if (agentIndex >= 0) {
-        const updatedAgents = [...this.agents]
-        updatedAgents[agentIndex] = {
-          ...updatedAgents[agentIndex],
-          status: 'idle'
-        }
-        this.agents = updatedAgents
-      }
+      // Refresh the agent list to get updated data
+      await this.loadAgents()
       
     } catch (error) {
       console.error('Failed to deactivate agent:', error)

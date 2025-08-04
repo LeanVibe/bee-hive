@@ -16,18 +16,37 @@ export interface TimelineEvent {
 
 @customElement('event-timeline')
 export class EventTimeline extends LitElement {
-  @property({ type: Array }) events: TimelineEvent[] = []
-  @property({ type: Number }) maxEvents: number = 50
-  @property({ type: Boolean }) realtime: boolean = true
-  @property({ type: String }) filterAgent: string = ''
-  @property({ type: String }) filterType: string = ''
-  @property({ type: String }) filterSeverity: string = ''
-  @property({ type: Boolean }) compact: boolean = false
+  @property({ type: Array }) declare events: TimelineEvent[]
+  @property({ type: Number }) declare maxEvents: number
+  @property({ type: Boolean }) declare realtime: boolean
+  @property({ type: String }) declare filterAgent: string
+  @property({ type: String }) declare filterType: string
+  @property({ type: String }) declare filterSeverity: string
+  @property({ type: Boolean }) declare compact: boolean
   
-  @state() private isAutoScrollEnabled: boolean = true
-  @state() private isPaused: boolean = false
-  @state() private hasNewEvents: boolean = false
-  @state() private lastEventCount: number = 0
+  @state() declare private isAutoScrollEnabled: boolean
+  @state() declare private isPaused: boolean
+  @state() declare private hasNewEvents: boolean
+  @state() declare private lastEventCount: number
+  
+  constructor() {
+    super()
+    
+    // Initialize properties
+    this.events = []
+    this.maxEvents = 50
+    this.realtime = true
+    this.filterAgent = ''
+    this.filterType = ''
+    this.filterSeverity = ''
+    this.compact = false
+    
+    // Initialize state properties
+    this.isAutoScrollEnabled = true
+    this.isPaused = false
+    this.hasNewEvents = false
+    this.lastEventCount = 0
+  }
   
   private timelineContainer?: HTMLElement
   private eventCountBadge?: HTMLElement

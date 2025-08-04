@@ -9,15 +9,30 @@ export interface SparklineDataPoint {
 
 @customElement('sparkline-chart')
 export class SparklineChart extends LitElement {
-  @property({ type: Array }) data: SparklineDataPoint[] = []
-  @property({ type: Number }) width: number = 120
-  @property({ type: Number }) height: number = 40
-  @property({ type: String }) color: string = '#3b82f6'
-  @property({ type: String }) fillColor: string = 'rgba(59, 130, 246, 0.1)'
-  @property({ type: Boolean }) showArea: boolean = true
-  @property({ type: Boolean }) showDots: boolean = false
-  @property({ type: Number }) strokeWidth: number = 2
-  @property({ type: String }) label: string = ''
+  @property({ type: Array }) declare data: SparklineDataPoint[]
+  @property({ type: Number }) declare width: number
+  @property({ type: Number }) declare height: number
+  @property({ type: String }) declare color: string
+  @property({ type: String }) declare fillColor: string
+  @property({ type: Boolean }) declare showArea: boolean
+  @property({ type: Boolean }) declare showDots: boolean
+  @property({ type: Number }) declare strokeWidth: number
+  @property({ type: String }) declare label: string
+  
+  constructor() {
+    super()
+    
+    // Initialize properties
+    this.data = []
+    this.width = 120
+    this.height = 40
+    this.color = '#3b82f6'
+    this.fillColor = 'rgba(59, 130, 246, 0.1)'
+    this.showArea = true
+    this.showDots = false
+    this.strokeWidth = 2
+    this.label = ''
+  }
   
   static styles = css`
     :host {

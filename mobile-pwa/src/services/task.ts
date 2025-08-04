@@ -51,6 +51,67 @@ export interface TaskFilters {
     start: string;
     end: string;
   };
+  sprintId?: string;
+  labels?: string[];
+  workloadBalance?: boolean;
+}
+
+export interface SprintPlan {
+  id: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: 'planning' | 'active' | 'completed' | 'cancelled';
+  tasks: Task[];
+  velocity: {
+    planned: number;
+    completed: number;
+    capacity: number;
+  };
+  teamComposition: string[];
+  burndownData: BurndownPoint[];
+}
+
+export interface BurndownPoint {
+  date: string;
+  remainingWork: number;
+  idealLine: number;
+  completedWork: number;
+}
+
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  description: string;
+  defaultTaskType: TaskType;
+  defaultPriority: TaskPriority;
+  estimatedEffort: number;
+  requiredSkills: string[];
+  checklistItems: string[];
+  associatedRoles: AgentRole[];
+}
+
+export interface AgentWorkload {
+  agentId: string;
+  agentName: string;
+  role: AgentRole;
+  currentLoad: number;
+  capacity: number;
+  utilization: number;
+  assignedTasks: Task[];
+  capabilities: string[];
+  availability: 'available' | 'busy' | 'overloaded';
+}
+
+export interface TaskAssignmentRecommendation {
+  agentId: string;
+  agentName: string;
+  role: AgentRole;
+  score: number;
+  reasoning: string[];
+  estimatedCompletionTime: number;
+  currentWorkload: number;
 }
 
 export interface TaskStatistics {
@@ -74,6 +135,11 @@ export class TaskService extends BaseService {
   private tasks: Map<string, Task> = new Map();
   private lastSync: string | null = null;
   private syncInProgress = false;
+  private currentSprint: SprintPlan | null = null;
+  private templates: Map<string, TaskTemplate> = new Map();
+  private workloadCache: Map<string, AgentWorkload> = new Map();
+  private velocityHistory: Map<string, number[]> = new Map();
+  private analyticsData: TaskAnalytics | null = null;
 
   // Kanban column configuration
   private readonly kanbanColumns: Omit<KanbanColumn, 'tasks' | 'count'>[] = [
@@ -443,6 +509,478 @@ export class TaskService extends BaseService {
     }
   }
 
+  // ===== SPRINT PLANNING & BACKLOG MANAGEMENT =====
+
+  /**
+   * Create a new sprint plan
+   */
+  async createSprint(sprintData: {
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    teamComposition: string[];
+  }): Promise<SprintPlan> {
+    try {
+      const sprint: SprintPlan = {
+        id: `sprint_${Date.now()}`,
+        ...sprintData,
+        status: 'planning',
+        tasks: [],
+        velocity: {
+          planned: 0,
+          completed: 0,
+          capacity: sprintData.teamComposition.length * 40 // 40 hours per agent
+        },
+        burndownData: []
+      };
+
+      // In real implementation, would call backend API
+      // For now, storing in cache
+      this.setInCache(`sprint_${sprint.id}`, sprint);
+      
+      this.emit('sprintCreated', sprint);
+      return sprint;
+
+    } catch (error) {
+      this.emit('sprintCreateFailed', { sprintData, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Add tasks to sprint backlog
+   */
+  async addTasksToSprint(sprintId: string, taskIds: string[]): Promise<SprintPlan> {
+    try {
+      const sprint = this.getFromCache(`sprint_${sprintId}`) as SprintPlan;
+      if (!sprint) {
+        throw new Error(`Sprint ${sprintId} not found`);
+      }
+
+      const tasks = await Promise.all(
+        taskIds.map(id => this.getTask(id))
+      );
+
+      sprint.tasks.push(...tasks);
+      sprint.velocity.planned = tasks.reduce((sum, task) => sum + (task.estimated_effort || 0), 0);
+      
+      this.setInCache(`sprint_${sprintId}`, sprint);
+      this.emit('sprintUpdated', sprint);
+      
+      return sprint;
+
+    } catch (error) {
+      this.emit('sprintUpdateFailed', { sprintId, taskIds, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get sprint burndown data
+   */
+  async getSprintBurndown(sprintId: string): Promise<BurndownPoint[]> {
+    try {
+      const sprint = this.getFromCache(`sprint_${sprintId}`) as SprintPlan;
+      if (!sprint) {
+        throw new Error(`Sprint ${sprintId} not found`);
+      }
+
+      // Calculate burndown based on task completion
+      const startDate = new Date(sprint.startDate);
+      const endDate = new Date(sprint.endDate);
+      const totalWork = sprint.velocity.planned;
+      const sprintDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      const burndownData: BurndownPoint[] = [];
+      
+      for (let day = 0; day <= sprintDays; day++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + day);
+        
+        // Calculate completed work up to this date
+        const completedWork = sprint.tasks
+          .filter(task => task.status === TaskStatus.COMPLETED && 
+                         new Date(task.completed_at || '') <= currentDate)
+          .reduce((sum, task) => sum + (task.actual_effort || task.estimated_effort || 0), 0);
+        
+        const remainingWork = totalWork - completedWork;
+        const idealLine = totalWork - (totalWork / sprintDays) * day;
+        
+        burndownData.push({
+          date: currentDate.toISOString().split('T')[0],
+          remainingWork: Math.max(0, remainingWork),
+          idealLine: Math.max(0, idealLine),
+          completedWork
+        });
+      }
+      
+      return burndownData;
+
+    } catch (error) {
+      this.emit('burndownLoadFailed', { sprintId, error });
+      throw error;
+    }
+  }
+
+  // ===== TASK TEMPLATES =====
+
+  /**
+   * Create task from template
+   */
+  async createTaskFromTemplate(templateId: string, customData: Partial<TaskCreate>): Promise<Task> {
+    const template = this.getTaskTemplate(templateId);
+    if (!template) {
+      throw new Error(`Template ${templateId} not found`);
+    }
+
+    const taskData: TaskCreate = {
+      title: template.name,
+      description: template.description,
+      task_type: template.defaultTaskType,
+      priority: template.defaultPriority,
+      estimated_effort: template.estimatedEffort,
+      required_skills: template.requiredSkills,
+      checklist: template.checklistItems,
+      ...customData
+    };
+
+    return this.createTask(taskData);
+  }
+
+  /**
+   * Get available task templates
+   */
+  getTaskTemplates(): TaskTemplate[] {
+    return [
+      {
+        id: 'bug_fix',
+        name: 'Bug Fix',
+        description: 'Standard bug fix template',
+        defaultTaskType: TaskType.BUG_FIX,
+        defaultPriority: TaskPriority.HIGH,
+        estimatedEffort: 2,
+        requiredSkills: ['debugging', 'testing'],
+        checklistItems: [
+          'Reproduce the bug',
+          'Identify root cause',
+          'Implement fix',
+          'Write test cases',
+          'Verify fix'
+        ],
+        associatedRoles: [AgentRole.BACKEND_DEVELOPER, AgentRole.QA_ENGINEER]
+      },
+      {
+        id: 'feature_development',
+        name: 'Feature Development',
+        description: 'New feature development template',
+        defaultTaskType: TaskType.FEATURE,
+        defaultPriority: TaskPriority.MEDIUM,
+        estimatedEffort: 8,
+        requiredSkills: ['development', 'design', 'testing'],
+        checklistItems: [
+          'Review requirements',
+          'Design implementation',
+          'Develop feature',
+          'Write tests',
+          'Documentation',
+          'Code review'
+        ],
+        associatedRoles: [AgentRole.PRODUCT_MANAGER, AgentRole.BACKEND_DEVELOPER, AgentRole.FRONTEND_DEVELOPER]
+      },
+      {
+        id: 'code_review',
+        name: 'Code Review',
+        description: 'Code review template',
+        defaultTaskType: TaskType.REVIEW,
+        defaultPriority: TaskPriority.MEDIUM,
+        estimatedEffort: 1,
+        requiredSkills: ['code_review', 'best_practices'],
+        checklistItems: [
+          'Review code quality',
+          'Check test coverage',
+          'Verify requirements',
+          'Provide feedback'
+        ],
+        associatedRoles: [AgentRole.ARCHITECT, AgentRole.QA_ENGINEER]
+      }
+    ];
+  }
+
+  /**
+   * Get specific task template
+   */
+  getTaskTemplate(templateId: string): TaskTemplate | null {
+    return this.getTaskTemplates().find(t => t.id === templateId) || null;
+  }
+
+  // ===== INTELLIGENT TASK ASSIGNMENT =====
+
+  /**
+   * Get agent workload information
+   */
+  async getAgentWorkloads(agentIds?: string[]): Promise<AgentWorkload[]> {
+    try {
+      const tasks = await this.getTasks({}, 1000);
+      const activeTasks = tasks.tasks.filter(task => 
+        task.status === TaskStatus.ASSIGNED || task.status === TaskStatus.IN_PROGRESS
+      );
+
+      // Get agent information from agent service
+      const { getAgentService } = await import('./agent');
+      const agentService = getAgentService();
+      const agents = agentService.getAgents();
+      
+      const workloads: AgentWorkload[] = agents
+        .filter(agent => !agentIds || agentIds.includes(agent.id))
+        .map(agent => {
+          const agentTasks = activeTasks.filter(task => task.assigned_agent_id === agent.id);
+          const currentLoad = agentTasks.reduce((sum, task) => 
+            sum + (task.estimated_effort || 0) - (task.actual_effort || 0), 0
+          );
+          const capacity = 40; // 40 hours per week capacity
+          const utilization = capacity > 0 ? (currentLoad / capacity) * 100 : 0;
+          
+          return {
+            agentId: agent.id,
+            agentName: agent.name || `Agent ${agent.id}`,
+            role: agent.role,
+            currentLoad,
+            capacity,
+            utilization,
+            assignedTasks: agentTasks,
+            capabilities: agent.capabilities || [],
+            availability: utilization > 90 ? 'overloaded' : utilization > 70 ? 'busy' : 'available'
+          };
+        });
+
+      return workloads;
+
+    } catch (error) {
+      this.emit('workloadLoadFailed', { agentIds, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get task assignment recommendations
+   */
+  async getTaskAssignmentRecommendations(taskId: string): Promise<TaskAssignmentRecommendation[]> {
+    try {
+      const task = await this.getTask(taskId);
+      const workloads = await this.getAgentWorkloads();
+      
+      const recommendations: TaskAssignmentRecommendation[] = workloads
+        .map(workload => {
+          let score = 0;
+          const reasoning: string[] = [];
+          
+          // Score based on availability (40%)
+          const availabilityScore = workload.availability === 'available' ? 40 : 
+                                   workload.availability === 'busy' ? 20 : 0;
+          score += availabilityScore;
+          reasoning.push(`Availability: ${workload.availability} (${availabilityScore} points)`);
+          
+          // Score based on role match (35%)
+          const taskTemplate = this.getTaskTemplates().find(t => t.defaultTaskType === task.task_type);
+          const roleMatch = taskTemplate?.associatedRoles.includes(workload.role) ? 35 : 0;
+          score += roleMatch;
+          reasoning.push(`Role match: ${roleMatch > 0 ? 'Yes' : 'No'} (${roleMatch} points)`);
+          
+          // Score based on capabilities (25%)
+          const requiredSkills = task.required_skills || taskTemplate?.requiredSkills || [];
+          const skillMatches = requiredSkills.filter(skill => 
+            workload.capabilities.some(cap => cap.toLowerCase().includes(skill.toLowerCase()))
+          ).length;
+          const capabilityScore = requiredSkills.length > 0 ? 
+            (skillMatches / requiredSkills.length) * 25 : 15;
+          score += capabilityScore;
+          reasoning.push(`Skill match: ${skillMatches}/${requiredSkills.length} (${Math.round(capabilityScore)} points)`);
+          
+          const estimatedCompletionTime = task.estimated_effort || 2;
+          
+          return {
+            agentId: workload.agentId,
+            agentName: workload.agentName,
+            role: workload.role,
+            score,
+            reasoning,
+            estimatedCompletionTime,
+            currentWorkload: workload.currentLoad
+          };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5); // Top 5 recommendations
+      
+      return recommendations;
+
+    } catch (error) {
+      this.emit('assignmentRecommendationsFailed', { taskId, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Auto-assign tasks based on intelligent matching
+   */
+  async autoAssignTasks(taskIds: string[], balanceWorkload = true): Promise<{
+    assignments: Array<{ taskId: string; agentId: string; confidence: number }>;
+    unassigned: string[];
+    summary: {
+      total: number;
+      assigned: number;
+      unassigned: number;
+    };
+  }> {
+    const assignments: Array<{ taskId: string; agentId: string; confidence: number }> = [];
+    const unassigned: string[] = [];
+    
+    for (const taskId of taskIds) {
+      try {
+        const recommendations = await this.getTaskAssignmentRecommendations(taskId);
+        
+        if (recommendations.length > 0) {
+          let selectedAgent = recommendations[0];
+          
+          // If workload balancing is enabled, prefer less loaded agents
+          if (balanceWorkload && recommendations.length > 1) {
+            const availableAgents = recommendations.filter(r => r.currentWorkload < 30);
+            if (availableAgents.length > 0) {
+              selectedAgent = availableAgents[0];
+            }
+          }
+          
+          await this.assignTask(taskId, selectedAgent.agentId);
+          assignments.push({
+            taskId,
+            agentId: selectedAgent.agentId,
+            confidence: selectedAgent.score
+          });
+        } else {
+          unassigned.push(taskId);
+        }
+      } catch (error) {
+        unassigned.push(taskId);
+      }
+    }
+    
+    const result = {
+      assignments,
+      unassigned,
+      summary: {
+        total: taskIds.length,
+        assigned: assignments.length,
+        unassigned: unassigned.length
+      }
+    };
+    
+    this.emit('autoAssignmentCompleted', result);
+    return result;
+  }
+
+  // ===== BULK OPERATIONS =====
+
+  /**
+   * Perform bulk operations on multiple tasks
+   */
+  async performBulkOperation(
+    taskIds: string[],
+    operation: 'assign' | 'move' | 'delete' | 'prioritize' | 'add_label',
+    options: {
+      agentId?: string;
+      newStatus?: TaskStatus;
+      priority?: TaskPriority;
+      label?: string;
+    } = {}
+  ): Promise<{
+    success: boolean;
+    results: Record<string, { success: boolean; message: string }>;
+    summary: {
+      total: number;
+      successful: number;
+      failed: number;
+    };
+  }> {
+    const results: Record<string, { success: boolean; message: string }> = {};
+    let successful = 0;
+    let failed = 0;
+    
+    for (const taskId of taskIds) {
+      try {
+        switch (operation) {
+          case 'assign':
+            if (options.agentId) {
+              await this.assignTask(taskId, options.agentId);
+              results[taskId] = { success: true, message: 'Task assigned successfully' };
+            } else {
+              throw new Error('Agent ID required for assignment');
+            }
+            break;
+            
+          case 'move':
+            if (options.newStatus) {
+              await this.moveTask(taskId, options.newStatus);
+              results[taskId] = { success: true, message: 'Task moved successfully' };
+            } else {
+              throw new Error('New status required for move operation');
+            }
+            break;
+            
+          case 'delete':
+            await this.deleteTask(taskId);
+            results[taskId] = { success: true, message: 'Task deleted successfully' };
+            break;
+            
+          case 'prioritize':
+            if (options.priority) {
+              await this.updateTask(taskId, { priority: options.priority });
+              results[taskId] = { success: true, message: 'Task priority updated' };
+            } else {
+              throw new Error('Priority required for prioritize operation');
+            }
+            break;
+            
+          case 'add_label':
+            if (options.label) {
+              const task = await this.getTask(taskId);
+              const labels = task.labels || [];
+              if (!labels.includes(options.label)) {
+                labels.push(options.label);
+                await this.updateTask(taskId, { labels });
+              }
+              results[taskId] = { success: true, message: 'Label added successfully' };
+            } else {
+              throw new Error('Label required for add_label operation');
+            }
+            break;
+            
+          default:
+            throw new Error(`Unknown operation: ${operation}`);
+        }
+        successful++;
+      } catch (error) {
+        results[taskId] = {
+          success: false,
+          message: error instanceof Error ? error.message : 'Operation failed'
+        };
+        failed++;
+      }
+    }
+    
+    const result = {
+      success: failed === 0,
+      results,
+      summary: {
+        total: taskIds.length,
+        successful,
+        failed
+      }
+    };
+    
+    this.emit('bulkOperationCompleted', { operation, taskIds, results: result });
+    return result;
+  }
+
   // ===== TASK STATISTICS & ANALYTICS =====
 
   /**
@@ -550,6 +1088,223 @@ export class TaskService extends BaseService {
     return this.pollingStopFn !== null;
   }
 
+  /**
+   * Get velocity tracking data
+   */
+  async getVelocityTracking(timeframeDays = 30): Promise<{
+    dailyCompletion: Array<{ date: string; completed: number; planned: number }>;
+    weeklyVelocity: Array<{ week: string; storyPoints: number; tasksCompleted: number }>;
+    trends: {
+      completionTrend: 'improving' | 'declining' | 'stable';
+      velocityTrend: 'increasing' | 'decreasing' | 'stable';
+      predictedCapacity: number;
+    };
+  }> {
+    try {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - timeframeDays);
+      
+      const tasksResponse = await this.getTasks({
+        dateRange: {
+          start: startDate.toISOString(),
+          end: endDate.toISOString()
+        }
+      }, 1000);
+      
+      const tasks = tasksResponse.tasks;
+      const dailyCompletion: Array<{ date: string; completed: number; planned: number }> = [];
+      const weeklyData: Map<string, { completed: number; storyPoints: number }> = new Map();
+      
+      // Generate daily completion data
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const completedTasks = tasks.filter(task => 
+          task.status === TaskStatus.COMPLETED &&
+          task.completed_at &&
+          task.completed_at.startsWith(dateStr)
+        );
+        
+        const plannedTasks = tasks.filter(task => 
+          task.created_at.startsWith(dateStr)
+        );
+        
+        dailyCompletion.push({
+          date: dateStr,
+          completed: completedTasks.length,
+          planned: plannedTasks.length
+        });
+        
+        // Aggregate weekly data
+        const weekKey = `${d.getFullYear()}-W${Math.ceil(d.getDate() / 7)}`;
+        const weekData = weeklyData.get(weekKey) || { completed: 0, storyPoints: 0 };
+        weekData.completed += completedTasks.length;
+        weekData.storyPoints += completedTasks.reduce((sum, task) => 
+          sum + (task.estimated_effort || 1), 0
+        );
+        weeklyData.set(weekKey, weekData);
+      }
+      
+      const weeklyVelocity = Array.from(weeklyData.entries()).map(([week, data]) => ({
+        week,
+        storyPoints: data.storyPoints,
+        tasksCompleted: data.completed
+      }));
+      
+      // Calculate trends
+      const recentWeeks = weeklyVelocity.slice(-4);
+      const olderWeeks = weeklyVelocity.slice(-8, -4);
+      
+      const avgRecentVelocity = recentWeeks.reduce((sum, week) => sum + week.storyPoints, 0) / Math.max(recentWeeks.length, 1);
+      const avgOlderVelocity = olderWeeks.reduce((sum, week) => sum + week.storyPoints, 0) / Math.max(olderWeeks.length, 1);
+      
+      const velocityTrend = avgRecentVelocity > avgOlderVelocity * 1.1 ? 'increasing' :
+                           avgRecentVelocity < avgOlderVelocity * 0.9 ? 'decreasing' : 'stable';
+      
+      const avgRecentCompletion = recentWeeks.reduce((sum, week) => sum + week.tasksCompleted, 0) / Math.max(recentWeeks.length, 1);
+      const avgOlderCompletion = olderWeeks.reduce((sum, week) => sum + week.tasksCompleted, 0) / Math.max(olderWeeks.length, 1);
+      
+      const completionTrend = avgRecentCompletion > avgOlderCompletion * 1.1 ? 'improving' :
+                             avgRecentCompletion < avgOlderCompletion * 0.9 ? 'declining' : 'stable';
+      
+      return {
+        dailyCompletion,
+        weeklyVelocity,
+        trends: {
+          completionTrend,
+          velocityTrend,
+          predictedCapacity: avgRecentVelocity
+        }
+      };
+      
+    } catch (error) {
+      this.emit('velocityTrackingFailed', { timeframeDays, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Identify bottlenecks in the development process
+   */
+  async identifyBottlenecks(): Promise<{
+    statusBottlenecks: Array<{
+      status: TaskStatus;
+      averageTime: number;
+      taskCount: number;
+      impact: 'high' | 'medium' | 'low';
+    }>;
+    agentBottlenecks: Array<{
+      agentId: string;
+      agentName: string;
+      overloadFactor: number;
+      blockedTasks: number;
+      suggestions: string[];
+    }>;
+    systemBottlenecks: {
+      totalBlockedTasks: number;
+      averageResolutionTime: number;
+      criticalPath: string[];
+    };
+  }> {
+    try {
+      const tasksResponse = await this.getTasks({}, 1000);
+      const tasks = tasksResponse.tasks;
+      const workloads = await this.getAgentWorkloads();
+      
+      // Analyze status bottlenecks
+      const statusTimes: Map<TaskStatus, number[]> = new Map();
+      
+      tasks.forEach(task => {
+        if (task.status === TaskStatus.COMPLETED && task.started_at && task.completed_at) {
+          const startTime = new Date(task.started_at).getTime();
+          const endTime = new Date(task.completed_at).getTime();
+          const duration = (endTime - startTime) / (1000 * 60 * 60); // hours
+          
+          const statusKey = task.status;
+          if (!statusTimes.has(statusKey)) {
+            statusTimes.set(statusKey, []);
+          }
+          statusTimes.get(statusKey)!.push(duration);
+        }
+      });
+      
+      const statusBottlenecks = Array.from(statusTimes.entries()).map(([status, times]) => {
+        const averageTime = times.reduce((sum, time) => sum + time, 0) / times.length;
+        const impact = averageTime > 48 ? 'high' : averageTime > 24 ? 'medium' : 'low';
+        
+        return {
+          status,
+          averageTime,
+          taskCount: times.length,
+          impact
+        };
+      }).sort((a, b) => b.averageTime - a.averageTime);
+      
+      // Analyze agent bottlenecks
+      const agentBottlenecks = workloads
+        .filter(workload => workload.availability === 'overloaded' || workload.utilization > 80)
+        .map(workload => {
+          const suggestions: string[] = [];
+          
+          if (workload.utilization > 100) {
+            suggestions.push('Redistribute tasks to other agents');
+          }
+          if (workload.assignedTasks.length > 5) {
+            suggestions.push('Limit concurrent task assignments');
+          }
+          if (workload.assignedTasks.some(task => task.priority === TaskPriority.CRITICAL)) {
+            suggestions.push('Prioritize critical tasks first');
+          }
+          
+          return {
+            agentId: workload.agentId,
+            agentName: workload.agentName,
+            overloadFactor: workload.utilization / 100,
+            blockedTasks: workload.assignedTasks.filter(task => 
+              task.status === TaskStatus.ASSIGNED && 
+              new Date(task.created_at).getTime() < Date.now() - (24 * 60 * 60 * 1000)
+            ).length,
+            suggestions
+          };
+        });
+      
+      // System-level bottlenecks
+      const blockedTasks = tasks.filter(task => 
+        task.status === TaskStatus.ASSIGNED &&
+        new Date(task.created_at).getTime() < Date.now() - (48 * 60 * 60 * 1000)
+      );
+      
+      const completedTasks = tasks.filter(task => 
+        task.status === TaskStatus.COMPLETED &&
+        task.started_at &&
+        task.completed_at
+      );
+      
+      const averageResolutionTime = completedTasks.length > 0 ?
+        completedTasks.reduce((sum, task) => {
+          const start = new Date(task.started_at!).getTime();
+          const end = new Date(task.completed_at!).getTime();
+          return sum + (end - start) / (1000 * 60 * 60);
+        }, 0) / completedTasks.length : 0;
+      
+      return {
+        statusBottlenecks,
+        agentBottlenecks,
+        systemBottlenecks: {
+          totalBlockedTasks: blockedTasks.length,
+          averageResolutionTime,
+          criticalPath: blockedTasks
+            .filter(task => task.priority === TaskPriority.CRITICAL)
+            .map(task => task.id)
+        }
+      };
+      
+    } catch (error) {
+      this.emit('bottleneckAnalysisFailed', { error });
+      throw error;
+    }
+  }
+
   // ===== EVENT SUBSCRIPTIONS =====
 
   public onTaskCreated(listener: EventListener<Task>): Subscription {
@@ -596,6 +1351,22 @@ export class TaskService extends BaseService {
     return this.subscribe('monitoringStopped', listener);
   }
 
+  public onSprintCreated(listener: EventListener<SprintPlan>): Subscription {
+    return this.subscribe('sprintCreated', listener);
+  }
+
+  public onSprintUpdated(listener: EventListener<SprintPlan>): Subscription {
+    return this.subscribe('sprintUpdated', listener);
+  }
+
+  public onAutoAssignmentCompleted(listener: EventListener<any>): Subscription {
+    return this.subscribe('autoAssignmentCompleted', listener);
+  }
+
+  public onBulkOperationCompleted(listener: EventListener<any>): Subscription {
+    return this.subscribe('bulkOperationCompleted', listener);
+  }
+
   // ===== UTILITY METHODS =====
 
   /**
@@ -627,13 +1398,412 @@ export class TaskService extends BaseService {
     };
   }
 
+  // ===== ENHANCED TASK MANAGEMENT =====
+
+  /**
+   * Multi-agent task assignment with load balancing
+   */
+  async assignTaskToAgent(taskId: string, agentId: string, options: {
+    balanceLoad?: boolean;
+    considerCapabilities?: boolean;
+    priority?: TaskPriority;
+  } = {}): Promise<TaskAssignmentResult> {
+    try {
+      const task = this.getTask(taskId);
+      if (!task) {
+        throw new Error(`Task ${taskId} not found`);
+      }
+
+      // Check agent workload if load balancing is enabled
+      if (options.balanceLoad) {
+        const workload = await this.getAgentWorkload(agentId);
+        if (workload.currentLoad > 0.8) { // 80% capacity threshold
+          const alternativeAgent = await this.findAlternativeAgent(task, agentId);
+          if (alternativeAgent) {
+            agentId = alternativeAgent;
+          }
+        }
+      }
+
+      // Update task assignment
+      const updatedTask = {
+        ...task,
+        assignedAgentId: agentId,
+        status: TaskStatus.ASSIGNED,
+        assignedAt: new Date().toISOString(),
+        priority: options.priority || task.priority
+      };
+
+      // Update local state
+      this.tasks.set(taskId, updatedTask);
+      
+      // Update workload cache
+      this.updateAgentWorkload(agentId, updatedTask);
+
+      // Emit assignment event
+      this.emit('taskAssigned', { taskId, agentId, task: updatedTask });
+
+      return {
+        success: true,
+        task: updatedTask,
+        message: `Task assigned to agent ${agentId} successfully`
+      };
+
+    } catch (error) {
+      this.emit('taskAssignmentFailed', { taskId, agentId, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk task operations for multi-task management
+   */
+  async performBulkTaskOperation(taskIds: string[], operation: {
+    type: 'assign' | 'move' | 'delete' | 'prioritize' | 'sprint';
+    agentId?: string;
+    status?: TaskStatus;
+    priority?: TaskPriority;
+    sprintId?: string;
+  }): Promise<{
+    success: boolean;
+    results: Record<string, { success: boolean; message: string }>;
+    summary: {
+      total: number;
+      successful: number;
+      failed: number;
+    };
+  }> {
+    const results: Record<string, { success: boolean; message: string }> = {};
+    let successful = 0;
+    let failed = 0;
+
+    for (const taskId of taskIds) {
+      try {
+        switch (operation.type) {
+          case 'assign':
+            if (operation.agentId) {
+              await this.assignTaskToAgent(taskId, operation.agentId, { balanceLoad: true });
+              results[taskId] = { success: true, message: 'Task assigned successfully' };
+            } else {
+              throw new Error('Agent ID required for assignment');
+            }
+            break;
+
+          case 'move':
+            if (operation.status) {
+              await this.updateTaskStatus(taskId, operation.status);
+              results[taskId] = { success: true, message: 'Task status updated successfully' };
+            } else {
+              throw new Error('Status required for move operation');
+            }
+            break;
+
+          case 'delete':
+            await this.deleteTask(taskId);
+            results[taskId] = { success: true, message: 'Task deleted successfully' };
+            break;
+
+          case 'prioritize':
+            if (operation.priority) {
+              const task = this.getTask(taskId);
+              if (task) {
+                await this.updateTask(taskId, { priority: operation.priority });
+                results[taskId] = { success: true, message: 'Task priority updated successfully' };
+              } else {
+                throw new Error('Task not found');
+              }
+            } else {
+              throw new Error('Priority required for prioritize operation');
+            }
+            break;
+
+          case 'sprint':
+            if (operation.sprintId) {
+              await this.addTaskToSprint(taskId, operation.sprintId);
+              results[taskId] = { success: true, message: 'Task added to sprint successfully' };
+            } else {
+              throw new Error('Sprint ID required for sprint operation');
+            }
+            break;
+
+          default:
+            throw new Error(`Unknown operation type: ${operation.type}`);
+        }
+        successful++;
+      } catch (error) {
+        results[taskId] = {
+          success: false,
+          message: error instanceof Error ? error.message : 'Operation failed'
+        };
+        failed++;
+      }
+    }
+
+    this.emit('bulkTaskOperationCompleted', {
+      operation,
+      taskIds,
+      results,
+      summary: { total: taskIds.length, successful, failed }
+    });
+
+    return {
+      success: failed === 0,
+      results,
+      summary: {
+        total: taskIds.length,
+        successful,
+        failed
+      }
+    };
+  }
+
+  /**
+   * Sprint planning and management
+   */
+  async createSprint(sprintData: {
+    name: string;
+    description: string;
+    duration: number; // in days
+    teamComposition: string[];
+    capacity: number;
+  }): Promise<SprintPlan> {
+    const startDate = new Date();
+    const endDate = new Date(startDate.getTime() + sprintData.duration * 24 * 60 * 60 * 1000);
+
+    const sprint: SprintPlan = {
+      id: `sprint-${Date.now()}`,
+      name: sprintData.name,
+      description: sprintData.description,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      status: 'planning',
+      tasks: [],
+      velocity: {
+        planned: 0,
+        completed: 0,
+        capacity: sprintData.capacity
+      },
+      teamComposition: sprintData.teamComposition,
+      burndownData: []
+    };
+
+    this.currentSprint = sprint;
+    this.emit('sprintCreated', sprint);
+
+    return sprint;
+  }
+
+  /**
+   * Add task to sprint with capacity validation
+   */
+  async addTaskToSprint(taskId: string, sprintId: string): Promise<void> {
+    const task = this.getTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+
+    if (this.currentSprint && this.currentSprint.id === sprintId) {
+      // Check sprint capacity
+      const currentLoad = this.currentSprint.tasks.reduce((sum, t) => sum + (t.estimatedEffort || 1), 0);
+      const taskEffort = task.estimatedEffort || 1;
+
+      if (currentLoad + taskEffort > this.currentSprint.velocity.capacity) {
+        throw new Error('Sprint capacity exceeded');
+      }
+
+      // Add task to sprint
+      this.currentSprint.tasks.push(task);
+      this.currentSprint.velocity.planned += taskEffort;
+
+      // Update task with sprint assignment
+      const updatedTask = { ...task, sprintId, addedToSprintAt: new Date().toISOString() };
+      this.tasks.set(taskId, updatedTask);
+
+      this.emit('taskAddedToSprint', { task: updatedTask, sprint: this.currentSprint });
+    } else {
+      throw new Error('Sprint not found or not active');
+    }
+  }
+
+  /**
+   * Get agent workload for load balancing
+   */
+  async getAgentWorkload(agentId: string): Promise<AgentWorkload> {
+    // Check cache first
+    if (this.workloadCache.has(agentId)) {
+      const cached = this.workloadCache.get(agentId)!;
+      // Return cached if less than 30 seconds old
+      if (Date.now() - new Date(cached.lastUpdated).getTime() < 30000) {
+        return cached;
+      }
+    }
+
+    // Calculate workload from current tasks
+    const agentTasks = Array.from(this.tasks.values()).filter(task => 
+      task.assignedAgentId === agentId && 
+      [TaskStatus.ASSIGNED, TaskStatus.IN_PROGRESS].includes(task.status)
+    );
+
+    const totalEffort = agentTasks.reduce((sum, task) => sum + (task.estimatedEffort || 1), 0);
+    const maxCapacity = 8; // 8 story points max capacity
+
+    const workload: AgentWorkload = {
+      agentId,
+      agentName: `Agent ${agentId}`,
+      role: 'backend_developer' as AgentRole, // This would come from agent service
+      currentLoad: Math.min(totalEffort / maxCapacity, 1.0),
+      taskCount: agentTasks.length,
+      totalEffort,
+      capacity: maxCapacity,
+      efficiency: 0.85, // Default efficiency
+      lastUpdated: new Date().toISOString()
+    };
+
+    // Cache the result
+    this.workloadCache.set(agentId, workload);
+
+    return workload;
+  }
+
+  /**
+   * Find alternative agent for load balancing
+   */
+  private async findAlternativeAgent(task: Task, originalAgentId: string): Promise<string | null> {
+    // This would integrate with the agent service from Day 1
+    // For now, return null to keep original assignment
+    return null;
+  }
+
+  /**
+   * Update agent workload cache
+   */
+  private updateAgentWorkload(agentId: string, task: Task): void {
+    const cached = this.workloadCache.get(agentId);
+    if (cached) {
+      cached.taskCount += 1;
+      cached.totalEffort += task.estimatedEffort || 1;
+      cached.currentLoad = Math.min(cached.totalEffort / cached.capacity, 1.0);
+      cached.lastUpdated = new Date().toISOString();
+    }
+  }
+
+  /**
+   * Get task templates for common patterns
+   */
+  getTaskTemplates(): TaskTemplate[] {
+    return Array.from(this.templates.values());
+  }
+
+  /**
+   * Create task from template
+   */
+  async createTaskFromTemplate(templateId: string, customizations: {
+    title?: string;
+    description?: string;
+    assignedAgentId?: string;
+    priority?: TaskPriority;
+    sprintId?: string;
+  } = {}): Promise<Task> {
+    const template = this.templates.get(templateId);
+    if (!template) {
+      throw new Error(`Template ${templateId} not found`);
+    }
+
+    const taskData: TaskCreate = {
+      title: customizations.title || template.name,
+      description: customizations.description || template.description,
+      taskType: template.defaultTaskType,
+      priority: customizations.priority || template.defaultPriority,
+      estimatedEffort: template.estimatedEffort,
+      requiredSkills: template.requiredSkills,
+      assignedAgentId: customizations.assignedAgentId,
+      sprintId: customizations.sprintId,
+      labels: [`template:${templateId}`],
+      checklist: template.checklistItems.map(item => ({ item, completed: false }))
+    };
+
+    return this.createTask(taskData);
+  }
+
+  /**
+   * Initialize default task templates
+   */
+  private initializeTaskTemplates(): void {
+    const defaultTemplates: TaskTemplate[] = [
+      {
+        id: 'feature-implementation',
+        name: 'Feature Implementation',
+        description: 'Implement a new feature with full testing',
+        defaultTaskType: TaskType.FEATURE,
+        defaultPriority: TaskPriority.MEDIUM,
+        estimatedEffort: 5,
+        requiredSkills: ['development', 'testing'],
+        checklistItems: [
+          'Analyze requirements',
+          'Design implementation approach',
+          'Write code',
+          'Write unit tests',
+          'Write integration tests',
+          'Code review',
+          'Documentation update'
+        ],
+        associatedRoles: ['backend_developer', 'frontend_developer', 'qa_engineer'] as AgentRole[]
+      },
+      {
+        id: 'bug-fix',
+        name: 'Bug Fix',
+        description: 'Fix a reported bug with root cause analysis',
+        defaultTaskType: TaskType.BUG,
+        defaultPriority: TaskPriority.HIGH,
+        estimatedEffort: 3,
+        requiredSkills: ['debugging', 'testing'],
+        checklistItems: [
+          'Reproduce the bug',
+          'Identify root cause',
+          'Implement fix',
+          'Write regression test',
+          'Verify fix works',
+          'Update documentation'
+        ],
+        associatedRoles: ['backend_developer', 'frontend_developer'] as AgentRole[]
+      },
+      {
+        id: 'refactoring',
+        name: 'Code Refactoring',
+        description: 'Refactor code for better maintainability',
+        defaultTaskType: TaskType.TECHNICAL,
+        defaultPriority: TaskPriority.LOW,
+        estimatedEffort: 4,
+        requiredSkills: ['refactoring', 'architecture'],
+        checklistItems: [
+          'Identify refactoring scope',
+          'Ensure test coverage',
+          'Refactor incrementally',
+          'Run all tests',
+          'Performance validation',
+          'Code review'
+        ],
+        associatedRoles: ['architect', 'backend_developer', 'frontend_developer'] as AgentRole[]
+      }
+    ];
+
+    defaultTemplates.forEach(template => {
+      this.templates.set(template.id, template);
+    });
+  }
+
   // ===== CLEANUP =====
 
   public destroy(): void {
     this.stopMonitoring();
     this.tasks.clear();
+    this.workloadCache.clear();
+    this.velocityHistory.clear();
+    this.templates.clear();
     this.lastSync = null;
     this.syncInProgress = false;
+    this.currentSprint = null;
+    this.analyticsData = null;
     super.destroy();
   }
 }

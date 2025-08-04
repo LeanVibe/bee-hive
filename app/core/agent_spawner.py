@@ -319,7 +319,7 @@ class ActiveAgentManager:
                 db_agent = Agent(
                     id=uuid.UUID(agent.id),
                     name=f"{agent.role.value}_agent",
-                    agent_type=AgentType.DEVELOPMENT,
+                    agent_type=AgentType.CLAUDE,
                     status=agent.status,
                     capabilities=[cap.name for cap in agent.capabilities],
                     specializations=agent.capabilities[0].specialization_areas if agent.capabilities else [],

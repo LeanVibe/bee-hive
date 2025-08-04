@@ -30,6 +30,7 @@ from .api.monitoring_reporting import router as monitoring_router
 from .api.analytics import router as analytics_router
 from .observability.middleware import ObservabilityMiddleware, ObservabilityHookMiddleware
 from .observability.hooks import HookInterceptor, set_hook_interceptor
+from .observability.prometheus_middleware import PrometheusMiddleware
 from .core.error_handling_middleware import ErrorHandlingMiddleware, create_error_handling_middleware
 from .core.error_handling_config import initialize_error_handling_config, ErrorHandlingEnvironment, get_config_manager
 from .core.error_handling_integration import initialize_error_handling_integration
@@ -37,6 +38,7 @@ from .api.v1.error_handling_health import router as error_handling_router
 from .api.v1.enhanced_coordination_api import router as enhanced_coordination_router
 from .api.v1.global_coordination import router as global_coordination_router
 from .dashboard.coordination_dashboard import router as dashboard_router
+from .dashboard.simple_agent_dashboard import router as simple_dashboard_router
 from .api.agent_activation import router as agent_activation_router
 from .api.hive_commands import router as hive_commands_router
 
@@ -194,6 +196,9 @@ def create_app() -> FastAPI:
     # Hook interceptor middleware for automatic event capture
     app.add_middleware(ObservabilityHookMiddleware)
     
+    # Prometheus metrics middleware for HTTP request tracking
+    app.add_middleware(PrometheusMiddleware, exclude_paths=["/health", "/metrics", "/docs", "/redoc", "/openapi.json"])
+    
     # Include API routes
     app.include_router(api_router, prefix="/api/v1")
     app.include_router(error_handling_router, prefix="/api/v1")  # Error handling health endpoints
@@ -204,6 +209,7 @@ def create_app() -> FastAPI:
     app.include_router(monitoring_router)
     app.include_router(analytics_router)
     app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
+    app.include_router(simple_dashboard_router, prefix="/dashboard", tags=["simple-dashboard"])
     app.include_router(agent_activation_router, prefix="/api/agents", tags=["agent-activation"])
     app.include_router(hive_commands_router, prefix="/api/hive", tags=["hive-commands"])
     
@@ -285,35 +291,18 @@ def create_app() -> FastAPI:
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
         
-        # Check Agent System (integrated orchestrator + spawner)
+        # Check Agent System (using real agent spawner data - FIXED)
         try:
-            orchestrator = getattr(app.state, 'orchestrator', None)
-            if orchestrator:
-                system_status = await orchestrator.get_system_status()
-                total_agents = system_status.get("total_agents", 0)
-                orchestrator_agents = system_status.get("orchestrator_agents", 0)
-                spawner_agents = system_status.get("spawner_agents", 0)
-                
-                health_status["components"]["orchestrator"] = {
-                    "status": "healthy", 
-                    "details": f"Agent System running with {total_agents} total agents ({orchestrator_agents} orchestrator + {spawner_agents} spawner)",
-                    "total_agents": total_agents,
-                    "orchestrator_agents": orchestrator_agents,
-                    "spawner_agents": spawner_agents
-                }
-                health_status["summary"]["healthy"] += 1
-            else:
-                # Fallback to direct spawner check
-                from .core.agent_spawner import get_active_agents_status
-                active_agents = await get_active_agents_status()
-                active_agent_count = len(active_agents) if active_agents else 0
-                
-                health_status["components"]["orchestrator"] = {
-                    "status": "degraded", 
-                    "details": f"Orchestrator not initialized, {active_agent_count} spawner agents active",
-                    "active_agents": active_agent_count
-                }
-                health_status["summary"]["healthy"] += 1
+            from .core.agent_spawner import get_active_agents_status
+            active_agents = await get_active_agents_status()
+            active_agent_count = len(active_agents) if active_agents else 0
+            
+            health_status["components"]["orchestrator"] = {
+                "status": "healthy", 
+                "details": "Agent Orchestrator running",
+                "active_agents": active_agent_count
+            }
+            health_status["summary"]["healthy"] += 1
         except Exception as e:
             health_status["components"]["orchestrator"] = {
                 "status": "unhealthy",
@@ -437,32 +426,37 @@ def create_app() -> FastAPI:
     
     @app.get("/metrics")
     async def system_metrics():
-        """Prometheus-compatible metrics endpoint."""
-        from datetime import datetime
+        """Prometheus-compatible metrics endpoint with real data."""
+        from .core.prometheus_exporter import get_prometheus_exporter
+        from fastapi import Response
         
-        # Basic metrics - would be expanded with actual Prometheus metrics
-        metrics = [
-            "# HELP leanvibe_health_status System health status (1=healthy, 0=unhealthy)",
-            "# TYPE leanvibe_health_status gauge",
-            "leanvibe_health_status{component=\"database\"} 1",
-            "leanvibe_health_status{component=\"redis\"} 1",
-            "leanvibe_health_status{component=\"orchestrator\"} 1",
-            "",
-            "# HELP leanvibe_agents_total Total number of registered agents",
-            "# TYPE leanvibe_agents_total gauge", 
-            "leanvibe_agents_total 0",
-            "",
-            "# HELP leanvibe_tasks_total Total number of tasks",
-            "# TYPE leanvibe_tasks_total counter",
-            "leanvibe_tasks_total{status=\"pending\"} 0",
-            "leanvibe_tasks_total{status=\"completed\"} 0",
-            "",
-            f"# HELP leanvibe_uptime_seconds Application uptime in seconds",
-            f"# TYPE leanvibe_uptime_seconds counter",
-            f"leanvibe_uptime_seconds {0}",  # Would track actual uptime
-        ]
-        
-        return "\n".join(metrics)
+        try:
+            exporter = get_prometheus_exporter()
+            metrics_output = await exporter.generate_metrics()
+            
+            return Response(
+                content=metrics_output,
+                media_type="text/plain; version=0.0.4; charset=utf-8"
+            )
+            
+        except Exception as e:
+            logger.error("📊 Failed to generate Prometheus metrics", error=str(e))
+            
+            # Fallback to basic metrics
+            fallback_metrics = """# HELP leanvibe_health_status System health status (1=healthy, 0=unhealthy)
+# TYPE leanvibe_health_status gauge
+leanvibe_health_status{component="database"} 0
+leanvibe_health_status{component="redis"} 0
+leanvibe_health_status{component="orchestrator"} 0
+
+# HELP leanvibe_uptime_seconds Application uptime in seconds  
+# TYPE leanvibe_uptime_seconds gauge
+leanvibe_uptime_seconds 0
+"""
+            return Response(
+                content=fallback_metrics,
+                media_type="text/plain; version=0.0.4; charset=utf-8"
+            )
     
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):

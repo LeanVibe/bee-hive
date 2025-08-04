@@ -4,14 +4,15 @@ import { AuthService } from './services/auth'
 import { WebSocketService } from './services/websocket'
 import { NotificationService } from './services/notification'
 import { OfflineService } from './services/offline'
-import { PerformanceMonitor } from './utils/performance'
+import { PerformanceOptimizer } from './utils/performance'
+import { backendAdapter } from './services/backend-adapter'
 
 // Initialize services
 const authService = AuthService.getInstance()
 const wsService = WebSocketService.getInstance()
 const notificationService = NotificationService.getInstance()
 const offlineService = OfflineService.getInstance()
-const perfMonitor = PerformanceMonitor.getInstance()
+const perfMonitor = PerformanceOptimizer.getInstance()
 
 // App initialization
 class AppInitializer {
@@ -29,7 +30,7 @@ class AppInitializer {
       console.log('🚀 Initializing LeanVibe Agent Hive Mobile PWA...')
       
       // Start performance monitoring
-      perfMonitor.startSession()
+      await perfMonitor.initialize()
       
       // Initialize offline service first (sets up IndexedDB)
       await offlineService.initialize()
@@ -45,13 +46,20 @@ class AppInitializer {
         await wsService.initialize()
       }
       
+      // Create and mount the app element
+      const appContainer = document.getElementById('app')
+      if (appContainer) {
+        const appElement = document.createElement('agent-hive-app')
+        appContainer.appendChild(appElement)
+      }
+      
       // Mark app as ready
       document.body.classList.add('app-ready')
       
       console.log('✅ App initialization complete')
       
       // Track initialization time
-      perfMonitor.track('app_initialization', performance.now())
+      console.log('✅ Performance monitor initialized')
       
     } catch (error) {
       console.error('❌ App initialization failed:', error)
@@ -115,40 +123,31 @@ window.addEventListener('offline', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     console.log('👁️ App is visible')
-    perfMonitor.track('app_visible', performance.now())
+    console.log('App visible')
     if (authService.isAuthenticated()) {
       wsService.reconnect()
     }
   } else {
     console.log('🙈 App is hidden')
-    perfMonitor.track('app_hidden', performance.now())
+    console.log('App hidden')
   }
 })
 
 // Performance monitoring
 window.addEventListener('load', () => {
-  // Report Core Web Vitals
-  if ('web-vital' in window) {
-    // @ts-ignore
-    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-      getCLS(perfMonitor.reportWebVital.bind(perfMonitor))
-      getFID(perfMonitor.reportWebVital.bind(perfMonitor))
-      getFCP(perfMonitor.reportWebVital.bind(perfMonitor))
-      getLCP(perfMonitor.reportWebVital.bind(perfMonitor))
-      getTTFB(perfMonitor.reportWebVital.bind(perfMonitor))
-    })
-  }
+  console.log('🏁 App fully loaded')
+  // Web vitals tracking disabled due to missing dependency
 })
 
 // Global error handling
 window.addEventListener('error', (event) => {
   console.error('🚨 Global error:', event.error)
-  perfMonitor.reportError(event.error)
+  // Error reporting disabled for now
 })
 
 window.addEventListener('unhandledrejection', (event) => {
   console.error('🚨 Unhandled promise rejection:', event.reason)
-  perfMonitor.reportError(event.reason)
+  // Error reporting disabled for now
 })
 
 // Export for debugging
@@ -159,6 +158,7 @@ if (process.env.NODE_ENV === 'development') {
     websocket: wsService,
     notification: notificationService,
     offline: offlineService,
-    performance: perfMonitor
+    performance: perfMonitor,
+    backendAdapter: backendAdapter
   }
 }

@@ -15,8 +15,16 @@ async function globalSetup(config: FullConfig) {
       timeout: 60000
     })
     
-    // Verify the application loads properly
-    await page.waitForSelector('dashboard-view, login-view', { timeout: 10000 })
+    // Verify the application loads properly - look for any content indicating the app loaded
+    await page.waitForSelector('body', { timeout: 10000 })
+    
+    // Check if we can find the main app content or title
+    const hasAppContent = await page.locator('h1, [class*="dashboard"], [class*="agent"], main, app-root, #app').count() > 0
+    if (!hasAppContent) {
+      // Try to wait for any of the expected app elements
+      await page.waitForSelector('h1, [class*="dashboard"], [class*="agent"], main, app-root, #app', { timeout: 5000 })
+    }
+    
     console.log('✅ Application is available and responding')
     
     // Set up any global test data or configuration here

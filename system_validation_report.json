@@ -1,0 +1,143 @@
+{
+  "test_execution_summary": {
+    "timestamp": "2025-08-04T12:22:23.523808+00:00",
+    "total_tests": 7,
+    "passed_tests": 6,
+    "failed_tests": 1,
+    "success_rate": 0.8571428571428571,
+    "overall_status": "FAIL",
+    "average_test_duration_ms": 293.5475025858198
+  },
+  "phase_results": {
+    "phase_1_dashboard_validation": {
+      "tests": 2,
+      "passed": 1,
+      "status": "FAIL"
+    },
+    "phase_2_api_integration": {
+      "tests": 3,
+      "passed": 3,
+      "status": "PASS"
+    },
+    "phase_3_agent_coordination": {
+      "tests": 2,
+      "passed": 2,
+      "status": "PASS"
+    },
+    "phase_4_performance_benchmarks": {
+      "tests": 1,
+      "passed": 1,
+      "status": "PASS"
+    }
+  },
+  "detailed_results": [
+    {
+      "test_name": "Dashboard API Live Data",
+      "status": "PASS",
+      "duration_ms": 4.221916198730469,
+      "details": "Active agents: 5, Status: healthy",
+      "performance_metrics": {
+        "response_time_ms": 4.221916198730469,
+        "active_agents": 5,
+        "system_status": "healthy"
+      }
+    },
+    {
+      "test_name": "Dashboard HTML Interface",
+      "status": "FAIL",
+      "duration_ms": 5.450963973999023,
+      "details": "Status: 200, Missing elements: ['agent-activities']",
+      "performance_metrics": {
+        "html_load_time_ms": 5.450963973999023
+      }
+    },
+    {
+      "test_name": "Health Check API",
+      "status": "PASS",
+      "duration_ms": 4.83393669128418,
+      "details": "Status: healthy, Components: 5/5",
+      "performance_metrics": {
+        "health_check_time_ms": 4.83393669128418,
+        "healthy_components": 5,
+        "total_components": 5
+      }
+    },
+    {
+      "test_name": "Debug Agents API",
+      "status": "PASS",
+      "duration_ms": 1.5790462493896484,
+      "details": "Agent count: 5",
+      "performance_metrics": {
+        "debug_agents_time_ms": 1.5790462493896484,
+        "agent_count": 5
+      }
+    },
+    {
+      "test_name": "Multi-Agent Coordination",
+      "status": "PASS",
+      "duration_ms": 1.5752315521240234,
+      "details": "Roles found: 5/5, Avg performance: 0.85",
+      "performance_metrics": {
+        "coordination_check_time_ms": 1.5752315521240234,
+        "active_agent_roles": 5,
+        "average_performance_score": 0.85,
+        "missing_roles": []
+      }
+    },
+    {
+      "test_name": "WebSocket Real-time Communication",
+      "status": "PASS",
+      "duration_ms": 2002.6988983154297,
+      "details": "Connection established in 1.3ms, Messages received: 1",
+      "performance_metrics": {
+        "websocket_connection_time_ms": 1.348733901977539,
+        "total_test_time_ms": 2002.6988983154297,
+        "messages_received": 1
+      }
+    },
+    {
+      "test_name": "Performance Benchmarks",
+      "status": "PASS",
+      "duration_ms": 34.472525119781494,
+      "details": "Success rate: 4/4, Avg response: 34.5ms",
+      "performance_metrics": {
+        "success_rate": 1.0,
+        "average_response_time_ms": 34.472525119781494,
+        "endpoint_results": {
+          "Health Check": {
+            "response_time_ms": 119.45700645446777,
+            "status_code": 200,
+            "success": true
+          },
+          "Dashboard API": {
+            "response_time_ms": 3.7789344787597656,
+            "status_code": 200,
+            "success": true
+          },
+          "Debug Agents": {
+            "response_time_ms": 3.947019577026367,
+            "status_code": 200,
+            "success": true
+          },
+          "System Status": {
+            "response_time_ms": 10.70713996887207,
+            "status_code": 200,
+            "success": true
+          }
+        }
+      }
+    }
+  ],
+  "success_criteria_validation": {
+    "dashboard_features_operational": false,
+    "api_integration_working": true,
+    "multi_agent_coordination_active": true,
+    "websocket_streaming_functional": true,
+    "performance_benchmarks_met": true
+  },
+  "recommendations": [
+    "Address 1 failed tests to achieve full system validation",
+    "Optimize performance for 1 slow-responding components",
+    "Dashboard functionality requires attention for production readiness"
+  ]
+}

@@ -340,7 +340,7 @@
         </div>
         
         <!-- Agent Activities Panel -->
-        <div class="agents-panel">
+        <div class="agents-panel" id="agent-activities">
             <div class="panel-title">Agent Activities</div>
             <div id="agentsList">
                 <div class="item-details" style="text-align: center; color: #999;">
@@ -391,11 +391,13 @@
             init() {
                 this.connect();
                 this.setupEventListeners();
+                // Start HTTP polling as fallback
+                this.startHttpPolling();
             }
             
             connect() {
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const wsUrl = `${protocol}//${window.location.host}/dashboard/ws/${this.generateConnectionId()}`;
+                const wsUrl = `${protocol}//${window.location.host}/dashboard/simple-ws/${this.generateConnectionId()}`;
                 
                 this.socket = new WebSocket(wsUrl);
                 
@@ -607,6 +609,28 @@
             
             generateConnectionId() {
                 return 'dashboard_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            startHttpPolling() {
+                // Poll the working API endpoint every 5 seconds
+                const pollData = async () => {
+                    try {
+                        const response = await fetch('/dashboard/api/live-data');
+                        const data = await response.json();
+                        this.handleMessage({
+                            type: 'dashboard_update',
+                            data: data
+                        });
+                    } catch (error) {
+                        console.error('Failed to fetch dashboard data:', error);
+                    }
+                };
+                
+                // Initial poll
+                pollData();
+                
+                // Set up polling interval
+                setInterval(pollData, 5000);
             }
         }
         

@@ -29,17 +29,35 @@ export interface AgentStatus {
 
 @customElement('agent-health-panel')
 export class AgentHealthPanel extends LitElement {
-  @property({ type: Array }) agents: AgentStatus[] = []
-  @property({ type: Boolean }) compact: boolean = false
-  @property({ type: String }) sortBy: 'name' | 'status' | 'performance' | 'uptime' = 'name'
-  @property({ type: String }) filterStatus: string = 'all'
+  @property({ type: Array }) declare agents: AgentStatus[]
+  @property({ type: Boolean }) declare compact: boolean
+  @property({ type: String }) declare sortBy: 'name' | 'status' | 'performance' | 'uptime'
+  @property({ type: String }) declare filterStatus: string
   
-  @state() private selectedAgent: string | null = null
-  @state() private isRefreshing: boolean = false
-  @state() private teamActivationInProgress: boolean = false
-  @state() private showTeamControls: boolean = true
-  @state() private bulkSelectedAgents: Set<string> = new Set()
-  @state() private showBulkActions: boolean = false
+  @state() declare private selectedAgent: string | null
+  @state() declare private isRefreshing: boolean
+  @state() declare private teamActivationInProgress: boolean
+  @state() declare private showTeamControls: boolean
+  @state() declare private bulkSelectedAgents: Set<string>
+  @state() declare private showBulkActions: boolean
+  
+  constructor() {
+    super()
+    
+    // Initialize properties
+    this.agents = []
+    this.compact = false
+    this.sortBy = 'name'
+    this.filterStatus = 'all'
+    
+    // Initialize state properties
+    this.selectedAgent = null
+    this.isRefreshing = false
+    this.teamActivationInProgress = false
+    this.showTeamControls = true
+    this.bulkSelectedAgents = new Set()
+    this.showBulkActions = false
+  }
   
   static styles = css`
     :host {

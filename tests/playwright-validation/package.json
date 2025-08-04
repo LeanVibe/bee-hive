@@ -1,0 +1,44 @@
+{
+  "name": "leanvibe-playwright-validation",
+  "version": "1.0.0",
+  "description": "Comprehensive Playwright validation suite for LeanVibe Agent Hive 2.0",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:infrastructure": "playwright test tests/infrastructure/",
+    "test:agents": "playwright test tests/multi-agent/",
+    "test:dashboard": "playwright test tests/dashboard/",
+    "test:api": "playwright test tests/api/",
+    "test:workflows": "playwright test tests/workflows/",
+    "test:integration": "playwright test tests/integration/",
+    "test:all": "npm run test:infrastructure && npm run test:agents && npm run test:dashboard && npm run test:api && npm run test:workflows && npm run test:integration",
+    "report": "playwright show-report",
+    "install:deps": "npx playwright install",
+    "validate:claims": "npm run test:all && npm run generate:evidence-report",
+    "generate:evidence-report": "node scripts/generate-comprehensive-report.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "moment": "^2.29.4"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "validation",
+    "autonomous-development",
+    "multi-agent",
+    "leanvibe"
+  ],
+  "author": "LeanVibe Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

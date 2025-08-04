@@ -93,6 +93,36 @@ export class AuthService extends EventEmitter {
   
   async initialize(): Promise<void> {
     try {
+      // DEVELOPMENT MODE: Auto-authenticate for testing
+      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+        console.log('🔧 Development mode: Auto-authenticating...')
+        this.state = {
+          user: {
+            id: 'dev-user-001',
+            email: 'developer@leanvibe.com',
+            name: 'Developer',
+            full_name: 'Development User',
+            role: 'super_admin',
+            permissions: ['read:agents', 'write:agents', 'admin:system'],
+            company_name: 'LeanVibe Development',
+            pilot_ids: ['dev-pilot-001'],
+            is_active: true,
+            last_login: new Date(),
+            auth_method: 'password'
+          },
+          token: 'dev-token-' + Date.now(),
+          refreshToken: 'dev-refresh-token-' + Date.now(),
+          isAuthenticated: true,
+          lastActivity: Date.now(),
+          sessionId: 'dev-session-' + Date.now(),
+          biometricEnabled: false
+        }
+        
+        console.log('✅ Development authentication complete')
+        this.emit('authenticated', this.state.user)
+        return
+      }
+      
       // Initialize Auth0 client
       await this.initializeAuth0()
       

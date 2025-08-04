@@ -8,7 +8,7 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: 'auto',
       devOptions: {
-        enabled: true
+        enabled: false  // Disable in development to fix the error
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
@@ -19,7 +19,7 @@ export default defineConfig({
         runtimeCaching: [
           // API Cache - Stale While Revalidate for dynamic data
           {
-            urlPattern: /^https?:\/\/.*\/api\/v1\/(tasks|agents|events).*$/,
+            urlPattern: /^https?:\/\/.*\/dashboard\/api\/(live-data).*$/,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'api-dynamic-cache',
@@ -41,7 +41,7 @@ export default defineConfig({
           },
           // Static API resources - Cache First
           {
-            urlPattern: /^https?:\/\/.*\/api\/v1\/(health|status|version).*$/,
+            urlPattern: /^https?:\/\/.*\/dashboard\/api\/(health|status|version).*$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'api-static-cache',
@@ -147,7 +147,6 @@ export default defineConfig({
             purpose: 'maskable any'
           }
         ],
-        categories: ['productivity', 'developer'],
         shortcuts: [
           {
             name: 'Dashboard',
@@ -174,14 +173,14 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 3001,
+    port: 3002,
     proxy: {
-      '/api': {
+      '/dashboard/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
-      '/ws': {
+      '/dashboard/simple-ws': {
         target: 'ws://localhost:8000',
         ws: true,
         changeOrigin: true,

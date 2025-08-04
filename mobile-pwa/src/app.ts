@@ -19,15 +19,15 @@ import './views/login-view'
 
 @customElement('agent-hive-app')
 export class AgentHiveApp extends LitElement {
-  @state() private currentRoute: string = '/'
-  @state() private isAuthenticated: boolean = false
-  @state() private isLoading: boolean = true
-  @state() private isOnline: boolean = navigator.onLine
-  @state() private hasError: boolean = false
-  @state() private errorMessage: string = ''
-  @state() private isMobile: boolean = window.innerWidth < 768
-  @state() private sidebarCollapsed: boolean = false
-  @state() private mobileMenuOpen: boolean = false
+  @state() declare private currentRoute: string
+  @state() declare private isAuthenticated: boolean
+  @state() declare private isLoading: boolean
+  @state() declare private isOnline: boolean
+  @state() declare private hasError: boolean
+  @state() declare private errorMessage: string
+  @state() declare private isMobile: boolean
+  @state() declare private sidebarCollapsed: boolean
+  @state() declare private mobileMenuOpen: boolean
   
   private router: Router
   private authService: AuthService
@@ -202,6 +202,17 @@ export class AgentHiveApp extends LitElement {
   constructor() {
     super()
     
+    // Initialize state properties
+    this.currentRoute = '/'
+    this.isAuthenticated = false
+    this.isLoading = true
+    this.isOnline = navigator.onLine
+    this.hasError = false
+    this.errorMessage = ''
+    this.isMobile = window.innerWidth < 768
+    this.sidebarCollapsed = false
+    this.mobileMenuOpen = false
+    
     // Initialize services
     this.authService = AuthService.getInstance()
     this.wsService = WebSocketService.getInstance()
@@ -231,17 +242,20 @@ export class AgentHiveApp extends LitElement {
     try {
       this.isLoading = true
       
+      // Initialize authentication service first
+      await this.authService.initialize()
+      
       // Check authentication state
       this.isAuthenticated = this.authService.isAuthenticated()
+      
+      // Start router AFTER auth initialization
+      this.router.start()
+      this.currentRoute = this.router.getCurrentRoute()
       
       // If authenticated, ensure WebSocket is connected
       if (this.isAuthenticated) {
         await this.wsService.ensureConnection()
       }
-      
-      // Start router
-      this.router.start()
-      this.currentRoute = this.router.getCurrentRoute()
       
       this.isLoading = false
       this.hasError = false
