@@ -6,13 +6,26 @@ import './notification-center'
 
 @customElement('app-header')
 export class AppHeader extends LitElement {
-  @property() currentRoute: string = '/'
-  @property() isOnline: boolean = true
-  @property({ type: Boolean }) showMenuButton: boolean = true
-  @state() private systemHealthService = getSystemHealthService()
-  @state() private healthSummary: HealthSummary | null = null
-  @state() private activeAgents: number = 0
-  @state() private activeTasks: number = 0
+  @property() declare currentRoute: string
+  @property() declare isOnline: boolean
+  @property({ type: Boolean }) declare showMenuButton: boolean
+  @state() private declare systemHealthService: any
+  @state() private declare healthSummary: HealthSummary | null
+  @state() private declare activeAgents: number
+  @state() private declare activeTasks: number
+  
+  constructor() {
+    super()
+    
+    // Initialize reactive properties
+    this.currentRoute = '/'
+    this.isOnline = true
+    this.showMenuButton = true
+    this.systemHealthService = getSystemHealthService()
+    this.healthSummary = null
+    this.activeAgents = 0
+    this.activeTasks = 0
+  }
   
   static styles = css`
     :host {

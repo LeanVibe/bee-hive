@@ -5,10 +5,20 @@ import { Task, TaskStatus } from '../../types/task'
 
 @customElement('kanban-column')
 export class KanbanColumn extends LitElement {
-  @property({ type: String }) title: string = ''
-  @property({ type: String }) status: TaskStatus = 'pending'
-  @property({ type: Array }) tasks: Task[] = []
-  @property({ type: Boolean }) offline: boolean = false
+  @property({ type: String }) declare title: string
+  @property({ type: String }) declare status: TaskStatus
+  @property({ type: Array }) declare tasks: Task[]
+  @property({ type: Boolean }) declare offline: boolean
+  
+  constructor() {
+    super()
+    
+    // Initialize reactive properties
+    this.title = ''
+    this.status = 'pending'
+    this.tasks = []
+    this.offline = false
+  }
   
   static styles = css`
     :host {

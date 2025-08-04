@@ -10,24 +10,47 @@ import '../components/modals/task-edit-modal'
 
 @customElement('tasks-view')
 export class TasksView extends LitElement {
-  @state() private tasks: Task[] = []
-  @state() private isLoading: boolean = true
-  @state() private error: string = ''
-  @state() private viewMode: 'kanban' | 'list' = 'kanban'
-  @state() private filterStatus: TaskStatus | 'all' = 'all'
-  @state() private searchQuery: string = ''
-  @state() private taskService = getTaskService()
-  @state() private agentService = getAgentService()
-  @state() private monitoringActive: boolean = false
-  @state() private showTaskModal: boolean = false
-  @state() private taskModalMode: 'create' | 'edit' = 'create'
-  @state() private taskModalTask?: Task
-  @state() private availableAgents: Agent[] = []
-  @state() private selectedTasks: Set<string> = new Set()
-  @state() private bulkActionMode: boolean = false
-  @state() private draggedTask: Task | null = null
-  @state() private draggedOverAgent: string | null = null
+  @state() private declare tasks: Task[]
+  @state() private declare isLoading: boolean
+  @state() private declare error: string
+  @state() private declare viewMode: 'kanban' | 'list'
+  @state() private declare filterStatus: TaskStatus | 'all'
+  @state() private declare searchQuery: string
+  @state() private declare taskService: any
+  @state() private declare agentService: any
+  @state() private declare monitoringActive: boolean
+  @state() private declare showTaskModal: boolean
+  @state() private declare taskModalMode: 'create' | 'edit'
+  @state() private declare taskModalTask: Task | undefined
+  @state() private declare availableAgents: Agent[]
+  @state() private declare selectedTasks: Set<string>
+  @state() private declare bulkActionMode: boolean
+  @state() private declare draggedTask: Task | null
+  @state() private declare draggedOverAgent: string | null
 
+  constructor() {
+    super()
+    
+    // Initialize reactive properties
+    this.tasks = []
+    this.isLoading = true
+    this.error = ''
+    this.viewMode = 'kanban'
+    this.filterStatus = 'all'
+    this.searchQuery = ''
+    this.taskService = getTaskService()
+    this.agentService = getAgentService()
+    this.monitoringActive = false
+    this.showTaskModal = false
+    this.taskModalMode = 'create'
+    this.taskModalTask = undefined
+    this.availableAgents = []
+    this.selectedTasks = new Set()
+    this.bulkActionMode = false
+    this.draggedTask = null
+    this.draggedOverAgent = null
+  }
+  
   static styles = css`
     :host {
       display: block;

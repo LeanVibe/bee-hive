@@ -20,19 +20,19 @@ import '../components/dashboard/event-timeline'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
-  @property({ type: Boolean }) offline = false
+  @property({ type: Boolean }) declare offline: boolean
   
-  @state() private tasks: Task[] = []
-  @state() private agents: AgentStatus[] = []
-  @state() private events: TimelineEvent[] = []
-  @state() private systemHealth: SystemHealth | null = null
-  @state() private performanceMetrics: PerformanceSnapshot | null = null
-  @state() private healthSummary: HealthSummary | null = null
-  @state() private isLoading = true
-  @state() private error = ''
-  @state() private lastSync: Date | null = null
-  @state() private selectedView: 'overview' | 'kanban' | 'agents' | 'events' = 'overview'
-  @state() private servicesInitialized = false
+  @state() private declare tasks: Task[]
+  @state() private declare agents: AgentStatus[]
+  @state() private declare events: TimelineEvent[]
+  @state() private declare systemHealth: SystemHealth | null
+  @state() private declare performanceMetrics: PerformanceSnapshot | null
+  @state() private declare healthSummary: HealthSummary | null
+  @state() private declare isLoading: boolean
+  @state() private declare error: string
+  @state() private declare lastSync: Date | null
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events'
+  @state() private declare servicesInitialized: boolean
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
@@ -330,6 +330,20 @@ export class DashboardView extends LitElement {
   
   constructor() {
     super()
+    
+    // Initialize reactive properties
+    this.offline = false
+    this.tasks = []
+    this.agents = []
+    this.events = []
+    this.systemHealth = null
+    this.performanceMetrics = null
+    this.healthSummary = null
+    this.isLoading = true
+    this.error = ''
+    this.lastSync = null
+    this.selectedView = 'overview'
+    this.servicesInitialized = false
     
     this.websocketService = WebSocketService.getInstance()
     this.offlineService = OfflineService.getInstance()

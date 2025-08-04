@@ -9,22 +9,41 @@ import './task-card'
 
 @customElement('kanban-board')
 export class KanbanBoard extends LitElement {
-  @property({ type: Array }) tasks: Task[] = []
-  @property({ type: Array }) agents: Agent[] = []
-  @property({ type: Boolean }) offline: boolean = false
-  @property({ type: String }) filter: string = ''
-  @property({ type: String }) agentFilter: string = ''
-  @property({ type: String }) priorityFilter: string = ''
-  @property({ type: String }) roleFilter: string = ''
-  @property({ type: Boolean }) showOnlyUnassigned: boolean = false
+  @property({ type: Array }) declare tasks: Task[]
+  @property({ type: Array }) declare agents: Agent[]
+  @property({ type: Boolean }) declare offline: boolean
+  @property({ type: String }) declare filter: string
+  @property({ type: String }) declare agentFilter: string
+  @property({ type: String }) declare priorityFilter: string
+  @property({ type: String }) declare roleFilter: string
+  @property({ type: Boolean }) declare showOnlyUnassigned: boolean
   
-  @state() private draggedTask: Task | null = null
-  @state() private isUpdating: boolean = false
-  @state() private selectedTasks: Set<string> = new Set()
-  @state() private bulkActionPanel: boolean = false
-  @state() private taskAnalytics: any = null
+  @state() private declare draggedTask: Task | null
+  @state() private declare isUpdating: boolean
+  @state() private declare selectedTasks: Set<string>
+  @state() private declare bulkActionPanel: boolean
+  @state() private declare taskAnalytics: any
   
   private sortableInstances: Map<string, Sortable> = new Map()
+  
+  constructor() {
+    super()
+    
+    // Initialize reactive properties
+    this.tasks = []
+    this.agents = []
+    this.offline = false
+    this.filter = ''
+    this.agentFilter = ''
+    this.priorityFilter = ''
+    this.roleFilter = ''
+    this.showOnlyUnassigned = false
+    this.draggedTask = null
+    this.isUpdating = false
+    this.selectedTasks = new Set()
+    this.bulkActionPanel = false
+    this.taskAnalytics = null
+  }
   
   static styles = css`
     :host {

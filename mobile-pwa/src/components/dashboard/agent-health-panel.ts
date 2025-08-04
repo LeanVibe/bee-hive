@@ -29,20 +29,32 @@ export interface AgentStatus {
 
 @customElement('agent-health-panel')
 export class AgentHealthPanel extends LitElement {
-  @property({ type: Array }) agents: AgentStatus[] = []
-  @property({ type: Boolean }) compact = false
-  @property({ type: String }) sortBy: 'name' | 'status' | 'performance' | 'uptime' = 'name'
-  @property({ type: String }) filterStatus = 'all'
+  @property({ type: Array }) declare agents: AgentStatus[]
+  @property({ type: Boolean }) declare compact: boolean
+  @property({ type: String }) declare sortBy: 'name' | 'status' | 'performance' | 'uptime'
+  @property({ type: String }) declare filterStatus: string
   
-  @state() private selectedAgent: string | null = null
-  @state() private isRefreshing = false
-  @state() private teamActivationInProgress = false
-  @state() private showTeamControls = true
-  @state() private bulkSelectedAgents = new Set<string>()
-  @state() private showBulkActions = false
+  @state() private declare selectedAgent: string | null
+  @state() private declare isRefreshing: boolean
+  @state() private declare teamActivationInProgress: boolean
+  @state() private declare showTeamControls: boolean
+  @state() private declare bulkSelectedAgents: Set<string>
+  @state() private declare showBulkActions: boolean
   
   constructor() {
     super()
+    
+    // Initialize reactive properties
+    this.agents = []
+    this.compact = false
+    this.sortBy = 'name'
+    this.filterStatus = 'all'
+    this.selectedAgent = null
+    this.isRefreshing = false
+    this.teamActivationInProgress = false
+    this.showTeamControls = true
+    this.bulkSelectedAgents = new Set<string>()
+    this.showBulkActions = false
   }
   
   static styles = css`
