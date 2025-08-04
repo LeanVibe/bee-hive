@@ -12,6 +12,7 @@ import './components/layout/install-prompt'
 import './components/common/error-boundary'
 import './components/common/loading-spinner'
 import './views/dashboard-view'
+import './views/mobile-enhanced-dashboard-view'
 import './views/agents-view'
 import './views/tasks-view'
 import './views/system-health-view'
@@ -403,7 +404,9 @@ export class AgentHiveApp extends LitElement {
         return html`<login-view></login-view>`
       case '/':
       case '/dashboard':
-        return html`<dashboard-view></dashboard-view>`
+        return this.isMobile ? 
+          html`<mobile-enhanced-dashboard-view .mobile=${true} .decisionMode=${true}></mobile-enhanced-dashboard-view>` :
+          html`<dashboard-view></dashboard-view>`
       case '/tasks':
         return html`<tasks-view></tasks-view>`
       case '/agents':

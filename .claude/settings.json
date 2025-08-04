@@ -1,0 +1,66 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/hive-quality-gate.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command", 
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/hive-session-summary.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'LeanVibe Agent Hive 2.0 session active - Commands: /hive /sleep /wake /dream /meditate'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "memory_management": {
+    "auto_sleep_threshold": 85,
+    "context_optimization_threshold": 75,
+    "session_preservation_enabled": true,
+    "agent_state_backup": true
+  },
+  "commands": {
+    "hive": {
+      "description": "LeanVibe Agent Hive system control",
+      "integration": "full_system_management"
+    },
+    "sleep": {
+      "description": "Intelligent session consolidation with agent state preservation", 
+      "auto_trigger": "context_usage >= 85%"
+    },
+    "wake": {
+      "description": "Session restoration with system validation",
+      "auto_execute": "session_start"
+    },
+    "dream": {
+      "description": "Creative processing and innovation cycles",
+      "context": "breakthrough_opportunities"
+    },
+    "meditate": {
+      "description": "Learning consolidation and wisdom extraction",
+      "trigger": "major_milestone_completion"
+    }
+  }
+}

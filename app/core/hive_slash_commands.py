@@ -191,22 +191,30 @@ class HiveSpawnCommand(HiveSlashCommand):
 
 
 class HiveStatusCommand(HiveSlashCommand):
-    """Get comprehensive platform status."""
+    """Get comprehensive platform status with intelligent filtering."""
     
     def __init__(self):
         super().__init__(
             name="status",
-            description="Get comprehensive status of the multi-agent platform",
-            usage="/hive:status [--detailed] [--agents-only]"
+            description="Get intelligent status overview with priority alerts and mobile optimization",
+            usage="/hive:status [--detailed] [--agents-only] [--mobile] [--alerts-only] [--priority=critical|high|medium]"
         )
     
     async def execute(self, args: List[str] = None, context: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Get platform status."""
+        """Get intelligent platform status with priority filtering."""
         try:
-            logger.info("📊 Executing /hive:status command")
+            logger.info("📊 Executing enhanced /hive:status command")
             
+            # Parse arguments
             detailed = "--detailed" in (args or [])
             agents_only = "--agents-only" in (args or [])
+            mobile_mode = "--mobile" in (args or [])
+            alerts_only = "--alerts-only" in (args or [])
+            
+            priority_filter = None
+            for arg in (args or []):
+                if arg.startswith("--priority="):
+                    priority_filter = arg.split("=")[1].lower()
             
             # Get agent status with hybrid orchestrator integration
             spawner_agents = await get_active_agents_status()
@@ -227,6 +235,11 @@ class HiveStatusCommand(HiveSlashCommand):
             
             total_agents = spawner_count + orchestrator_count
             
+            # Generate intelligent alerts and priority information
+            alerts = await self._generate_intelligent_alerts(spawner_agents, orchestrator_agents, total_agents)
+            filtered_alerts = self._filter_alerts_by_priority(alerts, priority_filter) if priority_filter else alerts
+            
+            # Base status structure
             status_result = {
                 "success": True,
                 "platform_active": total_agents > 0,
@@ -235,48 +248,38 @@ class HiveStatusCommand(HiveSlashCommand):
                 "orchestrator_agents": orchestrator_count,
                 "system_ready": total_agents >= 3,
                 "timestamp": datetime.utcnow().isoformat(),
-                "hybrid_integration": True
+                "hybrid_integration": True,
+                "priority_alerts": filtered_alerts,
+                "total_alerts": len(alerts),
+                "filtered_alerts": len(filtered_alerts)
             }
             
+            # Mobile-optimized response
+            if mobile_mode:
+                return await self._generate_mobile_optimized_status(status_result, filtered_alerts)
+            
+            # Alerts-only response
+            if alerts_only:
+                return {
+                    "success": True,
+                    "alerts": filtered_alerts,
+                    "alert_summary": self._generate_alert_summary(filtered_alerts),
+                    "requires_action": any(alert["priority"] in ["critical", "high"] for alert in filtered_alerts),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            
             if not agents_only:
-                # Add system health info
-                try:
-                    import requests
-                    health_response = requests.get("http://localhost:8000/health", timeout=3)
-                    if health_response.status_code == 200:
-                        health_data = health_response.json()
-                        status_result["system_health"] = health_data.get("status", "unknown")
-                        status_result["components"] = health_data.get("components", {})
-                except:
-                    status_result["system_health"] = "unknown"
+                # Add enhanced system health info
+                system_health = await self._get_enhanced_system_health()
+                status_result.update(system_health)
             
             if detailed or agents_only:
                 status_result["spawner_agents_detail"] = spawner_agents or {}
                 status_result["orchestrator_agents_detail"] = orchestrator_agents
                 
-                # Add capability summary
-                capabilities_summary = {}
-                all_agents = (spawner_agents or {}).copy()
-                all_agents.update(orchestrator_agents)
-                
-                for agent_data in all_agents.values():
-                    role = agent_data.get("role", "unknown")
-                    capabilities = agent_data.get("capabilities", [])
-                    
-                    if role not in capabilities_summary:
-                        capabilities_summary[role] = {
-                            "count": 0,
-                            "capabilities": set()
-                        }
-                    
-                    capabilities_summary[role]["count"] += 1
-                    capabilities_summary[role]["capabilities"].update(capabilities)
-                
-                # Convert sets to lists for JSON serialization
-                for role_info in capabilities_summary.values():
-                    role_info["capabilities"] = list(role_info["capabilities"])
-                
-                status_result["team_composition"] = capabilities_summary
+                # Add intelligent capability analysis
+                capabilities_analysis = await self._analyze_team_capabilities(spawner_agents, orchestrator_agents)
+                status_result["team_analysis"] = capabilities_analysis
             
             return status_result
             
@@ -287,6 +290,198 @@ class HiveStatusCommand(HiveSlashCommand):
                 "error": str(e),
                 "message": "Failed to get platform status"
             }
+    
+    async def _generate_intelligent_alerts(self, spawner_agents: dict, orchestrator_agents: dict, total_agents: int) -> List[Dict[str, Any]]:
+        """Generate intelligent alerts based on system state."""
+        alerts = []
+        
+        # Critical alerts
+        if total_agents == 0:
+            alerts.append({
+                "priority": "critical",
+                "type": "system_down",
+                "message": "No agents active - platform offline",
+                "action": "Execute /hive:start to initialize platform",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+        elif total_agents < 3:
+            alerts.append({
+                "priority": "high",
+                "type": "insufficient_agents",
+                "message": f"Only {total_agents} agents active - minimum 3 recommended",
+                "action": "Consider running /hive:start to spawn more agents",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+        
+        # Agent health analysis
+        all_agents = (spawner_agents or {}).copy()
+        all_agents.update(orchestrator_agents or {})
+        
+        stuck_agents = []
+        for agent_id, agent_data in all_agents.items():
+            # Check for stuck agents (placeholder logic)
+            last_activity = agent_data.get("last_activity")
+            if last_activity:
+                # If agent hasn't been active recently, flag as potentially stuck
+                pass  # Would implement actual stuck detection logic
+        
+        # Performance alerts
+        try:
+            import requests
+            health_response = requests.get("http://localhost:8000/health", timeout=2)
+            if health_response.status_code != 200:
+                alerts.append({
+                    "priority": "high",
+                    "type": "api_health",
+                    "message": "API health check failed",
+                    "action": "Check system logs and restart services if needed",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+        except:
+            alerts.append({
+                "priority": "medium",
+                "type": "api_unreachable",
+                "message": "API health check unreachable",
+                "action": "Verify system is running with make start",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+        
+        # Success alerts
+        if total_agents >= 5:
+            alerts.append({
+                "priority": "info",
+                "type": "system_optimal",
+                "message": f"Platform running optimally with {total_agents} agents",
+                "action": "Ready for autonomous development tasks",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+        
+        return alerts
+    
+    def _filter_alerts_by_priority(self, alerts: List[Dict[str, Any]], priority: str) -> List[Dict[str, Any]]:
+        """Filter alerts by priority level."""
+        priority_levels = {
+            "critical": ["critical"],
+            "high": ["critical", "high"],
+            "medium": ["critical", "high", "medium"],
+            "all": ["critical", "high", "medium", "info"]
+        }
+        
+        allowed_priorities = priority_levels.get(priority, ["critical", "high", "medium", "info"])
+        return [alert for alert in alerts if alert["priority"] in allowed_priorities]
+    
+    async def _generate_mobile_optimized_status(self, base_status: Dict[str, Any], alerts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate mobile-optimized status response."""
+        # Filter to only critical decision points for mobile
+        critical_alerts = [alert for alert in alerts if alert["priority"] in ["critical", "high"]]
+        
+        mobile_status = {
+            "success": True,
+            "mobile_optimized": True,
+            "system_state": "operational" if base_status["system_ready"] else "degraded",
+            "agent_count": base_status["agent_count"],
+            "requires_attention": len(critical_alerts) > 0,
+            "critical_alerts": critical_alerts,
+            "quick_actions": [],
+            "timestamp": base_status["timestamp"]
+        }
+        
+        # Generate contextual quick actions
+        if not base_status["platform_active"]:
+            mobile_status["quick_actions"].append({
+                "action": "start_platform",
+                "command": "/hive:start",
+                "description": "Start multi-agent platform"
+            })
+        elif base_status["agent_count"] < 3:
+            mobile_status["quick_actions"].append({
+                "action": "spawn_agents",
+                "command": "/hive:spawn backend_developer",
+                "description": "Add more agents to team"
+            })
+        else:
+            mobile_status["quick_actions"].append({
+                "action": "start_development",
+                "command": "/hive:develop",
+                "description": "Begin autonomous development"
+            })
+        
+        return mobile_status
+    
+    async def _get_enhanced_system_health(self) -> Dict[str, Any]:
+        """Get enhanced system health information."""
+        health_info = {}
+        
+        try:
+            import requests
+            health_response = requests.get("http://localhost:8000/health", timeout=3)
+            if health_response.status_code == 200:
+                health_data = health_response.json()
+                health_info["system_health"] = health_data.get("status", "unknown")
+                health_info["components"] = health_data.get("components", {})
+                health_info["response_time_ms"] = health_response.elapsed.total_seconds() * 1000
+            else:
+                health_info["system_health"] = "degraded"
+                health_info["health_status_code"] = health_response.status_code
+        except Exception as e:
+            health_info["system_health"] = "unknown"
+            health_info["health_error"] = str(e)
+        
+        return health_info
+    
+    async def _analyze_team_capabilities(self, spawner_agents: dict, orchestrator_agents: dict) -> Dict[str, Any]:
+        """Analyze team capabilities and provide recommendations."""
+        all_agents = (spawner_agents or {}).copy()
+        all_agents.update(orchestrator_agents or {})
+        
+        role_distribution = {}
+        total_capabilities = set()
+        
+        for agent_data in all_agents.values():
+            role = agent_data.get("role", "unknown")
+            capabilities = agent_data.get("capabilities", [])
+            
+            if role not in role_distribution:
+                role_distribution[role] = {
+                    "count": 0,
+                    "capabilities": set()
+                }
+            
+            role_distribution[role]["count"] += 1
+            role_distribution[role]["capabilities"].update(capabilities)
+            total_capabilities.update(capabilities)
+        
+        # Convert sets to lists for JSON serialization
+        for role_info in role_distribution.values():
+            role_info["capabilities"] = list(role_info["capabilities"])
+        
+        # Generate recommendations
+        recommendations = []
+        essential_roles = ["product_manager", "backend_developer", "frontend_developer"]
+        missing_roles = [role for role in essential_roles if role not in role_distribution]
+        
+        if missing_roles:
+            recommendations.append({
+                "type": "missing_roles",
+                "message": f"Consider adding: {', '.join(missing_roles)}",
+                "action": f"Run /hive:spawn {missing_roles[0]} to add missing capability"
+            })
+        
+        return {
+            "role_distribution": role_distribution,
+            "total_capabilities": list(total_capabilities),
+            "team_size": len(all_agents),
+            "recommendations": recommendations,
+            "team_readiness": len(all_agents) >= 3 and len(missing_roles) == 0
+        }
+    
+    def _generate_alert_summary(self, alerts: List[Dict[str, Any]]) -> Dict[str, int]:
+        """Generate summary of alerts by priority."""
+        summary = {"critical": 0, "high": 0, "medium": 0, "info": 0}
+        for alert in alerts:
+            priority = alert.get("priority", "info")
+            summary[priority] = summary.get(priority, 0) + 1
+        return summary
 
 
 class HiveDevelopCommand(HiveSlashCommand):
@@ -468,6 +663,190 @@ class HiveOversightCommand(HiveSlashCommand):
             }
 
 
+class HiveFocusCommand(HiveSlashCommand):
+    """Context-aware command that provides intelligent recommendations based on current system state."""
+    
+    def __init__(self):
+        super().__init__(
+            name="focus",
+            description="Get context-aware recommendations and intelligent next steps",
+            usage="/hive:focus [area] [--mobile] [--priority=critical|high]"
+        )
+    
+    async def execute(self, args: List[str] = None, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Provide intelligent, context-aware recommendations."""
+        try:
+            logger.info("🎯 Executing /hive:focus command")
+            
+            focus_area = args[0] if args and not args[0].startswith("--") else None
+            mobile_mode = "--mobile" in (args or [])
+            
+            priority_filter = None
+            for arg in (args or []):
+                if arg.startswith("--priority="):
+                    priority_filter = arg.split("=")[1].lower()
+            
+            # Get current system state
+            status_command = HiveStatusCommand()
+            current_status = await status_command.execute(["--alerts-only"])
+            
+            # Generate context-aware recommendations
+            recommendations = await self._generate_contextual_recommendations(
+                current_status, focus_area, priority_filter
+            )
+            
+            result = {
+                "success": True,
+                "focus_area": focus_area or "general",
+                "recommendations": recommendations,
+                "context": {
+                    "system_state": current_status.get("alert_summary", {}),
+                    "requires_immediate_action": current_status.get("requires_action", False)
+                },
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            if mobile_mode:
+                result = await self._optimize_for_mobile(result)
+            
+            return result
+            
+        except Exception as e:
+            logger.error("Failed to execute /hive:focus", error=str(e))
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to generate contextual recommendations"
+            }
+    
+    async def _generate_contextual_recommendations(self, status: Dict[str, Any], focus_area: str, priority_filter: str) -> List[Dict[str, Any]]:
+        """Generate intelligent recommendations based on system state."""
+        recommendations = []
+        alerts = status.get("alerts", [])
+        
+        # System state analysis
+        if status.get("requires_action", False):
+            critical_alerts = [a for a in alerts if a["priority"] == "critical"]
+            if critical_alerts:
+                recommendations.extend([{
+                    "priority": "critical",
+                    "category": "system_health",
+                    "title": "Critical System Issues Detected",
+                    "description": alert["message"],
+                    "action": alert["action"],
+                    "command": alert.get("command", ""),
+                    "estimated_time": "2-5 minutes"
+                } for alert in critical_alerts[:2]])  # Limit to top 2
+        
+        # Focus area specific recommendations
+        if focus_area:
+            area_recommendations = await self._get_area_specific_recommendations(focus_area)
+            recommendations.extend(area_recommendations)
+        else:
+            # General workflow recommendations
+            recommendations.extend(await self._get_general_workflow_recommendations())
+        
+        # Filter by priority if specified
+        if priority_filter:
+            priority_levels = {"critical": ["critical"], "high": ["critical", "high"]}
+            allowed = priority_levels.get(priority_filter, ["critical", "high", "medium", "info"])
+            recommendations = [r for r in recommendations if r["priority"] in allowed]
+        
+        return recommendations[:5]  # Limit to top 5 recommendations
+    
+    async def _get_area_specific_recommendations(self, area: str) -> List[Dict[str, Any]]:
+        """Get recommendations specific to a focus area."""
+        area_recommendations = {
+            "development": [
+                {
+                    "priority": "high",
+                    "category": "development",
+                    "title": "Start Autonomous Development",
+                    "description": "Begin AI-powered development with multi-agent coordination",
+                    "action": "Use /hive:develop with your project description",
+                    "command": "/hive:develop \"Your project description here\"",
+                    "estimated_time": "5-30 minutes"
+                }
+            ],
+            "monitoring": [
+                {
+                    "priority": "medium",
+                    "category": "monitoring", 
+                    "title": "Open Remote Oversight Dashboard",
+                    "description": "Monitor agent activities and system health in real-time",
+                    "action": "Launch the oversight dashboard",
+                    "command": "/hive:oversight --mobile-info",
+                    "estimated_time": "< 1 minute"
+                }
+            ],
+            "performance": [
+                {
+                    "priority": "medium",
+                    "category": "performance",
+                    "title": "System Performance Analysis",
+                    "description": "Get detailed performance metrics and optimization suggestions",
+                    "action": "Run detailed status check",
+                    "command": "/hive:status --detailed",
+                    "estimated_time": "1-2 minutes"
+                }
+            ]
+        }
+        
+        return area_recommendations.get(area.lower(), [])
+    
+    async def _get_general_workflow_recommendations(self) -> List[Dict[str, Any]]:
+        """Get general workflow recommendations."""
+        return [
+            {
+                "priority": "high",
+                "category": "getting_started",
+                "title": "Quick Platform Status Check",
+                "description": "Verify system health and agent readiness",
+                "action": "Check current platform status",
+                "command": "/hive:status --mobile",
+                "estimated_time": "< 30 seconds"
+            },
+            {
+                "priority": "medium", 
+                "category": "productivity",
+                "title": "Start Development Session",
+                "description": "Begin autonomous development with full team coordination",
+                "action": "Describe what you want to build",
+                "command": "/hive:develop \"Describe your project\"",
+                "estimated_time": "5-60 minutes"
+            }
+        ]
+    
+    async def _optimize_for_mobile(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize recommendations for mobile interface."""
+        recommendations = result.get("recommendations", [])
+        
+        # Mobile-optimized format
+        mobile_result = {
+            "success": True,
+            "mobile_optimized": True,
+            "summary": {
+                "total_recommendations": len(recommendations),
+                "critical_actions": len([r for r in recommendations if r["priority"] == "critical"]),
+                "estimated_total_time": "5-10 minutes"
+            },
+            "quick_actions": [],
+            "detailed_recommendations": recommendations[:3],  # Limit for mobile
+            "timestamp": result["timestamp"]
+        }
+        
+        # Convert to quick actions for mobile
+        for rec in recommendations[:3]:
+            mobile_result["quick_actions"].append({
+                "title": rec["title"],
+                "priority": rec["priority"],
+                "command": rec.get("command", ""),
+                "time": rec.get("estimated_time", "< 5 min")
+            })
+        
+        return mobile_result
+
+
 class HiveStopCommand(HiveSlashCommand):
     """Stop all agents and services."""
     
@@ -548,6 +927,7 @@ class HiveSlashCommandRegistry:
             HiveStatusCommand(),
             HiveDevelopCommand(),
             HiveOversightCommand(),
+            HiveFocusCommand(),
             HiveStopCommand()
         ]
         

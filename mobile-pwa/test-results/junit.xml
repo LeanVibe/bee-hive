@@ -1,0 +1,42 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="16.507134">
+<testsuite name="comprehensive-agentic-system-validation.spec.ts" timestamp="2025-08-04T19:48:39.336Z" hostname="chromium" tests="1" failures="1" skipped="0" time="15.277" errors="0">
+<testcase name="Comprehensive Agentic System Validation › Baseline Dashboard Tests › CRITICAL: Dashboard loads and displays agentic system interface" classname="comprehensive-agentic-system-validation.spec.ts" time="15.277">
+<failure message="comprehensive-agentic-system-validation.spec.ts:58:5 CRITICAL: Dashboard loads and displays agentic system interface" type="FAILURE">
+<![CDATA[  [chromium] › comprehensive-agentic-system-validation.spec.ts:58:5 › Comprehensive Agentic System Validation › Baseline Dashboard Tests › CRITICAL: Dashboard loads and displays agentic system interface 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      67 |       ).catch(() => false);
+      68 |
+    > 69 |       expect(loadingComplete).toBeTruthy();
+         |                               ^
+      70 |
+      71 |       // Verify core agentic system elements
+      72 |       await expect(page.locator('heading:has-text("Agent Dashboard")')).toBeVisible({ timeout: 10000 });
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/comprehensive-agentic-system-validation.spec.ts:69:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/comprehensive-agentic-syst-2550f-ys-agentic-system-interface-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/comprehensive-agentic-syst-2550f-ys-agentic-system-interface-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/comprehensive-agentic-syst-2550f-ys-agentic-system-interface-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|comprehensive-agentic-syst-2550f-ys-agentic-system-interface-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|comprehensive-agentic-syst-2550f-ys-agentic-system-interface-chromium/video.webm]]
+
+[[ATTACHMENT|comprehensive-agentic-syst-2550f-ys-agentic-system-interface-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
