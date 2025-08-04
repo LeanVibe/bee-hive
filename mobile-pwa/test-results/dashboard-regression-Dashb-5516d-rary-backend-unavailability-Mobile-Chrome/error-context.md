@@ -1,0 +1,48 @@
+# Page snapshot
+
+```yaml
+- text: Connection lost. Attempting to reconnect...
+- button "Dismiss error": ×
+- text: 🤖
+- heading "Agent Hive" [level=1]
+- paragraph: Autonomous Development
+- navigation:
+  - text: Main
+  - list:
+    - listitem:
+      - button "Dashboard": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/> <rect x="8" y="3" width="8" height="4" rx="1"/> </svg> Dashboard Dashboard
+    - listitem:
+      - button "Agents": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> </svg> Agents 3 Agents
+    - listitem:
+      - button "Tasks": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/> </svg> Tasks Tasks
+    - listitem:
+      - button "System Health": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/> </svg> System Health System Health
+  - text: Administration
+  - list:
+    - listitem:
+      - button "Settings": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/> </svg> Settings Settings
+- text: All systems operational
+- main:
+  - img
+  - heading "Something went wrong" [level=2]
+  - paragraph: "The following properties on element bottom-navigation will not trigger updates as expected because they are set using class fields: currentRoute. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information."
+  - button "Reload Page":
+    - img
+    - text: Reload Page
+  - button "Go Home":
+    - img
+    - text: Go Home
+  - button "Try Again":
+    - img
+    - text: Try Again
+  - group: Error Details (for developers)
+- text: 📱
+- heading "Install Agent Hive" [level=3]
+- paragraph: Install the app for the best mobile experience with offline support and push notifications.
+- button "Install":
+  - img
+  - text: Install
+- button "Not now"
+- button "Close":
+  - img
+```

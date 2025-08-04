@@ -1,0 +1,229 @@
+# Page snapshot
+
+```yaml
+- text: 🤖
+- heading "Agent Hive" [level=1]
+- paragraph: Autonomous Development
+- button "Collapse sidebar":
+  - img
+- navigation:
+  - text: Main
+  - list:
+    - listitem:
+      - button "Dashboard": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/> <rect x="8" y="3" width="8" height="4" rx="1"/> </svg> Dashboard Dashboard
+    - listitem:
+      - button "Agents": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/> </svg> Agents 3 Agents
+    - listitem:
+      - button "Tasks": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/> </svg> Tasks Tasks
+    - listitem:
+      - button "System Health": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/> </svg> System Health System Health
+  - text: Administration
+  - list:
+    - listitem:
+      - button "Settings": <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/> </svg> Settings Settings
+- text: All systems operational
+- main:
+  - heading "Agent Dashboard" [level=1]:
+    - img
+    - text: Agent Dashboard
+  - text: "Last sync: just now"
+  - button "Refresh data":
+    - img
+  - button "Overview":
+    - img
+    - text: Overview
+  - button "Tasks":
+    - img
+    - text: Tasks
+  - button "Agents":
+    - img
+    - text: Agents
+  - button "Events":
+    - img
+    - text: Events
+  - paragraph:
+    - strong: "Error:"
+    - text: Connection to backend lost - using cached data
+  - button "Try Again"
+  - text: 0 Active Tasks 0 Completed Tasks 5 Active Agents HEALTHY System Health 85% CPU Usage 15% Memory Usage 6 Recent Events 5 Healthy Components
+  - button "Activate 5-Agent Team":
+    - img
+    - text: Activate 5-Agent Team
+  - text: System Ready (5/5 agents active)
+  - heading "Agent Health & Management" [level=3]:
+    - img
+    - text: Agent Health & Management
+  - button "Refresh agent data":
+    - img
+  - combobox:
+    - option "Sort by Name" [selected]
+    - option "Sort by Status"
+    - option "Sort by Performance"
+    - option "Sort by Uptime"
+  - combobox:
+    - option "All Agents" [selected]
+    - option "Active Only"
+    - option "Idle Only"
+    - option "Errors Only"
+    - option "Offline Only"
+  - text: "Active: 5 Idle: 0 Errors: 0 Offline: 0"
+  - checkbox
+  - text: Architect → 85% CPU Usage
+  - img
+  - text: 19.6 Memory
+  - img
+  - text: 18.5 Tokens/min
+  - img
+  - text: 1.5K Response Time
+  - img
+  - text: 1.8K
+  - img
+  - text: CPU stable
+  - img
+  - text: Memory stable
+  - button "⚙️"
+  - button "🔄"
+  - button "⏸️"
+  - text: "Uptime: 0m Last seen: 9:32:50 PM"
+  - checkbox
+  - text: Backend Developer → 85% CPU Usage
+  - img
+  - text: 34.0 Memory
+  - img
+  - text: 84.3 Tokens/min
+  - img
+  - text: 7.9K Response Time
+  - img
+  - text: "471.4"
+  - img
+  - text: CPU stable
+  - img
+  - text: Memory stable
+  - button "⚙️"
+  - button "🔄"
+  - button "⏸️"
+  - text: "Uptime: 0m Last seen: 9:32:50 PM"
+  - checkbox
+  - text: Devops Engineer → 85% CPU Usage
+  - img
+  - text: 32.4 Memory
+  - img
+  - text: 74.0 Tokens/min
+  - img
+  - text: 4.8K Response Time
+  - img
+  - text: 1.0K
+  - img
+  - text: CPU stable
+  - img
+  - text: Memory stable
+  - button "⚙️"
+  - button "🔄"
+  - button "⏸️"
+  - text: "Uptime: 0m Last seen: 9:32:50 PM"
+  - checkbox
+  - text: Product Manager → 85% CPU Usage
+  - img
+  - text: 25.6 Memory
+  - img
+  - text: 62.4 Tokens/min
+  - img
+  - text: 1.4K Response Time
+  - img
+  - text: 1.6K
+  - img
+  - text: CPU stable
+  - img
+  - text: Memory stable
+  - button "⚙️"
+  - button "🔄"
+  - button "⏸️"
+  - text: "Uptime: 0m Last seen: 9:32:50 PM"
+  - checkbox
+  - text: Qa Engineer → 85% CPU Usage
+  - img
+  - text: 51.4 Memory
+  - img
+  - text: 51.4 Tokens/min
+  - img
+  - text: 4.4K Response Time
+  - img
+  - text: "465.4"
+  - img
+  - text: CPU stable
+  - img
+  - text: Memory stable
+  - button "⚙️"
+  - button "🔄"
+  - button "⏸️"
+  - text: "Uptime: 0m Last seen: 9:32:50 PM"
+  - heading "Event Timeline LIVE" [level=3]:
+    - img
+    - text: Event Timeline LIVE
+  - button "Pause updates":
+    - img
+  - button "Clear all events":
+    - img
+  - button "Scroll to latest":
+    - img
+  - combobox:
+    - option "All Agents" [selected]
+    - option "0cd10203-dbb1-4dfd-8f52-ea089f442a8b"
+    - option "2da06c53-0968-4e9e-b76f-6d00c82f3b59"
+    - option "477894f5-26da-4846-a0a0-2c342b3ed344"
+    - option "6870125d-008d-426b-a75d-73bb8ca11edc"
+    - option "b1e9eac8-83af-4893-814d-579c36138ff0"
+    - option
+  - combobox:
+    - option "All Types" [selected]
+    - option "agent status change"
+    - option "project progress"
+  - combobox:
+    - option "All Levels" [selected]
+    - option "Info"
+    - option "Success"
+    - option "Warning"
+    - option "Error"
+  - heading "Product Manager is active" [level=4]
+  - text: 0s ago 477894f5-26da-4846-a0a0-2c342b3ed344 agent status change
+  - paragraph: No active task
+  - strong: "performance_score:"
+  - text: "0.85"
+  - strong: "specializations:"
+  - text: requirements_analysisproject_planningdocumentation
+  - heading "Architect is active" [level=4]
+  - text: 0s ago b1e9eac8-83af-4893-814d-579c36138ff0 agent status change
+  - paragraph: No active task
+  - strong: "performance_score:"
+  - text: "0.85"
+  - strong: "specializations:"
+  - text: system_designarchitecture_planningtechnology_selection
+  - heading "Backend Developer is active" [level=4]
+  - text: 0s ago 6870125d-008d-426b-a75d-73bb8ca11edc agent status change
+  - paragraph: No active task
+  - strong: "performance_score:"
+  - text: "0.85"
+  - strong: "specializations:"
+  - text: api_developmentdatabase_designserver_logic
+  - heading "Qa Engineer is active" [level=4]
+  - text: 0s ago 2da06c53-0968-4e9e-b76f-6d00c82f3b59 agent status change
+  - paragraph: No active task
+  - strong: "performance_score:"
+  - text: "0.85"
+  - strong: "specializations:"
+  - text: test_creationquality_assurancevalidation
+  - heading "Devops Engineer is active" [level=4]
+  - text: 0s ago 0cd10203-dbb1-4dfd-8f52-ea089f442a8b agent status change
+  - paragraph: No active task
+  - strong: "performance_score:"
+  - text: "0.85"
+  - strong: "specializations:"
+  - text: deploymentinfrastructuremonitoring
+  - heading "Authentication API at 65% completion" [level=4]
+  - text: 0s ago project progress
+  - paragraph: 0 tasks completed, 0 in progress
+  - strong: "progress:"
+  - text: "65"
+  - strong: "quality_score:"
+  - text: "85"
+```
