@@ -132,7 +132,7 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = Field(default=30, env="JWT_EXPIRE_MINUTES")
     ALLOWED_HOSTS: List[str] = Field(default=["*"], env="ALLOWED_HOSTS")
     CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"],
+        default=["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"],
         env="CORS_ORIGINS"
     )
     
