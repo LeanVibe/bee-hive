@@ -1,12 +1,13 @@
 import { AuthService } from '../services/auth'
+import { AuthGuard, RouteGuardOptions } from '../services/auth-guard'
 
 export interface Route {
   path: string
   handler: () => void
-  options?: {
-    requireAuth?: boolean
-    roles?: string[]
+  options?: RouteGuardOptions & {
     redirect?: string
+    title?: string
+    meta?: Record<string, any>
   }
 }
 
@@ -14,10 +15,13 @@ export class Router {
   private routes: Map<string, Route> = new Map()
   private currentRoute: string = '/'
   private authService: AuthService
+  private authGuard: AuthGuard
   private isStarted: boolean = false
   
   constructor() {
     this.authService = AuthService.getInstance()
+    this.authGuard = AuthGuard.getInstance()
+    this.setupAuthEventHandlers()
   }
   
   addRoute(path: string, handler: () => void, options?: Route['options']): void {
@@ -44,18 +48,6 @@ export class Router {
     this.isStarted = false
   }
   
-  navigate(path: string, replace: boolean = false): void {
-    if (path === this.currentRoute) return
-    
-    // Update browser history
-    if (replace) {
-      window.history.replaceState({}, '', path)
-    } else {
-      window.history.pushState({}, '', path)
-    }
-    
-    this.handleRoute(path)
-  }
   
   replace(path: string): void {
     this.navigate(path, true)
@@ -73,7 +65,7 @@ export class Router {
     this.handleRoute(window.location.pathname)
   }
   
-  private handleRoute(path: string): void {
+  private async handleRoute(path: string): Promise<void> {
     console.log('🛣️ Navigating to:', path)
     
     // Normalize path
@@ -88,19 +80,18 @@ export class Router {
       return
     }
     
-    // Check authentication requirements
-    if (route.options?.requireAuth && !this.authService.isAuthenticated()) {
-      console.log('Authentication required, redirecting to login')
-      this.navigate('/login', true)
-      return
-    }
-    
-    // Check role requirements
-    if (route.options?.roles && route.options.roles.length > 0) {
-      const user = this.authService.getUser()
-      if (!user || !route.options.roles.includes(user.role)) {
-        console.warn('Insufficient permissions for route:', normalizedPath)
-        this.handleUnauthorized(normalizedPath)
+    // Use AuthGuard for comprehensive security checking
+    if (route.options) {
+      const guardResult = await this.authGuard.canActivate(normalizedPath, route.options)
+      
+      if (!guardResult.allowed) {
+        console.warn('Access denied:', guardResult.reason)
+        
+        if (guardResult.redirectTo) {
+          this.navigate(guardResult.redirectTo, true)
+        } else {
+          this.handleAccessDenied(normalizedPath, guardResult.reason)
+        }
         return
       }
     }
@@ -109,6 +100,11 @@ export class Router {
     if (route.options?.redirect) {
       this.navigate(route.options.redirect, true)
       return
+    }
+    
+    // Update page title if specified
+    if (route.options?.title) {
+      document.title = `${route.options.title} - LeanVibe Agent Hive`
     }
     
     // Update current route
@@ -201,6 +197,52 @@ export class Router {
     }
   }
   
+  private handleAccessDenied(path: string, reason?: string): void {
+    console.warn('Access denied to:', path, reason)
+    
+    // Emit access denied event for UI components to handle
+    window.dispatchEvent(new CustomEvent('router-access-denied', {
+      detail: { path, reason }
+    }))
+    
+    // Redirect to appropriate page
+    if (this.authService.isAuthenticated()) {
+      this.navigate('/access-denied', true)
+    } else {
+      this.navigate('/login', true)
+    }
+  }
+  
+  private setupAuthEventHandlers(): void {
+    // Listen for auth redirect events from AuthGuard
+    window.addEventListener('auth-redirect', (event: any) => {
+      const { path, reason } = event.detail
+      console.log('Auth redirect triggered:', path, reason)
+      this.navigate(path, true)
+    })
+    
+    // Listen for auth access denied events
+    window.addEventListener('auth-access-denied', (event: any) => {
+      const { path, reason } = event.detail
+      this.handleAccessDenied(path, reason)
+    })
+    
+    // Listen for authentication state changes
+    this.authService.on('authenticated', () => {
+      // If we're on login page and user just authenticated, redirect to dashboard
+      if (this.currentRoute === '/login') {
+        this.navigate('/dashboard', true)
+      }
+    })
+    
+    this.authService.on('unauthenticated', () => {
+      // If user logged out and we're on a protected route, redirect to login
+      if (this.currentRoute !== '/login' && this.currentRoute !== '/') {
+        this.navigate('/login', true)
+      }
+    })
+  }
+  
   private handleRouteError(path: string, error: unknown): void {
     console.error('Route error for', path, ':', error)
     
@@ -278,21 +320,26 @@ export class Router {
   }
   
   // Guard methods for components
-  canActivate(path: string): boolean {
+  async canActivate(path: string): Promise<boolean> {
     const route = this.findRoute(path)
     if (!route) return false
     
-    // Check auth requirements
-    if (route.options?.requireAuth && !this.authService.isAuthenticated()) {
-      return false
+    if (route.options) {
+      const guardResult = await this.authGuard.canActivate(path, route.options)
+      return guardResult.allowed
     }
     
-    // Check role requirements
-    if (route.options?.roles && route.options.roles.length > 0) {
-      const user = this.authService.getUser()
-      if (!user || !route.options.roles.includes(user.role)) {
-        return false
-      }
+    return true
+  }
+  
+  // Synchronous version for backwards compatibility
+  canActivateSync(path: string): boolean {
+    const route = this.findRoute(path)
+    if (!route) return false
+    
+    // Basic checks only
+    if (route.options?.requireAuth && !this.authService.isAuthenticated()) {
+      return false
     }
     
     return true
@@ -347,6 +394,79 @@ export class Router {
     console.log('Prefetching route:', path)
   }
   
+  // Advanced guard methods
+  async getSecurityContext(): Promise<any> {
+    return this.authGuard.getSecurityContext()
+  }
+  
+  async checkMultiplePermissions(checks: Array<{
+    name: string
+    options: RouteGuardOptions
+  }>): Promise<Record<string, boolean>> {
+    return this.authGuard.checkMultiplePermissions(checks)
+  }
+  
+  canUserPerformAction(action: string, context?: any): boolean {
+    return this.authGuard.canUserPerformAction(action, context)
+  }
+  
+  // Route metadata utilities
+  getRouteMetadata(path: string): Record<string, any> | undefined {
+    const route = this.findRoute(path)
+    return route?.options?.meta
+  }
+  
+  setRouteMetadata(path: string, meta: Record<string, any>): void {
+    const route = this.findRoute(path)
+    if (route && route.options) {
+      route.options.meta = { ...route.options.meta, ...meta }
+    }
+  }
+  
+  // Navigation history utilities
+  private navigationHistory: string[] = []
+  
+  getNavigationHistory(): string[] {
+    return [...this.navigationHistory]
+  }
+  
+  canGoBack(): boolean {
+    return this.navigationHistory.length > 1
+  }
+  
+  getPreviousRoute(): string | null {
+    return this.navigationHistory.length > 1 
+      ? this.navigationHistory[this.navigationHistory.length - 2]
+      : null
+  }
+  
+  // Enhanced navigation with history tracking (override original navigate method)
+  navigate(path: string, replace: boolean = false): void {
+    if (path === this.currentRoute) return
+    
+    // Update browser history
+    if (replace) {
+      window.history.replaceState({}, '', path)
+      // Replace current route in history
+      if (this.navigationHistory.length > 0) {
+        this.navigationHistory[this.navigationHistory.length - 1] = path
+      } else {
+        this.navigationHistory.push(path)
+      }
+    } else {
+      window.history.pushState({}, '', path)
+      // Add to navigation history
+      this.navigationHistory.push(path)
+      
+      // Keep history limited to last 50 entries
+      if (this.navigationHistory.length > 50) {
+        this.navigationHistory = this.navigationHistory.slice(-50)
+      }
+    }
+    
+    this.handleRoute(path)
+  }
+  
   // Debug utilities
   getRegisteredRoutes(): string[] {
     return Array.from(this.routes.keys())
@@ -358,7 +478,11 @@ export class Router {
       registeredRoutes: this.getRegisteredRoutes(),
       isStarted: this.isStarted,
       queryParams: Object.fromEntries(this.getQueryParams()),
-      hash: this.getHash()
+      hash: this.getHash(),
+      navigationHistory: this.getNavigationHistory(),
+      canGoBack: this.canGoBack(),
+      previousRoute: this.getPreviousRoute(),
+      securityContext: this.authGuard.getSecurityContext()
     }
   }
 }
