@@ -11,6 +11,7 @@ from fastapi import APIRouter
 # Import working API endpoints
 from .enterprise_pilots import router as pilots_router
 from ..core.auth import auth_router
+from .v1.websocket import router as websocket_router
 
 # Main API router
 router = APIRouter()
@@ -18,6 +19,7 @@ router = APIRouter()
 # Include working API routes
 router.include_router(auth_router)
 router.include_router(pilots_router)
+router.include_router(websocket_router, prefix="/ws")
 
 
 @router.get("/")

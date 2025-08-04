@@ -97,7 +97,7 @@ export class WebSocketService extends EventEmitter {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const host = window.location.hostname
       const port = process.env.NODE_ENV === 'development' ? ':8000' : ''
-      const wsUrl = `${protocol}//${host}${port}/ws/observability`
+      const wsUrl = `${protocol}//${host}${port}/api/v1/ws/observability`
       
       console.log('🔌 Connecting to WebSocket:', wsUrl)
       

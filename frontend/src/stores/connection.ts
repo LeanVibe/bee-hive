@@ -37,7 +37,7 @@ export const useConnectionStore = defineStore('connection', () => {
     
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsUrl = `${protocol}//${window.location.host}/ws/observability`
+      const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/observability`
       
       ws.value = new WebSocket(wsUrl)
       
