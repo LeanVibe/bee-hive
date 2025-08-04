@@ -1,0 +1,27 @@
+{
+  "name": "bee-hive",
+  "version": "1.0.0",
+  "description": "**Working autonomous development prototype. Experience AI agents collaborating on software development tasks with real-time demonstrations.**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanVibe/bee-hive.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeanVibe/bee-hive/issues"
+  },
+  "homepage": "https://github.com/LeanVibe/bee-hive#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

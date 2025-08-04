@@ -1,0 +1,284 @@
+{
+  "config": {
+    "configFile": "/Users/bogdan/work/leanvibe-dev/bee-hive/playwright.config.ts",
+    "rootDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "test-results/html-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 8,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "dashboard-functionality.spec.ts",
+      "file": "dashboard-functionality.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "PWA Dashboard Functionality",
+          "file": "dashboard-functionality.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Dashboard loads and displays real data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13808,
+                      "error": {
+                        "message": "Error: \u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('dashboard-view')\nExpected: visible\nReceived: hidden\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('dashboard-view')\u001b[22m\n\u001b[2m    14 × locator resolved to <dashboard-view></dashboard-view>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n",
+                        "stack": "Error: \u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('dashboard-view')\nExpected: visible\nReceived: hidden\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('dashboard-view')\u001b[22m\n\u001b[2m    14 × locator resolved to <dashboard-view></dashboard-view>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n    at /Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation/dashboard-functionality.spec.ts:43:33",
+                        "location": {
+                          "file": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation/dashboard-functionality.spec.ts",
+                          "column": 33,
+                          "line": 43
+                        },
+                        "snippet": "  41 |     // Check that dashboard view is rendered\n  42 |     const dashboardView = page.locator('dashboard-view');\n> 43 |     await expect(dashboardView).toBeVisible({ timeout: 10000 });\n     |                                 ^\n  44 |     \n  45 |     // Check for key dashboard elements\n  46 |     const dashboardTitle = page.locator('h1, h2, .dashboard-title').first();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation/dashboard-functionality.spec.ts",
+                            "column": 33,
+                            "line": 43
+                          },
+                          "message": "Error: \u001b[31mTimed out 10000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: locator('dashboard-view')\nExpected: visible\nReceived: hidden\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('dashboard-view')\u001b[22m\n\u001b[2m    14 × locator resolved to <dashboard-view></dashboard-view>\u001b[22m\n\u001b[2m       - unexpected value \"hidden\"\u001b[22m\n\n\n  41 |     // Check that dashboard view is rendered\n  42 |     const dashboardView = page.locator('dashboard-view');\n> 43 |     await expect(dashboardView).toBeVisible({ timeout: 10000 });\n     |                                 ^\n  44 |     \n  45 |     // Check for key dashboard elements\n  46 |     const dashboardTitle = page.locator('h1, h2, .dashboard-title').first();\n    at /Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation/dashboard-functionality.spec.ts:43:33"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "🔍 Loading PWA Dashboard...\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 Unhandled promise rejection: Error: The following properties on element error-boundary will not trigger updates as expected because they are set using class fields: hasError, errorMessage, errorStack. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at ErrorBoundary.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at ErrorBoundary.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at ErrorBoundary.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Error boundary caught error: Error: The following properties on element error-boundary will not trigger updates as expected because they are set using class fields: hasError, errorMessage, errorStack. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at ErrorBoundary.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at ErrorBoundary.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at ErrorBoundary.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Reporting error: {message: The following properties on element error-boundary…v/msg/class-field-shadowing for more information., stack: Error: The following properties on element error-b…s/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25), timestamp: 2025-08-04T11:21:27.849Z, url: http://localhost:3002/dashboard, userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…ML, like Gecko) Chrome/139.0.7258.5 Safari/537.36}\n"
+                        },
+                        {
+                          "text": "JS Error: The following properties on element error-boundary will not trigger updates as expected because they are set using class fields: hasError, errorMessage, errorStack. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 Unhandled promise rejection: Error: The following properties on element dashboard-view will not trigger updates as expected because they are set using class fields: offline, tasks, agents, events, systemHealth, performanceMetrics, healthSummary, isLoading, error, lastSync, selectedView, servicesInitialized. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at DashboardView.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at DashboardView.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at DashboardView.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Error boundary caught error: Error: The following properties on element dashboard-view will not trigger updates as expected because they are set using class fields: offline, tasks, agents, events, systemHealth, performanceMetrics, healthSummary, isLoading, error, lastSync, selectedView, servicesInitialized. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at DashboardView.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at DashboardView.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at DashboardView.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Reporting error: {message: The following properties on element dashboard-view…v/msg/class-field-shadowing for more information., stack: Error: The following properties on element dashboa…s/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25), timestamp: 2025-08-04T11:21:27.849Z, url: http://localhost:3002/dashboard, userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…ML, like Gecko) Chrome/139.0.7258.5 Safari/537.36}\n"
+                        },
+                        {
+                          "text": "JS Error: The following properties on element dashboard-view will not trigger updates as expected because they are set using class fields: offline, tasks, agents, events, systemHealth, performanceMetrics, healthSummary, isLoading, error, lastSync, selectedView, servicesInitialized. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 Unhandled promise rejection: Error: The following properties on element install-prompt will not trigger updates as expected because they are set using class fields: showPrompt, isInstalled. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at InstallPrompt.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at InstallPrompt.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at InstallPrompt.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Error boundary caught error: Error: The following properties on element install-prompt will not trigger updates as expected because they are set using class fields: showPrompt, isInstalled. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at InstallPrompt.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at InstallPrompt.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at InstallPrompt.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Reporting error: {message: The following properties on element install-prompt…v/msg/class-field-shadowing for more information., stack: Error: The following properties on element install…s/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25), timestamp: 2025-08-04T11:21:27.849Z, url: http://localhost:3002/dashboard, userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…ML, like Gecko) Chrome/139.0.7258.5 Safari/537.36}\n"
+                        },
+                        {
+                          "text": "JS Error: The following properties on element install-prompt will not trigger updates as expected because they are set using class fields: showPrompt, isInstalled. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 Unhandled promise rejection: Error: The following properties on element loading-spinner will not trigger updates as expected because they are set using class fields: size, color, text. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at LoadingSpinner.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at LoadingSpinner.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at LoadingSpinner.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Error boundary caught error: Error: The following properties on element loading-spinner will not trigger updates as expected because they are set using class fields: size, color, text. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n    at LoadingSpinner.performUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:718:17)\n    at LoadingSpinner.scheduleUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:690:25)\n    at LoadingSpinner.__enqueueUpdate (http://localhost:3002/node_modules/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25)\n"
+                        },
+                        {
+                          "text": "PWA Error: Reporting error: {message: The following properties on element loading-spinne…v/msg/class-field-shadowing for more information., stack: Error: The following properties on element loading…s/.vite/deps/chunk-SBXOPBOA.js?v=9de0e415:666:25), timestamp: 2025-08-04T11:21:27.849Z, url: http://localhost:3002/dashboard, userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…ML, like Gecko) Chrome/139.0.7258.5 Safari/537.36}\n"
+                        },
+                        {
+                          "text": "JS Error: The following properties on element loading-spinner will not trigger updates as expected because they are set using class fields: size, color, text. Native class fields and some compiled output will overwrite accessors used for detecting changes. See https://lit.dev/msg/class-field-shadowing for more information.\n"
+                        },
+                        {
+                          "text": "PWA Error: WebSocket connection to 'ws://localhost:8000/ws/observability' failed: Error during WebSocket handshake: Unexpected response code: 403\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 WebSocket error: Event\n"
+                        },
+                        {
+                          "text": "PWA Error: WebSocket connection to 'ws://localhost:8000/ws/observability' failed: Error during WebSocket handshake: Unexpected response code: 403\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 WebSocket error: Event\n"
+                        },
+                        {
+                          "text": "PWA Error: WebSocket connection to 'ws://localhost:8000/ws/observability' failed: Error during WebSocket handshake: Unexpected response code: 403\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 WebSocket error: Event\n"
+                        },
+                        {
+                          "text": "PWA Error: WebSocket connection to 'ws://localhost:8000/ws/observability' failed: Error during WebSocket handshake: Unexpected response code: 403\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 WebSocket error: Event\n"
+                        },
+                        {
+                          "text": "Current URL: http://localhost:3002/dashboard\n"
+                        },
+                        {
+                          "text": "PWA Error: WebSocket connection to 'ws://localhost:8000/ws/observability' failed: Error during WebSocket handshake: Unexpected response code: 403\n"
+                        },
+                        {
+                          "text": "PWA Error: 🚨 WebSocket error: Event\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-04T11:21:27.647Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/bogdan/work/leanvibe-dev/bee-hive/test-results/dashboard-functionality-PW-9e284-oads-and-displays-real-data-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/bogdan/work/leanvibe-dev/bee-hive/test-results/dashboard-functionality-PW-9e284-oads-and-displays-real-data-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/bogdan/work/leanvibe-dev/bee-hive/test-results/dashboard-functionality-PW-9e284-oads-and-displays-real-data-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/e2e-validation/dashboard-functionality.spec.ts",
+                        "column": 33,
+                        "line": 43
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "3197e36ed1ef2283f276-b0950de8792fc306ee82",
+              "file": "dashboard-functionality.spec.ts",
+              "line": 8,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-04T11:21:27.407Z",
+    "duration": 14137.14,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

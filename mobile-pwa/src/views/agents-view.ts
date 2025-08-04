@@ -11,16 +11,16 @@ import '../components/modals/agent-config-modal'
 @customElement('agents-view')
 export class AgentsView extends LitElement {
   @state() private agents: AgentStatus[] = []
-  @state() private isLoading: boolean = true
-  @state() private error: string = ''
+  @state() private isLoading = true
+  @state() private error = ''
   @state() private selectedAgent: AgentStatus | null = null
-  @state() private selectedAgents: Set<string> = new Set()
+  @state() private selectedAgents = new Set<string>()
   @state() private agentService = getAgentService()
-  @state() private monitoringActive: boolean = false
-  @state() private showAgentConfigModal: boolean = false
+  @state() private monitoringActive = false
+  @state() private showAgentConfigModal = false
   @state() private configModalMode: 'create' | 'edit' = 'create'
   @state() private configModalAgent?: Agent
-  @state() private bulkActionMode: boolean = false
+  @state() private bulkActionMode = false
   @state() private viewMode: 'grid' | 'list' = 'grid'
 
   static styles = css`

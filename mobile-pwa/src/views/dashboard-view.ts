@@ -20,19 +20,19 @@ import '../components/dashboard/event-timeline'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
-  @property({ type: Boolean }) declare offline: boolean
+  @property({ type: Boolean }) offline = false
   
-  @state() declare private tasks: Task[]
-  @state() declare private agents: AgentStatus[]
-  @state() declare private events: TimelineEvent[]
-  @state() declare private systemHealth: SystemHealth | null
-  @state() declare private performanceMetrics: PerformanceSnapshot | null
-  @state() declare private healthSummary: HealthSummary | null
-  @state() declare private isLoading: boolean
-  @state() declare private error: string
-  @state() declare private lastSync: Date | null
-  @state() declare private selectedView: 'overview' | 'kanban' | 'agents' | 'events'
-  @state() declare private servicesInitialized: boolean
+  @state() private tasks: Task[] = []
+  @state() private agents: AgentStatus[] = []
+  @state() private events: TimelineEvent[] = []
+  @state() private systemHealth: SystemHealth | null = null
+  @state() private performanceMetrics: PerformanceSnapshot | null = null
+  @state() private healthSummary: HealthSummary | null = null
+  @state() private isLoading = true
+  @state() private error = ''
+  @state() private lastSync: Date | null = null
+  @state() private selectedView: 'overview' | 'kanban' | 'agents' | 'events' = 'overview'
+  @state() private servicesInitialized = false
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
@@ -330,20 +330,6 @@ export class DashboardView extends LitElement {
   
   constructor() {
     super()
-    
-    // Initialize state properties
-    this.offline = false
-    this.tasks = []
-    this.agents = []
-    this.events = []
-    this.systemHealth = null
-    this.performanceMetrics = null
-    this.healthSummary = null
-    this.isLoading = true
-    this.error = ''
-    this.lastSync = null
-    this.selectedView = 'overview'
-    this.servicesInitialized = false
     
     this.websocketService = WebSocketService.getInstance()
     this.offlineService = OfflineService.getInstance()

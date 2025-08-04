@@ -268,14 +268,19 @@ async def observability_websocket(websocket: WebSocket):
     await connection_manager.connect_observability(websocket)
     
     try:
-        # Start Redis stream listener for this connection
+        # Start Redis stream listener for this connection (if Redis is available)
         redis_task = None
         try:
             redis_client = get_redis()
-            redis_task = asyncio.create_task(
-                _redis_stream_listener(connection_manager)
-            )
-            
+            if redis_client:
+                redis_task = asyncio.create_task(
+                    _redis_stream_listener(connection_manager)
+                )
+        except Exception as redis_error:
+            logger.warning("📡 Redis not available for WebSocket stream listener", error=str(redis_error))
+            redis_task = None
+        
+        try:
             # Handle incoming messages
             while True:
                 try:
@@ -299,7 +304,7 @@ async def observability_websocket(websocket: WebSocket):
                         "type": "keepalive",
                         "timestamp": datetime.utcnow().isoformat()
                     })
-                    
+                        
         except Exception as e:
             logger.error("📡 Observability WebSocket error", error=str(e))
         finally:
@@ -309,7 +314,7 @@ async def observability_websocket(websocket: WebSocket):
                     await redis_task
                 except asyncio.CancelledError:
                     pass
-                    
+                        
     except WebSocketDisconnect:
         logger.info("📡 Observability WebSocket disconnected")
     finally:
@@ -405,6 +410,9 @@ async def _redis_stream_listener(conn_manager: ConnectionManager):
     """
     try:
         redis_client = get_redis()
+        if not redis_client:
+            logger.warning("📡 Redis client not available, skipping stream listener")
+            return
         
         # Multiple stream subscriptions for comprehensive monitoring
         streams = {

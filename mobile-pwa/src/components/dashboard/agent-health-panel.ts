@@ -29,34 +29,20 @@ export interface AgentStatus {
 
 @customElement('agent-health-panel')
 export class AgentHealthPanel extends LitElement {
-  @property({ type: Array }) declare agents: AgentStatus[]
-  @property({ type: Boolean }) declare compact: boolean
-  @property({ type: String }) declare sortBy: 'name' | 'status' | 'performance' | 'uptime'
-  @property({ type: String }) declare filterStatus: string
+  @property({ type: Array }) agents: AgentStatus[] = []
+  @property({ type: Boolean }) compact = false
+  @property({ type: String }) sortBy: 'name' | 'status' | 'performance' | 'uptime' = 'name'
+  @property({ type: String }) filterStatus = 'all'
   
-  @state() declare private selectedAgent: string | null
-  @state() declare private isRefreshing: boolean
-  @state() declare private teamActivationInProgress: boolean
-  @state() declare private showTeamControls: boolean
-  @state() declare private bulkSelectedAgents: Set<string>
-  @state() declare private showBulkActions: boolean
+  @state() private selectedAgent: string | null = null
+  @state() private isRefreshing = false
+  @state() private teamActivationInProgress = false
+  @state() private showTeamControls = true
+  @state() private bulkSelectedAgents = new Set<string>()
+  @state() private showBulkActions = false
   
   constructor() {
     super()
-    
-    // Initialize properties
-    this.agents = []
-    this.compact = false
-    this.sortBy = 'name'
-    this.filterStatus = 'all'
-    
-    // Initialize state properties
-    this.selectedAgent = null
-    this.isRefreshing = false
-    this.teamActivationInProgress = false
-    this.showTeamControls = true
-    this.bulkSelectedAgents = new Set()
-    this.showBulkActions = false
   }
   
   static styles = css`
@@ -614,6 +600,195 @@ export class AgentHealthPanel extends LitElement {
     this.filterStatus = (e.target as HTMLSelectElement).value
   }
   
+  private renderTeamControls() {
+    if (!this.showTeamControls) return ''
+
+    const systemReady = this.agents.length >= 3 && this.agents.filter(a => a.status === 'active').length >= 2
+    
+    return html`
+      <div class="team-controls">
+        <button
+          class="team-activation-button"
+          @click=${this.handleTeamActivation}
+          ?disabled=${this.teamActivationInProgress}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          ${this.teamActivationInProgress ? 'Activating Team...' : 'Activate 5-Agent Team'}
+        </button>
+
+        <div class="team-status">
+          <div class="system-ready-indicator ${systemReady ? '' : 'not-ready'}"></div>
+          <span>
+            System ${systemReady ? 'Ready' : 'Not Ready'} 
+            (${this.agents.filter(a => a.status === 'active').length}/${this.agents.length} agents active)
+          </span>
+        </div>
+      </div>
+    `
+  }
+
+  private renderBulkActions() {
+    if (!this.showBulkActions || this.bulkSelectedAgents.size === 0) return ''
+    
+    return html`
+      <div class="bulk-actions">
+        <span>${this.bulkSelectedAgents.size} agents selected:</span>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('restart')}>
+          Restart
+        </button>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('pause')}>
+          Pause
+        </button>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('resume')}>
+          Resume
+        </button>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('configure')}>
+          Configure
+        </button>
+        <button class="bulk-action-button danger" @click=${() => { this.bulkSelectedAgents = new Set(); this.showBulkActions = false; }}>
+          Cancel
+        </button>
+      </div>
+    `
+  }
+
+  private renderAgentControls(agent: AgentStatus) {
+    return html`
+      <div class="agent-controls">
+        <button 
+          class="agent-control-button primary" 
+          @click=${() => this.handleAgentAction(agent.id, 'configure')}
+          title="Configure Agent"
+        >
+          ⚙️
+        </button>
+        <button 
+          class="agent-control-button" 
+          @click=${() => this.handleAgentAction(agent.id, 'restart')}
+          title="Restart Agent"
+        >
+          🔄
+        </button>
+        <button 
+          class="agent-control-button ${agent.status === 'active' ? '' : 'primary'}" 
+          @click=${() => this.handleAgentAction(agent.id, agent.status === 'active' ? 'pause' : 'resume')}
+          title="${agent.status === 'active' ? 'Pause' : 'Resume'} Agent"
+        >
+          ${agent.status === 'active' ? '⏸️' : '▶️'}
+        </button>
+      </div>
+    `
+  }
+
+  private renderPerformanceTrends(agent: AgentStatus) {
+    // Calculate simple trends based on recent data
+    const cpuTrend = agent.metrics.cpuUsage.length >= 2 ? 
+      (agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 1] > agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 2] ? 'up' : 
+       agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 1] < agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 2] ? 'down' : 'stable') : 'stable'
+    
+    const memoryTrend = agent.metrics.memoryUsage.length >= 2 ? 
+      (agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 1] > agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 2] ? 'up' : 
+       agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 1] < agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 2] ? 'down' : 'stable') : 'stable'
+
+    return html`
+      <div class="performance-trends">
+        <div class="trend-indicator">
+          <svg class="trend-arrow ${cpuTrend}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${cpuTrend === 'up' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>` :
+              cpuTrend === 'down' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>` :
+              html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>`}
+          </svg>
+          CPU ${cpuTrend}
+        </div>
+        <div class="trend-indicator">
+          <svg class="trend-arrow ${memoryTrend}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${memoryTrend === 'up' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>` :
+              memoryTrend === 'down' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>` :
+              html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>`}
+          </svg>
+          Memory ${memoryTrend}
+        </div>
+      </div>
+    `
+  }
+
+  private async handleTeamActivation() {
+    if (this.teamActivationInProgress) return
+
+    this.teamActivationInProgress = true
+    
+    try {
+      // Dispatch custom event for team activation
+      const event = new CustomEvent('activate-agent-team', {
+        detail: {
+          teamSize: 5,
+          roles: ['product_manager', 'architect', 'backend_developer', 'frontend_developer', 'qa_engineer'],
+          autoStartTasks: true
+        },
+        bubbles: true,
+        composed: true
+      })
+      
+      this.dispatchEvent(event)
+      
+      // Simulate team activation process
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+    } catch (error) {
+      console.error('Team activation failed:', error)
+    } finally {
+      this.teamActivationInProgress = false
+    }
+  }
+
+  private handleAgentSelect(agentId: string, event: Event) {
+    const checkbox = event.target as HTMLInputElement
+    const newSelected = new Set(this.bulkSelectedAgents)
+    
+    if (checkbox.checked) {
+      newSelected.add(agentId)
+    } else {
+      newSelected.delete(agentId)
+    }
+    
+    this.bulkSelectedAgents = newSelected
+    this.showBulkActions = newSelected.size > 0
+  }
+
+  private handleBulkAction(action: 'restart' | 'pause' | 'resume' | 'configure') {
+    const selectedIds = Array.from(this.bulkSelectedAgents)
+    
+    const event = new CustomEvent('bulk-agent-action', {
+      detail: {
+        action,
+        agentIds: selectedIds
+      },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(event)
+    
+    // Clear selection after action
+    this.bulkSelectedAgents = new Set()
+    this.showBulkActions = false
+  }
+
+  private handleAgentAction(agentId: string, action: 'configure' | 'restart' | 'pause' | 'resume') {
+    const event = new CustomEvent('agent-action', {
+      detail: {
+        agentId,
+        action
+      },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(event)
+  }
+
   render() {
     const counts = this.statusCounts
     const filtered = this.filteredAgents
@@ -799,289 +974,4 @@ export class AgentHealthPanel extends LitElement {
     `
   }
 
-  // Enhanced Agent Management Methods
-
-  private handleAgentClick(agent: AgentStatus) {
-    if (this.selectedAgent === agent.id) {
-      this.selectedAgent = null;
-    } else {
-      this.selectedAgent = agent.id;
-    }
-  }
-
-  private handleRefresh() {
-    if (this.isRefreshing) return;
-    
-    this.isRefreshing = true;
-    
-    const refreshEvent = new CustomEvent('refresh-agents', {
-      bubbles: true,
-      composed: true
-    });
-    
-    this.dispatchEvent(refreshEvent);
-    
-    // Reset refreshing state after a delay
-    setTimeout(() => {
-      this.isRefreshing = false;
-    }, 1000);
-  }
-
-  private handleSortChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.sortBy = target.value as 'name' | 'status' | 'performance' | 'uptime';
-  }
-
-  private handleFilterChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.filterStatus = target.value;
-  }
-
-  private getTrendIcon(trend: 'up' | 'down' | 'stable') {
-    switch (trend) {
-      case 'up':
-        return '↗️';
-      case 'down':
-        return '↘️';
-      default:
-        return '→';
-    }
-  }
-
-  private formatPerformanceScore(score: number): string {
-    return `${Math.round(score * 100)}%`;
-  }
-
-  private formatUptime(uptime: number): string {
-    const hours = Math.floor(uptime / 3600);
-    const minutes = Math.floor((uptime % 3600) / 60);
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  }
-
-  private get statusCounts() {
-    return this.agents.reduce((counts, agent) => {
-      counts[agent.status] = (counts[agent.status] || 0) + 1;
-      return counts;
-    }, {} as Record<string, number>);
-  }
-
-  private get filteredAgents() {
-    let filtered = this.agents;
-    
-    // Apply status filter
-    if (this.filterStatus !== 'all') {
-      filtered = filtered.filter(agent => agent.status === this.filterStatus);
-    }
-    
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (this.sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'status':
-          return a.status.localeCompare(b.status);
-        case 'performance':
-          return b.performance.score - a.performance.score;
-        case 'uptime':
-          return b.uptime - a.uptime;
-        default:
-          return 0;
-      }
-    });
-    
-    return filtered;
-  }
-
-  private async handleTeamActivation() {
-    if (this.teamActivationInProgress) return;
-
-    this.teamActivationInProgress = true;
-    
-    try {
-      // Dispatch custom event for team activation
-      const event = new CustomEvent('activate-agent-team', {
-        detail: {
-          teamSize: 5,
-          roles: ['product_manager', 'architect', 'backend_developer', 'frontend_developer', 'qa_engineer'],
-          autoStartTasks: true
-        },
-        bubbles: true,
-        composed: true
-      });
-      
-      this.dispatchEvent(event);
-      
-      // Simulate team activation process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-    } catch (error) {
-      console.error('Team activation failed:', error);
-    } finally {
-      this.teamActivationInProgress = false;
-    }
-  }
-
-  private handleAgentSelect(agentId: string, event: Event) {
-    const checkbox = event.target as HTMLInputElement;
-    const newSelected = new Set(this.bulkSelectedAgents);
-    
-    if (checkbox.checked) {
-      newSelected.add(agentId);
-    } else {
-      newSelected.delete(agentId);
-    }
-    
-    this.bulkSelectedAgents = newSelected;
-    this.showBulkActions = newSelected.size > 0;
-  }
-
-  private handleBulkAction(action: 'restart' | 'pause' | 'resume' | 'configure') {
-    const selectedIds = Array.from(this.bulkSelectedAgents);
-    
-    const event = new CustomEvent('bulk-agent-action', {
-      detail: {
-        action,
-        agentIds: selectedIds
-      },
-      bubbles: true,
-      composed: true
-    });
-    
-    this.dispatchEvent(event);
-    
-    // Clear selection after action
-    this.bulkSelectedAgents = new Set();
-    this.showBulkActions = false;
-  }
-
-  private handleAgentAction(agentId: string, action: 'configure' | 'restart' | 'pause' | 'resume') {
-    const event = new CustomEvent('agent-action', {
-      detail: {
-        agentId,
-        action
-      },
-      bubbles: true,
-      composed: true
-    });
-    
-    this.dispatchEvent(event);
-  }
-
-  private renderTeamControls() {
-    if (!this.showTeamControls) return '';
-
-    const systemReady = this.agents.length >= 3 && this.agents.filter(a => a.status === 'active').length >= 2;
-    
-    return html`
-      <div class="team-controls">
-        <button
-          class="team-activation-button"
-          @click=${this.handleTeamActivation}
-          ?disabled=${this.teamActivationInProgress}
-        >
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          ${this.teamActivationInProgress ? 'Activating Team...' : 'Activate 5-Agent Team'}
-        </button>
-
-        <div class="team-status">
-          <div class="system-ready-indicator ${systemReady ? '' : 'not-ready'}"></div>
-          <span>
-            System ${systemReady ? 'Ready' : 'Not Ready'} 
-            (${this.agents.filter(a => a.status === 'active').length}/${this.agents.length} agents active)
-          </span>
-        </div>
-      </div>
-    `;
-  }
-
-  private renderBulkActions() {
-    if (!this.showBulkActions || this.bulkSelectedAgents.size === 0) return '';
-    
-    return html`
-      <div class="bulk-actions">
-        <span>${this.bulkSelectedAgents.size} agents selected:</span>
-        <button class="bulk-action-button" @click=${() => this.handleBulkAction('restart')}>
-          Restart
-        </button>
-        <button class="bulk-action-button" @click=${() => this.handleBulkAction('pause')}>
-          Pause
-        </button>
-        <button class="bulk-action-button" @click=${() => this.handleBulkAction('resume')}>
-          Resume
-        </button>
-        <button class="bulk-action-button" @click=${() => this.handleBulkAction('configure')}>
-          Configure
-        </button>
-        <button class="bulk-action-button danger" @click=${() => { this.bulkSelectedAgents = new Set(); this.showBulkActions = false; }}>
-          Cancel
-        </button>
-      </div>
-    `;
-  }
-
-  private renderAgentControls(agent: AgentStatus) {
-    return html`
-      <div class="agent-controls">
-        <button 
-          class="agent-control-button primary" 
-          @click=${() => this.handleAgentAction(agent.id, 'configure')}
-          title="Configure Agent"
-        >
-          ⚙️
-        </button>
-        <button 
-          class="agent-control-button" 
-          @click=${() => this.handleAgentAction(agent.id, 'restart')}
-          title="Restart Agent"
-        >
-          🔄
-        </button>
-        <button 
-          class="agent-control-button ${agent.status === 'active' ? '' : 'primary'}" 
-          @click=${() => this.handleAgentAction(agent.id, agent.status === 'active' ? 'pause' : 'resume')}
-          title="${agent.status === 'active' ? 'Pause' : 'Resume'} Agent"
-        >
-          ${agent.status === 'active' ? '⏸️' : '▶️'}
-        </button>
-      </div>
-    `;
-  }
-
-  private renderPerformanceTrends(agent: AgentStatus) {
-    // Calculate simple trends based on recent data
-    const cpuTrend = agent.metrics.cpuUsage.length >= 2 ? 
-      (agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 1] > agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 2] ? 'up' : 
-       agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 1] < agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 2] ? 'down' : 'stable') : 'stable';
-    
-    const memoryTrend = agent.metrics.memoryUsage.length >= 2 ? 
-      (agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 1] > agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 2] ? 'up' : 
-       agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 1] < agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 2] ? 'down' : 'stable') : 'stable';
-
-    return html`
-      <div class="performance-trends">
-        <div class="trend-indicator">
-          <svg class="trend-arrow ${cpuTrend}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            ${cpuTrend === 'up' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>` :
-              cpuTrend === 'down' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>` :
-              html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>`}
-          </svg>
-          CPU ${cpuTrend}
-        </div>
-        <div class="trend-indicator">
-          <svg class="trend-arrow ${memoryTrend}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            ${memoryTrend === 'up' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>` :
-              memoryTrend === 'down' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>` :
-              html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>`}
-          </svg>
-          Memory ${memoryTrend}
-        </div>
-      </div>
-    `;
-  }
 }
