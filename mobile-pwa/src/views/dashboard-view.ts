@@ -6,6 +6,23 @@ import { TimelineEvent } from '../components/dashboard/event-timeline'
 import { WebSocketService } from '../services/websocket'
 import { OfflineService } from '../services/offline'
 import { NotificationService } from '../services/notification'
+import { 
+  initializeServices, 
+  startAllMonitoring, 
+  stopAllMonitoring,
+  getSystemHealthService,
+  getAgentService,
+  getTaskService,
+  getEventService,
+  getMetricsService
+} from '../services'
+import type {
+  SystemHealth,
+  Agent,
+  SystemEvent,
+  PerformanceSnapshot,
+  HealthSummary
+} from '../services'
 import '../components/kanban/kanban-board'
 import '../components/dashboard/agent-health-panel'
 import '../components/dashboard/event-timeline'
@@ -17,14 +34,27 @@ export class DashboardView extends LitElement {
   @state() private tasks: Task[] = []
   @state() private agents: AgentStatus[] = []
   @state() private events: TimelineEvent[] = []
+  @state() private systemHealth: SystemHealth | null = null
+  @state() private performanceMetrics: PerformanceSnapshot | null = null
+  @state() private healthSummary: HealthSummary | null = null
   @state() private isLoading: boolean = true
   @state() private error: string = ''
   @state() private lastSync: Date | null = null
   @state() private selectedView: 'overview' | 'kanban' | 'agents' | 'events' = 'overview'
+  @state() private servicesInitialized: boolean = false
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
   private notificationService: NotificationService
+  
+  // Integrated data services
+  private systemHealthService: ReturnType<typeof getSystemHealthService>
+  private agentService: ReturnType<typeof getAgentService>
+  private taskService: ReturnType<typeof getTaskService>
+  private eventService: ReturnType<typeof getEventService>
+  private metricsService: ReturnType<typeof getMetricsService>
+  
+  private monitoringActive: boolean = false
   
   static styles = css`
     :host {
@@ -316,6 +346,13 @@ export class DashboardView extends LitElement {
     this.offlineService = OfflineService.getInstance()
     this.notificationService = NotificationService.getInstance()
     
+    // Initialize integrated services
+    this.systemHealthService = getSystemHealthService()
+    this.agentService = getAgentService()
+    this.taskService = getTaskService()
+    this.eventService = getEventService()
+    this.metricsService = getMetricsService()
+    
     // Listen for offline state changes
     this.offlineService.addEventListener('online', () => {
       this.offline = false
@@ -342,7 +379,8 @@ export class DashboardView extends LitElement {
   
   async connectedCallback() {
     super.connectedCallback()
-    await this.loadTasks()
+    await this.initializeIntegratedServices()
+    await this.loadAllData()
     
     // Connect WebSocket if online
     if (!this.offline) {
@@ -353,9 +391,83 @@ export class DashboardView extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback()
     this.websocketService.disconnect()
+    this.stopAllMonitoring()
   }
   
-  private async loadTasks() {
+  /**
+   * Initialize integrated services with event listeners
+   */
+  private async initializeIntegratedServices() {
+    if (this.servicesInitialized) return
+    
+    try {
+      // Set up event listeners for real-time updates
+      this.systemHealthService.addEventListener('healthChanged', this.handleHealthChanged.bind(this))
+      this.agentService.addEventListener('agentsChanged', this.handleAgentsChanged.bind(this))
+      this.taskService.addEventListener('tasksChanged', this.handleTasksChanged.bind(this))
+      this.eventService.addEventListener('newEvent', this.handleNewEvent.bind(this))
+      this.metricsService.addEventListener('metricsUpdated', this.handleMetricsUpdated.bind(this))
+      
+      // Start monitoring if online
+      if (!this.offline) {
+        this.startAllMonitoring()
+      }
+      
+      this.servicesInitialized = true
+      console.log('Dashboard services initialized successfully')
+      
+    } catch (error) {
+      console.error('Failed to initialize dashboard services:', error)
+      this.error = 'Failed to initialize dashboard services'
+    }
+  }
+  
+  /**
+   * Start all real-time monitoring
+   */
+  private startAllMonitoring() {
+    if (this.monitoringActive) return
+    
+    try {
+      this.systemHealthService.startMonitoring()
+      this.agentService.startMonitoring()
+      this.taskService.startMonitoring()
+      this.eventService.startRealtimeMonitoring()
+      this.metricsService.startMonitoring()
+      
+      this.monitoringActive = true
+      console.log('All monitoring services started')
+      
+    } catch (error) {
+      console.error('Failed to start monitoring services:', error)
+    }
+  }
+  
+  /**
+   * Stop all monitoring
+   */
+  private stopAllMonitoring() {
+    if (!this.monitoringActive) return
+    
+    try {
+      this.systemHealthService.stopMonitoring()
+      this.agentService.stopMonitoring()
+      this.taskService.stopMonitoring()
+      this.eventService.stopRealtimeMonitoring()
+      this.metricsService.stopMonitoring()
+      
+      this.monitoringActive = false
+      console.log('All monitoring services stopped')
+      
+    } catch (error) {
+      console.error('Failed to stop monitoring services:', error)
+    }
+  }
+  
+  /**
+   * Load all dashboard data using integrated services
+   */
+  private async loadAllData() {
     this.isLoading = true
     this.error = ''
     
@@ -367,9 +479,9 @@ export class DashboardView extends LitElement {
         this.isLoading = false
       }
       
-      // If online, fetch fresh data
+      // If online, fetch fresh data using integrated services
       if (!this.offline) {
-        await this.syncAllData()
+        await this.syncAllIntegratedData()
       }
       
     } catch (error) {
@@ -380,101 +492,132 @@ export class DashboardView extends LitElement {
     }
   }
   
-  private async syncAllData() {
-    await Promise.all([
-      this.syncTasks(),
-      this.syncAgents(),
-      this.syncEvents()
-    ])
-  }
-  
-  private async syncAgents() {
+  /**
+   * Sync all data using integrated services instead of direct API calls
+   */
+  private async syncAllIntegratedData() {
     try {
-      const response = await fetch('/api/v1/agents/status')
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
+      const [healthData, agentData, taskData, eventData, metricsData] = await Promise.all([
+        this.systemHealthService.getSystemHealth(),
+        this.agentService.getAgents(),
+        this.taskService.getTasks(),
+        this.eventService.getRecentEvents(100),
+        this.metricsService.getCurrentMetrics()
+      ])
       
-      const agentData = await response.json()
+      // Update system health
+      this.systemHealth = healthData
+      this.healthSummary = await this.systemHealthService.getHealthSummary()
       
-      // Transform API data to AgentStatus format
-      this.agents = agentData.map((agent: any) => ({
-        id: agent.id,
-        name: agent.name,
-        status: agent.status,
-        uptime: agent.uptime || 0,
-        lastSeen: agent.lastSeen || new Date().toISOString(),
-        currentTask: agent.currentTask,
-        metrics: {
-          cpuUsage: agent.metrics?.cpuUsage || [],
-          memoryUsage: agent.metrics?.memoryUsage || [],
-          tokenUsage: agent.metrics?.tokenUsage || [],
-          tasksCompleted: agent.metrics?.tasksCompleted || [],
-          errorRate: agent.metrics?.errorRate || [],
-          responseTime: agent.metrics?.responseTime || [],
-          timestamps: agent.metrics?.timestamps || []
-        },
-        performance: {
-          score: agent.performance?.score || 85,
-          trend: agent.performance?.trend || 'stable'
-        }
-      }))
+      // Transform agent data to UI format
+      this.agents = agentData.map(this.transformAgentToUIFormat)
       
-    } catch (error) {
-      console.error('Failed to sync agents:', error)
-    }
-  }
-  
-  private async syncEvents() {
-    try {
-      const response = await fetch('/api/v1/events?limit=100')
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
+      // Update tasks
+      this.tasks = taskData
+      await this.offlineService.cacheTasks(taskData)
       
-      const eventData = await response.json()
+      // Transform events to UI format  
+      this.events = eventData.map(this.transformEventToUIFormat)
       
-      // Transform API data to TimelineEvent format
-      this.events = eventData.map((event: any) => ({
-        id: event.id,
-        type: event.type,
-        title: event.title,
-        description: event.description,
-        agent: event.agent,
-        timestamp: event.timestamp,
-        metadata: event.metadata,
-        severity: event.severity || 'info'
-      }))
+      // Update performance metrics
+      this.performanceMetrics = metricsData
       
-    } catch (error) {
-      console.error('Failed to sync events:', error)
-    }
-  }
-  
-  private async syncTasks() {
-    try {
-      const response = await fetch('/api/v1/tasks')
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-      
-      const freshTasks = await response.json()
-      this.tasks = freshTasks
       this.lastSync = new Date()
-      
-      // Cache for offline use
-      await this.offlineService.cacheTasks(freshTasks)
-      
-      // Clear any error state
       this.error = ''
       
+      console.log('All integrated data synced successfully')
+      
     } catch (error) {
-      console.error('Failed to sync tasks:', error)
-      if (!this.offline) {
-        this.error = error instanceof Error ? error.message : 'Failed to sync tasks'
+      console.error('Failed to sync integrated data:', error)
+      this.error = error instanceof Error ? error.message : 'Failed to sync data'
+    }
+  }
+  
+  /**
+   * Transform Agent API data to UI AgentStatus format
+   */
+  private transformAgentToUIFormat = (agent: Agent): AgentStatus => {
+    return {
+      id: agent.id,
+      name: agent.name || `Agent ${agent.id}`,
+      status: agent.status === 'active' ? 'active' : 
+             agent.status === 'idle' ? 'idle' : 
+             agent.status === 'error' ? 'error' : 'offline',
+      uptime: agent.performance_metrics?.uptime || 0,
+      lastSeen: agent.last_seen || new Date().toISOString(),
+      currentTask: agent.current_task_id || undefined,
+      metrics: {
+        cpuUsage: agent.performance_metrics?.cpu_usage || [],
+        memoryUsage: agent.performance_metrics?.memory_usage || [],
+        tokenUsage: agent.performance_metrics?.token_usage || [],
+        tasksCompleted: agent.performance_metrics?.tasks_completed || [],
+        errorRate: agent.performance_metrics?.error_rate || [],
+        responseTime: agent.performance_metrics?.response_time || [],
+        timestamps: agent.performance_metrics?.timestamps || []
+      },
+      performance: {
+        score: agent.performance_metrics?.overall_score || 85,
+        trend: agent.performance_metrics?.trend || 'stable'
       }
     }
   }
+  
+  /**
+   * Transform SystemEvent API data to UI TimelineEvent format
+   */
+  private transformEventToUIFormat = (event: SystemEvent): TimelineEvent => {
+    return {
+      id: event.id,
+      type: event.event_type,
+      title: event.summary || event.event_type,
+      description: event.description || '',
+      agent: event.agent_id,
+      timestamp: event.created_at,
+      metadata: event.metadata || {},
+      severity: event.severity === 'high' ? 'error' : 
+               event.severity === 'medium' ? 'warning' : 'info'
+    }
+  }
+  
+  /**
+   * Real-time event handlers for integrated services
+   */
+  private handleHealthChanged = (event: CustomEvent) => {
+    this.systemHealth = event.detail.health
+    this.systemHealthService.getHealthSummary().then(summary => {
+      this.healthSummary = summary
+    })
+    console.log('System health updated:', event.detail.health)
+  }
+  
+  private handleAgentsChanged = (event: CustomEvent) => {
+    this.agents = event.detail.agents.map(this.transformAgentToUIFormat)
+    console.log('Agents updated:', event.detail.agents.length, 'agents')
+  }
+  
+  private handleTasksChanged = (event: CustomEvent) => {
+    this.tasks = event.detail.tasks
+    this.offlineService.cacheTasks(event.detail.tasks)
+    console.log('Tasks updated:', event.detail.tasks.length, 'tasks')
+  }
+  
+  private handleNewEvent = (event: CustomEvent) => {
+    const newEvent = this.transformEventToUIFormat(event.detail.event)
+    this.events = [newEvent, ...this.events].slice(0, 100) // Keep latest 100 events
+    console.log('New event received:', newEvent)
+  }
+  
+  private handleMetricsUpdated = (event: CustomEvent) => {
+    this.performanceMetrics = event.detail.metrics
+    console.log('Performance metrics updated')
+  }
+  
+  private async syncAllData() {
+    // Legacy method - now redirect to integrated sync
+    await this.syncAllIntegratedData()
+  }
+  
+  // Legacy sync methods removed - using integrated services instead
   
   private async handleTaskMove(event: CustomEvent<TaskMoveEvent>) {
     const { taskId, newStatus, newIndex, offline } = event.detail
@@ -500,25 +643,13 @@ export class DashboardView extends LitElement {
         return
       }
       
-      // If online, sync immediately
-      const response = await fetch(`/api/v1/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: newStatus,
-          updatedAt: new Date().toISOString()
-        })
+      // Use integrated TaskService instead of direct API call
+      const updatedTask = await this.taskService.updateTask(taskId, { 
+        status: newStatus,
+        updated_at: new Date() 
       })
       
-      if (!response.ok) {
-        throw new Error(`Failed to update task: ${response.statusText}`)
-      }
-      
-      const updatedTask = await response.json()
-      
-      // Update with server response
+      // Update with service response
       const finalTaskIndex = this.tasks.findIndex(t => t.id === taskId)
       if (finalTaskIndex >= 0) {
         const finalTasks = [...this.tasks]
@@ -577,7 +708,8 @@ export class DashboardView extends LitElement {
   }
   
   private async handleRefresh() {
-    await this.syncAllData()
+    console.log('Manual refresh triggered')
+    await this.syncAllIntegratedData()
   }
   
   private get syncStatusText() {
@@ -604,6 +736,12 @@ export class DashboardView extends LitElement {
       return eventTime > hourAgo
     }).length
     
+    // Include system health information
+    const systemStatus = this.healthSummary?.overall || 'unknown'
+    const healthyComponents = this.healthSummary?.components.healthy || 0
+    const unhealthyComponents = (this.healthSummary?.components.degraded || 0) + 
+                               (this.healthSummary?.components.unhealthy || 0)
+    
     return {
       activeTasks,
       completedTasks,
@@ -611,7 +749,12 @@ export class DashboardView extends LitElement {
       activeAgents,
       errorAgents,
       totalAgents: this.agents.length,
-      recentEvents
+      recentEvents,
+      systemStatus,
+      healthyComponents,
+      unhealthyComponents,
+      cpuUsage: this.performanceMetrics?.system_metrics.cpu_usage || 0,
+      memoryUsage: this.performanceMetrics?.system_metrics.memory_usage || 0
     }
   }
   
@@ -626,19 +769,31 @@ export class DashboardView extends LitElement {
         </div>
         <div class="summary-card">
           <div class="summary-value">${summary.completedTasks}</div>
-          <div class="summary-label">Completed</div>
+          <div class="summary-label">Completed Tasks</div>
         </div>
         <div class="summary-card">
           <div class="summary-value">${summary.activeAgents}</div>
           <div class="summary-label">Active Agents</div>
         </div>
         <div class="summary-card">
-          <div class="summary-value">${summary.errorAgents}</div>
-          <div class="summary-label">Agent Errors</div>
+          <div class="summary-value" style="color: ${summary.systemStatus === 'healthy' ? '#10b981' : summary.systemStatus === 'degraded' ? '#f59e0b' : '#ef4444'}">${summary.systemStatus.toUpperCase()}</div>
+          <div class="summary-label">System Health</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">${Math.round(summary.cpuUsage)}%</div>
+          <div class="summary-label">CPU Usage</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">${Math.round(summary.memoryUsage)}%</div>
+          <div class="summary-label">Memory Usage</div>
         </div>
         <div class="summary-card">
           <div class="summary-value">${summary.recentEvents}</div>
           <div class="summary-label">Recent Events</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">${summary.healthyComponents}</div>
+          <div class="summary-label">Healthy Components</div>
         </div>
       </div>
       

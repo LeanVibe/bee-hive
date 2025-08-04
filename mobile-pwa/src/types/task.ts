@@ -1,5 +1,6 @@
-export type TaskStatus = 'pending' | 'in-progress' | 'review' | 'done'
-export type TaskPriority = 'low' | 'medium' | 'high'
+export type TaskStatus = 'todo' | 'pending' | 'in-progress' | 'review' | 'done'
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
+export type TaskType = 'feature' | 'bug' | 'enhancement' | 'documentation' | 'testing' | 'refactoring'
 export type SyncStatus = 'synced' | 'pending' | 'error'
 
 export interface Task {
@@ -8,6 +9,7 @@ export interface Task {
   description?: string
   status: TaskStatus
   priority: TaskPriority
+  type: TaskType
   agent: string
   tags?: string[]
   createdAt: string
@@ -18,6 +20,7 @@ export interface Task {
   dependencies?: string[]
   assignee?: string
   dueDate?: string
+  acceptanceCriteria?: string[]
   metadata?: Record<string, any>
 }
 
@@ -34,15 +37,37 @@ export interface TaskFilter {
 }
 
 export interface TaskUpdate {
-  id: string
+  id?: string
   status?: TaskStatus
   priority?: TaskPriority
+  type?: TaskType
   title?: string
   description?: string
   tags?: string[]
   estimatedHours?: number
   actualHours?: number
+  assignee?: string
   dueDate?: string
+  acceptanceCriteria?: string[]
+  dependencies?: string[]
+  updated_at?: Date
+  metadata?: Record<string, any>
+}
+
+export interface TaskCreate {
+  title: string
+  description?: string
+  status: TaskStatus
+  priority: TaskPriority
+  type: TaskType
+  assignee?: string
+  tags?: string[]
+  estimatedHours?: number
+  dependencies?: string[]
+  acceptanceCriteria?: string[]
+  dueDate?: string
+  created_at: Date
+  updated_at: Date
   metadata?: Record<string, any>
 }
 

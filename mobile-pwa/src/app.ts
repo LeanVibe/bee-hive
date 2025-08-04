@@ -1,4 +1,4 @@
-import { LitElement, html, css, property } from 'lit'
+import { LitElement, html, css } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import { Router } from './router/router'
 import { AuthService } from './services/auth'
@@ -7,10 +7,14 @@ import { NotificationService } from './services/notification'
 import { OfflineService } from './services/offline'
 import './components/layout/app-header'
 import './components/layout/bottom-navigation'
+import './components/layout/sidebar-navigation'
 import './components/layout/install-prompt'
 import './components/common/error-boundary'
 import './components/common/loading-spinner'
 import './views/dashboard-view'
+import './views/agents-view'
+import './views/tasks-view'
+import './views/system-health-view'
 import './views/login-view'
 
 @customElement('agent-hive-app')
@@ -21,6 +25,9 @@ export class AgentHiveApp extends LitElement {
   @state() private isOnline: boolean = navigator.onLine
   @state() private hasError: boolean = false
   @state() private errorMessage: string = ''
+  @state() private isMobile: boolean = window.innerWidth < 768
+  @state() private sidebarCollapsed: boolean = false
+  @state() private mobileMenuOpen: boolean = false
   
   private router: Router
   private authService: AuthService
@@ -40,9 +47,31 @@ export class AgentHiveApp extends LitElement {
     
     .app-container {
       display: flex;
-      flex-direction: column;
       height: 100%;
       position: relative;
+    }
+
+    /* Desktop Layout */
+    .app-container.desktop {
+      flex-direction: row;
+    }
+
+    /* Mobile Layout */
+    .app-container.mobile {
+      flex-direction: column;
+    }
+    
+    .sidebar-container {
+      flex-shrink: 0;
+      z-index: 30;
+    }
+
+    .main-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
     }
     
     .main-content {
@@ -57,6 +86,35 @@ export class AgentHiveApp extends LitElement {
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
+    }
+
+    /* Mobile Menu Overlay */
+    .mobile-menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 25;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .mobile-menu-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Header adjustments for responsive */
+    .header-container {
+      display: none;
+    }
+
+    .app-container.mobile .header-container {
+      display: block;
     }
     
     .offline-banner {
@@ -161,6 +219,7 @@ export class AgentHiveApp extends LitElement {
   connectedCallback() {
     super.connectedCallback()
     this.initializeApp()
+    this.setupResponsiveHandlers()
   }
   
   disconnectedCallback() {
@@ -204,6 +263,7 @@ export class AgentHiveApp extends LitElement {
     this.router.addRoute('/dashboard', () => this.setRoute('/dashboard'), { requireAuth: true })
     this.router.addRoute('/tasks', () => this.setRoute('/tasks'), { requireAuth: true })
     this.router.addRoute('/agents', () => this.setRoute('/agents'), { requireAuth: true })
+    this.router.addRoute('/system-health', () => this.setRoute('/system-health'), { requireAuth: true })
     this.router.addRoute('/events', () => this.setRoute('/events'), { requireAuth: true })
     this.router.addRoute('/settings', () => this.setRoute('/settings'), { requireAuth: true })
     
@@ -260,6 +320,37 @@ export class AgentHiveApp extends LitElement {
   private removeEventListeners() {
     window.removeEventListener('online', this.handleOnline.bind(this))
     window.removeEventListener('offline', this.handleOffline.bind(this))
+    window.removeEventListener('resize', this.handleResize.bind(this))
+  }
+
+  private setupResponsiveHandlers() {
+    // Listen for window resize
+    window.addEventListener('resize', this.handleResize.bind(this))
+    
+    // Check initial responsive state
+    this.handleResize()
+  }
+
+  private handleResize() {
+    const wasMobile = this.isMobile
+    this.isMobile = window.innerWidth < 768
+    
+    // Close mobile menu when switching to desktop
+    if (wasMobile && !this.isMobile) {
+      this.mobileMenuOpen = false
+    }
+  }
+
+  private handleSidebarToggle(event: CustomEvent) {
+    this.sidebarCollapsed = event.detail.collapsed
+  }
+
+  private handleMobileMenuToggle() {
+    this.mobileMenuOpen = !this.mobileMenuOpen
+  }
+
+  private closeMobileMenu() {
+    this.mobileMenuOpen = false
   }
   
   private handleOnline() {
@@ -300,7 +391,11 @@ export class AgentHiveApp extends LitElement {
       case '/dashboard':
         return html`<dashboard-view></dashboard-view>`
       case '/tasks':
+        return html`<tasks-view></tasks-view>`
       case '/agents':
+        return html`<agents-view></agents-view>`
+      case '/system-health':
+        return html`<system-health-view></system-health-view>`
       case '/events':
       case '/settings':
         return html`<div style="padding: 2rem; text-align: center; color: #6b7280;">
@@ -333,7 +428,7 @@ export class AgentHiveApp extends LitElement {
   
   render() {
     return html`
-      <div class="app-container">
+      <div class="app-container ${this.isMobile ? 'mobile' : 'desktop'}">
         <!-- Error banner -->
         ${this.hasError ? html`
           <div class="error-banner">
@@ -354,31 +449,62 @@ export class AgentHiveApp extends LitElement {
             📱 You're offline. Some features may be limited.
           </div>
         ` : ''}
-        
-        <!-- Header (only show when authenticated) -->
-        ${this.isAuthenticated ? html`
-          <app-header 
-            .currentRoute="${this.currentRoute}"
-            .isOnline="${this.isOnline}"
-          ></app-header>
+
+        <!-- Mobile Menu Overlay -->
+        ${this.isMobile ? html`
+          <div 
+            class="mobile-menu-overlay ${this.mobileMenuOpen ? 'open' : ''}"
+            @click="${this.closeMobileMenu}"
+          ></div>
         ` : ''}
         
-        <!-- Main content -->
-        <main class="main-content">
-          <div class="view-container">
-            <error-boundary>
-              ${this.renderCurrentView()}
-            </error-boundary>
-          </div>
-        </main>
-        
-        <!-- Bottom navigation (only show when authenticated and not on login) -->
+        <!-- Sidebar Navigation (Desktop) or Mobile Menu -->
         ${this.isAuthenticated && this.currentRoute !== '/login' ? html`
-          <bottom-navigation 
-            .currentRoute="${this.currentRoute}"
-            @navigate="${(e: CustomEvent) => this.router.navigate(e.detail.route)}"
-          ></bottom-navigation>
+          <div class="sidebar-container">
+            <sidebar-navigation
+              .currentRoute="${this.currentRoute}"
+              .collapsed="${this.sidebarCollapsed}"
+              .mobile="${this.isMobile}"
+              .open="${this.mobileMenuOpen}"
+              @navigate="${(e: CustomEvent) => {
+                this.router.navigate(e.detail.route)
+                this.closeMobileMenu()
+              }}"
+              @sidebar-toggle="${this.handleSidebarToggle}"
+            ></sidebar-navigation>
+          </div>
         ` : ''}
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+          <!-- Header (Mobile only) -->
+          <div class="header-container">
+            ${this.isAuthenticated && this.isMobile ? html`
+              <app-header 
+                .currentRoute="${this.currentRoute}"
+                .isOnline="${this.isOnline}"
+                @menu-toggle="${this.handleMobileMenuToggle}"
+              ></app-header>
+            ` : ''}
+          </div>
+          
+          <!-- Main content -->
+          <main class="main-content">
+            <div class="view-container">
+              <error-boundary>
+                ${this.renderCurrentView()}
+              </error-boundary>
+            </div>
+          </main>
+          
+          <!-- Bottom navigation (Mobile only) -->
+          ${this.isAuthenticated && this.isMobile && this.currentRoute !== '/login' ? html`
+            <bottom-navigation 
+              .currentRoute="${this.currentRoute}"
+              @navigate="${(e: CustomEvent) => this.router.navigate(e.detail.route)}"
+            ></bottom-navigation>
+          ` : ''}
+        </div>
         
         <!-- Install prompt -->
         <install-prompt></install-prompt>

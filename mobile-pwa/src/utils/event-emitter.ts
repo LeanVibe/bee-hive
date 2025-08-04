@@ -2,6 +2,10 @@ export interface EventListener {
   (data?: any): void
 }
 
+export interface Subscription {
+  unsubscribe: () => void
+}
+
 export class EventEmitter {
   private events: Map<string, Set<EventListener>> = new Map()
   
@@ -49,5 +53,15 @@ export class EventEmitter {
   
   getEventNames(): string[] {
     return Array.from(this.events.keys())
+  }
+  
+  subscribe(eventName: string, listener: EventListener): Subscription {
+    this.on(eventName, listener)
+    
+    return {
+      unsubscribe: () => {
+        this.off(eventName, listener)
+      }
+    }
   }
 }
