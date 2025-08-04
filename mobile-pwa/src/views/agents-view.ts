@@ -10,18 +10,57 @@ import '../components/modals/agent-config-modal'
 
 @customElement('agents-view')
 export class AgentsView extends LitElement {
-  @state() private agents: AgentStatus[] = []
-  @state() private isLoading = true
-  @state() private error = ''
-  @state() private selectedAgent: AgentStatus | null = null
-  @state() private selectedAgents = new Set<string>()
-  @state() private agentService = getAgentService()
-  @state() private monitoringActive = false
-  @state() private showAgentConfigModal = false
-  @state() private configModalMode: 'create' | 'edit' = 'create'
-  @state() private configModalAgent?: Agent
-  @state() private bulkActionMode = false
-  @state() private viewMode: 'grid' | 'list' = 'grid'
+  @state() 
+  private declare agents: AgentStatus[]
+  
+  @state() 
+  private declare isLoading: boolean
+  
+  @state() 
+  private declare error: string
+  
+  @state() 
+  private declare selectedAgent: AgentStatus | null
+  
+  @state() 
+  private declare selectedAgents: Set<string>
+  
+  @state() 
+  private declare agentService: ReturnType<typeof getAgentService>
+  
+  @state() 
+  private declare monitoringActive: boolean
+  
+  @state() 
+  private declare showAgentConfigModal: boolean
+  
+  @state() 
+  private declare configModalMode: 'create' | 'edit'
+  
+  @state() 
+  private declare configModalAgent?: Agent
+  
+  @state() 
+  private declare bulkActionMode: boolean
+  
+  @state() 
+  private declare viewMode: 'grid' | 'list'
+  
+  constructor() {
+    super()
+    // Initialize reactive properties in constructor to avoid shadowing
+    this.agents = []
+    this.isLoading = true
+    this.error = ''
+    this.selectedAgent = null
+    this.selectedAgents = new Set<string>()
+    this.agentService = getAgentService()
+    this.monitoringActive = false
+    this.showAgentConfigModal = false
+    this.configModalMode = 'create'
+    this.bulkActionMode = false
+    this.viewMode = 'grid'
+  }
 
   static styles = css`
     :host {
