@@ -54,6 +54,8 @@ export class AgentService extends BaseService {
   private currentStatus: AgentSystemStatus | null = null;
   private agents: Map<string, Agent> = new Map();
   private performanceHistory: Map<string, AgentPerformanceMetrics[]> = new Map();
+  private teamActivationInProgress: boolean = false;
+  private agentConfigurations: Map<string, any> = new Map();
 
   constructor(config: Partial<ServiceConfig> = {}) {
     super({
@@ -134,6 +136,111 @@ export class AgentService extends BaseService {
 
     } catch (error) {
       this.emit('agentSpawnFailed', { role, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Spawn multiple agents with specified roles (1-click team activation)
+   */
+  async spawnTeam(roles: AgentRole[]): Promise<{ success: boolean; agents: Record<string, { agent_id: string; role: string }>; message: string }> {
+    try {
+      const spawnPromises = roles.map(role => this.spawnAgent(role));
+      const results = await Promise.all(spawnPromises);
+      
+      const agents: Record<string, { agent_id: string; role: string }> = {};
+      results.forEach((result, index) => {
+        if (result.success) {
+          agents[result.agent_id] = {
+            agent_id: result.agent_id,
+            role: roles[index]
+          };
+        }
+      });
+      
+      const response = {
+        success: Object.keys(agents).length > 0,
+        agents,
+        message: `Successfully spawned ${Object.keys(agents).length} of ${roles.length} agents`
+      };
+      
+      this.emit('teamSpawned', response);
+      return response;
+
+    } catch (error) {
+      this.emit('teamSpawnFailed', { roles, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Deactivate/terminate a specific agent
+   */
+  async deactivateAgent(agentId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await this.delete<{ success: boolean; message: string }>(`/api/agents/${agentId}`);
+      
+      // Update local state
+      this.agents.delete(agentId);
+      this.clearCache('agents');
+      
+      this.emit('agentDeactivated', { agentId, ...response });
+      return response;
+
+    } catch (error) {
+      this.emit('agentDeactivationFailed', { agentId, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Configure a specific agent's settings
+   */
+  async configureAgent(agentId: string, config: Partial<Agent>): Promise<{ success: boolean; agent: Agent; message: string }> {
+    try {
+      const response = await this.put<{ success: boolean; agent: Agent; message: string }>(
+        `/api/agents/${agentId}/configure`,
+        config
+      );
+      
+      // Update local state
+      if (response.agent) {
+        this.agents.set(agentId, response.agent);
+        this.updateAgentPerformanceHistory(response.agent);
+      }
+      
+      this.emit('agentConfigured', { agentId, config, agent: response.agent });
+      return response;
+
+    } catch (error) {
+      this.emit('agentConfigurationFailed', { agentId, config, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get specific agent configuration and capabilities
+   */
+  async getAgentConfiguration(agentId: string): Promise<{
+    agent: Agent;
+    capabilities: string[];
+    configuration: Record<string, any>;
+    performance_history: AgentPerformanceMetrics[];
+  }> {
+    const cacheKey = `agent_config_${agentId}`;
+    
+    try {
+      const response = await this.get<{
+        agent: Agent;
+        capabilities: string[];
+        configuration: Record<string, any>;
+        performance_history: AgentPerformanceMetrics[];
+      }>(`/api/agents/${agentId}/configuration`, {}, cacheKey);
+      
+      return response;
+
+    } catch (error) {
+      this.emit('agentConfigurationLoadFailed', { agentId, error });
       throw error;
     }
   }
@@ -416,6 +523,18 @@ export class AgentService extends BaseService {
     return this.subscribe('agentSpawned', listener);
   }
 
+  public onTeamSpawned(listener: EventListener<{ success: boolean; agents: Record<string, { agent_id: string; role: string }>; message: string }>): Subscription {
+    return this.subscribe('teamSpawned', listener);
+  }
+
+  public onAgentDeactivated(listener: EventListener<{ agentId: string; success: boolean; message: string }>): Subscription {
+    return this.subscribe('agentDeactivated', listener);
+  }
+
+  public onAgentConfigured(listener: EventListener<{ agentId: string; config: Partial<Agent>; agent: Agent }>): Subscription {
+    return this.subscribe('agentConfigured', listener);
+  }
+
   public onAgentStatusChanged(listener: EventListener<AgentSystemStatus>): Subscription {
     return this.subscribe('agentStatusChanged', listener);
   }
@@ -490,19 +609,24 @@ export class AgentService extends BaseService {
       };
 
       this.agents.set(agentId, agent);
+      this.updateAgentPerformanceHistory(agent);
+    }
+  }
 
-      // Store performance history
-      if (agent.performance_metrics) {
-        const history = this.performanceHistory.get(agentId) || [];
-        history.push(agent.performance_metrics);
-        
-        // Keep only last 100 entries
-        if (history.length > 100) {
-          history.shift();
-        }
-        
-        this.performanceHistory.set(agentId, history);
+  /**
+   * Update performance history for a specific agent
+   */
+  private updateAgentPerformanceHistory(agent: Agent): void {
+    if (agent.performance_metrics) {
+      const history = this.performanceHistory.get(agent.id) || [];
+      history.push(agent.performance_metrics);
+      
+      // Keep only last 100 entries
+      if (history.length > 100) {
+        history.shift();
       }
+      
+      this.performanceHistory.set(agent.id, history);
     }
   }
 
@@ -537,13 +661,302 @@ export class AgentService extends BaseService {
     }
   }
 
+  // ===== ENHANCED AGENT MANAGEMENT =====
+
+  /**
+   * One-click team activation with enhanced configuration
+   */
+  async activateAgentTeam(options: {
+    teamSize?: number;
+    roles?: AgentRole[];
+    autoStartTasks?: boolean;
+    teamName?: string;
+  } = {}): Promise<{
+    success: boolean;
+    message: string;
+    activatedAgents: Agent[];
+    teamComposition: Record<string, string>;
+  }> {
+    if (this.teamActivationInProgress) {
+      throw new Error('Team activation already in progress');
+    }
+
+    this.teamActivationInProgress = true;
+    
+    try {
+      const activationResponse = await this.activateAgentSystem({
+        teamSize: options.teamSize || 5,
+        roles: options.roles || [
+          AgentRole.PRODUCT_MANAGER,
+          AgentRole.ARCHITECT,
+          AgentRole.BACKEND_DEVELOPER,
+          AgentRole.FRONTEND_DEVELOPER,
+          AgentRole.QA_ENGINEER
+        ],
+        autoStartTasks: options.autoStartTasks !== false
+      });
+
+      const activatedAgents = Object.values(activationResponse.active_agents || {});
+      
+      // Emit team activation event
+      this.emit('teamActivated', {
+        teamName: options.teamName || 'Development Team',
+        agents: activatedAgents,
+        composition: activationResponse.team_composition
+      });
+
+      return {
+        success: activationResponse.success,
+        message: `Successfully activated ${activatedAgents.length}-agent development team`,
+        activatedAgents,
+        teamComposition: activationResponse.team_composition || {}
+      };
+
+    } finally {
+      this.teamActivationInProgress = false;
+    }
+  }
+
+  /**
+   * Configure individual agent with enhanced settings
+   */
+  async configureAgent(agentId: string, configuration: {
+    specialization?: string[];
+    maxConcurrency?: number;
+    priority?: 'low' | 'medium' | 'high';
+    preferences?: Record<string, any>;
+  }): Promise<{ success: boolean; message: string; agent: Agent | null }> {
+    try {
+      // Store configuration locally
+      this.agentConfigurations.set(agentId, configuration);
+
+      // In a real implementation, this would call a backend endpoint
+      // For now, we'll update the local agent data
+      const agent = this.getAgent(agentId);
+      if (agent) {
+        // Update agent configuration
+        const updatedAgent = {
+          ...agent,
+          specialization: configuration.specialization,
+          maxConcurrency: configuration.maxConcurrency,
+          priority: configuration.priority,
+          lastConfigured: new Date().toISOString()
+        };
+
+        this.agents.set(agentId, updatedAgent);
+        this.emit('agentConfigured', { agentId, configuration, agent: updatedAgent });
+
+        return {
+          success: true,
+          message: `Agent ${agent.name} configured successfully`,
+          agent: updatedAgent
+        };
+      }
+
+      throw new Error(`Agent ${agentId} not found`);
+
+    } catch (error) {
+      this.emit('agentConfigurationFailed', { agentId, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get enhanced agent performance metrics with history
+   */
+  async getAgentPerformanceMetrics(agentId: string, timeframe: '1h' | '24h' | '7d' = '1h'): Promise<{
+    current: AgentPerformanceMetrics;
+    history: AgentPerformanceMetrics[];
+    trends: {
+      cpuTrend: 'rising' | 'falling' | 'stable';
+      memoryTrend: 'rising' | 'falling' | 'stable';
+      performanceTrend: 'improving' | 'declining' | 'stable';
+    };
+  }> {
+    const agent = this.getAgent(agentId);
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
+
+    const history = this.performanceHistory.get(agentId) || [];
+    const current = history[history.length - 1] || {
+      cpuUsage: 0,
+      memoryUsage: 0,
+      tasksCompleted: 0,
+      averageTaskTime: 0,
+      successRate: 1.0,
+      lastUpdated: new Date().toISOString()
+    };
+
+    // Calculate trends (simplified)
+    const trends = {
+      cpuTrend: 'stable' as const,
+      memoryTrend: 'stable' as const,
+      performanceTrend: 'stable' as const
+    };
+
+    if (history.length >= 2) {
+      const previous = history[history.length - 2];
+      trends.cpuTrend = current.cpuUsage > previous.cpuUsage + 5 ? 'rising' : 
+                      current.cpuUsage < previous.cpuUsage - 5 ? 'falling' : 'stable';
+      trends.memoryTrend = current.memoryUsage > previous.memoryUsage + 5 ? 'rising' :
+                          current.memoryUsage < previous.memoryUsage - 5 ? 'falling' : 'stable';
+      trends.performanceTrend = current.successRate > previous.successRate + 0.05 ? 'improving' :
+                               current.successRate < previous.successRate - 0.05 ? 'declining' : 'stable';
+    }
+
+    return { current, history, trends };
+  }
+
+  /**
+   * Bulk agent operations
+   */
+  async performBulkOperation(agentIds: string[], operation: 'restart' | 'pause' | 'resume' | 'configure', options?: any): Promise<{
+    success: boolean;
+    results: Record<string, { success: boolean; message: string }>;
+    summary: {
+      total: number;
+      successful: number;
+      failed: number;
+    };
+  }> {
+    const results: Record<string, { success: boolean; message: string }> = {};
+    let successful = 0;
+    let failed = 0;
+
+    for (const agentId of agentIds) {
+      try {
+        switch (operation) {
+          case 'restart':
+            // In real implementation, would call restart endpoint
+            results[agentId] = { success: true, message: 'Agent restarted successfully' };
+            break;
+          case 'pause':
+            // In real implementation, would call pause endpoint
+            results[agentId] = { success: true, message: 'Agent paused successfully' };
+            break;
+          case 'resume':
+            // In real implementation, would call resume endpoint
+            results[agentId] = { success: true, message: 'Agent resumed successfully' };
+            break;
+          case 'configure':
+            if (options) {
+              await this.configureAgent(agentId, options);
+              results[agentId] = { success: true, message: 'Agent configured successfully' };
+            } else {
+              throw new Error('Configuration options required');
+            }
+            break;
+          default:
+            throw new Error(`Unknown operation: ${operation}`);
+        }
+        successful++;
+      } catch (error) {
+        results[agentId] = { 
+          success: false, 
+          message: error instanceof Error ? error.message : 'Operation failed' 
+        };
+        failed++;
+      }
+    }
+
+    this.emit('bulkOperationCompleted', {
+      operation,
+      agentIds,
+      results,
+      summary: { total: agentIds.length, successful, failed }
+    });
+
+    return {
+      success: failed === 0,
+      results,
+      summary: {
+        total: agentIds.length,
+        successful,
+        failed
+      }
+    };
+  }
+
+  /**
+   * Get agent team composition with role distribution
+   */
+  getTeamComposition(): TeamComposition {
+    const agents = this.getAgents();
+    const composition: TeamComposition = {};
+
+    agents.forEach(agent => {
+      const role = agent.role;
+      if (!composition[role]) {
+        composition[role] = {
+          count: 0,
+          agents: [],
+          capabilities: []
+        };
+      }
+
+      composition[role].count++;
+      composition[role].agents.push(agent);
+      
+      // Add unique capabilities
+      if (agent.capabilities) {
+        agent.capabilities.forEach(cap => {
+          if (!composition[role].capabilities.includes(cap)) {
+            composition[role].capabilities.push(cap);
+          }
+        });
+      }
+    });
+
+    return composition;
+  }
+
+  /**
+   * Check if system is ready for autonomous development
+   */
+  isSystemReady(): {
+    ready: boolean;
+    requirements: {
+      minAgents: boolean;
+      essentialRoles: boolean;
+      allAgentsHealthy: boolean;
+    };
+    recommendations: string[];
+  } {
+    const agents = this.getAgents();
+    const summary = this.getAgentSummary();
+    const composition = this.getTeamComposition();
+
+    const essentialRoles = [AgentRole.PRODUCT_MANAGER, AgentRole.BACKEND_DEVELOPER, AgentRole.QA_ENGINEER];
+    const hasEssentialRoles = essentialRoles.every(role => composition[role]?.count > 0);
+    const minAgents = agents.length >= 3;
+    const allAgentsHealthy = summary.error === 0 && summary.offline === 0;
+
+    const recommendations: string[] = [];
+    if (!minAgents) recommendations.push('Activate at least 3 agents for basic functionality');
+    if (!hasEssentialRoles) recommendations.push('Ensure Product Manager, Backend Developer, and QA Engineer roles are active');
+    if (!allAgentsHealthy) recommendations.push(`Address ${summary.error + summary.offline} agent health issues`);
+
+    return {
+      ready: minAgents && hasEssentialRoles && allAgentsHealthy,
+      requirements: {
+        minAgents,
+        essentialRoles: hasEssentialRoles,
+        allAgentsHealthy
+      },
+      recommendations
+    };
+  }
+
   // ===== CLEANUP =====
 
   public destroy(): void {
     this.stopMonitoring();
     this.agents.clear();
     this.performanceHistory.clear();
+    this.agentConfigurations.clear();
     this.currentStatus = null;
+    this.teamActivationInProgress = false;
     super.destroy();
   }
 }

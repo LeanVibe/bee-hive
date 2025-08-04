@@ -36,6 +36,10 @@ export class AgentHealthPanel extends LitElement {
   
   @state() private selectedAgent: string | null = null
   @state() private isRefreshing: boolean = false
+  @state() private teamActivationInProgress: boolean = false
+  @state() private showTeamControls: boolean = true
+  @state() private bulkSelectedAgents: Set<string> = new Set()
+  @state() private showBulkActions: boolean = false
   
   static styles = css`
     :host {
@@ -293,6 +297,177 @@ export class AgentHealthPanel extends LitElement {
       50% { opacity: 0.5; }
     }
     
+    /* Enhanced Agent Management Styles */
+    .team-controls {
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .team-activation-button {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .team-activation-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .team-activation-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .team-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .system-ready-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .system-ready-indicator.not-ready {
+      background: #f59e0b;
+      animation: pulse 2s infinite;
+    }
+
+    .bulk-actions {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      margin: 0.5rem 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .bulk-action-button {
+      background: #f59e0b;
+      color: white;
+      border: none;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .bulk-action-button:hover {
+      background: #d97706;
+    }
+
+    .bulk-action-button.danger {
+      background: #dc2626;
+    }
+
+    .bulk-action-button.danger:hover {
+      background: #b91c1c;
+    }
+
+    .agent-controls {
+      display: flex;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+    }
+
+    .agent-control-button {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .agent-control-button:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+    }
+
+    .agent-control-button.primary {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    .agent-control-button.primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .agent-control-button.danger {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: white;
+    }
+
+    .agent-control-button.danger:hover {
+      background: #b91c1c;
+      border-color: #b91c1c;
+    }
+
+    .agent-checkbox {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .performance-trends {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid #f3f4f6;
+    }
+
+    .trend-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      color: #6b7280;
+    }
+
+    .trend-arrow {
+      width: 12px;
+      height: 12px;
+    }
+
+    .trend-arrow.up { color: #059669; }
+    .trend-arrow.down { color: #dc2626; }
+    .trend-arrow.stable { color: #6b7280; }
+
     @media (max-width: 768px) {
       .agents-grid {
         grid-template-columns: 1fr;
@@ -426,13 +601,16 @@ export class AgentHealthPanel extends LitElement {
     const filtered = this.filteredAgents
     
     return html`
+      ${this.renderTeamControls()}
+      ${this.renderBulkActions()}
+      
       <div class="health-panel-header">
         <div class="header-content">
           <h3 class="panel-title">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            Agent Health
+            Agent Health & Management
           </h3>
           
           <button
@@ -501,6 +679,14 @@ export class AgentHealthPanel extends LitElement {
                 class="agent-card ${this.compact ? 'compact' : ''} ${this.selectedAgent === agent.id ? 'selected' : ''}"
                 @click=${() => this.handleAgentClick(agent)}
               >
+                <input 
+                  type="checkbox" 
+                  class="agent-checkbox"
+                  .checked=${this.bulkSelectedAgents.has(agent.id)}
+                  @click=${(e: Event) => e.stopPropagation()}
+                  @change=${(e: Event) => this.handleAgentSelect(agent.id, e)}
+                />
+                
                 <div class="agent-header">
                   <div class="agent-info">
                     <div class="agent-status-indicator ${agent.status}"></div>
@@ -576,6 +762,9 @@ export class AgentHealthPanel extends LitElement {
                   </div>
                 </div>
                 
+                ${this.renderPerformanceTrends(agent)}
+                ${this.renderAgentControls(agent)}
+                
                 <div class="agent-footer">
                   <span class="uptime-badge">
                     Uptime: ${this.formatUptime(agent.uptime)}
@@ -590,5 +779,291 @@ export class AgentHealthPanel extends LitElement {
         </div>
       `}
     `
+  }
+
+  // Enhanced Agent Management Methods
+
+  private handleAgentClick(agent: AgentStatus) {
+    if (this.selectedAgent === agent.id) {
+      this.selectedAgent = null;
+    } else {
+      this.selectedAgent = agent.id;
+    }
+  }
+
+  private handleRefresh() {
+    if (this.isRefreshing) return;
+    
+    this.isRefreshing = true;
+    
+    const refreshEvent = new CustomEvent('refresh-agents', {
+      bubbles: true,
+      composed: true
+    });
+    
+    this.dispatchEvent(refreshEvent);
+    
+    // Reset refreshing state after a delay
+    setTimeout(() => {
+      this.isRefreshing = false;
+    }, 1000);
+  }
+
+  private handleSortChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    this.sortBy = target.value as 'name' | 'status' | 'performance' | 'uptime';
+  }
+
+  private handleFilterChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    this.filterStatus = target.value;
+  }
+
+  private getTrendIcon(trend: 'up' | 'down' | 'stable') {
+    switch (trend) {
+      case 'up':
+        return '↗️';
+      case 'down':
+        return '↘️';
+      default:
+        return '→';
+    }
+  }
+
+  private formatPerformanceScore(score: number): string {
+    return `${Math.round(score * 100)}%`;
+  }
+
+  private formatUptime(uptime: number): string {
+    const hours = Math.floor(uptime / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  }
+
+  private get statusCounts() {
+    return this.agents.reduce((counts, agent) => {
+      counts[agent.status] = (counts[agent.status] || 0) + 1;
+      return counts;
+    }, {} as Record<string, number>);
+  }
+
+  private get filteredAgents() {
+    let filtered = this.agents;
+    
+    // Apply status filter
+    if (this.filterStatus !== 'all') {
+      filtered = filtered.filter(agent => agent.status === this.filterStatus);
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (this.sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'status':
+          return a.status.localeCompare(b.status);
+        case 'performance':
+          return b.performance.score - a.performance.score;
+        case 'uptime':
+          return b.uptime - a.uptime;
+        default:
+          return 0;
+      }
+    });
+    
+    return filtered;
+  }
+
+  private async handleTeamActivation() {
+    if (this.teamActivationInProgress) return;
+
+    this.teamActivationInProgress = true;
+    
+    try {
+      // Dispatch custom event for team activation
+      const event = new CustomEvent('activate-agent-team', {
+        detail: {
+          teamSize: 5,
+          roles: ['product_manager', 'architect', 'backend_developer', 'frontend_developer', 'qa_engineer'],
+          autoStartTasks: true
+        },
+        bubbles: true,
+        composed: true
+      });
+      
+      this.dispatchEvent(event);
+      
+      // Simulate team activation process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+    } catch (error) {
+      console.error('Team activation failed:', error);
+    } finally {
+      this.teamActivationInProgress = false;
+    }
+  }
+
+  private handleAgentSelect(agentId: string, event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    const newSelected = new Set(this.bulkSelectedAgents);
+    
+    if (checkbox.checked) {
+      newSelected.add(agentId);
+    } else {
+      newSelected.delete(agentId);
+    }
+    
+    this.bulkSelectedAgents = newSelected;
+    this.showBulkActions = newSelected.size > 0;
+  }
+
+  private handleBulkAction(action: 'restart' | 'pause' | 'resume' | 'configure') {
+    const selectedIds = Array.from(this.bulkSelectedAgents);
+    
+    const event = new CustomEvent('bulk-agent-action', {
+      detail: {
+        action,
+        agentIds: selectedIds
+      },
+      bubbles: true,
+      composed: true
+    });
+    
+    this.dispatchEvent(event);
+    
+    // Clear selection after action
+    this.bulkSelectedAgents = new Set();
+    this.showBulkActions = false;
+  }
+
+  private handleAgentAction(agentId: string, action: 'configure' | 'restart' | 'pause' | 'resume') {
+    const event = new CustomEvent('agent-action', {
+      detail: {
+        agentId,
+        action
+      },
+      bubbles: true,
+      composed: true
+    });
+    
+    this.dispatchEvent(event);
+  }
+
+  private renderTeamControls() {
+    if (!this.showTeamControls) return '';
+
+    const systemReady = this.agents.length >= 3 && this.agents.filter(a => a.status === 'active').length >= 2;
+    
+    return html`
+      <div class="team-controls">
+        <button
+          class="team-activation-button"
+          @click=${this.handleTeamActivation}
+          ?disabled=${this.teamActivationInProgress}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          ${this.teamActivationInProgress ? 'Activating Team...' : 'Activate 5-Agent Team'}
+        </button>
+
+        <div class="team-status">
+          <div class="system-ready-indicator ${systemReady ? '' : 'not-ready'}"></div>
+          <span>
+            System ${systemReady ? 'Ready' : 'Not Ready'} 
+            (${this.agents.filter(a => a.status === 'active').length}/${this.agents.length} agents active)
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderBulkActions() {
+    if (!this.showBulkActions || this.bulkSelectedAgents.size === 0) return '';
+    
+    return html`
+      <div class="bulk-actions">
+        <span>${this.bulkSelectedAgents.size} agents selected:</span>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('restart')}>
+          Restart
+        </button>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('pause')}>
+          Pause
+        </button>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('resume')}>
+          Resume
+        </button>
+        <button class="bulk-action-button" @click=${() => this.handleBulkAction('configure')}>
+          Configure
+        </button>
+        <button class="bulk-action-button danger" @click=${() => { this.bulkSelectedAgents = new Set(); this.showBulkActions = false; }}>
+          Cancel
+        </button>
+      </div>
+    `;
+  }
+
+  private renderAgentControls(agent: AgentStatus) {
+    return html`
+      <div class="agent-controls">
+        <button 
+          class="agent-control-button primary" 
+          @click=${() => this.handleAgentAction(agent.id, 'configure')}
+          title="Configure Agent"
+        >
+          ⚙️
+        </button>
+        <button 
+          class="agent-control-button" 
+          @click=${() => this.handleAgentAction(agent.id, 'restart')}
+          title="Restart Agent"
+        >
+          🔄
+        </button>
+        <button 
+          class="agent-control-button ${agent.status === 'active' ? '' : 'primary'}" 
+          @click=${() => this.handleAgentAction(agent.id, agent.status === 'active' ? 'pause' : 'resume')}
+          title="${agent.status === 'active' ? 'Pause' : 'Resume'} Agent"
+        >
+          ${agent.status === 'active' ? '⏸️' : '▶️'}
+        </button>
+      </div>
+    `;
+  }
+
+  private renderPerformanceTrends(agent: AgentStatus) {
+    // Calculate simple trends based on recent data
+    const cpuTrend = agent.metrics.cpuUsage.length >= 2 ? 
+      (agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 1] > agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 2] ? 'up' : 
+       agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 1] < agent.metrics.cpuUsage[agent.metrics.cpuUsage.length - 2] ? 'down' : 'stable') : 'stable';
+    
+    const memoryTrend = agent.metrics.memoryUsage.length >= 2 ? 
+      (agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 1] > agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 2] ? 'up' : 
+       agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 1] < agent.metrics.memoryUsage[agent.metrics.memoryUsage.length - 2] ? 'down' : 'stable') : 'stable';
+
+    return html`
+      <div class="performance-trends">
+        <div class="trend-indicator">
+          <svg class="trend-arrow ${cpuTrend}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${cpuTrend === 'up' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>` :
+              cpuTrend === 'down' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>` :
+              html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>`}
+          </svg>
+          CPU ${cpuTrend}
+        </div>
+        <div class="trend-indicator">
+          <svg class="trend-arrow ${memoryTrend}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${memoryTrend === 'up' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>` :
+              memoryTrend === 'down' ? html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>` :
+              html`<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>`}
+          </svg>
+          Memory ${memoryTrend}
+        </div>
+      </div>
+    `;
   }
 }
