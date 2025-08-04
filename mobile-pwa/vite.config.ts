@@ -173,7 +173,10 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 3002,
+    port: 5173,
+    strictPort: true,
+    open: false,
+    cors: true,
     proxy: {
       '/dashboard/api': {
         target: 'http://localhost:8000',
@@ -193,6 +196,9 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true,
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html')
+      },
       output: {
         manualChunks: {
           vendor: ['lit', 'zustand'],
@@ -207,5 +213,10 @@ export default defineConfig({
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-  }
+  },
+  esbuild: {
+    target: 'es2020',
+    format: 'esm'
+  },
+  clearScreen: false
 })
