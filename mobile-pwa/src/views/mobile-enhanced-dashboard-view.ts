@@ -33,6 +33,15 @@ interface SystemStatus {
   requiresAttention: boolean
 }
 
+interface ProductivityMetrics {
+  score: number
+  rating: 'excellent' | 'good' | 'needs_improvement' | 'critical'
+  efficiency: string
+  agentUtilization: number
+  recommendations: number
+  lastUpdated: string
+}
+
 @customElement('mobile-enhanced-dashboard-view')
 export class MobileEnhancedDashboardView extends LitElement {
   @property({ type: Boolean }) declare mobile: boolean
@@ -41,6 +50,7 @@ export class MobileEnhancedDashboardView extends LitElement {
   @state() private declare alerts: PriorityAlert[]
   @state() private declare quickActions: QuickAction[]
   @state() private declare systemStatus: SystemStatus
+  @state() private declare productivityMetrics: ProductivityMetrics
   @state() private declare isLoading: boolean
   @state() private declare lastUpdate: Date | null
   @state() private declare selectedPriority: 'all' | 'critical' | 'high' | 'medium'
@@ -299,6 +309,84 @@ export class MobileEnhancedDashboardView extends LitElement {
       border-radius: 4px;
     }
 
+    /* Productivity Widget */
+    .productivity-widget {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .productivity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .productivity-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .productivity-score {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .productivity-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .metric-item {
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      opacity: 0.9;
+    }
+
+    .productivity-rating {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .productivity-rating.excellent {
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    .productivity-rating.good {
+      background: rgba(59, 130, 246, 0.2);
+    }
+
+    .productivity-rating.needs_improvement {
+      background: rgba(245, 158, 11, 0.2);
+    }
+
+    .productivity-rating.critical {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
     /* Quick Actions Section */
     .quick-actions-section {
       margin-bottom: 2rem;
@@ -459,6 +547,14 @@ export class MobileEnhancedDashboardView extends LitElement {
       criticalIssues: 0,
       requiresAttention: false
     }
+    this.productivityMetrics = {
+      score: 0,
+      rating: 'good',
+      efficiency: 'unknown',
+      agentUtilization: 0,
+      recommendations: 0,
+      lastUpdated: new Date().toISOString()
+    }
     this.isLoading = true
     this.lastUpdate = null
     this.selectedPriority = 'all'
@@ -493,31 +589,53 @@ export class MobileEnhancedDashboardView extends LitElement {
 
   private async loadDashboardData() {
     try {
-      // Simulate API call to enhanced hive commands
-      const response = await fetch('/api/hive/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          command: '/hive:status --mobile --alerts-only --priority=high'
+      // Load system status and productivity data concurrently
+      const [statusResponse, productivityResponse] = await Promise.allSettled([
+        fetch('/api/hive/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            command: '/hive:status --mobile --alerts-only --priority=high'
+          })
+        }),
+        fetch('/api/hive/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            command: '/hive:productivity --mobile --developer'
+          })
         })
-      })
+      ])
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.result.mobile_optimized) {
-          this.updateFromHiveData(data.result)
+      // Process status data
+      if (statusResponse.status === 'fulfilled' && statusResponse.value.ok) {
+        const statusData = await statusResponse.value.json()
+        if (statusData.success && statusData.result.mobile_optimized) {
+          this.updateFromHiveData(statusData.result)
         } else {
-          // Fallback to mock data
           this.generateMockMobileData()
         }
       } else {
         this.generateMockMobileData()
       }
 
+      // Process productivity data
+      if (productivityResponse.status === 'fulfilled' && productivityResponse.value.ok) {
+        const productivityData = await productivityResponse.value.json()
+        if (productivityData.success && productivityData.result.mobile_optimized) {
+          this.updateProductivityMetrics(productivityData.result)
+        } else {
+          this.generateMockProductivityData()
+        }
+      } else {
+        this.generateMockProductivityData()
+      }
+
       this.lastUpdate = new Date()
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
       this.generateMockMobileData()
+      this.generateMockProductivityData()
     }
   }
 
@@ -630,6 +748,29 @@ export class MobileEnhancedDashboardView extends LitElement {
         description: 'Open complete oversight interface'
       }
     ]
+  }
+
+  private updateProductivityMetrics(productivityData: any) {
+    const summary = productivityData.productivity_summary || {}
+    this.productivityMetrics = {
+      score: summary.score || 0,
+      rating: summary.rating || 'good',
+      efficiency: productivityData.workflow_efficiency || 'unknown',
+      agentUtilization: productivityData.metrics_snapshot?.agents || 0,
+      recommendations: productivityData.top_recommendations?.length || 0,
+      lastUpdated: productivityData.metrics_snapshot?.last_updated || new Date().toISOString()
+    }
+  }
+
+  private generateMockProductivityData() {
+    this.productivityMetrics = {
+      score: 78,
+      rating: 'good',
+      efficiency: 'good',
+      agentUtilization: 4,
+      recommendations: 3,
+      lastUpdated: new Date().toISOString()
+    }
   }
 
   private getActionIcon(action: string): string {
@@ -797,6 +938,54 @@ export class MobileEnhancedDashboardView extends LitElement {
     `
   }
 
+  private renderProductivityWidget() {
+    const scoreColor = this.productivityMetrics.score >= 90 ? '#10b981' :
+                      this.productivityMetrics.score >= 75 ? '#3b82f6' :
+                      this.productivityMetrics.score >= 60 ? '#f59e0b' : '#ef4444'
+
+    return html`
+      <div class="productivity-widget" @click=${() => this.handleProductivityTap()}>
+        <div class="productivity-header">
+          <div class="productivity-title">
+            📈 Developer Productivity
+          </div>
+          <div class="productivity-score" style="color: ${scoreColor}">
+            ${Math.round(this.productivityMetrics.score)}%
+          </div>
+        </div>
+        
+        <div class="productivity-rating ${this.productivityMetrics.rating}">
+          ${this.productivityMetrics.rating.replace('_', ' ')}
+        </div>
+        
+        <div class="productivity-metrics">
+          <div class="metric-item">
+            <div class="metric-value">${this.productivityMetrics.agentUtilization}</div>
+            <div class="metric-label">Active Agents</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${this.productivityMetrics.recommendations}</div>
+            <div class="metric-label">Recommendations</div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  private handleProductivityTap() {
+    // Open detailed productivity insights
+    const event = new CustomEvent('execute-command', {
+      detail: { 
+        command: '/hive:productivity --developer --insights',
+        title: 'Detailed Productivity Analysis',
+        estimatedTime: '< 1 min'
+      },
+      bubbles: true,
+      composed: true
+    })
+    this.dispatchEvent(event)
+  }
+
   private renderQuickActions() {
     return html`
       <div class="quick-actions-grid">
@@ -860,6 +1049,7 @@ export class MobileEnhancedDashboardView extends LitElement {
       <div class="mobile-dashboard">
         <div class="dashboard-header">
           ${this.renderStatusIndicator()}
+          ${this.renderProductivityWidget()}
           ${this.renderPriorityTabs()}
         </div>
 

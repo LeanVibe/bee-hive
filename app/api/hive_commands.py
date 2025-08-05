@@ -105,6 +105,7 @@ async def list_commands():
                 "/hive:start --team-size=5",
                 "/hive:spawn architect --capabilities=system_design,security",
                 "/hive:status --detailed",
+                "/hive:productivity --developer --mobile",
                 "/hive:develop \"Build user authentication with JWT\"",
                 "/hive:oversight --mobile-info",
                 "/hive:stop --agents-only"
@@ -162,6 +163,12 @@ async def get_command_help(command_name: str):
                 "/hive:status",
                 "/hive:status --detailed",
                 "/hive:status --agents-only"
+            ]
+        elif command_name == "productivity":
+            examples = [
+                "/hive:productivity",
+                "/hive:productivity --developer --mobile",
+                "/hive:productivity --insights --workflow=development"
             ]
         elif command_name == "oversight":
             examples = [
