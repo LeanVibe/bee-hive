@@ -17,35 +17,57 @@ export interface AgentConfigData {
 
 @customElement('agent-config-modal')
 export class AgentConfigModal extends LitElement {
-  @property({ type: Boolean }) open = false
-  @property({ type: Object }) agent?: Agent
-  @property({ type: String }) mode: 'create' | 'edit' = 'create'
+  @property({ type: Boolean }) 
+  declare open: boolean
   
-  @state() private isLoading = false
-  @state() private error = ''
-  @state() private formData: AgentConfigData = {
-    name: '',
-    role: AgentRole.BACKEND_DEVELOPER,
-    capabilities: [],
-    priority: 'normal',
-    maxConcurrentTasks: 5,
-    autoAssign: true,
-    teamIntegration: true
+  @property({ type: Object }) 
+  declare agent?: Agent
+  
+  @property({ type: String }) 
+  declare mode: 'create' | 'edit'
+  
+  @state() 
+  private declare isLoading: boolean
+  
+  @state() 
+  private declare error: string
+  
+  @state() 
+  private declare formData: AgentConfigData
+  
+  @state() 
+  private declare availableCapabilities: string[]
+
+  constructor() {
+    super()
+    this.open = false
+    this.mode = 'create'
+    this.isLoading = false
+    this.error = ''
+    this.formData = {
+      name: '',
+      role: AgentRole.BACKEND_DEVELOPER,
+      capabilities: [],
+      priority: 'normal',
+      maxConcurrentTasks: 5,
+      autoAssign: true,
+      teamIntegration: true
+    }
+    this.availableCapabilities = [
+      'code-generation',
+      'testing',
+      'debugging',
+      'documentation',
+      'code-review',
+      'architecture-design',
+      'deployment',
+      'monitoring',
+      'security-analysis',
+      'performance-optimization',
+      'database-design',
+      'api-development'
+    ]
   }
-  @state() private availableCapabilities = [
-    'code-generation',
-    'testing',
-    'debugging',
-    'documentation',
-    'code-review',
-    'architecture-design',
-    'deployment',
-    'monitoring',
-    'security-analysis',
-    'performance-optimization',
-    'database-design',
-    'api-development'
-  ]
 
   static styles = css`
     :host {
