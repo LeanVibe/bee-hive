@@ -159,9 +159,11 @@ async function registerServiceWorker(): Promise<void> {
 }
 
 // Start the app and register service worker
+const appInitializer = AppInitializer.getInstance()
+
 Promise.all([
   registerServiceWorker(),
-  app.initialize()
+  appInitializer.initialize()
 ]).then(() => {
   console.log('🎉 App and service worker ready')
 }).catch(error => {
