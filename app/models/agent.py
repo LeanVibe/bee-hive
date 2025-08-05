@@ -75,12 +75,11 @@ class Agent(Base):
     last_heartbeat = Column(DateTime(timezone=True), nullable=True)
     last_active = Column(DateTime(timezone=True), nullable=True)
     
-    # Relationships - only include relationships for models that exist
-    # Note: Relationships to missing models removed to avoid import errors
-    # sleep_windows = relationship("SleepWindow", back_populates="agent", cascade="all, delete-orphan")
-    # checkpoints = relationship("Checkpoint", back_populates="agent", cascade="all, delete-orphan") 
-    # sleep_wake_cycles = relationship("SleepWakeCycle", back_populates="agent", cascade="all, delete-orphan")
-    # sleep_wake_analytics = relationship("SleepWakeAnalytics", back_populates="agent", cascade="all, delete-orphan")
+    # Relationships
+    sleep_windows = relationship("SleepWindow", back_populates="agent", cascade="all, delete-orphan")
+    checkpoints = relationship("Checkpoint", back_populates="agent", cascade="all, delete-orphan") 
+    sleep_wake_cycles = relationship("SleepWakeCycle", back_populates="agent", cascade="all, delete-orphan")
+    sleep_wake_analytics = relationship("SleepWakeAnalytics", back_populates="agent", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         return f"<Agent(id={self.id}, name='{self.name}', role='{self.role}', status='{self.status}')>"
