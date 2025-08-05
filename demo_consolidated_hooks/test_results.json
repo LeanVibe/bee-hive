@@ -1,0 +1,103 @@
+{
+  "test_suite": "consolidated_hooks",
+  "started_at": "2025-08-05T12:31:10Z",
+  "tests": [
+    {
+      "name": "Quality Gate - Safe Bash Command",
+      "status": "PASSED",
+      "output": "🎯 Quality Gate Hook: PreToolUse:Bash at 2025-08-05T12:31:10Z\n🔍 Validating bash command before execution...\n✅ Bash command validation passed\n✅ Quality Gate Hook completed successfully: PreToolUse:Bash",
+      "exit_code": 0
+    },
+    {
+      "name": "Quality Gate - Dangerous Bash Command",
+      "status": "PASSED",
+      "output": "🎯 Quality Gate Hook: PreToolUse:Bash at 2025-08-05T12:31:10Z\n🔍 Validating bash command before execution...\n❌ Dangerous bash command blocked: rm -rf /\n{\"success\":true,\"notification_id\":\"notification-1754386270.449703\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":2}",
+      "exit_code": 1
+    },
+    {
+      "name": "Quality Gate - Python File Edit",
+      "status": "PASSED",
+      "output": "🎯 Quality Gate Hook: PostToolUse:Edit at 2025-08-05T12:31:10Z\n🎨 Running code formatter after file edit...\n🐍 Formatting Python file: /tmp/test.py\n⚠️ Black formatting failed\n✅ Code formatting completed\n✅ Quality Gate Hook completed successfully: PostToolUse:Edit",
+      "exit_code": 0
+    },
+    {
+      "name": "Quality Gate - Comprehensive Validation",
+      "status": "PASSED",
+      "output": "🎯 Quality Gate Hook: PostToolUse:Write at 2025-08-05T12:31:14Z\n🎨 Running code formatter after file edit...\n✅ Code formatting completed\n✅ Quality Gate Hook completed successfully: PostToolUse:Write",
+      "exit_code": 0
+    },
+    {
+      "name": "Quality Gate - Stop Event",
+      "status": "PASSED",
+      "output": "🎯 Quality Gate Hook: Stop:System at 2025-08-05T12:31:14Z\nℹ️ Quality gate: No specific action for Stop:System\n✅ Quality Gate Hook completed successfully: Stop:System",
+      "exit_code": 0
+    },
+    {
+      "name": "Session Manager - Startup",
+      "status": "PASSED",
+      "output": "🔄 Session Lifecycle Hook: SessionStart:startup at 2025-08-05T12:31:15Z\n🚀 Initializing LeanVibe Agent Hive connection...\n✅ LeanVibe Agent Hive 2.0 active - Enhanced mobile oversight available\n📱 Mobile Dashboard: http://localhost:8000/dashboard/mobile?session=claude-20250805-123115\n🤖 Active Agents: 5\n🆔 Session ID: claude-20250805-123115\n✅ LeanVibe Agent Hive connection healthy\n✅ Session Lifecycle Hook completed successfully: SessionStart:startup",
+      "exit_code": 0
+    },
+    {
+      "name": "Session Manager - Resume",
+      "status": "PASSED",
+      "output": "🔄 Session Lifecycle Hook: SessionStart:resume at 2025-08-05T12:31:15Z\n🔄 Restoring agent states and mobile dashboard...\n✅ Session restored - 5 agents active, resume #1\n✅ LeanVibe Agent Hive connection healthy\n✅ Session Lifecycle Hook completed successfully: SessionStart:resume",
+      "exit_code": 0
+    },
+    {
+      "name": "Session Manager - Pre-Compaction",
+      "status": "PASSED",
+      "output": "🔄 Session Lifecycle Hook: PreCompact:memory_management at 2025-08-05T12:31:15Z\nℹ️ Session manager: No specific action for PreCompact:memory_management\n✅ LeanVibe Agent Hive connection healthy\n✅ Session Lifecycle Hook completed successfully: PreCompact:memory_management",
+      "exit_code": 0
+    },
+    {
+      "name": "Session Manager - System Notification",
+      "status": "PASSED",
+      "output": "🔄 Session Lifecycle Hook: Notification:system at 2025-08-05T12:31:15Z\n📢 Processing system notification...\nℹ️ Low-priority notification filtered: System status update\n✅ LeanVibe Agent Hive connection healthy\n✅ Session Lifecycle Hook completed successfully: Notification:system",
+      "exit_code": 0
+    },
+    {
+      "name": "Session Manager - Error Notification",
+      "status": "PASSED",
+      "output": "🔄 Session Lifecycle Hook: Notification:error at 2025-08-05T12:31:15Z\n📢 Processing error notification...\n{\"success\":true,\"notification_id\":\"notification-1754386275.313868\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":0}📱 Notification routed to mobile dashboard: Critical system error detected\n✅ LeanVibe Agent Hive connection healthy\n✅ Session Lifecycle Hook completed successfully: Notification:error",
+      "exit_code": 0
+    },
+    {
+      "name": "Agent Coordinator - Task",
+      "status": "PASSED",
+      "output": "🤖 Agent Coordination Hook: Task for agent test-agent-001 at 2025-08-05T12:31:15Z\n📋 Coordinating with LeanVibe Agent Hive for task management...\n⚠️ Failed to coordinate with LeanVibe Agent Hive - task proceeding independently\n{\"success\":true,\"notification_id\":\"notification-1754386275.650586\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":0}⚠️ LeanVibe Agent Hive coordination unavailable - operating in standalone mode\n📱 Mobile dashboard connectivity confirmed\n✅ Agent Coordination Hook completed successfully: Task",
+      "exit_code": 0
+    },
+    {
+      "name": "Agent Coordinator - Successful Stop",
+      "status": "PASSED",
+      "output": "🤖 Agent Coordination Hook: SubagentStop for agent test-agent-001 at 2025-08-05T12:31:15Z\n🛑 Processing subagent stop event...\n{\"detail\":\"Failed to update mobile agent status: BoundLogger.info() got multiple values for argument 'event'\"}📱 Mobile dashboard updated with agent stop event\n{\"success\":true,\"notification_id\":\"notification-1754386275.729329\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":0}✅ Subagent stop processed and mobile dashboard notified\n⚠️ LeanVibe Agent Hive coordination unavailable - operating in standalone mode\n📱 Mobile dashboard connectivity confirmed\n✅ Agent Coordination Hook completed successfully: SubagentStop",
+      "exit_code": 0
+    },
+    {
+      "name": "Agent Coordinator - Failed Stop",
+      "status": "PASSED",
+      "output": "🤖 Agent Coordination Hook: SubagentStop for agent test-agent-002 at 2025-08-05T12:31:15Z\n🛑 Processing subagent stop event...\n{\"detail\":\"Failed to update mobile agent status: BoundLogger.info() got multiple values for argument 'event'\"}📱 Mobile dashboard updated with agent stop event\n{\"success\":true,\"notification_id\":\"notification-1754386275.809998\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":0}✅ Subagent stop processed and mobile dashboard notified\n⚠️ LeanVibe Agent Hive coordination unavailable - operating in standalone mode\n📱 Mobile dashboard connectivity confirmed\n✅ Agent Coordination Hook completed successfully: SubagentStop",
+      "exit_code": 0
+    },
+    {
+      "name": "Agent Coordinator - Agent Start",
+      "status": "PASSED",
+      "output": "🤖 Agent Coordination Hook: AgentStart for agent test-agent-003 at 2025-08-05T12:31:15Z\n🚀 Processing agent start event...\n{\"detail\":\"Failed to update mobile agent status: BoundLogger.info() got multiple values for argument 'event'\"}{\"success\":true,\"notification_id\":\"notification-1754386275.889911\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":0}✅ Agent start processed and mobile dashboard updated\n⚠️ LeanVibe Agent Hive coordination unavailable - operating in standalone mode\n📱 Mobile dashboard connectivity confirmed\n✅ Agent Coordination Hook completed successfully: AgentStart",
+      "exit_code": 0
+    },
+    {
+      "name": "Agent Coordinator - Generic Event",
+      "status": "PASSED",
+      "output": "🤖 Agent Coordination Hook: AgentStatus for agent test-agent-004 at 2025-08-05T12:31:15Z\nℹ️ Agent coordinator: No specific action for event AgentStatus\n{\"success\":true,\"notification_id\":\"notification-1754386275.957612\",\"message\":\"Mobile notification sent successfully\",\"delivery_channels\":[\"mobile_notifications\",\"system_events\"],\"actions_available\":0}⚠️ LeanVibe Agent Hive coordination unavailable - operating in standalone mode\n📱 Mobile dashboard connectivity confirmed\n✅ Agent Coordination Hook completed successfully: AgentStatus",
+      "exit_code": 0
+    }
+  ],
+  "completed_at": "2025-08-05T12:31:16Z",
+  "summary": {
+    "total_tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "success_rate": 100
+  }
+}

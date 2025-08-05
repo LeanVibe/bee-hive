@@ -28,7 +28,7 @@
   <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
   
   <!-- Manifest -->
-  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="manifest" href="/manifest.json" />
   
   <!-- Preconnect to improve performance -->
   <link rel="preconnect" href="ws://localhost:8000" />
@@ -103,20 +103,8 @@
   <!-- App container -->
   <div id="app"></div>
   
-  <!-- PWA registration script -->
+  <!-- PWA installation prompt script -->
   <script>
-    // Register service worker and handle PWA installation
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((registration) => {
-            console.log('SW registered: ', registration);
-          })
-          .catch((registrationError) => {
-            console.log('SW registration failed: ', registrationError);
-          });
-      });
-    }
     
     // Handle PWA install prompt
     let deferredPrompt;

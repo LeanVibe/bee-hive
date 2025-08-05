@@ -103,9 +103,132 @@ class AppInitializer {
   }
 }
 
-// Start the app
-const app = AppInitializer.getInstance()
-app.initialize()
+// Register service worker for PWA functionality
+async function registerServiceWorker(): Promise<void> {
+  if ('serviceWorker' in navigator) {
+    try {
+      console.log('🔧 Registering service worker...')
+      
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none'
+      })
+      
+      console.log('✅ Service worker registered:', registration)
+      
+      // Handle updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing
+        if (newWorker) {
+          console.log('🔄 New service worker available')
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('🔄 New service worker installed, update available')
+              
+              // Notify user of update
+              const updateEvent = new CustomEvent('sw-update-available', {
+                detail: { registration }
+              })
+              window.dispatchEvent(updateEvent)
+            }
+          })
+        }
+      })
+      
+      // Handle controller change (new SW activated)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('🔄 Service worker controller changed, reloading...')
+        window.location.reload()
+      })
+      
+      // Send messages to service worker
+      if (registration.active) {
+        registration.active.postMessage({
+          type: 'CLIENT_READY',
+          data: { timestamp: Date.now() }
+        })
+      }
+      
+    } catch (error) {
+      console.error('❌ Service worker registration failed:', error)
+    }
+  } else {
+    console.warn('⚠️ Service workers not supported')
+  }
+}
+
+// Start the app and register service worker
+Promise.all([
+  registerServiceWorker(),
+  app.initialize()
+]).then(() => {
+  console.log('🎉 App and service worker ready')
+}).catch(error => {
+  console.error('❌ Failed to start app:', error)
+})
+
+// Handle service worker updates
+window.addEventListener('sw-update-available', (event: CustomEvent) => {
+  console.log('🔄 Service worker update available')
+  
+  // Show update notification
+  const updateNotification = document.createElement('div')
+  updateNotification.className = 'fixed top-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm'
+  updateNotification.innerHTML = `
+    <div class="flex items-start">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-blue-200" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div class="ml-3 flex-1">
+        <p class="text-sm font-medium">Update Available</p>
+        <p class="mt-1 text-sm text-blue-200">A new version is ready to install.</p>
+        <div class="mt-3 flex space-x-2">
+          <button 
+            id="update-now" 
+            class="bg-blue-800 text-white px-3 py-1 rounded text-sm hover:bg-blue-900"
+          >
+            Update Now
+          </button>
+          <button 
+            id="update-later" 
+            class="bg-transparent text-blue-200 px-3 py-1 rounded text-sm hover:text-white border border-blue-200"
+          >
+            Later
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+  
+  document.body.appendChild(updateNotification)
+  
+  // Handle update actions
+  const updateNowBtn = updateNotification.querySelector('#update-now')
+  const updateLaterBtn = updateNotification.querySelector('#update-later')
+  
+  updateNowBtn?.addEventListener('click', () => {
+    const registration = event.detail.registration
+    const newWorker = registration.waiting
+    
+    if (newWorker) {
+      newWorker.postMessage({ type: 'SKIP_WAITING' })
+    }
+  })
+  
+  updateLaterBtn?.addEventListener('click', () => {
+    updateNotification.remove()
+  })
+  
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    if (updateNotification.parentNode) {
+      updateNotification.remove()
+    }
+  }, 10000)
+})
 
 // Handle online/offline events
 window.addEventListener('online', () => {
@@ -113,10 +236,18 @@ window.addEventListener('online', () => {
   if (authService.isAuthenticated()) {
     wsService.reconnect()
   }
+  
+  // Notify offline service about online state
+  const onlineEvent = new CustomEvent('app-online')
+  window.dispatchEvent(onlineEvent)
 })
 
 window.addEventListener('offline', () => {
   console.log('📱 App is offline')
+  
+  // Notify offline service about offline state
+  const offlineEvent = new CustomEvent('app-offline')
+  window.dispatchEvent(offlineEvent)
 })
 
 // Handle visibility changes (for mobile app lifecycle)

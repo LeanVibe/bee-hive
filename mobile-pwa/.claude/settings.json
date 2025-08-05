@@ -1,0 +1,114 @@
+{
+  "version": "streamlined-v1.0",
+  "project": {
+    "name": "LeanVibe Agent Hive - Mobile PWA",
+    "type": "mobile-pwa",
+    "integration": {
+      "leanvibe_api": "http://localhost:8000",
+      "mobile_dashboard": true,
+      "notifications": true,
+      "real_time_updates": true
+    }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/quality-gate.sh",
+            "timeout": 30,
+            "description": "Consolidated quality gate with mobile notifications"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-manager.sh",
+            "timeout": 15,
+            "description": "Session lifecycle with LeanVibe integration"
+          }
+        ]
+      }
+    ],
+    "Task": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/agent-coordinator.sh",
+            "timeout": 20,
+            "description": "Agent coordination with mobile dashboard updates"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🚀 LeanVibe Agent Hive 2.0 active | 📱 Mobile: /hive mobile --qr | 🤖 Agents: /hive agents --list | ⚡ Status: /hive status --mobile'",
+            "timeout": 2,
+            "description": "Quick help with mobile integration"
+          }
+        ]
+      }
+    ]
+  },
+  "commands": {
+    "hive": {
+      "path": "$CLAUDE_PROJECT_DIR/.claude/commands/hive.js",
+      "description": "Unified command interface for LeanVibe Agent Hive 2.0",
+      "mobile_optimized": true,
+      "cache_enabled": true,
+      "subcommands": [
+        "status", "config", "agents", "mobile", "review", 
+        "test", "deploy", "fix", "memory", "help"
+      ]
+    }
+  },
+  "mobile": {
+    "dashboard_url": "http://localhost:3000",
+    "qr_code_access": true,
+    "push_notifications": {
+      "enabled": true,
+      "priority_filter": "medium",
+      "types": ["system_alerts", "agent_updates", "task_completion"]
+    },
+    "websocket": {
+      "enabled": true,
+      "url": "ws://localhost:8000/ws",
+      "auto_reconnect": true
+    },
+    "performance": {
+      "cache_responses": true,
+      "target_response_time_ms": 50,
+      "offline_mode": true
+    }
+  },
+  "performance": {
+    "hook_execution_timeout": 30,
+    "cache_ttl_seconds": 300,
+    "memory_management": {
+      "auto_compact": true,
+      "usage_threshold": 85
+    }
+  },
+  "security": {
+    "validate_commands": true,
+    "block_dangerous_operations": true,
+    "audit_log": true
+  },
+  "development": {
+    "auto_format": true,
+    "run_tests": false,
+    "commit_validation": true,
+    "mobile_preview": true
+  }
+}

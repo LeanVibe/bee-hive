@@ -1,7 +1,7 @@
 """Fix enum column types to use proper enum types
 
 Revision ID: 020_fix_enum_columns
-Revises: 019_add_enhanced_orchestrator_metrics
+Revises: 019_add_custom_commands_system
 Create Date: 2025-01-15 12:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '020_fix_enum_columns'
-down_revision = '019_add_enhanced_orchestrator_metrics'
+down_revision = '019_add_custom_commands_system'
 branch_labels = None
 depends_on = None
 

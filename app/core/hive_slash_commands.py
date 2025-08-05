@@ -292,7 +292,7 @@ class HiveStatusCommand(HiveSlashCommand):
             }
     
     async def _generate_intelligent_alerts(self, spawner_agents: dict, orchestrator_agents: dict, total_agents: int) -> List[Dict[str, Any]]:
-        """Generate intelligent alerts based on system state."""
+        """Generate intelligent alerts with enhanced mobile-optimized filtering."""
         alerts = []
         
         # Critical alerts
@@ -302,6 +302,9 @@ class HiveStatusCommand(HiveSlashCommand):
                 "type": "system_down",
                 "message": "No agents active - platform offline",
                 "action": "Execute /hive:start to initialize platform",
+                "command": "/hive:start",
+                "estimated_time": "2-3 minutes",
+                "mobile_action": "start_platform",
                 "timestamp": datetime.utcnow().isoformat()
             })
         elif total_agents < 3:
@@ -310,6 +313,9 @@ class HiveStatusCommand(HiveSlashCommand):
                 "type": "insufficient_agents",
                 "message": f"Only {total_agents} agents active - minimum 3 recommended",
                 "action": "Consider running /hive:start to spawn more agents",
+                "command": "/hive:start --team-size=5",
+                "estimated_time": "1-2 minutes",
+                "mobile_action": "scale_team",
                 "timestamp": datetime.utcnow().isoformat()
             })
         
@@ -325,38 +331,103 @@ class HiveStatusCommand(HiveSlashCommand):
                 # If agent hasn't been active recently, flag as potentially stuck
                 pass  # Would implement actual stuck detection logic
         
-        # Performance alerts
+        # Performance alerts with mobile optimization context
         try:
             import requests
+            import time
+            start_time = time.time()
             health_response = requests.get("http://localhost:8000/health", timeout=2)
+            response_time = (time.time() - start_time) * 1000
+            
             if health_response.status_code != 200:
                 alerts.append({
                     "priority": "high",
                     "type": "api_health",
                     "message": "API health check failed",
                     "action": "Check system logs and restart services if needed",
+                    "command": "/hive:status --detailed",
+                    "estimated_time": "5-10 minutes",
+                    "mobile_action": "diagnose_system",
+                    "response_time_ms": response_time,
                     "timestamp": datetime.utcnow().isoformat()
                 })
-        except:
+            elif response_time > 100:  # Slow response for mobile
+                alerts.append({
+                    "priority": "medium",
+                    "type": "performance_degradation",
+                    "message": f"API response time degraded: {response_time:.0f}ms (target: <50ms)",
+                    "action": "Consider system optimization for mobile performance",
+                    "command": "/hive:focus performance",
+                    "estimated_time": "2-5 minutes",
+                    "mobile_action": "optimize_performance",
+                    "response_time_ms": response_time,
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+        except Exception as e:
             alerts.append({
                 "priority": "medium",
                 "type": "api_unreachable",
                 "message": "API health check unreachable",
                 "action": "Verify system is running with make start",
+                "command": "make start",
+                "estimated_time": "3-5 minutes",
+                "mobile_action": "restart_system",
+                "error_details": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             })
         
-        # Success alerts
+        # Success alerts with mobile-ready actions
         if total_agents >= 5:
             alerts.append({
                 "priority": "info",
                 "type": "system_optimal",
                 "message": f"Platform running optimally with {total_agents} agents",
                 "action": "Ready for autonomous development tasks",
+                "command": "/hive:develop \"Your project description\"",
+                "estimated_time": "5-60 minutes",
+                "mobile_action": "start_development",
+                "mobile_ready": True,
                 "timestamp": datetime.utcnow().isoformat()
             })
         
+        # Mobile-specific performance alerts
+        if len(alerts) > 0:
+            # Calculate alert relevance score for mobile filtering
+            for alert in alerts:
+                relevance_score = self._calculate_mobile_relevance(alert)
+                alert["mobile_relevance_score"] = relevance_score
+                alert["mobile_priority"] = "high" if relevance_score > 0.8 else "medium" if relevance_score > 0.5 else "low"
+        
+        # Sort alerts by mobile relevance for optimal mobile experience
+        alerts.sort(key=lambda x: x.get("mobile_relevance_score", 0), reverse=True)
+        
         return alerts
+    
+    def _calculate_mobile_relevance(self, alert: Dict[str, Any]) -> float:
+        """Calculate relevance score for mobile dashboard (0.0 to 1.0)."""
+        score = 0.0
+        
+        # Priority weight (40%)
+        priority_weights = {"critical": 1.0, "high": 0.8, "medium": 0.5, "info": 0.2}
+        score += priority_weights.get(alert.get("priority", "medium"), 0.5) * 0.4
+        
+        # Action availability weight (30%)
+        if alert.get("command"):
+            score += 0.3
+        elif alert.get("action"):
+            score += 0.15
+        
+        # Mobile-specific features weight (20%)
+        if alert.get("mobile_action"):
+            score += 0.2
+        if alert.get("estimated_time"):
+            score += 0.1
+        
+        # System impact weight (10%)
+        impact_types = {"system_down": 1.0, "insufficient_agents": 0.8, "api_health": 0.7, "performance_degradation": 0.6}
+        score += impact_types.get(alert.get("type", ""), 0.3) * 0.1
+        
+        return min(1.0, score)
     
     def _filter_alerts_by_priority(self, alerts: List[Dict[str, Any]], priority: str) -> List[Dict[str, Any]]:
         """Filter alerts by priority level."""
@@ -719,10 +790,24 @@ class HiveFocusCommand(HiveSlashCommand):
                 "message": "Failed to generate contextual recommendations"
             }
     
-    async def _generate_contextual_recommendations(self, status: Dict[str, Any], focus_area: str, priority_filter: str) -> List[Dict[str, Any]]:
-        """Generate intelligent recommendations based on system state."""
+    async def _generate_contextual_recommendations(self, status: Dict[str, Any], focus_area: str, priority_filter: str, target_agent: str = None, task_description: str = None) -> List[Dict[str, Any]]:
+        """Generate intelligent recommendations with enhanced agent coordination context."""
         recommendations = []
         alerts = status.get("alerts", [])
+        
+        # Agent-specific recommendations if target specified
+        if target_agent and task_description:
+            recommendations.append({
+                "priority": "high",
+                "category": "agent_coordination",
+                "title": f"Direct {target_agent} Attention",
+                "description": f"Coordinate {target_agent} to focus on: {task_description}",
+                "action": f"Agent attention directed to specific task",
+                "command": f"/hive:coordinate {target_agent} \"{task_description}\"",
+                "estimated_time": "2-5 minutes",
+                "agent_id": target_agent,
+                "task_context": task_description
+            })
         
         # System state analysis
         if status.get("requires_action", False):
