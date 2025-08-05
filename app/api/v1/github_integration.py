@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from uuid import UUID
+import jwt
 
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -19,7 +20,7 @@ from pydantic import BaseModel, Field, validator
 
 from ...core.database import get_db_session
 from ...core.config import get_settings
-from ...models.agent import Agent
+from ...models.agent import Agent, AgentStatus
 from ...models.github_integration import (
     GitHubRepository, AgentWorkTree, PullRequest, GitHubIssue,
     CodeReview, BranchOperation, GitCommit
@@ -111,10 +112,51 @@ async def get_github_client() -> GitHubAPIClient:
 
 
 async def get_authenticated_agent(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    """Get authenticated agent ID from token."""
-    # TODO: Implement proper JWT token validation
-    # For now, return a placeholder agent ID
-    return "authenticated_agent_id"
+    """Get authenticated agent ID from token with proper JWT validation."""
+    
+    try:
+        # Extract token from credentials
+        token = credentials.credentials
+        
+        # Validate JWT token
+        payload = jwt.decode(
+            token, 
+            settings.JWT_SECRET_KEY, 
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+        
+        # Check token expiration
+        exp_timestamp = payload.get('exp')
+        if exp_timestamp and datetime.utcnow().timestamp() > exp_timestamp:
+            raise HTTPException(status_code=401, detail="Token has expired")
+        
+        # Extract agent ID from payload
+        agent_id = payload.get('agent_id')
+        if not agent_id:
+            raise HTTPException(status_code=401, detail="Invalid token: missing agent_id")
+            
+        # Validate agent exists in database
+        async with get_db_session() as db:
+            agent_result = await db.execute(
+                select(Agent).where(Agent.id == agent_id)
+            )
+            agent = agent_result.scalar_one_or_none()
+            if not agent:
+                raise HTTPException(status_code=401, detail="Agent not found")
+            
+            # Check agent is active
+            if agent.status not in [AgentStatus.ACTIVE, AgentStatus.BUSY]:
+                raise HTTPException(status_code=401, detail="Agent is not active")
+        
+        return str(agent_id)
+        
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        logger.error(f"Token validation failed: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 async def get_db() -> AsyncSession:

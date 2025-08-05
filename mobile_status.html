@@ -31,21 +31,92 @@
     </style>
     <script>
         let refreshTimer = 30;
+        let systemData = {
+            apiStatus: 'CHECKING...',
+            activeAgents: '?/?',
+            services: '?/? running'
+        };
+        
+        // Fetch system status from API
+        async function fetchSystemStatus() {
+            try {
+                const response = await fetch('/api/v1/system/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    systemData.apiStatus = 'ONLINE';
+                    systemData.activeAgents = `${data.active_agents || 0}/${data.total_agents || 5}`;
+                    systemData.services = `${data.running_services || 0}/${data.total_services || 3} running`;
+                    updateDisplay();
+                } else {
+                    throw new Error('API response not ok');
+                }
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+                systemData.apiStatus = 'OFFLINE';
+                systemData.activeAgents = '0/5';
+                systemData.services = '0/3 running';
+                updateDisplay();
+            }
+        }
+        
+        // Update display elements
+        function updateDisplay() {
+            document.querySelector('.status-card .metric:nth-child(2) span:last-child').textContent = 
+                systemData.apiStatus === 'ONLINE' ? '✅ ONLINE' : '❌ OFFLINE';
+            document.querySelector('.status-card .metric:nth-child(3) span:last-child').textContent = 
+                systemData.activeAgents;
+            document.querySelector('.status-card .metric:nth-child(4) span:last-child').textContent = 
+                systemData.services;
+                
+            // Update status card styling
+            const statusCard = document.querySelector('.status-card');
+            if (systemData.apiStatus === 'ONLINE') {
+                statusCard.className = 'status-card status-online';
+            } else {
+                statusCard.className = 'status-card status-offline';
+            }
+        }
+        
         function updateTimer() {
             document.getElementById('timer').textContent = refreshTimer;
             refreshTimer--;
             if (refreshTimer < 0) {
-                location.reload();
+                refreshTimer = 30;
+                fetchSystemStatus();
             }
         }
-        setInterval(updateTimer, 1000);
         
-        function executeCommand(cmd) {
+        // Execute commands via API
+        async function executeCommand(cmd) {
             if (confirm(`Execute: ${cmd}?`)) {
-                // In a real implementation, this would call the API
-                alert(`Command ${cmd} would be executed`);
+                try {
+                    const response = await fetch('/api/v1/system/command', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ command: cmd })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        alert(`Command ${cmd} executed: ${result.message || 'Success'}`);
+                        fetchSystemStatus(); // Refresh status after command
+                    } else {
+                        throw new Error('Command failed');
+                    }
+                } catch (error) {
+                    console.error('Command execution failed:', error);
+                    alert(`Command ${cmd} failed to execute`);
+                }
             }
         }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            fetchSystemStatus();
+            setInterval(updateTimer, 1000);
+        });
     </script>
 </head>
 <body>
@@ -54,11 +125,11 @@
         <p>Mobile Control Center</p>
     </div>
     
-    <div class="status-card status-offline">
+    <div class="status-card status-online">
         <h3>🌐 System Status</h3>
         <div class="metric">
             <span>API Server:</span>
-            <span>❌ OFFLINE</span>
+            <span>✅ ONLINE</span>
         </div>
         <div class="metric">
             <span>Active Agents:</span>
@@ -66,7 +137,7 @@
         </div>
         <div class="metric">
             <span>Services:</span>
-            <span>0/2 running</span>
+            <span>3/2 running</span>
         </div>
     </div>
     
