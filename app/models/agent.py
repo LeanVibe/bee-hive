@@ -11,6 +11,7 @@ from typing import Dict, Any, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -48,7 +49,7 @@ class Agent(Base):
     # Primary identification
     id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
-    type = Column(SQLEnum(AgentType, native_enum=False), nullable=False, default=AgentType.CLAUDE)
+    type = Column(ENUM(AgentType, name='agenttype'), nullable=False, default=AgentType.CLAUDE)
     
     # Role and capabilities
     role = Column(String(100), nullable=True, index=True)
@@ -56,7 +57,7 @@ class Agent(Base):
     system_prompt = Column(Text, nullable=True)
     
     # Current status and configuration
-    status = Column(SQLEnum(AgentStatus, native_enum=False), nullable=False, default=AgentStatus.INACTIVE, index=True)
+    status = Column(ENUM(AgentStatus, name='agentstatus'), nullable=False, default=AgentStatus.INACTIVE, index=True)
     config = Column(JSON, nullable=True, default=dict)
     
     # tmux integration

@@ -9,9 +9,9 @@ argument-hint: start | stop | status | demo | fix | mobile | logs
 Execute LeanVibe operations with intelligent error recovery and mobile oversight.
 
 ## System Context Check
-- API Status: !`curl -sf http://localhost:8000/health 2>/dev/null && echo "✅ ONLINE" || echo "❌ OFFLINE"`
+- API Status: !`timeout 5 curl -sf http://localhost:8000/health 2>/dev/null && echo "✅ ONLINE" || echo "❌ OFFLINE (checking...)"`
 - Docker Services: !`docker ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null | grep -E "(postgres|redis)" | wc -l | xargs -I {} echo "{} services running"`
-- Agent Count: !`curl -s http://localhost:8000/api/agents/debug 2>/dev/null | jq -r '.agents | length' 2>/dev/null || echo "0"`
+- Agent Count: !`timeout 3 curl -s http://localhost:8000/debug-agents 2>/dev/null | jq -r '.agent_count // 0' 2>/dev/null || echo "0"`
 - System Load: !`uptime | awk '{print $10,$11,$12}' | sed 's/,//g'`
 
 ## Command: $ARGUMENTS
@@ -34,11 +34,39 @@ Based on your command, I'll execute the appropriate LeanVibe operation:
 4. **Validate success** and provide next steps
 5. **Generate mobile access** if requested
 
+#### Intelligent Error Recovery System:
+```bash
+# Check if API is unresponsive
+if ! timeout 10 curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+    echo "🔧 API unresponsive, attempting recovery..."
+    
+    # Kill hanging processes
+    pkill -f "uvicorn.*app.main:app" || true
+    
+    # Wait for clean shutdown
+    sleep 2
+    
+    # Restart API server
+    python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > api_server.log 2>&1 &
+    
+    # Wait for startup
+    echo "🔄 Waiting for API startup..."
+    for i in {1..30}; do
+        if timeout 5 curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+            echo "✅ API recovered successfully"
+            break
+        fi
+        sleep 1
+    done
+fi
+```
+
 The system will automatically handle:
 - Port conflicts and service issues
 - Missing dependencies and configuration
 - Database connectivity and migrations
 - Agent spawning and coordination
 - Real-time monitoring and alerts
+- API server recovery and restart
 
 Ready to execute: **$ARGUMENTS**

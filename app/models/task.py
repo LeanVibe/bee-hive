@@ -11,6 +11,7 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Integer, ForeignKey
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -70,10 +71,10 @@ class Task(Base):
     title = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     
-    # Task classification
-    task_type = Column(SQLEnum(TaskType), nullable=True, index=True)
-    status = Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.PENDING, index=True)
-    priority = Column(SQLEnum(TaskPriority), nullable=False, default=TaskPriority.MEDIUM, index=True)
+    # Task classification 
+    task_type = Column(ENUM(TaskType, name='tasktype'), nullable=True, index=True)
+    status = Column(ENUM(TaskStatus, name='taskstatus'), nullable=False, default=TaskStatus.PENDING, index=True)
+    priority = Column(ENUM(TaskPriority, name='taskpriority'), nullable=False, default=TaskPriority.MEDIUM, index=True)
     
     # Assignment and ownership
     assigned_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True, index=True)
