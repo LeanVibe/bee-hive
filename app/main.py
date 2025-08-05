@@ -41,6 +41,7 @@ from .dashboard.coordination_dashboard import router as dashboard_router
 from .dashboard.simple_agent_dashboard import router as simple_dashboard_router
 from .api.agent_activation import router as agent_activation_router
 from .api.hive_commands import router as hive_commands_router
+from .api.intelligence import router as intelligence_router
 
 
 # Configure structured logging
@@ -212,6 +213,7 @@ def create_app() -> FastAPI:
     app.include_router(simple_dashboard_router, prefix="/dashboard", tags=["simple-dashboard"])
     app.include_router(agent_activation_router, prefix="/api/agents", tags=["agent-activation"])
     app.include_router(hive_commands_router, prefix="/api/hive", tags=["hive-commands"])
+    app.include_router(intelligence_router, tags=["intelligence"])
     
     @app.get("/debug-agents")
     async def debug_agents():
