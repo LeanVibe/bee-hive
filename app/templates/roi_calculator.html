@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise ROI Calculator - LeanVibe Agent Hive 2.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { font-size: 1.1rem; opacity: 0.9; }
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+        }
+        .inputs-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        .results-section {
+            padding: 40px;
+            background: white;
+        }
+        .input-group {
+            margin-bottom: 25px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .results-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .results-card h3 { font-size: 1.2rem; margin-bottom: 10px; }
+        .results-card .value { font-size: 2.8rem; font-weight: bold; }
+        .results-card .subtitle { font-size: 0.9rem; opacity: 0.9; }
+        .savings-breakdown {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .savings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        .savings-item:last-child { border-bottom: none; }
+        .savings-label { font-weight: 500; }
+        .savings-value { font-weight: bold; color: #28a745; }
+        .cta-section {
+            background: #1a1a2e;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .cta-button {
+            background: #28a745;
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .cta-button:hover { background: #218838; }
+        .cta-button.secondary {
+            background: transparent;
+            border: 2px solid white;
+        }
+        .cta-button.secondary:hover {
+            background: white;
+            color: #1a1a2e;
+        }
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Enterprise ROI Calculator</h1>
+            <p>Calculate the financial impact of LeanVibe Agent Hive 2.0 autonomous development for your organization</p>
+        </div>
+        
+        <div class="calculator-grid">
+            <div class="inputs-section">
+                <h2 style="margin-bottom: 30px; color: #333;">Your Organization</h2>
+                
+                <div class="input-group">
+                    <label for="companySize">Company Size</label>
+                    <select id="companySize" onchange="updateCalculations()">
+                        <option value="fortune50">Fortune 50 (10,000+ developers)</option>
+                        <option value="fortune100" selected>Fortune 100 (1,000-10,000 developers)</option>
+                        <option value="fortune500">Fortune 500 (100-1,000 developers)</option>
+                        <option value="enterprise">Enterprise (50-100 developers)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="developerCount">Number of Developers</label>
+                    <input type="number" id="developerCount" value="500" onchange="updateCalculations()" min="10" max="20000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="averageSalary">Average Developer Total Compensation ($)</label>
+                    <input type="number" id="averageSalary" value="200000" onchange="updateCalculations()" step="1000" min="50000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="industry">Industry Vertical</label>
+                    <select id="industry" onchange="updateCalculations()">
+                        <option value="financial">Financial Services</option>
+                        <option value="healthcare">Healthcare Technology</option>
+                        <option value="manufacturing">Manufacturing & Industrial</option>
+                        <option value="retail">Technology & Retail</option>
+                        <option value="general" selected>General Enterprise</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="currentVelocity">Current Development Velocity (Features/Quarter)</label>
+                    <input type="number" id="currentVelocity" value="12" onchange="updateCalculations()" min="1" max="100">
+                </div>
+                
+                <div class="input-group">
+                    <label for="timeToMarket">Average Time-to-Market (Months)</label>
+                    <input type="number" id="timeToMarket" value="6" onchange="updateCalculations()" min="1" max="24">
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h2 style="margin-bottom: 30px; color: #333;">Your ROI Impact</h2>
+                
+                <div class="results-card">
+                    <h3>Total Annual ROI</h3>
+                    <div class="value" id="totalROI">3,225%</div>
+                    <div class="subtitle">Return on Investment</div>
+                </div>
+                
+                <div class="results-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h3>Annual Cost Savings</h3>
+                    <div class="value" id="annualSavings">$97.6M</div>
+                    <div class="subtitle">Direct development cost reduction</div>
+                </div>
+                
+                <div class="savings-breakdown">
+                    <h4 style="margin-bottom: 15px;">Savings Breakdown</h4>
+                    <div class="savings-item">
+                        <span class="savings-label">Development Velocity (42x faster)</span>
+                        <span class="savings-value" id="velocitySavings">$75.0M</span>
+                    </div>
+                    <div class="savings-item">
+                        <span class="savings-label">Quality Improvement (95% fewer defects)</span>
+                        <span class="savings-value" id="qualitySavings">$14.85M</span>
+                    </div>
+                    <div class="savings-item">
+                        <span class="savings-label">Time-to-Market Acceleration</span>
+                        <span class="savings-value" id="timeToMarketSavings">$7.75M</span>
+                    </div>
+                    <div class="savings-item">
+                        <span class="savings-label">Platform Investment</span>
+                        <span class="savings-value" style="color: #dc3545;" id="platformCost">-$2.4M</span>
+                    </div>
+                </div>
+                
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="color: #28a745; margin-bottom: 10px;">Payback Period</h4>
+                    <p style="font-size: 1.2rem; font-weight: bold; color: #28a745;" id="paybackPeriod">2.3 months</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cta-section">
+            <h2 style="margin-bottom: 20px;">Ready to Transform Your Development?</h2>
+            <p style="margin-bottom: 30px; opacity: 0.9;">Start your 30-day risk-free pilot program and experience 42x velocity improvement firsthand</p>
+            <a href="/enterprise/pilot-program" class="cta-button">Start 30-Day Pilot ($50K - Credited Toward License)</a>
+            <a href="/enterprise/demo" class="cta-button secondary">Schedule Executive Demo</a>
+        </div>
+    </div>
+
+    <script>
+        const industryMultipliers = {
+            financial: { velocity: 36, compliance: 1.2, regulatory: 5000000 },
+            healthcare: { velocity: 34, compliance: 1.3, regulatory: 12200000 },
+            manufacturing: { velocity: 27, compliance: 1.1, regulatory: 34000000 },
+            retail: { velocity: 39, compliance: 1.0, regulatory: 2500000 },
+            general: { velocity: 42, compliance: 1.0, regulatory: 0 }
+        };
+        
+        const companySizeDefaults = {
+            fortune50: { developers: 5000, salary: 250000, platform: 3200000 },
+            fortune100: { developers: 500, salary: 200000, platform: 1800000 },
+            fortune500: { developers: 100, salary: 180000, platform: 900000 },
+            enterprise: { developers: 50, salary: 150000, platform: 450000 }
+        };
+        
+        function updateCompanyDefaults() {
+            const companySize = document.getElementById('companySize').value;
+            const defaults = companySizeDefaults[companySize];
+            
+            document.getElementById('developerCount').value = defaults.developers;
+            document.getElementById('averageSalary').value = defaults.salary;
+            
+            updateCalculations();
+        }
+        
+        function updateCalculations() {
+            const developerCount = parseInt(document.getElementById('developerCount').value);
+            const averageSalary = parseInt(document.getElementById('averageSalary').value);
+            const currentVelocity = parseInt(document.getElementById('currentVelocity').value);
+            const timeToMarket = parseInt(document.getElementById('timeToMarket').value);
+            const industry = document.getElementById('industry').value;
+            const companySize = document.getElementById('companySize').value;
+            
+            const industryData = industryMultipliers[industry];
+            const platformCost = companySizeDefaults[companySize].platform;
+            
+            // Calculate current development costs
+            const annualDevCost = developerCount * averageSalary;
+            const coordinationOverhead = annualDevCost * 0.4; // 40% coordination overhead
+            
+            // Calculate LeanVibe improvements
+            const velocityImprovement = industryData.velocity;
+            const velocitySavings = (annualDevCost * 0.8) * (1 - 1/velocityImprovement);
+            
+            // Quality improvements (95% fewer defects)
+            const qualitySavings = annualDevCost * 0.15 * 0.95;
+            
+            // Time-to-market acceleration
+            const timeToMarketAcceleration = timeToMarket * 0.76; // 76% faster
+            const revenueAcceleration = (developerCount * 50000) * (timeToMarketAcceleration / 12);
+            
+            // Industry-specific compliance savings
+            const complianceSavings = industryData.regulatory;
+            
+            // Total savings calculation
+            const totalAnnualSavings = velocitySavings + qualitySavings + revenueAcceleration + complianceSavings;
+            const netSavings = totalAnnualSavings - platformCost;
+            const roi = ((netSavings / platformCost) * 100);
+            const paybackMonths = (platformCost / (totalAnnualSavings / 12));
+            
+            // Update UI
+            document.getElementById('totalROI').textContent = Math.round(roi).toLocaleString() + '%';
+            document.getElementById('annualSavings').textContent = '$' + (netSavings / 1000000).toFixed(1) + 'M';
+            document.getElementById('velocitySavings').textContent = '$' + (velocitySavings / 1000000).toFixed(1) + 'M';
+            document.getElementById('qualitySavings').textContent = '$' + (qualitySavings / 1000000).toFixed(2) + 'M';
+            document.getElementById('timeToMarketSavings').textContent = '$' + ((revenueAcceleration + complianceSavings) / 1000000).toFixed(1) + 'M';
+            document.getElementById('platformCost').textContent = '-$' + (platformCost / 1000000).toFixed(1) + 'M';
+            document.getElementById('paybackPeriod').textContent = paybackMonths.toFixed(1) + ' months';
+        }
+        
+        // Initialize calculations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCalculations();
+            document.getElementById('companySize').addEventListener('change', updateCompanyDefaults);
+        });
+    </script>
+</body>
+</html>

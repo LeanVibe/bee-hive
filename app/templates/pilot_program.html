@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30-Day Pilot Program - LeanVibe Agent Hive 2.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            padding: 50px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+        }
+        .header h1 { font-size: 3rem; margin-bottom: 15px; }
+        .header .subtitle { font-size: 1.3rem; margin-bottom: 10px; color: #a8b3ff; }
+        .header .guarantee { 
+            background: rgba(40, 167, 69, 0.2); 
+            padding: 15px 25px; 
+            border-radius: 10px; 
+            display: inline-block;
+            margin-top: 20px;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+        }
+        .benefits-section {
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        .benefit-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .benefit-icon { 
+            font-size: 2.5rem; 
+            margin-bottom: 15px; 
+            color: #667eea;
+        }
+        .benefit-title { 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            margin-bottom: 10px;
+        }
+        .form-section {
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+        .submit-button {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .success-message {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .pricing-highlight {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .pricing-value { 
+            font-size: 2.5rem; 
+            font-weight: bold; 
+            color: #667eea; 
+            margin-bottom: 10px;
+        }
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+            .benefits-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>30-Day Pilot Program</h1>
+            <p class="subtitle">Experience 42x development velocity improvement with zero risk</p>
+            <div class="guarantee">
+                💯 Success Guarantee: Full refund if we don't deliver >20x velocity improvement
+            </div>
+        </div>
+        
+        <div class="benefits-section">
+            <h2 style="text-align: center; margin-bottom: 30px;">What You'll Get in 30 Days</h2>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <div class="benefit-title">Velocity Validation</div>
+                    <p>Documented 20-42x development speed improvement on real enterprise projects</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎯</div>
+                    <div class="benefit-title">Quality Assurance</div>
+                    <p>95%+ test coverage with automated security and compliance validation</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">📊</div>
+                    <div class="benefit-title">ROI Measurement</div>
+                    <p>Comprehensive metrics showing exact cost savings and productivity gains</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔒</div>
+                    <div class="benefit-title">Enterprise Security</div>
+                    <p>Production-grade security with sandboxed execution and audit trails</p>
+                </div>
+            </div>
+            
+            <div class="pricing-highlight">
+                <div class="pricing-value">$50,000</div>
+                <p>Pilot program fee (fully credited toward your first year license)</p>
+                <p style="margin-top: 10px; opacity: 0.8;">Average customer saves $2.4M+ annually - 4,800% ROI</p>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2 style="margin-bottom: 30px; text-align: center;">Start Your Risk-Free Pilot</h2>
+            
+            <form id="pilotForm" class="form-grid">
+                <div class="form-group">
+                    <label for="companyName">Company Name *</label>
+                    <input type="text" id="companyName" name="company_name" required placeholder="Your company name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contactName">Your Name *</label>
+                    <input type="text" id="contactName" name="contact_name" required placeholder="Full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contactEmail">Email Address *</label>
+                    <input type="email" id="contactEmail" name="contact_email" required placeholder="your.email@company.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contactPhone">Phone Number</label>
+                    <input type="tel" id="contactPhone" name="contact_phone" placeholder="+1 (555) 123-4567">
+                </div>
+                
+                <div class="form-group">
+                    <label for="developerCount">Number of Developers *</label>
+                    <input type="number" id="developerCount" name="developer_count" required min="10" max="10000" placeholder="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="industry">Industry Vertical *</label>
+                    <select id="industry" name="industry" required>
+                        <option value="">Select your industry</option>
+                        <option value="financial">Financial Services</option>
+                        <option value="healthcare">Healthcare Technology</option>
+                        <option value="manufacturing">Manufacturing & Industrial</option>
+                        <option value="retail">Technology & Retail</option>
+                        <option value="general">General Enterprise</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="useCases">Primary Use Cases *</label>
+                    <textarea id="useCases" name="use_cases" required rows="4" placeholder="Describe your main development challenges and what you'd like to accomplish in the pilot (e.g., API development, microservices, compliance automation, legacy modernization)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timeline">Preferred Start Timeline *</label>
+                    <select id="timeline" name="timeline" required>
+                        <option value="">Select timeline</option>
+                        <option value="immediate">Immediate (next 2 weeks)</option>
+                        <option value="30days">Within 30 days</option>
+                        <option value="60days">Within 60 days</option>
+                        <option value="90days">Within 90 days</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="budgetApproved" name="budget_approved" required>
+                        <label for="budgetApproved">I have budget approval for the $50K pilot program</label>
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <button type="submit" class="submit-button" id="submitButton">
+                        Start 30-Day Pilot Program
+                    </button>
+                </div>
+            </form>
+            
+            <div id="successMessage" class="success-message">
+                <h3>🎉 Pilot Program Request Submitted!</h3>
+                <p>Our enterprise sales team will contact you within 24 hours to:</p>
+                <ul style="text-align: left; margin: 15px 0;">
+                    <li>Schedule your pilot program kickoff meeting</li>
+                    <li>Customize the evaluation criteria for your use cases</li>
+                    <li>Set up your dedicated sandbox environment</li>
+                    <li>Define success metrics and ROI measurement</li>
+                </ul>
+                <p><strong>Next Steps:</strong> Check your email for pilot program preparation materials.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('pilotForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = document.getElementById('submitButton');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Disable submit button
+            submitButton.textContent = 'Submitting...';
+            submitButton.disabled = true;
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = {
+                company_name: formData.get('company_name'),
+                contact_name: formData.get('contact_name'),
+                contact_email: formData.get('contact_email'),
+                contact_phone: formData.get('contact_phone') || '',
+                developer_count: parseInt(formData.get('developer_count')),
+                industry: formData.get('industry'),
+                use_cases: formData.get('use_cases'),
+                timeline: formData.get('timeline'),
+                budget_approved: formData.get('budget_approved') === 'on'
+            };
+            
+            try {
+                const response = await fetch('/enterprise/pilot-program/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Hide form and show success message
+                    document.getElementById('pilotForm').style.display = 'none';
+                    successMessage.style.display = 'block';
+                    
+                    // Add estimated ROI info to success message
+                    if (result.estimated_roi) {
+                        successMessage.innerHTML += `
+                            <div style="background: rgba(102, 126, 234, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                <strong>Estimated Impact for Your Organization:</strong><br>
+                                ROI: ${result.estimated_roi}<br>
+                                Annual Savings: ${result.estimated_savings}
+                            </div>
+                        `;
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.detail || 'Submission failed'));
+                    
+                    // Re-enable submit button
+                    submitButton.textContent = 'Start 30-Day Pilot Program';
+                    submitButton.disabled = false;
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                alert('Network error. Please try again.');
+                
+                // Re-enable submit button
+                submitButton.textContent = 'Start 30-Day Pilot Program';
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

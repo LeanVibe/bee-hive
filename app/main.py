@@ -44,6 +44,7 @@ from .api.hive_commands import router as hive_commands_router
 from .api.intelligence import router as intelligence_router
 from .api.claude_integration import router as claude_integration_router
 from .api.dx_debugging import router as dx_debugging_router
+from .api.enterprise_sales import router as enterprise_sales_router
 
 
 # Configure structured logging
@@ -218,6 +219,7 @@ def create_app() -> FastAPI:
     app.include_router(intelligence_router, tags=["intelligence"])
     app.include_router(claude_integration_router, prefix="/api", tags=["claude-integration"])
     app.include_router(dx_debugging_router, tags=["dx-debugging"])
+    app.include_router(enterprise_sales_router, tags=["enterprise-sales"])
     
     @app.get("/debug-agents")
     async def debug_agents():
