@@ -20,7 +20,7 @@ from sqlalchemy import select, update, delete, func, and_, or_
 from sqlalchemy.dialects.postgresql import JSONB
 
 from .database import get_session
-# from .security import SecurityValidator  # TODO: Implement SecurityValidator
+from .advanced_security_validator import AdvancedSecurityValidator, CommandContext
 from .agent_registry import AgentRegistry
 from ..schemas.custom_commands import (
     CommandDefinition, CommandValidationResult, CommandMetrics,
@@ -60,7 +60,7 @@ class CommandRegistry:
     def __init__(
         self,
         agent_registry: Optional[AgentRegistry] = None,
-        security_validator: Optional[Any] = None,  # TODO: Type with SecurityValidator when implemented
+        security_validator: Optional[AdvancedSecurityValidator] = None,
         command_storage_path: Optional[Path] = None
     ):
         self.agent_registry = agent_registry
@@ -512,11 +512,10 @@ class CommandRegistry:
                 errors.extend(agent_errors)
                 agent_availability.update(availability)
             
-            # Security validation
-            # TODO: Implement security validation when SecurityValidator is available
-            # if self.security_validator:
-            #     security_errors = await self.security_validator.validate_command_security(definition)
-            #     errors.extend(security_errors)
+            # Security validation using AdvancedSecurityValidator
+            if self.security_validator:
+                security_errors = await self._validate_command_security(definition, validate_agents)
+                errors.extend(security_errors)
             
             # Performance validation
             perf_warnings = self._validate_performance_requirements(definition)
@@ -606,6 +605,80 @@ class CommandRegistry:
         except Exception as e:
             logger.error("Agent validation error", error=str(e))
             return [f"Agent validation failed: {str(e)}"], availability
+    
+    async def _validate_command_security(
+        self,
+        definition: CommandDefinition,
+        validate_agents: bool = True
+    ) -> List[str]:
+        """Validate command definition for security risks."""
+        errors = []
+        
+        if not self.security_validator:
+            return errors
+        
+        try:
+            # Create command context for security validation
+            context = CommandContext(
+                agent_id=uuid.uuid4(),  # Placeholder for validation
+                command=f"Command: {definition.name}",
+                agent_type="validator",
+                trust_level=0.5  # Neutral trust for validation
+            )
+            
+            # Validate each workflow step
+            for step in definition.workflow:
+                # Check step actions for dangerous commands
+                step_commands = []
+                if hasattr(step, 'action') and step.action:
+                    step_commands.append(step.action)
+                if hasattr(step, 'commands') and step.commands:
+                    step_commands.extend(step.commands)
+                
+                for command in step_commands:
+                    result = await self.security_validator.validate_command_advanced(
+                        command, context
+                    )
+                    
+                    if not result.is_safe:
+                        errors.append(f"Dangerous command in step '{step.step}': {command}")
+                        errors.extend([f"Risk: {factor}" for factor in result.risk_factors])
+                    
+                    if result.threat_categories:
+                        threat_names = [cat.value for cat in result.threat_categories]
+                        errors.append(f"Threat categories detected in '{step.step}': {', '.join(threat_names)}")
+                    
+                    if result.behavioral_anomalies:
+                        errors.append(f"Behavioral anomalies in '{step.step}': {', '.join(result.behavioral_anomalies)}")
+            
+            # Check for command complexity and resource requirements
+            total_steps = len(definition.workflow)
+            if total_steps > 50:
+                errors.append(f"Workflow has {total_steps} steps, which may pose management risks")
+            
+            # Check for dangerous agent role combinations
+            admin_roles = [req for req in definition.agents if req.role.value in ['admin', 'system_administrator']]
+            if len(admin_roles) > 1:
+                errors.append("Multiple admin-level agents in single workflow may pose privilege escalation risks")
+            
+            # Validate timeout and resource constraints
+            for step in definition.workflow:
+                if hasattr(step, 'timeout_minutes') and step.timeout_minutes:
+                    if step.timeout_minutes > 720:  # 12 hours
+                        errors.append(f"Step '{step.step}' has excessive timeout ({step.timeout_minutes} minutes)")
+                
+                if hasattr(step, 'resources') and step.resources:
+                    # Check for resource abuse patterns
+                    if step.resources.get('cpu_limit', 0) > 8:
+                        errors.append(f"Step '{step.step}' requests high CPU limit, potential resource abuse")
+                    if step.resources.get('memory_limit', 0) > 16384:  # 16GB
+                        errors.append(f"Step '{step.step}' requests high memory limit, potential resource abuse")
+            
+            return errors
+            
+        except Exception as e:
+            logger.error(f"Security validation error: {e}")
+            return [f"Security validation failed: {str(e)}"]
     
     def _validate_performance_requirements(self, definition: CommandDefinition) -> List[str]:
         """Validate performance and resource requirements."""
