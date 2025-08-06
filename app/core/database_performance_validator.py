@@ -453,7 +453,7 @@ class DatabasePerformanceValidator:
                 agent_data = {
                     "id": str(uuid.uuid4()),
                     "name": f"test_agent_{i}",
-                    "status": AgentStatus.ACTIVE,
+                    "status": AgentStatus.active,
                     "capabilities": ["python", "testing"],
                     "created_at": datetime.utcnow()
                 }
@@ -531,7 +531,7 @@ class DatabasePerformanceValidator:
                 agent_data = {
                     "id": agent_id,
                     "name": f"test_agent_{i}",
-                    "status": AgentStatus.ACTIVE
+                    "status": AgentStatus.active
                 }
                 
             except Exception as e:
@@ -589,7 +589,7 @@ class DatabasePerformanceValidator:
                 # Mock agent update operation
                 agent_id = str(uuid.uuid4())
                 update_data = {
-                    "status": AgentStatus.BUSY if i % 2 == 0 else AgentStatus.IDLE,
+                    "status": AgentStatus.busy if i % 2 == 0 else AgentStatus.active,
                     "last_activity": datetime.utcnow()
                 }
                 

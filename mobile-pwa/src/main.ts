@@ -117,10 +117,16 @@ class AppInitializer {
   }
 }
 
-// Register service worker for PWA functionality
+// Register service worker for PWA functionality (non-blocking)
 async function registerServiceWorker(): Promise<void> {
   if ('serviceWorker' in navigator) {
     try {
+      // Skip service worker registration completely in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 Development mode: Skipping service worker registration entirely')
+        return
+      }
+      
       console.log('🔧 Registering service worker...')
       
       const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -166,6 +172,7 @@ async function registerServiceWorker(): Promise<void> {
       
     } catch (error) {
       console.error('❌ Service worker registration failed:', error)
+      // Don't throw error - continue without service worker
     }
   } else {
     console.warn('⚠️ Service workers not supported')
@@ -175,11 +182,17 @@ async function registerServiceWorker(): Promise<void> {
 // Start the app and register service worker
 const appInitializer = AppInitializer.getInstance()
 
-Promise.all([
-  registerServiceWorker(),
-  appInitializer.initialize()
-]).then(() => {
-  console.log('🎉 App and service worker ready')
+// Initialize app first (critical path), then register service worker in background
+appInitializer.initialize().then(() => {
+  console.log('✅ App initialization complete')
+  
+  // Register service worker in background (non-blocking)
+  registerServiceWorker().then(() => {
+    console.log('🎉 App and service worker ready')
+  }).catch(error => {
+    console.warn('⚠️ Service worker registration failed, app will continue without PWA features:', error)
+  })
+  
 }).catch(error => {
   console.error('❌ Failed to start app:', error)
 })

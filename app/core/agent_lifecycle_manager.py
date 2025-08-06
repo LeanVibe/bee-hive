@@ -138,7 +138,7 @@ class AgentLifecycleManager:
                 await db.refresh(agent)
                 
                 # Update agent status to active
-                agent.status = AgentStatus.ACTIVE
+                agent.status = AgentStatus.active
                 agent.last_heartbeat = datetime.utcnow()
                 agent.last_active = datetime.utcnow()
                 await db.commit()
@@ -269,7 +269,7 @@ class AgentLifecycleManager:
                     await self.hook_system.process_hook_event(hook_event)
                 
                 # Mark as inactive in database
-                agent.status = AgentStatus.INACTIVE
+                agent.status = AgentStatus.inactive
                 await db.commit()
                 
                 logger.info("✅ Agent deregistered", agent_id=str(agent_id), name=agent.name)
@@ -337,7 +337,7 @@ class AgentLifecycleManager:
                 
                 # Assign task to agent
                 task.assign_to_agent(suitable_agent.id)
-                suitable_agent.status = AgentStatus.BUSY
+                suitable_agent.status = AgentStatus.busy
                 await db.commit()
                 
                 # Track assignment
@@ -458,7 +458,7 @@ class AgentLifecycleManager:
                     event_type = LifecycleEventType.TASK_FAILED
                 
                 # Update agent status back to active
-                agent.status = AgentStatus.ACTIVE
+                agent.status = AgentStatus.active
                 agent.last_active = datetime.utcnow()
                 
                 await db.commit()
@@ -640,7 +640,7 @@ class AgentLifecycleManager:
                 select(Agent).where(
                     and_(
                         Agent.id == preferred_agent_id,
-                        Agent.status == AgentStatus.ACTIVE,
+                        Agent.status == AgentStatus.active,
                         or_(
                             Agent.context_window_usage.is_(None),
                             cast(Agent.context_window_usage, Float) < 0.8
@@ -656,7 +656,7 @@ class AgentLifecycleManager:
         result = await db.execute(
             select(Agent).where(
                 and_(
-                    Agent.status == AgentStatus.ACTIVE,
+                    Agent.status == AgentStatus.active,
                     or_(
                         Agent.context_window_usage.is_(None),
                         cast(Agent.context_window_usage, Float) < 0.8

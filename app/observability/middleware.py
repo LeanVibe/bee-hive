@@ -14,7 +14,7 @@ import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.observability.hooks import get_hook_interceptor
+from app.observability.hooks import get_hook_integration_manager
 
 try:
     from prometheus_client import Counter, Histogram, Gauge
@@ -315,7 +315,7 @@ class ObservabilityHookMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         # Get hook interceptor
-        interceptor = get_hook_interceptor()
+        interceptor = get_hook_integration_manager()
         if not interceptor or not interceptor.is_enabled:
             # Hook interceptor not available or disabled
             return await call_next(request)

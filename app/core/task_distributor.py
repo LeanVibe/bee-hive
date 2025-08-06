@@ -525,7 +525,7 @@ class TaskDistributor:
                 if metrics.health_score < self.min_health_score:
                     return False
             
-            return agent.status == AgentStatus.ACTIVE
+            return agent.status == AgentStatus.active
             
         except Exception as e:
             logger.error("Error checking agent availability", agent_id=str(agent.id), error=str(e))

@@ -1,0 +1,48 @@
+# Configuration for LeanVibe Agent Hive Kubernetes deployment
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: leanvibe-config
+  namespace: leanvibe-hive
+data:
+  # Database configuration
+  DATABASE_HOST: "leanvibe-postgres-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "leanvibe_agent_hive"
+  DATABASE_USER: "leanvibe_user"
+  
+  # Redis configuration  
+  REDIS_HOST: "leanvibe-redis-service"
+  REDIS_PORT: "6379"
+  
+  # Application configuration
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  
+  # Agent configuration
+  AGENT_WORKSPACE: "/app/workspace"
+  AGENT_LOGS: "/app/logs"
+  
+  # Performance tuning
+  MAX_AGENTS_PER_TYPE: "10"
+  AGENT_SPAWN_TIMEOUT: "30"
+  TASK_PROCESSING_TIMEOUT: "300"
+  
+  # Monitoring configuration
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_PORT: "8080"
+  
+---
+# Secret for sensitive configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: leanvibe-secrets
+  namespace: leanvibe-hive
+type: Opaque
+stringData:
+  # These should be set via external secret management in production
+  ANTHROPIC_API_KEY: "your-anthropic-api-key-here"
+  DATABASE_PASSWORD: "your-secure-database-password"
+  REDIS_PASSWORD: "your-secure-redis-password"
+  SECRET_KEY: "your-secret-key-for-jwt-tokens"

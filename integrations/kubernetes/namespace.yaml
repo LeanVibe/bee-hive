@@ -1,0 +1,35 @@
+# Kubernetes namespace for LeanVibe Agent Hive production deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-hive
+  labels:
+    name: leanvibe-hive
+    environment: production
+    component: autonomous-development
+---
+# Network policies for security isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-hive-network-policy
+  namespace: leanvibe-hive
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-hive
+    ports:
+    - protocol: TCP
+      port: 8080  # Agent health checks
+    - protocol: TCP  
+      port: 6379  # Redis
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+  egress:
+  - to: []  # Allow all outbound (for Claude API calls)

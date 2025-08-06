@@ -324,7 +324,7 @@ class IntelligentTaskRouter:
         try:
             async with get_session() as db_session:
                 # Get all active agents
-                agents_query = select(Agent).where(Agent.status == AgentStatus.ACTIVE)
+                agents_query = select(Agent).where(Agent.status == AgentStatus.active)
                 agents = (await db_session.execute(agents_query)).scalars().all()
                 
                 if len(agents) < 2:
@@ -767,7 +767,7 @@ class IntelligentTaskRouter:
         """Get list of currently available agent IDs."""
         try:
             async with get_session() as db_session:
-                agents_query = select(Agent.id).where(Agent.status == AgentStatus.ACTIVE)
+                agents_query = select(Agent.id).where(Agent.status == AgentStatus.active)
                 agents = (await db_session.execute(agents_query)).scalars().all()
                 return [str(agent_id) for agent_id in agents]
                 

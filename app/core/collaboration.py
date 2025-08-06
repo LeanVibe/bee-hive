@@ -426,7 +426,7 @@ class TaskDecomposer:
         best_score = 0.0
         
         for agent in available_agents:
-            if agent.status == AgentStatus.ACTIVE:
+            if agent.status == AgentStatus.active:
                 score = agent.calculate_task_suitability("task", required_capabilities)
                 if score > best_score:
                     best_score = score
@@ -481,7 +481,7 @@ class CollaborationOrchestrator:
             async with get_session() as db_session:
                 from sqlalchemy import select
                 result = await db_session.execute(
-                    select(Agent).where(Agent.status == AgentStatus.ACTIVE)
+                    select(Agent).where(Agent.status == AgentStatus.active)
                 )
                 available_agents = result.scalars().all()
             
@@ -756,7 +756,7 @@ class CollaborationOrchestrator:
             "active_sessions": len(human_sessions),
             "unread_notifications": unread_count,
             "total_agents": len(all_agents),
-            "active_agents": len([a for a in all_agents if a.status == AgentStatus.ACTIVE]),
+            "active_agents": len([a for a in all_agents if a.status == AgentStatus.active]),
             "sessions": [session.__dict__ for session in human_sessions],
             "recent_notifications": notifications[-10:],  # Last 10 notifications
             "agent_status": agent_status,

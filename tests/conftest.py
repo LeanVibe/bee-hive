@@ -148,7 +148,7 @@ async def sample_agent(test_db_session: AsyncSession) -> Agent:
                 "specialization_areas": ["testing"]
             }
         ],
-        status=AgentStatus.ACTIVE,
+        status=AgentStatus.active,
         config={"test": True}
     )
     

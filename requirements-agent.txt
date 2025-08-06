@@ -1,0 +1,35 @@
+# Requirements for containerized agents
+# Minimal set focused on agent runtime needs
+
+# Core dependencies
+anthropic>=0.21.0
+redis>=4.5.0
+psycopg2-binary>=2.9.5
+sqlalchemy>=2.0.0
+structlog>=23.0.0
+httpx>=0.24.0
+
+# Task processing
+celery>=5.3.0
+kombu>=5.3.0
+
+# Configuration and environment
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Monitoring and health checks
+prometheus-client>=0.16.0
+
+# JSON processing
+orjson>=3.8.0
+
+# Async support
+aioredis>=2.0.0
+asyncio-mqtt>=0.13.0
+
+# Security
+cryptography>=40.0.0
+
+# Utilities
+python-dateutil>=2.8.0
+tenacity>=8.2.0

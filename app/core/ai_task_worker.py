@@ -502,7 +502,7 @@ Please provide:
                         id=self.worker_id,
                         name=f"AI Worker {self.worker_id}",
                         agent_type="ai_worker",
-                        status=AgentStatus.ACTIVE,
+                        status=AgentStatus.active,
                         capabilities=self.capabilities,
                         configuration={
                             "ai_model": self.ai_model.value,
@@ -517,7 +517,7 @@ Please provide:
                         update(Agent)
                         .where(Agent.id == self.worker_id)
                         .values(
-                            status=AgentStatus.ACTIVE,
+                            status=AgentStatus.active,
                             capabilities=self.capabilities,
                             last_heartbeat=datetime.utcnow()
                         )
@@ -536,7 +536,7 @@ Please provide:
                     update(Agent)
                     .where(Agent.id == self.worker_id)
                     .values(
-                        status=AgentStatus.INACTIVE,
+                        status=AgentStatus.inactive,
                         last_heartbeat=datetime.utcnow()
                     )
                 )

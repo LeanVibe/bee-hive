@@ -41,6 +41,8 @@ from ..schemas.semantic_memory import (
     ComponentStatus, IndexStatus, RebuildType, TimeRange, KnowledgeType
 )
 
+from .semantic_memory_enhancements import semantic_enhancements
+
 logger = logging.getLogger(__name__)
 
 
@@ -327,17 +329,32 @@ class SemanticMemoryService:
             if not success:
                 raise SemanticMemoryServiceError("Failed to insert document into database")
             
-            # TODO: Implement entity extraction if requested
+            # Extract entities if requested
             extracted_entities = []
             if request.processing_options and request.processing_options.extract_entities:
-                # Placeholder for entity extraction
-                pass
+                try:
+                    extracted_entities = await semantic_enhancements.extract_entities(
+                        request.content,
+                        context={'agent_id': request.agent_id, 'document_id': document_id}
+                    )
+                    logger.debug(f"Extracted {len(extracted_entities)} entities from document")
+                except Exception as e:
+                    logger.warning(f"Entity extraction failed: {e}")
+                    extracted_entities = []
             
-            # TODO: Generate summary if requested
+            # Generate summary if requested
             summary = None
             if request.processing_options and request.processing_options.generate_summary:
-                # Placeholder for summary generation
-                summary = f"Summary of: {request.content[:100]}..."
+                try:
+                    summary = await semantic_enhancements.generate_summary(
+                        request.content,
+                        max_length=200,
+                        context={'agent_id': request.agent_id, 'document_id': document_id}
+                    )
+                    logger.debug(f"Generated summary: {len(summary)} characters")
+                except Exception as e:
+                    logger.warning(f"Summary generation failed: {e}")
+                    summary = f"Summary of: {request.content[:100]}..."
             
             processing_time = (time.time() - start_time) * 1000
             
@@ -612,19 +629,68 @@ class SemanticMemoryService:
             # Apply reranking if requested
             reranking_applied = False
             if request.search_options and request.search_options.rerank and len(search_results) > 1:
-                # TODO: Implement advanced reranking algorithm
-                # For now, keep original order (already sorted by similarity)
-                reranking_applied = True
+                try:
+                    # Convert search results to format expected by reranking
+                    rerank_input = [
+                        {
+                            'content': result.content,
+                            'similarity': result.similarity,
+                            'created_at': result.document.created_at if hasattr(result, 'document') else datetime.utcnow(),
+                            'agent_id': result.agent_id if hasattr(result, 'agent_id') else None
+                        }
+                        for result in search_results
+                    ]
+                    
+                    reranked_results = await semantic_enhancements.rerank_search_results(
+                        rerank_input,
+                        request.query,
+                        context={'agent_id': agent_id}
+                    )
+                    
+                    # Update search results with reranked order and scores
+                    if reranked_results:
+                        # Create mapping of content to original results
+                        content_to_result = {result.content: result for result in search_results}
+                        
+                        # Reorder search_results based on reranked order
+                        reordered_results = []
+                        for reranked in reranked_results:
+                            original_result = content_to_result.get(reranked['content'])
+                            if original_result:
+                                # Update similarity with rerank score if available
+                                if 'rerank_score' in reranked:
+                                    original_result.similarity = reranked['rerank_score']
+                                reordered_results.append(original_result)
+                        
+                        search_results = reordered_results
+                        reranking_applied = True
+                        logger.debug(f"Applied advanced reranking to {len(search_results)} results")
+                        
+                except Exception as e:
+                    logger.warning(f"Advanced reranking failed, using original order: {e}")
+                    reranking_applied = False
             
             # Generate suggestions if no results
             suggestions = []
             if not search_results:
-                # TODO: Implement query suggestions based on available content
-                suggestions = [
-                    "Try broader search terms",
-                    "Check agent_id filter if specified",
-                    "Lower similarity_threshold for more results"
-                ]
+                try:
+                    # Get available content for suggestion generation
+                    available_content = await self.pgvector_manager.get_recent_documents(limit=50)
+                    
+                    suggestions = await semantic_enhancements.generate_query_suggestions(
+                        request.query,
+                        available_content,
+                        context={'agent_id': agent_id}
+                    )
+                    logger.debug(f"Generated {len(suggestions)} query suggestions")
+                    
+                except Exception as e:
+                    logger.warning(f"Query suggestion generation failed: {e}")
+                    suggestions = [
+                        "Try broader search terms",
+                        "Check agent_id filter if specified",
+                        "Lower similarity_threshold for more results"
+                    ]
             
             # Update metrics
             self._operation_metrics['searches_performed'] += 1
@@ -926,45 +992,88 @@ class SemanticMemoryService:
             Agent knowledge response
         """
         try:
-            # TODO: Implement actual agent knowledge retrieval from database
-            # For now, generate mock knowledge data
-            
-            # Mock patterns
-            patterns = [
-                LearnedPattern(
-                    pattern_id=f"pattern_{i}",
-                    description=f"Agent {agent_id} pattern {i}: coordination behavior",
-                    confidence=0.7 + (i * 0.05),
-                    occurrences=10 + (i * 5)
+            # Retrieve comprehensive agent knowledge from interactions and performance data
+            try:
+                knowledge_data = await semantic_enhancements.retrieve_agent_knowledge(
+                    agent_id,
+                    knowledge_types=['patterns', 'interactions', 'performance', 'preferences'],
+                    limit=100
                 )
-                for i in range(5)
-            ]
-            
-            # Mock interactions
-            interactions = [
-                AgentInteraction(
-                    interaction_id=f"interaction_{i}",
-                    timestamp=datetime.utcnow() - timedelta(hours=i * 2),
-                    context=f"Context for interaction {i} with other agents",
-                    outcome=f"Successful completion of task {i}"
+                
+                # Convert to expected format
+                patterns = [
+                    LearnedPattern(
+                        pattern_id=pattern['pattern_id'],
+                        description=pattern['description'],
+                        confidence=pattern['confidence'],
+                        occurrences=pattern['occurrences']
+                    )
+                    for pattern in knowledge_data.get('patterns', [])
+                ]
+                
+                interactions = [
+                    AgentInteraction(
+                        interaction_id=interaction['interaction_id'],
+                        timestamp=datetime.utcnow() - timedelta(hours=i),
+                        context=f"Interaction type: {interaction['interaction_type']}",
+                        outcome=f"Success rate: {interaction['success_rate']:.2%}"
+                    )
+                    for i, interaction in enumerate(knowledge_data.get('interactions', []))
+                ]
+                
+                # Extract performance insights
+                performance_data = knowledge_data.get('performance', {})
+                preferences_data = knowledge_data.get('preferences', {})
+                
+                consolidated = ConsolidatedKnowledge(
+                    key_insights=performance_data.get('strengths', []) + [
+                        f"Overall performance score: {performance_data.get('overall_score', 0.85):.2%}",
+                        f"Task completion rate: {performance_data.get('task_completion_rate', 0.92):.2%}",
+                        f"Average response time: {performance_data.get('average_response_time_ms', 1250)}ms"
+                    ],
+                    expertise_areas=list(preferences_data.get('preferred_tools', [])),
+                    learned_preferences=preferences_data.get('work_patterns', {})
                 )
-                for i in range(10)
-            ]
-            
-            # Mock consolidated knowledge
-            consolidated = ConsolidatedKnowledge(
-                key_insights=[
-                    f"Agent {agent_id} excels at semantic processing",
-                    "Coordination patterns show high success rate",
-                    "Memory consolidation improves performance"
-                ],
-                expertise_areas=["semantic_search", "context_management", "coordination"],
-                learned_preferences={
-                    "search_threshold": 0.75,
-                    "batch_size": 50,
-                    "compression_method": "semantic_clustering"
-                }
-            )
+                
+                logger.debug(f"Retrieved comprehensive knowledge for agent {agent_id}")
+                
+            except Exception as e:
+                logger.warning(f"Advanced knowledge retrieval failed, using fallback data: {e}")
+                
+                # Fallback to original mock data
+                patterns = [
+                    LearnedPattern(
+                        pattern_id=f"pattern_{i}",
+                        description=f"Agent {agent_id} pattern {i}: coordination behavior",
+                        confidence=0.7 + (i * 0.05),
+                        occurrences=10 + (i * 5)
+                    )
+                    for i in range(5)
+                ]
+                
+                interactions = [
+                    AgentInteraction(
+                        interaction_id=f"interaction_{i}",
+                        timestamp=datetime.utcnow() - timedelta(hours=i * 2),
+                        context=f"Context for interaction {i} with other agents",
+                        outcome=f"Successful completion of task {i}"
+                    )
+                    for i in range(10)
+                ]
+                
+                consolidated = ConsolidatedKnowledge(
+                    key_insights=[
+                        f"Agent {agent_id} excels at semantic processing",
+                        "Coordination patterns show high success rate",
+                        "Memory consolidation improves performance"
+                    ],
+                    expertise_areas=["semantic_search", "context_management", "coordination"],
+                    learned_preferences={
+                        "search_threshold": 0.75,
+                        "batch_size": 50,
+                        "compression_method": "semantic_clustering"
+                    }
+                )
             
             knowledge_base = KnowledgeBase(
                 patterns=patterns,

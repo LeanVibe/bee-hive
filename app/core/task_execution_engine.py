@@ -158,7 +158,7 @@ class TaskExecutionEngine:
                 
                 # Start execution
                 task.start_execution()
-                agent.status = AgentStatus.BUSY
+                agent.status = AgentStatus.busy
                 await db.commit()
                 
                 # Create execution context
@@ -365,7 +365,7 @@ class TaskExecutionEngine:
                     agent.total_tasks_failed = str(failed_count)
                 
                 # Update agent status back to active
-                agent.status = AgentStatus.ACTIVE
+                agent.status = AgentStatus.active
                 agent.last_active = completion_time
                 
                 # Update average response time

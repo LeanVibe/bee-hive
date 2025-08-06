@@ -1,0 +1,29 @@
+# Specialized Docker image for Meta Agent
+# Extends base agent with meta-learning and system optimization capabilities
+
+FROM leanvibe/agent-base:latest
+
+LABEL agent.type="meta"
+LABEL agent.capabilities="system_improvement,optimization,coordination,self_modification"
+
+# Install meta agent-specific tools
+RUN pip install --no-cache-dir \
+    scikit-learn \
+    numpy \
+    pandas \
+    optuna \
+    mlflow
+
+# Set agent-specific environment variables
+ENV AGENT_TYPE=meta  
+ENV AGENT_ROLE="Meta Agent"
+ENV AGENT_CAPABILITIES="system_improvement,optimization,agent_coordination,self_modification,process_enhancement"
+
+# Copy meta agent-specific prompts and tools
+COPY app/agents/meta/ /app/agents/meta/
+
+# Health check specific to meta agent
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["python", "agents/runtime.py"]

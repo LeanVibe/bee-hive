@@ -23,7 +23,7 @@ import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.observability import EventType, AgentEvent
-from ..observability.hooks import EventCapture, EventProcessor
+from ..observability.hooks import EventProcessor
 from ..core.database import get_async_session
 from ..core.redis import get_redis
 from ..core.config import get_settings

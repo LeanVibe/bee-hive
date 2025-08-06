@@ -1335,7 +1335,7 @@ class ProductionOrchestrator:
         try:
             if self.db_session:
                 result = await self.db_session.execute(
-                    select(func.count(Agent.id)).where(Agent.status == AgentStatus.ACTIVE)
+                    select(func.count(Agent.id)).where(Agent.status == AgentStatus.active)
                 )
                 return result.scalar() or 0
         except Exception:
@@ -1571,7 +1571,7 @@ class ProductionOrchestrator:
         try:
             if self.db_session:
                 result = await self.db_session.execute(
-                    select(Agent.id).where(Agent.status == AgentStatus.ACTIVE).limit(count)
+                    select(Agent.id).where(Agent.status == AgentStatus.active).limit(count)
                 )
                 return [str(row[0]) for row in result.fetchall()]
         except Exception:

@@ -829,7 +829,7 @@ class IntelligentSleepManager:
                     validation["errors"].append(f"Agent is not awake (current state: {agent.current_sleep_state})")
                     return validation
                 
-                if agent.status != AgentStatus.ACTIVE:
+                if agent.status != AgentStatus.active:
                     validation["valid"] = False
                     validation["errors"].append(f"Agent is not active (status: {agent.status})")
                     return validation

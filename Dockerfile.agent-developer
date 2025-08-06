@@ -1,0 +1,30 @@
+# Specialized Docker image for Developer Agent
+# Extends base agent with development-specific tools and capabilities
+
+FROM leanvibe/agent-base:latest
+
+LABEL agent.type="developer"
+LABEL agent.capabilities="code_generation,bug_fixing,feature_implementation"
+
+# Install development-specific tools
+RUN pip install --no-cache-dir \
+    black \
+    flake8 \
+    mypy \
+    pytest \
+    coverage \
+    bandit
+
+# Set agent-specific environment variables
+ENV AGENT_TYPE=developer
+ENV AGENT_ROLE="Development Agent" 
+ENV AGENT_CAPABILITIES="code_generation,bug_fixing,feature_implementation,testing,debugging"
+
+# Copy developer-specific prompts and tools
+COPY app/agents/developer/ /app/agents/developer/
+
+# Health check specific to developer agent
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["python", "agents/runtime.py"]

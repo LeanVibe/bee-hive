@@ -321,7 +321,7 @@ class TeamCoordinationService:
                 "tags": registration_data.tags,
                 "registration_timestamp": datetime.utcnow().isoformat()
             },
-            status=AgentStatus.ACTIVE
+            status=AgentStatus.active
         )
         
         db.add(agent)
@@ -360,7 +360,7 @@ class TeamCoordinationService:
         # Get all active agents with their current workload
         query = select(Agent).where(
             and_(
-                Agent.status == AgentStatus.ACTIVE,
+                Agent.status == AgentStatus.active,
                 func.cast(Agent.context_window_usage, 'float') < 0.9
             )
         ).options(selectinload(Agent.performance_history))
@@ -759,7 +759,7 @@ async def reassign_task_intelligently(
                 raise HTTPException(status_code=404, detail="Target agent not found")
             
             # Check if agent is available or force assignment is enabled
-            if not reassignment.force_assignment and new_agent.status != AgentStatus.ACTIVE:
+            if not reassignment.force_assignment and new_agent.status != AgentStatus.active:
                 raise HTTPException(status_code=400, detail="Target agent is not available")
                 
         else:
@@ -872,11 +872,11 @@ async def get_coordination_metrics(
     time_threshold = datetime.utcnow() - timedelta(hours=metrics_query.time_range_hours)
     
     # Get total and active agents
-    total_agents_query = select(func.count(Agent.id)).where(Agent.status != AgentStatus.INACTIVE)
+    total_agents_query = select(func.count(Agent.id)).where(Agent.status != AgentStatus.inactive)
     total_agents_result = await db.execute(total_agents_query)
     total_agents = total_agents_result.scalar()
     
-    active_agents_query = select(func.count(Agent.id)).where(Agent.status == AgentStatus.ACTIVE)
+    active_agents_query = select(func.count(Agent.id)).where(Agent.status == AgentStatus.active)
     active_agents_result = await db.execute(active_agents_query)
     active_agents = active_agents_result.scalar()
     
@@ -925,7 +925,7 @@ async def get_coordination_metrics(
         Agent.id,
         Agent.name,
         Agent.context_window_usage
-    ).where(Agent.status == AgentStatus.ACTIVE)
+    ).where(Agent.status == AgentStatus.active)
     
     if metrics_query.agent_ids:
         workload_query = workload_query.where(
@@ -953,7 +953,7 @@ async def get_coordination_metrics(
         Agent.name,
         Agent.total_tasks_completed,
         Agent.average_response_time
-    ).where(Agent.status == AgentStatus.ACTIVE).order_by(
+    ).where(Agent.status == AgentStatus.active).order_by(
         func.cast(Agent.total_tasks_completed, 'integer').desc(),
         func.cast(Agent.average_response_time, 'float').asc()
     ).limit(5)
@@ -1163,7 +1163,7 @@ async def stream_coordination_metrics(
                 current_time = datetime.utcnow()
                 
                 # Active agents count
-                active_agents_query = select(func.count(Agent.id)).where(Agent.status == AgentStatus.ACTIVE)
+                active_agents_query = select(func.count(Agent.id)).where(Agent.status == AgentStatus.active)
                 active_agents_result = await db.execute(active_agents_query)
                 active_agents = active_agents_result.scalar()
                 

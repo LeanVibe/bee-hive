@@ -438,13 +438,13 @@ class TaskScheduler:
             heartbeat_score = 0.0
         
         # Check if agent is idle vs busy
-        status_score = 1.0 if agent.status == AgentStatus.ACTIVE else 0.5
+        status_score = 1.0 if agent.status == AgentStatus.active else 0.5
         
         return (heartbeat_score * 0.7 + status_score * 0.3)
     
     def _is_agent_available(self, agent: Agent) -> bool:
         """Check if agent is available for task assignment."""
-        if agent.status not in [AgentStatus.ACTIVE]:
+        if agent.status not in [AgentStatus.active]:
             return False
         
         # Check context window usage
@@ -498,7 +498,7 @@ class TaskScheduler:
                     update(Agent)
                     .where(Agent.id == agent.id)
                     .values(
-                        status=AgentStatus.BUSY,
+                        status=AgentStatus.busy,
                         updated_at=datetime.utcnow()
                     )
                 )

@@ -688,7 +688,7 @@ class SleepWakePerformanceTestFramework:
                     id=uuid.UUID(agent_id),
                     name=f"Test Agent {i}",
                     type="test",
-                    status=AgentStatus.ACTIVE
+                    status=AgentStatus.active
                 )
                 db_session.add(agent)
                 self.test_agents.append(agent_id)

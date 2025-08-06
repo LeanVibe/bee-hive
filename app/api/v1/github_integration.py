@@ -145,7 +145,7 @@ async def get_authenticated_agent(credentials: HTTPAuthorizationCredentials = De
                 raise HTTPException(status_code=401, detail="Agent not found")
             
             # Check agent is active
-            if agent.status not in [AgentStatus.ACTIVE, AgentStatus.BUSY]:
+            if agent.status not in [AgentStatus.active, AgentStatus.busy]:
                 raise HTTPException(status_code=401, detail="Agent is not active")
         
         return str(agent_id)

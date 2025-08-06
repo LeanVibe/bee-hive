@@ -135,6 +135,56 @@ export class DashboardView extends LitElement {
       padding: 0.75rem;
     }
     
+    /* Enhanced metric cards with visual indicators */
+    .enhanced-metric-card {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    
+    .metric-trend {
+      opacity: 0.7;
+      transition: all 0.2s ease;
+    }
+    
+    .trend-healthy {
+      color: #10b981;
+    }
+    
+    .trend-warning {
+      color: #f59e0b;
+    }
+    
+    .trend-critical {
+      color: #ef4444;
+      animation: pulse 2s infinite;
+    }
+    
+    .metric-bar {
+      height: 4px;
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    
+    .metric-fill {
+      height: 100%;
+      transition: width 0.6s ease-in-out;
+      border-radius: 2px;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    
     .summary-value {
       font-size: 1.5rem;
       font-weight: 700;
@@ -1149,13 +1199,33 @@ export class DashboardView extends LitElement {
             </div>
             <div class="summary-label">System Health</div>
           </div>
-          <div class="summary-card" role="img" aria-label="CPU usage: ${Math.round(summary.cpuUsage)} percent">
-            <div class="summary-value" aria-hidden="true">${Math.round(summary.cpuUsage)}%</div>
+          <div class="summary-card enhanced-metric-card" role="img" aria-label="CPU usage: ${Math.round(summary.cpuUsage)} percent">
+            <div class="metric-header">
+              <div class="summary-value" aria-hidden="true">${Math.round(summary.cpuUsage)}%</div>
+              <div class="metric-trend ${summary.cpuUsage > 80 ? 'trend-critical' : summary.cpuUsage > 60 ? 'trend-warning' : 'trend-healthy'}">
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${summary.cpuUsage > 60 ? 'M7 17l9.2-9.2M17 17V7H7' : 'M5 12h14'}"/>
+                </svg>
+              </div>
+            </div>
             <div class="summary-label">CPU Usage</div>
+            <div class="metric-bar">
+              <div class="metric-fill" style="width: ${Math.round(summary.cpuUsage)}%; background-color: ${summary.cpuUsage > 80 ? '#ef4444' : summary.cpuUsage > 60 ? '#f59e0b' : '#10b981'}"></div>
+            </div>
           </div>
-          <div class="summary-card" role="img" aria-label="Memory usage: ${Math.round(summary.memoryUsage)} percent">
-            <div class="summary-value" aria-hidden="true">${Math.round(summary.memoryUsage)}%</div>
+          <div class="summary-card enhanced-metric-card" role="img" aria-label="Memory usage: ${Math.round(summary.memoryUsage)} percent">
+            <div class="metric-header">
+              <div class="summary-value" aria-hidden="true">${Math.round(summary.memoryUsage)}%</div>
+              <div class="metric-trend ${summary.memoryUsage > 85 ? 'trend-critical' : summary.memoryUsage > 70 ? 'trend-warning' : 'trend-healthy'}">
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${summary.memoryUsage > 70 ? 'M7 17l9.2-9.2M17 17V7H7' : 'M5 12h14'}"/>
+                </svg>
+              </div>
+            </div>
             <div class="summary-label">Memory Usage</div>
+            <div class="metric-bar">
+              <div class="metric-fill" style="width: ${Math.round(summary.memoryUsage)}%; background-color: ${summary.memoryUsage > 85 ? '#ef4444' : summary.memoryUsage > 70 ? '#f59e0b' : '#10b981'}"></div>
+            </div>
           </div>
           <div class="summary-card" role="img" aria-label="Recent events: ${summary.recentEvents}">
             <div class="summary-value" aria-hidden="true">${summary.recentEvents}</div>

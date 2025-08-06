@@ -97,7 +97,7 @@ class ActiveAgentManager:
         agent_instance = AgentInstance(
             id=agent_id,
             role=config.role,
-            status=AgentStatus.ACTIVE,
+            status=AgentStatus.active,
             tmux_session=None,  # Could be implemented for Claude CLI integration
             capabilities=capabilities,
             current_task=None,
@@ -148,7 +148,7 @@ class ActiveAgentManager:
         agent.current_task = task_id if not agent.current_task else agent.current_task
         
         # Update agent status
-        agent.status = AgentStatus.BUSY
+        agent.status = AgentStatus.busy
         await self._update_agent_in_database(agent)
         
         # Send task assignment event
@@ -180,7 +180,7 @@ class ActiveAgentManager:
         
         # Update agent status
         if not remaining_tasks:
-            agent.status = AgentStatus.ACTIVE
+            agent.status = AgentStatus.active
         
         await self._update_agent_in_database(agent)
         
@@ -357,7 +357,7 @@ class ActiveAgentManager:
         """Deactivate an agent."""
         if agent_id in self.active_agents:
             agent = self.active_agents[agent_id]
-            agent.status = AgentStatus.INACTIVE
+            agent.status = AgentStatus.inactive
             
             await self._update_agent_in_database(agent)
             await self._send_agent_event(agent_id, "agent_deactivated", {})

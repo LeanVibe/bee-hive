@@ -267,7 +267,7 @@ async def assign_task_to_agent(
         if not agent:
             raise HTTPException(status_code=404, detail="Agent not found")
         
-        if agent.status != AgentStatus.ACTIVE:
+        if agent.status != AgentStatus.active:
             raise HTTPException(
                 status_code=400,
                 detail=f"Agent is not available (status: {agent.status.value})"

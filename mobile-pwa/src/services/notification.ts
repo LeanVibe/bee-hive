@@ -78,8 +78,13 @@ export class NotificationService extends EventEmitter {
       // Get current permission status
       this.permission = Notification.permission
       
-      // Register service worker if not already registered
-      await this.registerServiceWorker()
+      // Skip service worker registration in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 Development mode: Skipping notification service worker registration')
+      } else {
+        // Register service worker if not already registered
+        await this.registerServiceWorker()
+      }
       
       // Setup message handling
       this.setupMessageHandling()
@@ -250,6 +255,20 @@ export class NotificationService extends EventEmitter {
   
   private async registerServiceWorker(): Promise<void> {
     try {
+      // In development mode, skip service worker registration if sw.js is not accessible
+      if (process.env.NODE_ENV === 'development') {
+        try {
+          const response = await fetch('/sw.js', { method: 'HEAD' })
+          if (!response.ok) {
+            console.log('🔧 Development mode: Service worker file not available, skipping registration')
+            return
+          }
+        } catch (fetchError) {
+          console.log('🔧 Development mode: Service worker file not accessible, skipping registration')
+          return
+        }
+      }
+      
       this.registration = await navigator.serviceWorker.register('/sw.js')
       console.log('✅ Service worker registered')
       
@@ -264,7 +283,9 @@ export class NotificationService extends EventEmitter {
     } catch (error) {
       console.error('Service worker registration failed:', error)
       // Don't throw in development mode
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('🔧 Development mode: Continuing without service worker registration')
+      } else {
         throw error
       }
     }

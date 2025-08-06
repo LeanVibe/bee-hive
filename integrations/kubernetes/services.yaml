@@ -1,0 +1,141 @@
+# Kubernetes services for LeanVibe Agent Hive components
+---
+# Service for Architecture Agents
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-architect-service
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: architect
+spec:
+  selector:
+    app: leanvibe-agent
+    agent-type: architect
+  ports:
+  - name: health
+    port: 8080
+    targetPort: health
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+  type: ClusterIP
+
+---
+# Service for Developer Agents
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-developer-service
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: developer
+spec:
+  selector:
+    app: leanvibe-agent
+    agent-type: developer
+  ports:
+  - name: health
+    port: 8080
+    targetPort: health
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+  type: ClusterIP
+
+---
+# Service for QA Agents
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-qa-service
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: qa
+spec:
+  selector:
+    app: leanvibe-agent
+    agent-type: qa
+  ports:
+  - name: health
+    port: 8080
+    targetPort: health
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+  type: ClusterIP
+
+---
+# Service for Meta Agent
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-meta-service
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: meta
+spec:
+  selector:
+    app: leanvibe-agent
+    agent-type: meta
+  ports:
+  - name: health
+    port: 8080
+    targetPort: health
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+  type: ClusterIP
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: leanvibe-postgres-service
+  namespace: leanvibe-hive
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: leanvibe-redis-service
+  namespace: leanvibe-hive
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: leanvibe-api-service
+  namespace: leanvibe-hive
+spec:
+  selector:
+    app: leanvibe-api
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: LoadBalancer  # External access to API

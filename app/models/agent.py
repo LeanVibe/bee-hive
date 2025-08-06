@@ -21,11 +21,12 @@ from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 class AgentStatus(Enum):
     """Agent lifecycle status."""
-    INACTIVE = "inactive"
-    ACTIVE = "active"
-    BUSY = "busy"
-    ERROR = "error"
-    MAINTENANCE = "maintenance"
+    inactive = "inactive"
+    active = "active"
+    busy = "busy"
+    error = "error"
+    maintenance = "maintenance"
+    shutting_down = "shutting_down"
 
 
 class AgentType(Enum):
@@ -57,7 +58,7 @@ class Agent(Base):
     system_prompt = Column(Text, nullable=True)
     
     # Current status and configuration
-    status = Column(ENUM(AgentStatus, name='agentstatus'), nullable=False, default=AgentStatus.INACTIVE, index=True)
+    status = Column(ENUM(AgentStatus, name='agentstatus'), nullable=False, default=AgentStatus.inactive, index=True)
     config = Column(JSON, nullable=True, default=dict)
     
     # tmux integration
@@ -108,7 +109,7 @@ class Agent(Base):
     def update_heartbeat(self) -> None:
         """Update the agent's heartbeat timestamp."""
         self.last_heartbeat = datetime.utcnow()
-        if self.status == AgentStatus.ACTIVE:
+        if self.status == AgentStatus.active:
             self.last_active = datetime.utcnow()
     
     def add_capability(self, name: str, description: str, confidence: float, areas: list) -> None:
@@ -145,7 +146,7 @@ class Agent(Base):
     
     def is_available_for_task(self) -> bool:
         """Check if agent is available to take on new tasks."""
-        return self.status in [AgentStatus.ACTIVE] and self.context_window_usage and float(self.context_window_usage) < 0.8
+        return self.status in [AgentStatus.active] and self.context_window_usage and float(self.context_window_usage) < 0.8
     
     def calculate_task_suitability(self, task_type: str, required_capabilities: list) -> float:
         """Calculate how suitable this agent is for a specific task."""

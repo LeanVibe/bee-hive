@@ -194,7 +194,7 @@ class AgentRegistry:
                 
                 # Update to active state
                 await self._update_agent_lifecycle_state(
-                    db, agent.id, LifecycleState.ACTIVE, AgentStatus.ACTIVE
+                    db, agent.id, LifecycleState.ACTIVE, AgentStatus.active
                 )
                 
                 logger.info(
@@ -282,7 +282,7 @@ class AgentRegistry:
                     .where(Agent.id == agent_id)
                     .values(
                         lifecycle_state=LifecycleState.TERMINATED.value,
-                        status=AgentStatus.INACTIVE,
+                        status=AgentStatus.inactive,
                         termination_time=datetime.utcnow(),
                         updated_at=datetime.utcnow()
                     )
@@ -362,7 +362,7 @@ class AgentRegistry:
         """Get all active agents."""
         return await self.list_agents(
             lifecycle_state=LifecycleState.ACTIVE,
-            status=AgentStatus.ACTIVE
+            status=AgentStatus.active
         )
     
     async def update_agent_heartbeat(self, agent_id: uuid.UUID) -> bool:
@@ -446,7 +446,7 @@ class AgentRegistry:
                 # Basic counts
                 total_count = await db.execute(select(func.count(Agent.id)))
                 active_count = await db.execute(
-                    select(func.count(Agent.id)).where(Agent.status == AgentStatus.ACTIVE)
+                    select(func.count(Agent.id)).where(Agent.status == AgentStatus.active)
                 )
                 
                 # Health distribution
@@ -660,7 +660,7 @@ class AgentRegistry:
                     )
                     .values(
                         lifecycle_state=LifecycleState.TERMINATED.value,
-                        status=AgentStatus.ERROR,
+                        status=AgentStatus.error,
                         termination_time=datetime.utcnow(),
                         updated_at=datetime.utcnow()
                     )

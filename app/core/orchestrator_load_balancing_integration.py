@@ -230,7 +230,7 @@ class LoadBalancingOrchestrator:
         try:
             async with get_session() as session:
                 for agent_id, agent_instance in self.base_orchestrator.agents.items():
-                    if agent_instance.status == AgentStatus.ACTIVE:
+                    if agent_instance.status == AgentStatus.active:
                         # Create workload snapshot
                         snapshot = WorkloadSnapshot(
                             agent_id=uuid.UUID(agent_id) if self._is_valid_uuid(agent_id) else uuid.uuid4(),
@@ -333,7 +333,7 @@ class LoadBalancingOrchestrator:
             # Get available agents
             available_agents = [
                 agent_id for agent_id, agent in self.base_orchestrator.agents.items()
-                if agent.status in [AgentStatus.ACTIVE, AgentStatus.IDLE]
+                if agent.status in [AgentStatus.active, AgentStatus.active]
             ]
             
             if not available_agents:
@@ -352,7 +352,7 @@ class LoadBalancingOrchestrator:
             
             # Verify agent is still available
             if (selected_agent_id in self.base_orchestrator.agents and
-                self.base_orchestrator.agents[selected_agent_id].status in [AgentStatus.ACTIVE, AgentStatus.IDLE]):
+                self.base_orchestrator.agents[selected_agent_id].status in [AgentStatus.active, AgentStatus.active]):
                 
                 # Record metrics
                 await self.metrics_collector.record_custom_metric(
@@ -386,7 +386,7 @@ class LoadBalancingOrchestrator:
             # Simple round-robin or first available assignment
             available_agents = [
                 agent_id for agent_id, agent in self.base_orchestrator.agents.items()
-                if agent.status in [AgentStatus.ACTIVE, AgentStatus.IDLE]
+                if agent.status in [AgentStatus.active, AgentStatus.active]
             ]
             
             if available_agents:

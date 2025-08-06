@@ -170,6 +170,16 @@ export class WebSocketService extends EventEmitter {
           this.emit('error', new Error(message.data.message || 'Server error'))
           break
           
+        case 'performance_update':
+          // Handle performance updates silently or emit specific event
+          this.emit('performance_update', message.data)
+          break
+          
+        case 'keepalive':
+          // Handle keepalive messages silently
+          this.emit('keepalive', message)
+          break
+          
         default:
           console.log('📡 Unknown message type:', message.type, message)
       }

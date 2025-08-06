@@ -211,7 +211,7 @@ class SpecializedAgent:
     @property
     def is_available(self) -> bool:
         """Check if agent is available for new tasks."""
-        return (self.status == AgentStatus.ACTIVE and 
+        return (self.status == AgentStatus.active and 
                 self.current_workload < self.workload_capacity * 0.9)
     
     @property 
@@ -485,7 +485,7 @@ class EnhancedMultiAgentCoordinator:
                 agent = SpecializedAgent(
                     agent_id=agent_id,
                     role=spec['role'],
-                    status=AgentStatus.ACTIVE,
+                    status=AgentStatus.active,
                     capabilities=spec['capabilities'].copy()
                 )
                 

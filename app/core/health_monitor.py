@@ -403,7 +403,7 @@ class HealthMonitor:
             async with self.session_factory() as session:
                 # Get agents that have recent activity
                 query = select(Agent.id).where(
-                    Agent.status.in_([AgentStatus.ACTIVE, AgentStatus.BUSY, AgentStatus.IDLE])
+                    Agent.status.in_([AgentStatus.active, AgentStatus.busy])
                 )
                 result = await session.execute(query)
                 agents = result.scalars().all()

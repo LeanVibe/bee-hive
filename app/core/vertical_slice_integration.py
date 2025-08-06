@@ -836,7 +836,7 @@ class VerticalSliceIntegration:
         while time.time() - start_time < timeout:
             if agent_id in self.orchestrator.agents:
                 agent = self.orchestrator.agents[agent_id]
-                if agent.status == AgentStatus.ACTIVE:
+                if agent.status == AgentStatus.active:
                     return
             
             await asyncio.sleep(0.5)

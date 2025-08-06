@@ -588,7 +588,7 @@ class OrchestratorLoadTestFramework:
             active_count = 0
             for agent_id in agent_ids:
                 if (agent_id in self.orchestrator.agents and 
-                    self.orchestrator.agents[agent_id].status == AgentStatus.ACTIVE):
+                    self.orchestrator.agents[agent_id].status == AgentStatus.active):
                     active_count += 1
             
             if active_count == len(agent_ids):
@@ -625,7 +625,7 @@ class OrchestratorLoadTestFramework:
                 for agent_id in self.test_agents[:10]:  # Check first 10 agents
                     if agent_id in self.orchestrator.agents:
                         agent = self.orchestrator.agents[agent_id]
-                        if agent.status == AgentStatus.ACTIVE:
+                        if agent.status == AgentStatus.active:
                             self.current_metrics.agents_active += 1
                 
                 await asyncio.sleep(10)
@@ -717,7 +717,7 @@ class OrchestratorLoadTestFramework:
                     active_agents = sum(
                         1 for agent_id in self.test_agents
                         if (agent_id in self.orchestrator.agents and 
-                            self.orchestrator.agents[agent_id].status == AgentStatus.ACTIVE)
+                            self.orchestrator.agents[agent_id].status == AgentStatus.active)
                     )
                     self.current_metrics.agent_uptime_percent = (active_agents / len(self.test_agents)) * 100
                 

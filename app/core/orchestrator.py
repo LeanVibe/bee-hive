@@ -8,6 +8,7 @@ sleep-wake cycles for optimal multi-agent development workflows.
 
 import asyncio
 import json
+import os
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Any, Callable
@@ -31,6 +32,7 @@ from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy, AgentSuitabilityScore
 from .capability_matcher import CapabilityMatcher
 from .agent_persona_system import AgentPersonaSystem, PersonaAssignment, get_agent_persona_system
+from .container_orchestrator import get_container_orchestrator, ContainerAgentOrchestrator
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.session import Session, SessionStatus
 from ..models.task import Task, TaskStatus, TaskPriority
@@ -118,6 +120,10 @@ class AgentOrchestrator:
         
         # Agent persona system for role-based assignment
         self.persona_system: Optional[AgentPersonaSystem] = None
+        
+        # Container orchestrator for production deployment
+        self.container_orchestrator: Optional[ContainerAgentOrchestrator] = None
+        self.orchestrator_mode = os.getenv("ORCHESTRATOR_MODE", "hybrid")  # hybrid, tmux, container
         
         # Multi-agent coordination state
         self.coordination_enabled = True
@@ -491,7 +497,7 @@ class AgentOrchestrator:
             
             # Mark agent as having issues
             if agent_id in self.agents:
-                self.agents[agent_id].status = AgentStatus.ERROR
+                self.agents[agent_id].status = AgentStatus.error
             
         except Exception as e:
             logger.error(f"Error handling error message: {e}")
@@ -566,7 +572,7 @@ class AgentOrchestrator:
         agent_instance = AgentInstance(
             id=agent_id,
             role=role,
-            status=AgentStatus.INACTIVE,
+            status=AgentStatus.inactive,
             tmux_session=None,
             capabilities=capabilities,
             current_task=None,
@@ -592,7 +598,7 @@ class AgentOrchestrator:
                 type=AgentType.CLAUDE,
                 role=role.value,
                 capabilities=[asdict(cap) for cap in capabilities],
-                status=AgentStatus.INACTIVE
+                status=AgentStatus.inactive
             )
             db_session.add(db_agent)
             await db_session.commit()
@@ -636,13 +642,13 @@ class AgentOrchestrator:
                 # TODO: Implement graceful task completion
         
         # Update agent status
-        agent.status = AgentStatus.SHUTTING_DOWN
+        agent.status = AgentStatus.shutting_down
         
         # Update database
         async with get_session() as db_session:
             db_agent = await db_session.get(Agent, agent_id)
             if db_agent:
-                db_agent.status = AgentStatus.INACTIVE
+                db_agent.status = AgentStatus.inactive
                 await db_session.commit()
         
         # Clean up agent instance
@@ -843,7 +849,7 @@ class AgentOrchestrator:
             "total_agents": len(self.agents) + spawner_agent_count,
             "orchestrator_agents": len(self.agents),
             "spawner_agents": spawner_agent_count,
-            "active_agents": len([a for a in self.agents.values() if a.status == AgentStatus.ACTIVE]) + spawner_agent_count,
+            "active_agents": len([a for a in self.agents.values() if a.status == AgentStatus.active]) + spawner_agent_count,
             "agents": agent_statuses,
             "spawner_agents_detail": spawner_agents,
             "metrics": self.metrics,
@@ -857,14 +863,14 @@ class AgentOrchestrator:
             # TODO: Implement tmux session creation
             # agent.tmux_session = await self._create_tmux_session(agent.id)
             
-            agent.status = AgentStatus.ACTIVE
+            agent.status = AgentStatus.active
             agent.last_heartbeat = datetime.utcnow()
             
             logger.info(f"✅ Agent {agent.id} started successfully")
             
         except Exception as e:
             logger.error(f"❌ Failed to start agent {agent.id}", error=str(e))
-            agent.status = AgentStatus.ERROR
+            agent.status = AgentStatus.error
     
     async def _heartbeat_loop(self) -> None:
         """Background task to monitor agent health with automatic recovery."""
@@ -900,7 +906,7 @@ class AgentOrchestrator:
             return
         
         # Mark agent as in error state
-        agent.status = AgentStatus.ERROR
+        agent.status = AgentStatus.error
         
         # Update database with error details
         try:
@@ -909,7 +915,7 @@ class AgentOrchestrator:
                     update(Agent)
                     .where(Agent.id == agent_id)
                     .values(
-                        status=AgentStatus.ERROR, 
+                        status=AgentStatus.error, 
                         updated_at=datetime.utcnow(),
                         error_count=Agent.error_count + 1,
                         last_error='heartbeat_timeout'
@@ -972,7 +978,7 @@ class AgentOrchestrator:
                 health_issues.append("high_context_usage")
             
             # Check if agent is stuck on a task
-            if agent.current_task and agent.status == AgentStatus.ACTIVE:
+            if agent.current_task and agent.status == AgentStatus.active:
                 async with get_session() as db_session:
                     task = await db_session.get(Task, agent.current_task)
                     if task and task.started_at:
@@ -1019,7 +1025,7 @@ class AgentOrchestrator:
         while self.is_running:
             try:
                 for agent_id, agent in self.agents.items():
-                    if (agent.status == AgentStatus.ACTIVE and 
+                    if (agent.status == AgentStatus.active and 
                         agent.context_window_usage > settings.CONSOLIDATION_THRESHOLD):
                         await self.initiate_sleep_cycle(agent_id)
                 
@@ -1127,7 +1133,7 @@ class AgentOrchestrator:
         
         available_agents = [
             agent for agent in self.agents.values()
-            if agent.status == AgentStatus.ACTIVE and agent.current_task is None
+            if agent.status == AgentStatus.active and agent.current_task is None
         ]
         
         if not available_agents:
@@ -1647,7 +1653,7 @@ class AgentOrchestrator:
             
             # Calculate required agent capacity
             estimated_parallel_tasks = min(len(workflow.task_ids), 3)  # Max 3 parallel by default
-            available_agents = len([a for a in self.agents.values() if a.status == AgentStatus.ACTIVE])
+            available_agents = len([a for a in self.agents.values() if a.status == AgentStatus.active])
             
             # Spawn additional agents if needed
             agents_needed = max(0, estimated_parallel_tasks - available_agents)
@@ -1875,7 +1881,7 @@ class AgentOrchestrator:
             health_status["redis"] = await self._check_redis_health()
             
             # Check agent responsiveness
-            active_agents = [a for a in self.agents.values() if a.status == AgentStatus.ACTIVE]
+            active_agents = [a for a in self.agents.values() if a.status == AgentStatus.active]
             health_status["agents_responsive"] = len(active_agents) > 0
             health_status["sufficient_agents"] = len(active_agents) >= 1  # At least one active agent
             
@@ -2080,7 +2086,7 @@ class AgentOrchestrator:
         """Get list of available agent IDs for task assignment."""
         available_agents = []
         for agent_id, agent_instance in self.agents.items():
-            if (agent_instance.status == AgentStatus.ACTIVE and 
+            if (agent_instance.status == AgentStatus.active and 
                 agent_instance.current_task is None and
                 agent_instance.context_window_usage < 0.9):
                 available_agents.append(agent_id)
@@ -2359,7 +2365,7 @@ class AgentOrchestrator:
         try:
             # Check orchestrator metrics
             total_agents = len(self.agents)
-            active_agents = len([a for a in self.agents.values() if a.status == AgentStatus.ACTIVE])
+            active_agents = len([a for a in self.agents.values() if a.status == AgentStatus.active])
             
             # Resource health is good if we have reasonable agent distribution
             agent_health = total_agents > 0 and (active_agents / total_agents) > 0.5
@@ -2388,7 +2394,7 @@ class AgentOrchestrator:
             agent_count = 0
             
             for agent_id, agent_instance in self.agents.items():
-                if agent_instance.status == AgentStatus.ACTIVE:
+                if agent_instance.status == AgentStatus.active:
                     if self.capability_matcher:
                         workload_factor = await self.capability_matcher.get_workload_factor(agent_id)
                     else:
@@ -2660,7 +2666,7 @@ class AgentOrchestrator:
         
         # Remove agent from available pool temporarily
         if agent_id in self.agents:
-            self.agents[agent_id].status = AgentStatus.ERROR  # Use existing status
+            self.agents[agent_id].status = AgentStatus.error  # Use existing status
         
         # Schedule recovery attempt
         asyncio.create_task(self._schedule_circuit_breaker_recovery(agent_id))
@@ -2715,7 +2721,7 @@ class AgentOrchestrator:
                 if (current_time - agent.last_heartbeat).total_seconds() < 30:
                     # Agent is responsive
                     await self._update_circuit_breaker(agent_id, success=True)
-                    agent.status = AgentStatus.ACTIVE
+                    agent.status = AgentStatus.active
                     
                     logger.info(f"✅ Circuit breaker recovery successful for agent {agent_id}")
                     self.metrics['automatic_recovery_actions'] += 1
@@ -3266,7 +3272,7 @@ class AgentOrchestrator:
             agent_assignments = {}
             available_agents = [
                 agent_id for agent_id, agent in self.agents.items()
-                if agent.status == AgentStatus.ACTIVE and not agent.current_task
+                if agent.status == AgentStatus.active and not agent.current_task
             ]
             
             if not available_agents:
@@ -3457,3 +3463,14 @@ class AgentOrchestrator:
                 'execution_time': 0,
                 'coordination_events': {}
             }
+
+
+# Global orchestrator instance
+_orchestrator_instance = None
+
+def get_orchestrator() -> AgentOrchestrator:
+    """Get the global orchestrator instance."""
+    global _orchestrator_instance
+    if _orchestrator_instance is None:
+        _orchestrator_instance = AgentOrchestrator()
+    return _orchestrator_instance

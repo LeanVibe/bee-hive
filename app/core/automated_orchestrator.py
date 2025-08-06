@@ -1042,7 +1042,7 @@ class AutomatedOrchestrator:
                     select(Agent.id).where(
                         and_(
                             Agent.current_sleep_state == SleepState.AWAKE,
-                            Agent.status == AgentStatus.ACTIVE,
+                            Agent.status == AgentStatus.active,
                             or_(
                                 Agent.last_wake_time < cutoff_time,
                                 Agent.last_wake_time.is_(None)
@@ -1065,7 +1065,7 @@ class AutomatedOrchestrator:
                     select(Agent.id).where(
                         and_(
                             Agent.current_sleep_state == SleepState.AWAKE,
-                            Agent.status == AgentStatus.ACTIVE
+                            Agent.status == AgentStatus.active
                         )
                     )
                 )

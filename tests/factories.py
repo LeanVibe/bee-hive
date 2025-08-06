@@ -108,7 +108,7 @@ class AgentFactory:
         agent.created_at = created_time
         agent.updated_at = created_time + timedelta(hours=random.randint(1, 24))
         
-        if status == AgentStatus.ACTIVE:
+        if status == AgentStatus.active:
             agent.last_heartbeat = datetime.utcnow() - timedelta(minutes=random.randint(1, 10))
             agent.last_active = datetime.utcnow() - timedelta(minutes=random.randint(1, 30))
         
@@ -149,7 +149,7 @@ class AgentFactory:
                 "confidence_level": 0.95,
                 "specialization_areas": ["speed", "throughput", "latency"]
             }],
-            status=AgentStatus.ACTIVE,
+            status=AgentStatus.active,
             context_window_usage="0.5",
             config={"performance_optimized": True}
         )
@@ -486,13 +486,13 @@ class TestScenarioFactory:
         orchestrator = AgentFactory.create_agent(
             name="Orchestrator Agent",
             agent_type=AgentType.CLAUDE,
-            status=AgentStatus.ACTIVE
+            status=AgentStatus.active
         )
         
         workers = [
             AgentFactory.create_agent(
                 name=f"Worker Agent {i+1}",
-                status=AgentStatus.ACTIVE
+                status=AgentStatus.active
             ) for i in range(3)
         ]
         
@@ -548,7 +548,7 @@ class TestScenarioFactory:
         """Create an error handling test scenario."""
         
         return {
-            "stable_agents": [AgentFactory.create_agent(status=AgentStatus.ACTIVE) for _ in range(5)],
+            "stable_agents": [AgentFactory.create_agent(status=AgentStatus.active) for _ in range(5)],
             "error_agents": [AgentFactory.create_error_prone_agent() for _ in range(2)],
             "error_conditions": [
                 "database_timeout",

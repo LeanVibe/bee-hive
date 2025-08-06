@@ -16,7 +16,7 @@ import logging
 
 import structlog
 import psutil
-from sqlalchemy import select, func
+from sqlalchemy import select, func, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .redis import get_redis
@@ -225,7 +225,7 @@ class PerformanceMetricsPublisher:
             async for db in get_async_session():
                 # Get active connection count (simplified)
                 active_agents = await db.execute(
-                    select(func.count(Agent.id)).where(Agent.status == AgentStatus.ACTIVE.value)
+                    select(func.count(Agent.id)).where(Agent.status.cast(String) == 'active')
                 )
                 active_agent_count = active_agents.scalar() or 0
                 

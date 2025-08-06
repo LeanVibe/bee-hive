@@ -471,7 +471,7 @@ class TeamCoordinationMetricsService:
         try:
             async for session in get_async_session():
                 # Get active agents with their current state
-                query = select(Agent).where(Agent.status == AgentStatus.ACTIVE)
+                query = select(Agent).where(Agent.status == AgentStatus.active)
                 result = await session.execute(query)
                 agents = result.scalars().all()
                 

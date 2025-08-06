@@ -1,0 +1,61 @@
+# Base Docker image for LeanVibe Agent Hive containerized agents
+# Replaces tmux + Claude Code CLI with containerized Claude API agents
+
+FROM python:3.11-slim
+
+LABEL maintainer="LeanVibe Agent Hive Team"
+LABEL description="Base image for containerized Claude agents"
+LABEL version="1.0.0"
+
+# Install system dependencies needed for agent operations
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    procps \
+    htop \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Set working directory
+WORKDIR /app
+
+# Copy agent requirements
+COPY requirements-agent.txt /app/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements-agent.txt
+
+# Create workspace directory for agent operations
+RUN mkdir -p /app/workspace /app/logs
+
+# Copy agent runtime and core modules
+COPY app/agents/ /app/agents/
+COPY app/core/agent_runtime.py /app/agents/
+COPY app/core/redis.py /app/core/
+COPY app/core/config.py /app/core/
+COPY app/models/ /app/models/
+COPY app/schemas/ /app/schemas/
+
+# Create non-root user for security
+RUN groupadd -r agent && \
+    useradd -r -g agent -s /bin/bash -d /home/agent agent && \
+    mkdir -p /home/agent && \
+    chown -R agent:agent /home/agent /app/workspace /app/logs
+
+# Set proper permissions
+RUN chmod +x /app/agents/*.py
+
+# Health check endpoint
+EXPOSE 8080
+
+# Switch to non-root user
+USER agent
+
+# Set environment defaults
+ENV PYTHONPATH=/app
+ENV AGENT_WORKSPACE=/app/workspace
+ENV AGENT_LOGS=/app/logs
+ENV PYTHONUNBUFFERED=1
+
+# Default command - overridden by specific agent images
+CMD ["python", "agents/runtime.py"]

@@ -221,7 +221,7 @@ async def delete_agent(
         await db.execute(
             update(Agent)
             .where(Agent.id == agent_id)
-            .values(status=AgentStatus.INACTIVE, updated_at=datetime.utcnow())
+            .values(status=AgentStatus.inactive, updated_at=datetime.utcnow())
         )
         await db.commit()
         
@@ -257,7 +257,7 @@ async def agent_heartbeat(
             .where(Agent.id == agent_id)
             .values(
                 last_heartbeat=datetime.utcnow(),
-                last_active=datetime.utcnow() if agent.status == AgentStatus.ACTIVE else agent.last_active
+                last_active=datetime.utcnow() if agent.status == AgentStatus.active else agent.last_active
             )
         )
         await db.commit()

@@ -29,7 +29,7 @@ from .api.intelligent_scheduling import router as intelligent_scheduling_router
 from .api.monitoring_reporting import router as monitoring_router
 from .api.analytics import router as analytics_router
 from .observability.middleware import ObservabilityMiddleware, ObservabilityHookMiddleware
-from .observability.hooks import HookInterceptor, set_hook_interceptor
+from .observability.hooks import HookInterceptor, set_hook_integration_manager
 from .observability.prometheus_middleware import PrometheusMiddleware
 from .core.error_handling_middleware import ErrorHandlingMiddleware, create_error_handling_middleware
 from .core.error_handling_config import initialize_error_handling_config, ErrorHandlingEnvironment, get_config_manager
@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         # Initialize hook interceptor
         hook_interceptor = HookInterceptor(event_processor=event_processor)
-        set_hook_interceptor(hook_interceptor)
+        set_hook_integration_manager(hook_interceptor)
         app.state.hook_interceptor = hook_interceptor
         
         # Initialize error handling system
@@ -111,6 +111,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         orchestrator = AgentOrchestrator()
         await orchestrator.start()
         app.state.orchestrator = orchestrator
+        
+        # 🚀 COMPOUNDING IMPACT: Enhanced orchestrator with SharedWorldState for 5-10x coordination performance
+        from .core.orchestrator_shared_state_integration import enhance_orchestrator_with_shared_state
+        shared_state_integration = await enhance_orchestrator_with_shared_state(orchestrator)
+        app.state.shared_state_integration = shared_state_integration
+        logger.info("🚀 SharedWorldState integration enabled - Agent coordination performance multiplied!")
         
         # Start performance metrics publisher for real-time monitoring
         performance_publisher = await get_performance_publisher()

@@ -152,7 +152,7 @@ class AgentIdentityService:
                 private_key_encrypted=private_key_encrypted,
                 scopes=scopes,
                 rate_limit_per_minute=rate_limit_per_minute,
-                status=AgentStatus.ACTIVE.value,
+                status=AgentStatus.active.value,
                 metadata=metadata or {},
                 created_by=created_by
             )

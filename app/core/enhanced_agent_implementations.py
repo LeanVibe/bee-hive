@@ -134,12 +134,12 @@ class BaseEnhancedAgent:
             # Load previous learning insights
             await self._load_learning_insights()
             
-            self.status = AgentStatus.ACTIVE
+            self.status = AgentStatus.active
             self.logger.info("✅ Enhanced agent initialized successfully",
                            capabilities=len(self.capabilities))
             
         except Exception as e:
-            self.status = AgentStatus.ERROR
+            self.status = AgentStatus.error
             self.logger.error("❌ Failed to initialize enhanced agent", error=str(e))
             raise
     

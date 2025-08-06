@@ -1,0 +1,201 @@
+# Monitoring and observability for LeanVibe Agent Hive Kubernetes deployment
+
+---
+# ServiceMonitor for Prometheus scraping of agent metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: leanvibe-agents-metrics
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agents
+spec:
+  selector:
+    matchLabels:
+      app: leanvibe-agent
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+
+---
+# ServiceMonitor for API metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: leanvibe-api-metrics
+  namespace: leanvibe-hive
+spec:
+  selector:
+    matchLabels:
+      app: leanvibe-api
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+
+---
+# PrometheusRule for alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: leanvibe-agent-alerts
+  namespace: leanvibe-hive
+spec:
+  groups:
+  - name: leanvibe-agents.rules
+    rules:
+    
+    # Agent health alerts
+    - alert: AgentDown
+      expr: up{job="leanvibe-agents-metrics"} == 0
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "LeanVibe agent is down"
+        description: "Agent {{ $labels.instance }} has been down for more than 2 minutes."
+    
+    # High resource utilization
+    - alert: AgentHighCPU
+      expr: rate(process_cpu_seconds_total{job="leanvibe-agents-metrics"}[5m]) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Agent CPU usage high"
+        description: "Agent {{ $labels.instance }} CPU usage is above 80% for 5 minutes."
+    
+    # Task processing issues
+    - alert: AgentTaskProcessingStuck
+      expr: increase(agent_tasks_completed_total{job="leanvibe-agents-metrics"}[10m]) == 0
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Agent not processing tasks"
+        description: "Agent {{ $labels.instance }} has not completed any tasks in 10 minutes."
+    
+    # Spawn time SLA violation
+    - alert: AgentSpawnTimeSLAViolation
+      expr: agent_spawn_duration_seconds > 10
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Agent spawn time exceeds SLA"
+        description: "Agent spawn time {{ $value }}s exceeds 10s SLA target."
+    
+    # Orchestration latency
+    - alert: OrchestrationLatencyHigh
+      expr: agent_orchestration_latency_seconds > 0.5
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Orchestration latency high"
+        description: "Orchestration latency {{ $value }}s exceeds 500ms target."
+
+---
+# Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: leanvibe-dashboard
+  namespace: leanvibe-hive
+data:
+  leanvibe-agents.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "LeanVibe Agent Hive - Production Monitoring",
+        "tags": ["leanvibe", "agents", "autonomous-development"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Active Agents by Type",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "count by (agent_type) (up{job=\"leanvibe-agents-metrics\"})",
+                "legendFormat": "{{agent_type}}"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Task Processing Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(agent_tasks_completed_total[5m])",
+                "legendFormat": "{{instance}}"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Agent Spawn Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "agent_spawn_duration_seconds",
+                "legendFormat": "{{agent_type}}"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Resource Utilization",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+                "legendFormat": "CPU - {{instance}}"
+              },
+              {
+                "expr": "process_resident_memory_bytes / 1024 / 1024",
+                "legendFormat": "Memory MB - {{instance}}"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Orchestration Latency",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(agent_orchestration_latency_seconds_bucket[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(agent_orchestration_latency_seconds_bucket[5m]))",
+                "legendFormat": "50th percentile"
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "5s"
+      }
+    }
+
+---
+# PodMonitor for direct pod metrics (alternative to ServiceMonitor)
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: leanvibe-agents-pods
+  namespace: leanvibe-hive
+spec:
+  selector:
+    matchLabels:
+      app: leanvibe-agent
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics

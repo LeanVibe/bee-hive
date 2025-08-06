@@ -64,7 +64,38 @@ export class SidebarNavigation extends LitElement {
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       border-radius: 0.75rem;
       font-size: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .logo::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transform: rotate(-45deg);
+      transition: all 0.6s ease;
+      opacity: 0;
+    }
+    
+    .logo:hover::before {
+      opacity: 1;
+      animation: shimmer 0.6s ease;
+    }
+    
+    .logo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3);
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(-45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(-45deg); }
     }
 
     .brand-text {
@@ -112,8 +143,10 @@ export class SidebarNavigation extends LitElement {
     }
 
     .sidebar-toggle:hover {
-      background: #2563eb;
-      transform: scale(1.1);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      transform: scale(1.15);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+      border-color: rgba(59, 130, 246, 0.5);
     }
 
     .sidebar-toggle svg {
@@ -191,7 +224,19 @@ export class SidebarNavigation extends LitElement {
     .nav-link:hover {
       background: rgba(148, 163, 184, 0.1);
       color: #f1f5f9;
-      transform: translateX(2px);
+      transform: translateX(4px);
+      border-left: 2px solid #3b82f6;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    }
+    
+    .nav-link:hover .nav-icon {
+      color: #60a5fa;
+      transform: scale(1.1);
+    }
+    
+    .nav-link:hover .nav-badge {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
 
     .nav-link.active {
@@ -217,6 +262,11 @@ export class SidebarNavigation extends LitElement {
       height: 20px;
       flex-shrink: 0;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      line-height: 1;
     }
 
     .nav-label {
@@ -233,7 +283,7 @@ export class SidebarNavigation extends LitElement {
     }
 
     .nav-badge {
-      background: #ef4444;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: white;
       font-size: 0.625rem;
       font-weight: 600;
@@ -245,7 +295,20 @@ export class SidebarNavigation extends LitElement {
       align-items: center;
       justify-content: center;
       opacity: 1;
-      transition: opacity 0.2s ease;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+      animation: badgePulse 2s infinite;
+    }
+    
+    @keyframes badgePulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+      }
     }
 
     :host([collapsed]) .nav-badge {
@@ -289,9 +352,17 @@ export class SidebarNavigation extends LitElement {
       align-items: center;
       gap: 0.75rem;
       padding: 0.75rem;
-      background: rgba(15, 23, 42, 0.5);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
       border-radius: 0.5rem;
-      border: 1px solid rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+    
+    .system-status:hover {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+      border-color: rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .status-indicator {
@@ -400,35 +471,26 @@ export class SidebarNavigation extends LitElement {
           id: 'dashboard',
           path: '/dashboard',
           label: 'Dashboard',
-          icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
-            <rect x="8" y="3" width="8" height="4" rx="1"/>
-          </svg>`
+          icon: '📊'
         },
         {
           id: 'agents',
           path: '/agents',
           label: 'Agents',
-          icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>`,
+          icon: '🤖',
           badge: '3'
         },
         {
           id: 'tasks',
           path: '/tasks',
           label: 'Tasks',
-          icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-          </svg>`
+          icon: '✅'
         },
         {
           id: 'system-health',
           path: '/system-health',
           label: 'System Health',
-          icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>`
+          icon: '💚'
         }
       ]
     },
@@ -443,10 +505,7 @@ export class SidebarNavigation extends LitElement {
           id: 'settings',
           path: '/settings',
           label: 'Settings',
-          icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>`
+          icon: '⚙️'
         }
       ]
     }
@@ -559,9 +618,7 @@ export class SidebarNavigation extends LitElement {
             @click=${this.handleToggle}
             aria-label="${this.collapsed ? 'Expand sidebar' : 'Collapse sidebar'}"
           >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
+${this.collapsed ? '▶' : '◀'}
           </button>
         ` : ''}
 

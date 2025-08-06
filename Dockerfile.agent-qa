@@ -1,0 +1,30 @@
+# Specialized Docker image for QA Agent
+# Extends base agent with QA-specific tools and capabilities
+
+FROM leanvibe/agent-base:latest
+
+LABEL agent.type="qa"
+LABEL agent.capabilities="test_creation,validation,quality_assurance"
+
+# Install QA-specific tools
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-asyncio \
+    pytest-cov \
+    selenium \
+    locust \
+    hypothesis
+
+# Set agent-specific environment variables  
+ENV AGENT_TYPE=qa
+ENV AGENT_ROLE="QA Agent"
+ENV AGENT_CAPABILITIES="test_creation,validation,quality_assurance,performance_testing,security_testing"
+
+# Copy QA-specific prompts and tools
+COPY app/agents/qa/ /app/agents/qa/
+
+# Health check specific to QA agent
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["python", "agents/runtime.py"]

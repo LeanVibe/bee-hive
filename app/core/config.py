@@ -118,6 +118,8 @@ class Settings(BaseSettings):
     
     # OpenAI API (Optional in sandbox mode)
     OPENAI_API_KEY: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
+    OPENAI_BASE_URL: Optional[str] = Field(default=None, env="OPENAI_BASE_URL")
+    OPENAI_MODEL: Optional[str] = Field(default=None, env="OPENAI_MODEL")
     OPENAI_EMBEDDING_MODEL: str = Field(default="text-embedding-ada-002", env="OPENAI_EMBEDDING_MODEL")
     OPENAI_EMBEDDING_MAX_TOKENS: int = Field(default=8191, env="OPENAI_EMBEDDING_MAX_TOKENS")
     OPENAI_EMBEDDING_CACHE_TTL: int = Field(default=3600, env="OPENAI_EMBEDDING_CACHE_TTL")

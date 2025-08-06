@@ -1,0 +1,28 @@
+# Specialized Docker image for Architecture Agent
+# Extends base agent with architecture-specific tools and capabilities
+
+FROM leanvibe/agent-base:latest
+
+LABEL agent.type="architect"
+LABEL agent.capabilities="system_design,architecture_review,technical_planning"
+
+# Install architecture-specific tools
+RUN pip install --no-cache-dir \
+    plantuml \
+    pygraphviz \
+    networkx \
+    matplotlib
+
+# Set agent-specific environment variables
+ENV AGENT_TYPE=architect
+ENV AGENT_ROLE="Architecture Agent"
+ENV AGENT_CAPABILITIES="system_design,architecture_review,technical_planning,integration_patterns"
+
+# Copy architecture-specific prompts and tools
+COPY app/agents/architect/ /app/agents/architect/
+
+# Health check specific to architect agent
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["python", "agents/runtime.py"]

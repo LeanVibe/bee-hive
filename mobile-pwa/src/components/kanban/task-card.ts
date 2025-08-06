@@ -22,7 +22,7 @@ function formatDistanceToNow(date: Date): string {
 @customElement('task-card')
 export class TaskCard extends LitElement {
   @property({ type: Object }) task!: Task
-  @property({ type: Boolean }) offline: boolean = false
+  @property({ type: Boolean }) offline = false
   
   static styles = css`
     :host {

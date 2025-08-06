@@ -373,7 +373,7 @@ class AgentMatcher:
             result = await session.execute(
                 select(Agent).where(
                     and_(
-                        Agent.status == AgentStatus.ACTIVE,
+                        Agent.status == AgentStatus.active,
                         Agent.capabilities.isnot(None)
                     )
                 )
@@ -548,7 +548,7 @@ class AgentMatcher:
     def _calculate_availability_score(self, agent: Agent) -> float:
         """Calculate agent availability score."""
         
-        if agent.status != AgentStatus.ACTIVE:
+        if agent.status != AgentStatus.active:
             return 0.0
             
         # Check last heartbeat
