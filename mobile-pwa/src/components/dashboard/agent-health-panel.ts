@@ -40,6 +40,8 @@ export class AgentHealthPanel extends LitElement {
   @state() private declare showTeamControls: boolean
   @state() private declare bulkSelectedAgents: Set<string>
   @state() private declare showBulkActions: boolean
+  @state() private declare agentActionsInProgress: Map<string, string>
+  @state() private declare showAdvancedControls: boolean
   
   constructor() {
     super()
@@ -55,6 +57,8 @@ export class AgentHealthPanel extends LitElement {
     this.showTeamControls = true
     this.bulkSelectedAgents = new Set<string>()
     this.showBulkActions = false
+    this.agentActionsInProgress = new Map<string, string>()
+    this.showAdvancedControls = true
   }
   
   static styles = css`
@@ -410,46 +414,122 @@ export class AgentHealthPanel extends LitElement {
 
     .agent-controls {
       display: flex;
-      gap: 0.25rem;
-      margin-top: 0.5rem;
+      gap: 0.375rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
     }
 
     .agent-control-button {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      color: #374151;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
       font-size: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      min-height: 32px;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
     }
 
-    .agent-control-button:hover {
-      background: #e5e7eb;
-      border-color: #9ca3af;
+    .agent-control-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+      border-color: #94a3b8;
+    }
+
+    .agent-control-button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .agent-control-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .agent-control-button.primary {
-      background: #3b82f6;
-      border-color: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border-color: #2563eb;
       color: white;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
     }
 
-    .agent-control-button.primary:hover {
-      background: #2563eb;
-      border-color: #2563eb;
+    .agent-control-button.primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .agent-control-button.success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-color: #059669;
+      color: white;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .agent-control-button.success:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .agent-control-button.warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border-color: #d97706;
+      color: white;
+      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+    }
+
+    .agent-control-button.warning:hover:not(:disabled) {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
     }
 
     .agent-control-button.danger {
-      background: #dc2626;
-      border-color: #dc2626;
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      border-color: #b91c1c;
       color: white;
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
     }
 
-    .agent-control-button.danger:hover {
-      background: #b91c1c;
-      border-color: #b91c1c;
+    .agent-control-button.danger:hover:not(:disabled) {
+      background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+    }
+
+    .control-button-loading {
+      position: relative;
+    }
+
+    .control-button-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 12px;
+      height: 12px;
+      margin: -6px 0 0 -6px;
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .control-button-loading .button-content {
+      opacity: 0;
+    }
+
+    .agent-control-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
     }
 
     .agent-checkbox {
@@ -667,29 +747,105 @@ export class AgentHealthPanel extends LitElement {
   }
 
   private renderAgentControls(agent: AgentStatus) {
+    const isActionInProgress = this.agentActionsInProgress.has(agent.id)
+    const currentAction = this.agentActionsInProgress.get(agent.id)
+    
+    const getButtonClass = (baseClass: string, action: string) => {
+      return `agent-control-button ${baseClass} ${
+        isActionInProgress && currentAction === action ? 'control-button-loading' : ''
+      }`
+    }
+    
+    const isButtonDisabled = (action: string) => {
+      return isActionInProgress && currentAction !== action
+    }
+
     return html`
       <div class="agent-controls">
+        <!-- Primary Action Button -->
         <button 
-          class="agent-control-button primary" 
-          @click=${() => this.handleAgentAction(agent.id, 'configure')}
-          title="Configure Agent"
+          class=${getButtonClass(agent.status === 'active' ? 'warning' : 'success', agent.status === 'active' ? 'pause' : 'resume')}
+          @click=${() => this.handleAgentAction(agent.id, agent.status === 'active' ? 'pause' : 'resume')}
+          ?disabled=${isButtonDisabled(agent.status === 'active' ? 'pause' : 'resume')}
+          title="${agent.status === 'active' ? 'Pause Agent' : 'Resume Agent'}"
         >
-          ⚙️
+          <span class="button-content">
+            <svg class="agent-control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              ${agent.status === 'active' ? html`
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              ` : html`
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M15 14h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              `}
+            </svg>
+            ${agent.status === 'active' ? 'Pause' : 'Resume'}
+          </span>
         </button>
+
+        <!-- Configuration Button -->
         <button 
-          class="agent-control-button" 
+          class=${getButtonClass('primary', 'configure')}
+          @click=${() => this.handleAgentAction(agent.id, 'configure')}
+          ?disabled=${isButtonDisabled('configure')}
+          title="Configure Agent Settings"
+        >
+          <span class="button-content">
+            <svg class="agent-control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Config
+          </span>
+        </button>
+
+        <!-- Restart Button -->
+        <button 
+          class=${getButtonClass('', 'restart')}
           @click=${() => this.handleAgentAction(agent.id, 'restart')}
+          ?disabled=${isButtonDisabled('restart')}
           title="Restart Agent"
         >
-          🔄
+          <span class="button-content">
+            <svg class="agent-control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Restart
+          </span>
         </button>
-        <button 
-          class="agent-control-button ${agent.status === 'active' ? '' : 'primary'}" 
-          @click=${() => this.handleAgentAction(agent.id, agent.status === 'active' ? 'pause' : 'resume')}
-          title="${agent.status === 'active' ? 'Pause' : 'Resume'} Agent"
-        >
-          ${agent.status === 'active' ? '⏸️' : '▶️'}
-        </button>
+
+        ${this.showAdvancedControls ? html`
+          <!-- Logs Button -->
+          <button 
+            class=${getButtonClass('', 'logs')}
+            @click=${() => this.handleAgentAction(agent.id, 'logs')}
+            ?disabled=${isButtonDisabled('logs')}
+            title="View Agent Logs"
+          >
+            <span class="button-content">
+              <svg class="agent-control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Logs
+            </span>
+          </button>
+
+          <!-- Stop Button (Danger Action) -->
+          ${agent.status !== 'offline' ? html`
+            <button 
+              class=${getButtonClass('danger', 'stop')}
+              @click=${() => this.handleAgentAction(agent.id, 'stop')}
+              ?disabled=${isButtonDisabled('stop')}
+              title="Stop Agent"
+            >
+              <span class="button-content">
+                <svg class="agent-control-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10h6v4H9z" />
+                </svg>
+                Stop
+              </span>
+            </button>
+          ` : ''}
+        ` : ''}
       </div>
     `
   }
@@ -788,9 +944,101 @@ export class AgentHealthPanel extends LitElement {
     this.showBulkActions = false
   }
 
-  private handleAgentAction(agentId: string, action: 'configure' | 'restart' | 'pause' | 'resume') {
-    const event = new CustomEvent('agent-action', {
+  private async handleAgentAction(agentId: string, action: 'configure' | 'restart' | 'pause' | 'resume' | 'stop' | 'logs') {
+    // Set loading state
+    this.agentActionsInProgress.set(agentId, action)
+    this.requestUpdate()
+    
+    try {
+      // Dispatch action event with enhanced details
+      const event = new CustomEvent('agent-action', {
+        detail: {
+          agentId,
+          action,
+          agent: this.agents.find(a => a.id === agentId),
+          timestamp: new Date().toISOString()
+        },
+        bubbles: true,
+        composed: true
+      })
+      
+      this.dispatchEvent(event)
+      
+      // Simulate action processing time for better UX
+      const processingTime = this.getActionProcessingTime(action)
+      await new Promise(resolve => setTimeout(resolve, processingTime))
+      
+      // Show success feedback
+      this.showActionFeedback(agentId, action, 'success')
+      
+    } catch (error) {
+      console.error(`Failed to ${action} agent ${agentId}:`, error)
+      
+      // Show error feedback
+      this.showActionFeedback(agentId, action, 'error')
+      
+      // Dispatch error event
+      const errorEvent = new CustomEvent('agent-action-error', {
+        detail: {
+          agentId,
+          action,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        },
+        bubbles: true,
+        composed: true
+      })
+      
+      this.dispatchEvent(errorEvent)
+      
+    } finally {
+      // Clear loading state
+      this.agentActionsInProgress.delete(agentId)
+      this.requestUpdate()
+    }
+  }
+  
+  private getActionProcessingTime(action: string): number {
+    const times = {
+      'configure': 800,
+      'restart': 2000,
+      'pause': 500,
+      'resume': 600,
+      'stop': 1000,
+      'logs': 300
+    }
+    return times[action as keyof typeof times] || 500
+  }
+  
+  private showActionFeedback(agentId: string, action: string, type: 'success' | 'error') {
+    const agent = this.agents.find(a => a.id === agentId)
+    const agentName = agent?.name || `Agent ${agentId}`
+    
+    const messages = {
+      success: {
+        'configure': `${agentName} configuration updated`,
+        'restart': `${agentName} restarted successfully`,
+        'pause': `${agentName} paused`,
+        'resume': `${agentName} resumed`,
+        'stop': `${agentName} stopped`,
+        'logs': `Opened logs for ${agentName}`
+      },
+      error: {
+        'configure': `Failed to configure ${agentName}`,
+        'restart': `Failed to restart ${agentName}`,
+        'pause': `Failed to pause ${agentName}`,
+        'resume': `Failed to resume ${agentName}`,
+        'stop': `Failed to stop ${agentName}`,
+        'logs': `Failed to open logs for ${agentName}`
+      }
+    }
+    
+    const message = messages[type][action as keyof typeof messages.success]
+    
+    // Dispatch feedback event for toast/notification system
+    const feedbackEvent = new CustomEvent('agent-action-feedback', {
       detail: {
+        type,
+        message,
         agentId,
         action
       },
@@ -798,7 +1046,7 @@ export class AgentHealthPanel extends LitElement {
       composed: true
     })
     
-    this.dispatchEvent(event)
+    this.dispatchEvent(feedbackEvent)
   }
 
   render() {

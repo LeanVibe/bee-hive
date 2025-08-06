@@ -1,5 +1,5 @@
 import { LitElement, html, css, svg } from 'lit'
-import { customElement, property } from 'lit/decorators.js'
+import { customElement, property, state } from 'lit/decorators.js'
 
 export interface SparklineDataPoint {
   value: number
@@ -18,6 +18,15 @@ export class SparklineChart extends LitElement {
   @property({ type: Boolean }) declare showDots: boolean
   @property({ type: Number }) declare strokeWidth: number
   @property({ type: String }) declare label: string
+  @property({ type: Boolean }) declare interactive: boolean
+  @property({ type: Boolean }) declare realtime: boolean
+  @property({ type: String }) declare animationType: 'none' | 'fade' | 'slide' | 'pulse'
+  @property({ type: Number }) declare updateInterval: number
+  
+  @state() private declare hoveredPoint: number | null
+  @state() private declare tooltipVisible: boolean
+  @state() private declare tooltipPosition: { x: number; y: number }
+  @state() private declare isAnimating: boolean
   
   constructor() {
     super()
@@ -32,6 +41,14 @@ export class SparklineChart extends LitElement {
     this.showDots = false
     this.strokeWidth = 2
     this.label = ''
+    this.interactive = true
+    this.realtime = false
+    this.animationType = 'slide'
+    this.updateInterval = 1000
+    this.hoveredPoint = null
+    this.tooltipVisible = false
+    this.tooltipPosition = { x: 0, y: 0 }
+    this.isAnimating = false
   }
   
   static styles = css`
@@ -97,10 +114,209 @@ export class SparklineChart extends LitElement {
       r: 3;
     }
     
+    /* Interactive enhancements */
+    .sparkline-interactive {
+      cursor: crosshair;
+    }
+    
+    .sparkline-tooltip {
+      position: absolute;
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transform: translate(-50%, -100%);
+      margin-top: -8px;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    
+    .sparkline-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: #1f2937;
+    }
+    
+    .sparkline-tooltip.visible {
+      opacity: 1;
+      transform: translate(-50%, -100%) translateY(-2px);
+    }
+    
+    .sparkline-hover-line {
+      stroke: rgba(59, 130, 246, 0.3);
+      stroke-width: 1;
+      stroke-dasharray: 2, 2;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .sparkline-hover-line.visible {
+      opacity: 1;
+    }
+    
+    .sparkline-hover-dot {
+      fill: #3b82f6;
+      stroke: white;
+      stroke-width: 2;
+      opacity: 0;
+      transition: opacity 0.2s ease, r 0.2s ease;
+      r: 4;
+    }
+    
+    .sparkline-hover-dot.visible {
+      opacity: 1;
+    }
+    
+    /* Animation styles */
+    .sparkline-animate-slide .sparkline-path {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: drawLine 1s ease-out forwards;
+    }
+    
+    .sparkline-animate-fade {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .sparkline-animate-pulse .sparkline-path {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes drawLine {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+    
+    /* Real-time update effects */
+    .sparkline-realtime .sparkline-path {
+      transition: d 0.3s ease-out;
+    }
+    
+    .sparkline-realtime .sparkline-area {
+      transition: d 0.3s ease-out;
+    }
+    
+    .sparkline-new-data-point {
+      animation: newPointGlow 0.6s ease-out;
+    }
+    
+    @keyframes newPointGlow {
+      0% {
+        opacity: 0;
+        r: 8;
+        fill: #10b981;
+      }
+      50% {
+        opacity: 1;
+        r: 6;
+        fill: #10b981;
+      }
+      100% {
+        opacity: 1;
+        r: 2.5;
+        fill: currentColor;
+      }
+    }
+    
+    /* Trend indicators */
+    .trend-indicator {
+      position: absolute;
+      top: -16px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+    
+    .trend-indicator.up {
+      color: #10b981;
+    }
+    
+    .trend-indicator.down {
+      color: #ef4444;
+    }
+    
+    .trend-indicator.stable {
+      color: #6b7280;
+    }
+    
+    .trend-arrow {
+      width: 10px;
+      height: 10px;
+    }
+    
     @media (max-width: 768px) {
       .sparkline-label,
-      .sparkline-value {
+      .sparkline-value,
+      .trend-indicator {
         font-size: 0.6875rem;
+      }
+      
+      .sparkline-tooltip {
+        font-size: 0.6875rem;
+        padding: 0.375rem 0.5rem;
+      }
+      
+      .sparkline-interactive {
+        cursor: pointer;
+      }
+    }
+    
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+      .sparkline-tooltip {
+        background: #000000;
+        border: 2px solid #ffffff;
+      }
+      
+      .sparkline-hover-line {
+        stroke: #ffffff;
+        stroke-width: 2;
+      }
+    }
+    
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .sparkline-path,
+      .sparkline-area,
+      .sparkline-dot,
+      .sparkline-tooltip,
+      .sparkline-hover-line,
+      .sparkline-hover-dot {
+        animation: none;
+        transition: none;
       }
     }
   `
@@ -173,10 +389,170 @@ export class SparklineChart extends LitElement {
     }
   }
   
+  private get trend(): 'up' | 'down' | 'stable' {
+    if (this.data.length < 2) return 'stable'
+    
+    const current = this.data[this.data.length - 1].value
+    const previous = this.data[this.data.length - 2].value
+    const change = ((current - previous) / previous) * 100
+    
+    if (Math.abs(change) < 1) return 'stable'
+    return change > 0 ? 'up' : 'down'
+  }
+  
+  private get trendPercentage(): string {
+    if (this.data.length < 2) return '0%'
+    
+    const current = this.data[this.data.length - 1].value
+    const previous = this.data[this.data.length - 2].value
+    const change = ((current - previous) / previous) * 100
+    
+    return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`
+  }
+  
+  // Interactive methods
+  private handleMouseMove(event: MouseEvent) {
+    if (!this.interactive || this.data.length === 0) return
+    
+    const rect = (event.currentTarget as SVGElement).getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const dataIndex = Math.round((x / this.width) * (this.data.length - 1))
+    
+    if (dataIndex >= 0 && dataIndex < this.data.length && dataIndex !== this.hoveredPoint) {
+      this.hoveredPoint = dataIndex
+      this.tooltipPosition = { x: event.clientX, y: event.clientY }
+      this.tooltipVisible = true
+    }
+  }
+  
+  private handleMouseLeave() {
+    this.hoveredPoint = null
+    this.tooltipVisible = false
+  }
+  
+  private handleClick(event: MouseEvent) {
+    if (!this.interactive || this.hoveredPoint === null) return
+    
+    const dataPoint = this.data[this.hoveredPoint]
+    
+    const clickEvent = new CustomEvent('sparkline-point-click', {
+      detail: {
+        point: dataPoint,
+        index: this.hoveredPoint,
+        value: dataPoint.value,
+        timestamp: dataPoint.timestamp
+      },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(clickEvent)
+  }
+  
+  private getTooltipContent(): string {
+    if (this.hoveredPoint === null) return ''
+    
+    const point = this.data[this.hoveredPoint]
+    const formattedValue = this.formatValue(point.value)
+    
+    if (point.timestamp) {
+      const date = new Date(point.timestamp)
+      const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      return `${formattedValue} at ${timeString}`
+    }
+    
+    return point.label ? `${point.label}: ${formattedValue}` : formattedValue
+  }
+  
+  private getTrendIcon() {
+    const trend = this.trend
+    switch (trend) {
+      case 'up':
+        return html`
+          <svg class="trend-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>
+          </svg>
+        `
+      case 'down':
+        return html`
+          <svg class="trend-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 7l-9.2 9.2M7 7v10h10"/>
+          </svg>
+        `
+      case 'stable':
+      default:
+        return html`
+          <svg class="trend-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>
+          </svg>
+        `
+    }
+  }
+  
+  private getAnimationClass(): string {
+    if (this.animationType === 'none') return ''
+    return `sparkline-animate-${this.animationType}`
+  }
+  
+  private getContainerClass(): string {
+    const classes = ['sparkline-container']
+    
+    if (this.interactive) classes.push('sparkline-interactive')
+    if (this.realtime) classes.push('sparkline-realtime')
+    if (this.animationType !== 'none') classes.push(this.getAnimationClass())
+    
+    return classes.join(' ')
+  }
+  
+  // Lifecycle methods for real-time updates
+  connectedCallback() {
+    super.connectedCallback()
+    
+    if (this.realtime && this.updateInterval > 0) {
+      this.startRealtimeUpdates()
+    }
+  }
+  
+  disconnectedCallback() {
+    super.disconnectedCallback()
+    this.stopRealtimeUpdates()
+  }
+  
+  private realtimeTimer: number | null = null
+  
+  private startRealtimeUpdates() {
+    this.stopRealtimeUpdates()
+    
+    this.realtimeTimer = window.setInterval(() => {
+      this.dispatchUpdateRequest()
+    }, this.updateInterval)
+  }
+  
+  private stopRealtimeUpdates() {
+    if (this.realtimeTimer) {
+      clearInterval(this.realtimeTimer)
+      this.realtimeTimer = null
+    }
+  }
+  
+  private dispatchUpdateRequest() {
+    const updateEvent = new CustomEvent('sparkline-update-request', {
+      detail: {
+        chartId: this.id || 'sparkline',
+        lastDataPoint: this.data[this.data.length - 1],
+        dataLength: this.data.length
+      },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(updateEvent)
+  }
+  
   render() {
     if (this.data.length === 0) {
       return html`
-        <div class="sparkline-container" style="width: ${this.width}px; height: ${this.height}px;">
+        <div class="${this.getContainerClass()}" style="width: ${this.width}px; height: ${this.height}px;">
           ${this.label ? html`<div class="sparkline-label">${this.label}</div>` : ''}
           <svg class="sparkline-svg" viewBox="0 0 ${this.width} ${this.height}">
             <line 
@@ -195,12 +571,27 @@ export class SparklineChart extends LitElement {
     }
     
     const points = this.normalizedData
+    const hoveredPoint = this.hoveredPoint !== null ? points[this.hoveredPoint] : null
     
     return html`
-      <div class="sparkline-container" style="width: ${this.width}px; height: ${this.height}px;">
+      <div class="${this.getContainerClass()}" style="width: ${this.width}px; height: ${this.height}px;">
         ${this.label ? html`<div class="sparkline-label">${this.label}</div>` : ''}
         
-        <svg class="sparkline-svg" viewBox="0 0 ${this.width} ${this.height}">
+        <!-- Trend indicator -->
+        ${this.data.length >= 2 ? html`
+          <div class="trend-indicator ${this.trend}">
+            ${this.getTrendIcon()}
+            ${this.trendPercentage}
+          </div>
+        ` : ''}
+        
+        <svg 
+          class="sparkline-svg" 
+          viewBox="0 0 ${this.width} ${this.height}"
+          @mousemove=${this.handleMouseMove}
+          @mouseleave=${this.handleMouseLeave}
+          @click=${this.handleClick}
+        >
           <!-- Area fill -->
           ${this.showArea ? svg`
             <path
@@ -218,10 +609,21 @@ export class SparklineChart extends LitElement {
             stroke-width="${this.strokeWidth}"
           />
           
+          <!-- Hover line -->
+          ${this.interactive && hoveredPoint ? svg`
+            <line
+              class="sparkline-hover-line visible"
+              x1="${hoveredPoint.x}"
+              y1="0"
+              x2="${hoveredPoint.x}"
+              y2="${this.height}"
+            />
+          ` : ''}
+          
           <!-- Data points -->
           ${this.showDots ? points.map((point, index) => svg`
             <circle
-              class="sparkline-dot"
+              class="sparkline-dot ${index === this.hoveredPoint ? 'visible' : ''}"
               cx="${point.x}"
               cy="${point.y}"
               r="2"
@@ -229,9 +631,19 @@ export class SparklineChart extends LitElement {
             />
           `) : ''}
           
-          <!-- Last point (always visible) -->
+          <!-- Hovered point -->
+          ${this.interactive && hoveredPoint ? svg`
+            <circle
+              class="sparkline-hover-dot visible"
+              cx="${hoveredPoint.x}"
+              cy="${hoveredPoint.y}"
+            />
+          ` : ''}
+          
+          <!-- Last point (always visible with potential animation) -->
           ${points.length > 0 ? svg`
             <circle
+              class="${this.realtime ? 'sparkline-new-data-point' : ''}"
               cx="${points[points.length - 1].x}"
               cy="${points[points.length - 1].y}"
               r="2.5"
@@ -241,6 +653,16 @@ export class SparklineChart extends LitElement {
             />
           ` : ''}
         </svg>
+        
+        <!-- Interactive tooltip -->
+        ${this.interactive && this.tooltipVisible ? html`
+          <div 
+            class="sparkline-tooltip visible"
+            style="left: ${this.tooltipPosition.x}px; top: ${this.tooltipPosition.y}px;"
+          >
+            ${this.getTooltipContent()}
+          </div>
+        ` : ''}
         
         <div class="sparkline-value">${this.formatValue(this.currentValue)}</div>
       </div>

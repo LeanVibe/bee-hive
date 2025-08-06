@@ -33,6 +33,11 @@ export class DashboardView extends LitElement {
   @state() private declare lastSync: Date | null
   @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events'
   @state() private declare servicesInitialized: boolean
+  @state() private declare wsConnected: boolean
+  @state() private declare realtimeEnabled: boolean
+  @state() private declare connectionQuality: 'excellent' | 'good' | 'poor' | 'offline'
+  @state() private declare updateQueue: any[]
+  @state() private declare lastUpdateTimestamp: Date | null
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
@@ -82,6 +87,19 @@ export class DashboardView extends LitElement {
       display: flex;
       align-items: center;
       gap: 0.375rem;
+      min-height: 44px;
+      position: relative;
+    }
+    
+    .tab-button:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px rgba(59, 130, 246, 0.2);
+      z-index: 1;
+    }
+    
+    .tab-button:focus-visible {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
     }
     
     .tab-button:hover {
@@ -326,6 +344,178 @@ export class DashboardView extends LitElement {
         height: calc(100vh - 100px);
       }
     }
+    
+    /* Accessibility utilities */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 6px;
+      background: #000;
+      color: #fff;
+      padding: 8px;
+      text-decoration: none;
+      border-radius: 4px;
+      z-index: 9999;
+    }
+    
+    .skip-link:focus {
+      top: 6px;
+    }
+    
+    /* Real-time update indicators */
+    .realtime-indicator {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .realtime-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .realtime-indicator.active .realtime-pulse {
+      opacity: 1;
+      animation: realtimePulse 2s ease-in-out;
+    }
+    
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+    
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+    
+    .connection-dot.excellent {
+      background: #10b981;
+      box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+    }
+    
+    .connection-dot.good {
+      background: #f59e0b;
+      box-shadow: 0 0 4px rgba(245, 158, 11, 0.5);
+    }
+    
+    .connection-dot.poor {
+      background: #ef4444;
+      box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+    }
+    
+    .connection-dot.offline {
+      background: #6b7280;
+    }
+    
+    .update-queue-indicator {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 600;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.2s ease;
+    }
+    
+    .update-queue-indicator.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .realtime-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: 1rem;
+    }
+    
+    .realtime-toggle {
+      background: none;
+      border: 1px solid #d1d5db;
+      color: #374151;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .realtime-toggle.active {
+      background: #10b981;
+      border-color: #10b981;
+      color: white;
+    }
+    
+    .realtime-toggle:hover {
+      border-color: #9ca3af;
+    }
+    
+    @keyframes realtimePulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+      }
+    }
+    
+    /* High contrast mode enhancements */
+    @media (prefers-contrast: high) {
+      .tab-button {
+        border-width: 2px;
+      }
+      
+      .tab-button:focus {
+        box-shadow: 0 0 0 3px #000, 0 0 0 6px #fff;
+      }
+      
+      .tab-button.active {
+        border-color: #000;
+        background: #000;
+        color: #fff;
+      }
+      
+      .connection-dot.excellent,
+      .connection-dot.good,
+      .connection-dot.poor {
+        box-shadow: none;
+        border: 2px solid #000;
+      }
+    }
   `
   
   constructor() {
@@ -344,6 +534,11 @@ export class DashboardView extends LitElement {
     this.lastSync = null
     this.selectedView = 'overview'
     this.servicesInitialized = false
+    this.wsConnected = false
+    this.realtimeEnabled = true
+    this.connectionQuality = 'offline'
+    this.updateQueue = []
+    this.lastUpdateTimestamp = null
     
     this.websocketService = WebSocketService.getInstance()
     this.offlineService = OfflineService.getInstance()
@@ -361,17 +556,47 @@ export class DashboardView extends LitElement {
       this.offline = true
     })
     
-    // Listen for WebSocket events
+    // Enhanced WebSocket event handlers with real-time updates
+    this.websocketService.on('connected', () => {
+      this.wsConnected = true
+      this.connectionQuality = 'excellent'
+      console.log('✅ WebSocket connected - Real-time updates enabled')
+      this.makeLiveAnnouncement('Real-time updates connected')
+    })
+    
+    this.websocketService.on('disconnected', () => {
+      this.wsConnected = false
+      this.connectionQuality = 'offline'
+      console.log('❌ WebSocket disconnected - Falling back to polling')
+      this.makeLiveAnnouncement('Real-time updates disconnected')
+    })
+    
+    this.websocketService.on('connection-quality', (event: any) => {
+      this.connectionQuality = event.detail.quality || 'good'
+    })
+    
     this.websocketService.on('task-updated', (event: any) => {
-      this.handleTaskUpdate(event.detail || event)
+      this.handleRealtimeTaskUpdate(event.detail || event)
     })
     
     this.websocketService.on('task-created', (event: any) => {
-      this.handleTaskCreated(event.detail || event)
+      this.handleRealtimeTaskCreated(event.detail || event)
     })
     
     this.websocketService.on('task-deleted', (event: any) => {
-      this.handleTaskDeleted(event.detail || event)
+      this.handleRealtimeTaskDeleted(event.detail || event)
+    })
+    
+    this.websocketService.on('agent-status-changed', (event: any) => {
+      this.handleRealtimeAgentUpdate(event.detail || event)
+    })
+    
+    this.websocketService.on('system-event', (event: any) => {
+      this.handleRealtimeSystemEvent(event.detail || event)
+    })
+    
+    this.websocketService.on('metrics-updated', (event: any) => {
+      this.handleRealtimeMetricsUpdate(event.detail || event)
     })
   }
   
@@ -643,21 +868,115 @@ export class DashboardView extends LitElement {
     }
   }
   
-  private handleTaskUpdate(taskData: Task) {
+  // Enhanced real-time event handlers
+  private handleRealtimeTaskUpdate(taskData: Task) {
+    this.lastUpdateTimestamp = new Date()
+    
     const index = this.tasks.findIndex(t => t.id === taskData.id)
     if (index >= 0) {
       const updated = [...this.tasks]
       updated[index] = { ...taskData, syncStatus: 'synced' }
       this.tasks = updated
+      
+      // Announce update for screen readers
+      this.makeLiveAnnouncement(`Task "${taskData.title}" updated`)
+      
+      // Add visual update indicator
+      this.showUpdateIndicator('task-updated')
     }
   }
   
-  private handleTaskCreated(taskData: Task) {
+  private handleRealtimeTaskCreated(taskData: Task) {
+    this.lastUpdateTimestamp = new Date()
     this.tasks = [...this.tasks, { ...taskData, syncStatus: 'synced' }]
+    
+    this.makeLiveAnnouncement(`New task "${taskData.title}" created`)
+    this.showUpdateIndicator('task-created')
+  }
+  
+  private handleRealtimeTaskDeleted(taskId: string) {
+    const task = this.tasks.find(t => t.id === taskId)
+    this.tasks = this.tasks.filter(t => t.id !== taskId)
+    
+    if (task) {
+      this.makeLiveAnnouncement(`Task "${task.title}" deleted`)
+      this.showUpdateIndicator('task-deleted')
+    }
+  }
+  
+  private handleRealtimeAgentUpdate(agentData: any) {
+    this.lastUpdateTimestamp = new Date()
+    
+    const index = this.agents.findIndex(a => a.id === agentData.id)
+    if (index >= 0) {
+      const updated = [...this.agents]
+      updated[index] = this.transformAgentToUIFormat(agentData)
+      this.agents = updated
+      
+      const statusChanged = this.agents[index].status !== agentData.status
+      if (statusChanged) {
+        this.makeLiveAnnouncement(`Agent ${agentData.name} status changed to ${agentData.status}`)
+        this.showUpdateIndicator('agent-status-changed')
+      }
+    }
+  }
+  
+  private handleRealtimeSystemEvent(eventData: any) {
+    this.lastUpdateTimestamp = new Date()
+    
+    const newEvent = this.transformEventToUIFormat(eventData)
+    this.events = [newEvent, ...this.events].slice(0, 100) // Keep only latest 100 events
+    
+    if (eventData.severity === 'high' || eventData.severity === 'critical') {
+      this.makeLiveAnnouncement(`Critical system event: ${eventData.summary}`)
+      this.showUpdateIndicator('system-alert')
+    }
+  }
+  
+  private handleRealtimeMetricsUpdate(metricsData: any) {
+    this.lastUpdateTimestamp = new Date()
+    this.performanceMetrics = metricsData
+    
+    // Update health summary if included
+    if (metricsData.healthSummary) {
+      this.healthSummary = metricsData.healthSummary
+    }
+    
+    this.showUpdateIndicator('metrics-updated')
+  }
+  
+  private showUpdateIndicator(updateType: string) {
+    // Add a visual indicator that shows real-time updates
+    const indicator = this.shadowRoot?.querySelector('.realtime-indicator')
+    if (indicator) {
+      indicator.classList.add('active', updateType)
+      setTimeout(() => {
+        indicator.classList.remove('active', updateType)
+      }, 2000)
+    }
+    
+    // Add to update queue for batching
+    this.updateQueue.push({
+      type: updateType,
+      timestamp: new Date(),
+      id: Math.random().toString(36).substr(2, 9)
+    })
+    
+    // Keep only recent updates
+    this.updateQueue = this.updateQueue.slice(-10)
+  }
+  
+  // Legacy handlers for backward compatibility
+  private handleTaskUpdate(taskData: Task) {
+    this.handleRealtimeTaskUpdate(taskData)
+  }
+  
+  private handleTaskCreated(taskData: Task) {
+    this.handleRealtimeTaskCreated(taskData)
   }
   
   private handleTaskDeleted(taskId: string) {
-    this.tasks = this.tasks.filter(t => t.id !== taskId)
+    this.handleRealtimeTaskDeleted(taskId)
   }
   
   private handleTaskClick(event: CustomEvent) {
@@ -689,6 +1008,84 @@ export class DashboardView extends LitElement {
     }
     
     return 'Not synced'
+  }
+  
+  // Accessibility and keyboard navigation methods
+  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events') {
+    this.selectedView = view
+    this.announceViewChange(view)
+  }
+  
+  private handleTabKeydown(event: KeyboardEvent) {
+    const tabs = this.shadowRoot?.querySelectorAll('[role="tab"]') as NodeListOf<HTMLElement>
+    if (!tabs) return
+    
+    const currentIndex = Array.from(tabs).findIndex(tab => tab.getAttribute('aria-selected') === 'true')
+    let newIndex = currentIndex
+    
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        event.preventDefault()
+        newIndex = (currentIndex + 1) % tabs.length
+        break
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        event.preventDefault()
+        newIndex = (currentIndex - 1 + tabs.length) % tabs.length
+        break
+      case 'Home':
+        event.preventDefault()
+        newIndex = 0
+        break
+      case 'End':
+        event.preventDefault()
+        newIndex = tabs.length - 1
+        break
+      case 'Enter':
+      case ' ':
+        event.preventDefault()
+        const view = tabs[currentIndex].getAttribute('aria-controls')?.replace('-panel', '') as any
+        if (view) this.handleTabClick(view)
+        return
+      default:
+        return
+    }
+    
+    // Update focus and selection
+    tabs[currentIndex].setAttribute('tabindex', '-1')
+    tabs[currentIndex].setAttribute('aria-selected', 'false')
+    tabs[newIndex].setAttribute('tabindex', '0')
+    tabs[newIndex].setAttribute('aria-selected', 'true')
+    tabs[newIndex].focus()
+    
+    // Update selected view
+    const newView = tabs[newIndex].getAttribute('aria-controls')?.replace('-panel', '') as any
+    if (newView) {
+      this.selectedView = newView
+      this.announceViewChange(newView)
+    }
+  }
+  
+  private announceViewChange(view: string) {
+    const viewNames = {
+      overview: 'Overview dashboard',
+      kanban: 'Task management board',
+      agents: 'Agent health and management',
+      events: 'System events timeline'
+    }
+    
+    const announcement = `Switched to ${viewNames[view as keyof typeof viewNames] || view} view`
+    
+    // Create a live region announcement
+    const announcer = document.createElement('div')
+    announcer.setAttribute('aria-live', 'polite')
+    announcer.setAttribute('aria-atomic', 'true')
+    announcer.className = 'sr-only'
+    announcer.textContent = announcement
+    
+    document.body.appendChild(announcer)
+    setTimeout(() => document.body.removeChild(announcer), 1000)
   }
   
   private get dashboardSummary() {
@@ -728,57 +1125,69 @@ export class DashboardView extends LitElement {
     const summary = this.dashboardSummary
     
     return html`
-      <div class="overview-summary">
-        <div class="summary-card">
-          <div class="summary-value">${summary.activeTasks}</div>
-          <div class="summary-label">Active Tasks</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value">${summary.completedTasks}</div>
-          <div class="summary-label">Completed Tasks</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value">${summary.activeAgents}</div>
-          <div class="summary-label">Active Agents</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value" style="color: ${summary.systemStatus === 'healthy' ? '#10b981' : summary.systemStatus === 'degraded' ? '#f59e0b' : '#ef4444'}">${summary.systemStatus.toUpperCase()}</div>
-          <div class="summary-label">System Health</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value">${Math.round(summary.cpuUsage)}%</div>
-          <div class="summary-label">CPU Usage</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value">${Math.round(summary.memoryUsage)}%</div>
-          <div class="summary-label">Memory Usage</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value">${summary.recentEvents}</div>
-          <div class="summary-label">Recent Events</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-value">${summary.healthyComponents}</div>
-          <div class="summary-label">Healthy Components</div>
-        </div>
-      </div>
-      
-      <div class="overview-panels">
-        <div class="panel-section">
-          <agent-health-panel 
-            .agents=${this.agents}
-            .compact=${true}
-            @refresh-agents=${this.handleRefresh}
-          ></agent-health-panel>
-        </div>
+      <div id="overview-panel" role="tabpanel" aria-labelledby="overview-tab">
+        <h2 class="sr-only">Dashboard Overview</h2>
         
-        <div class="panel-section">
-          <event-timeline
-            .events=${this.events}
-            .maxEvents=${20}
-            .realtime=${!this.offline}
-            .compact=${true}
-          ></event-timeline>
+        <section class="overview-summary" aria-label="System metrics summary" role="region">
+          <div class="summary-card" role="img" aria-label="Active tasks: ${summary.activeTasks}">
+            <div class="summary-value" aria-hidden="true">${summary.activeTasks}</div>
+            <div class="summary-label">Active Tasks</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="Completed tasks: ${summary.completedTasks}">
+            <div class="summary-value" aria-hidden="true">${summary.completedTasks}</div>
+            <div class="summary-label">Completed Tasks</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="Active agents: ${summary.activeAgents}">
+            <div class="summary-value" aria-hidden="true">${summary.activeAgents}</div>
+            <div class="summary-label">Active Agents</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="System health: ${summary.systemStatus}">
+            <div class="summary-value" 
+                 style="color: ${summary.systemStatus === 'healthy' ? '#10b981' : summary.systemStatus === 'degraded' ? '#f59e0b' : '#ef4444'}"
+                 aria-hidden="true">
+              ${summary.systemStatus.toUpperCase()}
+            </div>
+            <div class="summary-label">System Health</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="CPU usage: ${Math.round(summary.cpuUsage)} percent">
+            <div class="summary-value" aria-hidden="true">${Math.round(summary.cpuUsage)}%</div>
+            <div class="summary-label">CPU Usage</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="Memory usage: ${Math.round(summary.memoryUsage)} percent">
+            <div class="summary-value" aria-hidden="true">${Math.round(summary.memoryUsage)}%</div>
+            <div class="summary-label">Memory Usage</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="Recent events: ${summary.recentEvents}">
+            <div class="summary-value" aria-hidden="true">${summary.recentEvents}</div>
+            <div class="summary-label">Recent Events</div>
+          </div>
+          <div class="summary-card" role="img" aria-label="Healthy components: ${summary.healthyComponents}">
+            <div class="summary-value" aria-hidden="true">${summary.healthyComponents}</div>
+            <div class="summary-label">Healthy Components</div>
+          </div>
+        </section>
+        
+        <div class="overview-panels">
+          <section class="panel-section" aria-label="Agent health status">
+            <agent-health-panel 
+              .agents=${this.agents}
+              .compact=${true}
+              @refresh-agents=${this.handleRefresh}
+              role="region"
+              aria-label="Agent health and status information"
+            ></agent-health-panel>
+          </section>
+          
+          <section class="panel-section" aria-label="System events timeline">
+            <event-timeline
+              .events=${this.events}
+              .maxEvents=${20}
+              .realtime=${!this.offline}
+              .compact=${true}
+              role="region"
+              aria-label="Recent system events and activities"
+            ></event-timeline>
+          </section>
         </div>
       </div>
     `
@@ -786,7 +1195,8 @@ export class DashboardView extends LitElement {
   
   private renderKanbanView() {
     return html`
-      <div style="height: calc(100vh - 140px); padding: 0;">
+      <div id="kanban-panel" role="tabpanel" aria-labelledby="kanban-tab" style="height: calc(100vh - 140px); padding: 0;">
+        <h2 class="sr-only">Task Management Board</h2>
         <kanban-board
           .tasks=${this.tasks}
           .offline=${this.offline}
@@ -795,6 +1205,8 @@ export class DashboardView extends LitElement {
           @tasks-updated=${(e: CustomEvent) => {
             this.tasks = e.detail.tasks
           }}
+          role="application"
+          aria-label="Kanban task management board with drag and drop functionality"
         ></kanban-board>
       </div>
     `
@@ -802,14 +1214,18 @@ export class DashboardView extends LitElement {
   
   private renderAgentsView() {
     return html`
-      <div style="height: calc(100vh - 140px); padding: 1rem;">
+      <div id="agents-panel" role="tabpanel" aria-labelledby="agents-tab" style="height: calc(100vh - 140px); padding: 1rem;">
+        <h2 class="sr-only">Agent Health and Management</h2>
         <agent-health-panel 
           .agents=${this.agents}
           .compact=${false}
           @refresh-agents=${this.handleRefresh}
           @agent-selected=${(e: CustomEvent) => {
             console.log('Agent selected:', e.detail.agent)
+            this.announceAgentSelection(e.detail.agent)
           }}
+          role="region"
+          aria-label="Detailed agent health monitoring and management controls"
         ></agent-health-panel>
       </div>
     `
@@ -817,7 +1233,8 @@ export class DashboardView extends LitElement {
   
   private renderEventsView() {
     return html`
-      <div style="height: calc(100vh - 140px);">
+      <div id="events-panel" role="tabpanel" aria-labelledby="events-tab" style="height: calc(100vh - 140px);">
+        <h2 class="sr-only">System Events Timeline</h2>
         <event-timeline
           .events=${this.events}
           .maxEvents=${100}
@@ -825,10 +1242,57 @@ export class DashboardView extends LitElement {
           .compact=${false}
           @event-selected=${(e: CustomEvent) => {
             console.log('Event selected:', e.detail.event)
+            this.announceEventSelection(e.detail.event)
           }}
+          role="log"
+          aria-label="System events and activities timeline"
+          aria-live="polite"
         ></event-timeline>
       </div>
     `
+  }
+  
+  private announceAgentSelection(agent: any) {
+    const announcement = `Agent ${agent.name} selected. Status: ${agent.status}. Performance: ${agent.performance?.score || 'unknown'}%`
+    this.makeLiveAnnouncement(announcement)
+  }
+  
+  private announceEventSelection(event: any) {
+    const announcement = `Event selected: ${event.title}. Type: ${event.type}. Time: ${new Date(event.timestamp).toLocaleTimeString()}`
+    this.makeLiveAnnouncement(announcement)
+  }
+  
+  private makeLiveAnnouncement(message: string) {
+    const liveRegion = this.shadowRoot?.querySelector('#live-region')
+    if (liveRegion) {
+      liveRegion.textContent = message
+      setTimeout(() => {
+        liveRegion.textContent = ''
+      }, 3000)
+    }
+  }
+  
+  private toggleRealtime() {
+    this.realtimeEnabled = !this.realtimeEnabled
+    
+    if (this.realtimeEnabled) {
+      // Re-enable WebSocket if offline
+      if (!this.wsConnected && !this.offline) {
+        this.websocketService.connect()
+      }
+      this.makeLiveAnnouncement('Real-time updates enabled')
+    } else {
+      this.makeLiveAnnouncement('Real-time updates paused')
+    }
+    
+    // Dispatch event for other components
+    const toggleEvent = new CustomEvent('realtime-toggled', {
+      detail: { enabled: this.realtimeEnabled },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(toggleEvent)
   }
   
   private renderCurrentView() {
@@ -867,16 +1331,52 @@ export class DashboardView extends LitElement {
           </h1>
           
           <div style="display: flex; align-items: center; gap: 1rem;">
+            <!-- Connection Status -->
+            <div class="connection-status">
+              <div class="connection-dot ${this.connectionQuality}"></div>
+              ${this.wsConnected ? 'Live' : 'Offline'}
+              ${this.lastUpdateTimestamp ? html`
+                <span title="Last update: ${this.lastUpdateTimestamp.toLocaleTimeString()}">
+                  • ${Math.floor((Date.now() - this.lastUpdateTimestamp.getTime()) / 1000)}s ago
+                </span>
+              ` : ''}
+            </div>
+            
+            <!-- Real-time Indicator -->
+            <div class="realtime-indicator">
+              <div class="realtime-pulse"></div>
+              ${this.updateQueue.length > 0 ? html`
+                <div class="update-queue-indicator visible" title="${this.updateQueue.length} recent updates">
+                  ${this.updateQueue.length}
+                </div>
+              ` : ''}
+            </div>
+            
+            <!-- Sync Status -->
             <div class="sync-status">
               <div class="sync-indicator ${this.offline ? 'offline' : ''}"></div>
               ${this.syncStatusText}
             </div>
             
+            <!-- Real-time Controls -->
+            <div class="realtime-controls">
+              <button
+                class="realtime-toggle ${this.realtimeEnabled ? 'active' : ''}"
+                @click=${this.toggleRealtime}
+                title="${this.realtimeEnabled ? 'Disable' : 'Enable'} real-time updates"
+                aria-label="${this.realtimeEnabled ? 'Disable' : 'Enable'} real-time updates"
+              >
+                ${this.realtimeEnabled ? '🔴 Live' : '⏸️ Paused'}
+              </button>
+            </div>
+            
+            <!-- Refresh Button -->
             <button
               class="refresh-button ${this.isLoading ? 'spinning' : ''}"
               @click=${this.handleRefresh}
               ?disabled=${this.isLoading}
-              title="Refresh data"
+              title="Refresh data manually"
+              aria-label="Refresh dashboard data"
             >
               <svg class="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -885,12 +1385,17 @@ export class DashboardView extends LitElement {
           </div>
         </div>
         
-        <div class="view-tabs">
+        <div class="view-tabs" role="tablist" aria-label="Dashboard navigation">
           <button 
             class="tab-button ${this.selectedView === 'overview' ? 'active' : ''}"
-            @click=${() => this.selectedView = 'overview'}
+            role="tab"
+            aria-selected=${this.selectedView === 'overview'}
+            aria-controls="overview-panel"
+            tabindex=${this.selectedView === 'overview' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('overview')}
+            @keydown=${this.handleTabKeydown}
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
             Overview
@@ -898,9 +1403,14 @@ export class DashboardView extends LitElement {
           
           <button 
             class="tab-button ${this.selectedView === 'kanban' ? 'active' : ''}"
-            @click=${() => this.selectedView = 'kanban'}
+            role="tab"
+            aria-selected=${this.selectedView === 'kanban'}
+            aria-controls="kanban-panel"
+            tabindex=${this.selectedView === 'kanban' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('kanban')}
+            @keydown=${this.handleTabKeydown}
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
             Tasks
@@ -908,9 +1418,14 @@ export class DashboardView extends LitElement {
           
           <button 
             class="tab-button ${this.selectedView === 'agents' ? 'active' : ''}"
-            @click=${() => this.selectedView = 'agents'}
+            role="tab"
+            aria-selected=${this.selectedView === 'agents'}
+            aria-controls="agents-panel"
+            tabindex=${this.selectedView === 'agents' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('agents')}
+            @keydown=${this.handleTabKeydown}
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             Agents
@@ -918,9 +1433,14 @@ export class DashboardView extends LitElement {
           
           <button 
             class="tab-button ${this.selectedView === 'events' ? 'active' : ''}"
-            @click=${() => this.selectedView = 'events'}
+            role="tab"
+            aria-selected=${this.selectedView === 'events'}
+            aria-controls="events-panel"
+            tabindex=${this.selectedView === 'events' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('events')}
+            @keydown=${this.handleTabKeydown}
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Events
@@ -939,9 +1459,17 @@ export class DashboardView extends LitElement {
         </div>
       ` : ''}
       
-      <div class="dashboard-content">
-        ${this.renderCurrentView()}
-      </div>
+      <main class="dashboard-content" role="main">
+        <!-- Skip link for keyboard navigation -->
+        <a href="#main-content" class="skip-link">Skip to main content</a>
+        
+        <!-- Live region for dynamic announcements -->
+        <div id="live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+        
+        <div id="main-content" tabindex="-1">
+          ${this.renderCurrentView()}
+        </div>
+      </main>
     `
   }
 }

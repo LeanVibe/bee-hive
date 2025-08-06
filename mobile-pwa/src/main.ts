@@ -35,22 +35,32 @@ class AppInitializer {
       // Initialize offline service first (sets up IndexedDB)
       await offlineService.initialize()
       
-      // Initialize notification service
-      await notificationService.initialize()
+      // Skip notification service in development to avoid hanging
+      if (process.env.NODE_ENV === 'production') {
+        // Initialize notification service
+        try {
+          await notificationService.initialize()
+        } catch (error) {
+          console.warn('⚠️ Notification service initialization failed:', error.message)
+        }
+      } else {
+        console.log('🔧 Development mode: Skipping notification service initialization')
+      }
       
       // Check authentication state
       await authService.initialize()
       
-      // Initialize WebSocket if authenticated
-      if (authService.isAuthenticated()) {
-        await wsService.initialize()
-      }
-      
-      // Create and mount the app element
+      // Create and mount the app element first (don't wait for WebSocket)
       const appContainer = document.getElementById('app')
       if (appContainer) {
         const appElement = document.createElement('agent-hive-app')
         appContainer.appendChild(appElement)
+      }
+      
+      // Hide loading screen
+      const loadingContainer = document.querySelector('.loading-container')
+      if (loadingContainer) {
+        loadingContainer.style.display = 'none'
       }
       
       // Mark app as ready
@@ -58,8 +68,12 @@ class AppInitializer {
       
       console.log('✅ App initialization complete')
       
-      // Track initialization time
-      console.log('✅ Performance monitor initialized')
+      // Initialize WebSocket in background (non-blocking)
+      if (authService.isAuthenticated()) {
+        wsService.initialize().catch(error => {
+          console.warn('⚠️ WebSocket initialization failed, continuing without real-time updates:', error)
+        })
+      }
       
     } catch (error) {
       console.error('❌ App initialization failed:', error)

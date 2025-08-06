@@ -23,6 +23,9 @@ export class KanbanBoard extends LitElement {
   @state() private declare selectedTasks: Set<string>
   @state() private declare bulkActionPanel: boolean
   @state() private declare taskAnalytics: any
+  @state() private declare touchStartPos: { x: number; y: number } | null
+  @state() private declare isDragMode: boolean
+  @state() private declare longPressTimer: number | null
   
   private sortableInstances: Map<string, Sortable> = new Map()
   
@@ -43,6 +46,9 @@ export class KanbanBoard extends LitElement {
     this.selectedTasks = new Set()
     this.bulkActionPanel = false
     this.taskAnalytics = null
+    this.touchStartPos = null
+    this.isDragMode = false
+    this.longPressTimer = null
   }
   
   static styles = css`
@@ -60,6 +66,26 @@ export class KanbanBoard extends LitElement {
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      position: relative;
+    }
+    
+    .board-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .board-container::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+    
+    .board-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    
+    .board-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.3);
     }
     
     .board-filters {
@@ -373,6 +399,132 @@ export class KanbanBoard extends LitElement {
       transform: translateX(20px);
     }
     
+    /* Enhanced Drag and Drop Styles */
+    .drag-ghost {
+      opacity: 0.5;
+      transform: rotate(2deg) scale(1.02);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      border: 2px dashed #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+    }
+    
+    .drag-chosen {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 999;
+    }
+    
+    .drop-zone-active {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+      border: 2px dashed #3b82f6;
+      border-radius: 0.5rem;
+      animation: pulse-glow 2s infinite;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+      }
+    }
+    
+    .drag-feedback {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+      z-index: 9999;
+      pointer-events: none;
+      animation: fadeInScale 0.2s ease-out;
+    }
+    
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    
+    /* Touch-Optimized Interaction Areas */
+    .touch-drag-handle {
+      min-height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .touch-drag-handle:active {
+      cursor: grabbing;
+    }
+    
+    .touch-drop-zone {
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px dashed transparent;
+      border-radius: 0.5rem;
+      transition: all 0.2s ease;
+      touch-action: none;
+    }
+    
+    .touch-drop-zone.active {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+      transform: scale(1.02);
+    }
+
+    /* Mobile-specific enhancements */
+    @media (max-width: 768px) {
+      .board-container {
+        gap: 0.75rem;
+        padding: 0.75rem;
+      }
+      
+      .drag-ghost {
+        transform: rotate(1deg) scale(1.05);
+      }
+      
+      .touch-drag-handle {
+        min-height: 48px;
+        min-width: 48px;
+      }
+      
+      .touch-drop-zone {
+        min-height: 64px;
+      }
+    }
+    
+    /* Accessibility enhancements */
+    @media (prefers-reduced-motion: reduce) {
+      .drag-ghost,
+      .drag-chosen,
+      .drop-zone-active,
+      .drag-feedback {
+        animation: none;
+        transition: none;
+        transform: none;
+      }
+    }
+    
     @media (max-width: 768px) {
       .board-container {
         padding: 0.5rem;
@@ -477,28 +629,117 @@ export class KanbanBoard extends LitElement {
       if (columnElement) {
         const sortable = new Sortable(columnElement as HTMLElement, {
           group: 'kanban',
-          animation: 150,
-          ghostClass: 'ghost',
-          dragClass: 'drag',
+          animation: 200,
+          easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          ghostClass: 'drag-ghost',
+          chosenClass: 'drag-chosen',
+          dragClass: 'dragging',
+          forceFallback: true,
+          fallbackClass: 'drag-fallback',
+          fallbackOnBody: true,
+          swapThreshold: 0.65,
+          invertSwap: true,
+          direction: 'vertical',
+          touchStartThreshold: 10,
+          delay: 100,
+          delayOnTouchStart: true,
           onStart: (evt) => {
             const taskId = evt.item.getAttribute('data-task-id')
             this.draggedTask = this.tasks.find(t => t.id === taskId) || null
+            
+            // Add visual feedback
+            this.showDragFeedback('Task selected for moving')
+            
+            // Mark all drop zones as active
+            this.shadowRoot?.querySelectorAll('[data-column]').forEach(col => {
+              if (col !== evt.from) {
+                col.classList.add('drop-zone-active')
+              }
+            })
+            
+            // Add haptic feedback on supported devices
+            if ('vibrate' in navigator) {
+              navigator.vibrate(50)
+            }
+          },
+          onMove: (evt) => {
+            // Provide visual feedback during move
+            const targetColumn = evt.related.closest('[data-column]')
+            if (targetColumn) {
+              const status = targetColumn.getAttribute('data-column')
+              this.showDragFeedback(`Moving to ${this.getColumnTitle(status)}`)
+            }
+            return true
           },
           onEnd: async (evt) => {
             const taskId = evt.item.getAttribute('data-task-id')
             const newStatus = evt.to.getAttribute('data-column') as TaskStatus
+            const oldStatus = evt.from.getAttribute('data-column') as TaskStatus
+            
+            // Clear drop zone highlights
+            this.shadowRoot?.querySelectorAll('[data-column]').forEach(col => {
+              col.classList.remove('drop-zone-active')
+            })
+            
+            // Hide drag feedback
+            this.hideDragFeedback()
             
             if (taskId && newStatus && this.draggedTask) {
-              await this.handleTaskMove(taskId, newStatus, evt.newIndex || 0)
+              // Show processing feedback
+              if (oldStatus !== newStatus) {
+                this.showDragFeedback(`Moving task to ${this.getColumnTitle(newStatus)}...`)
+                
+                // Haptic feedback for successful move
+                if ('vibrate' in navigator) {
+                  navigator.vibrate([50, 100, 50])
+                }
+                
+                await this.handleTaskMove(taskId, newStatus, evt.newIndex || 0)
+                
+                // Success feedback
+                setTimeout(() => {
+                  this.showDragFeedback(`Task moved to ${this.getColumnTitle(newStatus)}`)
+                  setTimeout(() => this.hideDragFeedback(), 1500)
+                }, 300)
+              }
             }
             
             this.draggedTask = null
+          },
+          onError: (evt) => {
+            console.error('Drag and drop error:', evt)
+            this.showDragFeedback('Failed to move task')
+            setTimeout(() => this.hideDragFeedback(), 2000)
           }
         })
         
         this.sortableInstances.set(column.status, sortable)
       }
     })
+  }
+  
+  private getColumnTitle(status: string | null): string {
+    const column = this.columns.find(col => col.status === status)
+    return column?.title || status || 'Unknown'
+  }
+  
+  private showDragFeedback(message: string) {
+    // Remove existing feedback
+    this.hideDragFeedback()
+    
+    const feedback = document.createElement('div')
+    feedback.className = 'drag-feedback'
+    feedback.textContent = message
+    feedback.id = 'kanban-drag-feedback'
+    
+    document.body.appendChild(feedback)
+  }
+  
+  private hideDragFeedback() {
+    const existing = document.getElementById('kanban-drag-feedback')
+    if (existing) {
+      existing.remove()
+    }
   }
   
   private updateSortable() {
@@ -668,6 +909,11 @@ export class KanbanBoard extends LitElement {
   }
   
   private handleTaskClick(task: Task) {
+    // Prevent click during drag operations
+    if (this.isDragMode) {
+      return
+    }
+    
     const clickEvent = new CustomEvent('task-click', {
       detail: { task },
       bubbles: true,
@@ -675,6 +921,126 @@ export class KanbanBoard extends LitElement {
     })
     
     this.dispatchEvent(clickEvent)
+  }
+  
+  // Enhanced touch interaction methods
+  private handleTouchStart(event: TouchEvent, task: Task) {
+    const touch = event.touches[0]
+    this.touchStartPos = { x: touch.clientX, y: touch.clientY }
+    this.isDragMode = false
+    
+    // Start long press timer for touch devices
+    this.longPressTimer = window.setTimeout(() => {
+      this.handleLongPress(task)
+    }, 500)
+  }
+  
+  private handleTouchMove(event: TouchEvent) {
+    if (!this.touchStartPos) return
+    
+    const touch = event.touches[0]
+    const deltaX = Math.abs(touch.clientX - this.touchStartPos.x)
+    const deltaY = Math.abs(touch.clientY - this.touchStartPos.y)
+    
+    // If moved significantly, cancel long press and enable drag mode
+    if (deltaX > 10 || deltaY > 10) {
+      this.clearLongPressTimer()
+      this.isDragMode = true
+    }
+  }
+  
+  private handleTouchEnd() {
+    this.clearLongPressTimer()
+    this.touchStartPos = null
+    
+    // Reset drag mode after a short delay
+    setTimeout(() => {
+      this.isDragMode = false
+    }, 100)
+  }
+  
+  private handleLongPress(task: Task) {
+    // Haptic feedback for long press
+    if ('vibrate' in navigator) {
+      navigator.vibrate(100)
+    }
+    
+    // Show context menu or bulk selection mode
+    this.handleTaskSelection(task.id, !this.selectedTasks.has(task.id))
+    
+    // Show feedback
+    this.showDragFeedback(`Task ${this.selectedTasks.has(task.id) ? 'selected' : 'deselected'}`)
+    setTimeout(() => this.hideDragFeedback(), 1000)
+  }
+  
+  private clearLongPressTimer() {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
+    }
+  }
+  
+  // Enhanced task move handling with optimistic updates
+  private async handleTaskMoveEnhanced(taskId: string, newStatus: TaskStatus, newIndex: number, sourceColumn: string) {
+    this.isUpdating = true
+    
+    try {
+      // Optimistic update for immediate feedback
+      const taskIndex = this.tasks.findIndex(t => t.id === taskId)
+      if (taskIndex >= 0) {
+        const updatedTasks = [...this.tasks]
+        const movedTask = { ...updatedTasks[taskIndex] }
+        
+        // Update task status and timestamp
+        movedTask.status = newStatus
+        movedTask.updatedAt = new Date().toISOString()
+        
+        // Add visual indication of pending sync
+        if (this.offline) {
+          movedTask.syncStatus = 'pending'
+        }
+        
+        updatedTasks[taskIndex] = movedTask
+        
+        // Dispatch optimistic update
+        const updateEvent = new CustomEvent('tasks-updated', {
+          detail: { tasks: updatedTasks },
+          bubbles: true,
+          composed: true
+        })
+        this.dispatchEvent(updateEvent)
+      }
+      
+      // Perform actual backend update
+      const moveEvent = new CustomEvent('task-move', {
+        detail: {
+          taskId,
+          newStatus,
+          newIndex,
+          offline: this.offline,
+          previousStatus: sourceColumn,
+          timestamp: new Date().toISOString()
+        },
+        bubbles: true,
+        composed: true
+      })
+      
+      this.dispatchEvent(moveEvent)
+      
+    } catch (error) {
+      console.error('Enhanced task move failed:', error)
+      
+      // Revert optimistic update on error
+      const revertEvent = new CustomEvent('task-move-error', {
+        detail: { error, taskId, newStatus, revert: true },
+        bubbles: true,
+        composed: true
+      })
+      this.dispatchEvent(revertEvent)
+      
+    } finally {
+      this.isUpdating = false
+    }
   }
   
   render() {

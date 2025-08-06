@@ -76,6 +76,12 @@ dependencies = [
     "cryptography>=41.0.7",
     "authlib>=1.2.1",
     "oauthlib>=3.2.2",
+    "webauthn>=1.8.1",  # FIDO2/WebAuthn biometric authentication
+    "pyotp>=2.8.0",  # TOTP for MFA
+    "qrcode[pil]>=7.4.2",  # QR code generation for TOTP
+    "twilio>=8.10.0",  # SMS provider for MFA
+    "boto3>=1.34.0",  # AWS SNS for SMS/notifications
+    "PyJWT>=2.8.0",  # JWT token handling
     
     # Configuration & Environment
     "python-dotenv>=1.0.0",
@@ -188,6 +194,7 @@ Issues = "https://github.com/leanvibe/agent-hive/issues"
 [project.scripts]
 agent-hive = "app.cli:main"
 ahive = "app.cli:main"
+lv = "app.dx_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

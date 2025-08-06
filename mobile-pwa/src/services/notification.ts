@@ -84,8 +84,13 @@ export class NotificationService extends EventEmitter {
       // Setup message handling
       this.setupMessageHandling()
       
-      // Initialize Firebase Cloud Messaging
-      await this.initializeFirebaseMessaging()
+      // In development mode, skip Firebase initialization to avoid hanging
+      if (process.env.NODE_ENV === 'development' && this.fcmConfig.apiKey === 'demo-key') {
+        console.log('🔧 Development mode: Skipping Firebase Cloud Messaging initialization')
+      } else {
+        // Initialize Firebase Cloud Messaging
+        await this.initializeFirebaseMessaging()
+      }
       
       // Initialize push messaging if supported
       if ('PushManager' in window) {
@@ -97,7 +102,13 @@ export class NotificationService extends EventEmitter {
       
     } catch (error) {
       console.error('❌ Failed to initialize notification service:', error)
-      throw error
+      // Don't throw the error in development mode - just log it and continue
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('🔧 Development mode: Continuing despite notification service error')
+        this.isInitialized = true
+      } else {
+        throw error
+      }
     }
   }
   
@@ -242,12 +253,20 @@ export class NotificationService extends EventEmitter {
       this.registration = await navigator.serviceWorker.register('/sw.js')
       console.log('✅ Service worker registered')
       
-      // Wait for service worker to be ready
-      await navigator.serviceWorker.ready
+      // In development mode, don't wait for service worker ready to avoid hanging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 Development mode: Skipping service worker ready wait')
+      } else {
+        // Wait for service worker to be ready
+        await navigator.serviceWorker.ready
+      }
       
     } catch (error) {
       console.error('Service worker registration failed:', error)
-      throw error
+      // Don't throw in development mode
+      if (process.env.NODE_ENV === 'production') {
+        throw error
+      }
     }
   }
   
