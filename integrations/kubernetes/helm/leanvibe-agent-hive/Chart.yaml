@@ -1,0 +1,46 @@
+apiVersion: v2
+name: leanvibe-agent-hive
+description: LeanVibe Agent Hive - Autonomous Development Platform on Kubernetes
+type: application
+version: 1.0.0
+appVersion: "2.0.0"
+home: https://github.com/leanvibe-dev/bee-hive
+sources:
+  - https://github.com/leanvibe-dev/bee-hive
+maintainers:
+  - name: LeanVibe Team
+    email: team@leanvibe.dev
+    url: https://leanvibe.dev
+
+keywords:
+  - ai
+  - autonomous-development
+  - multi-agent
+  - productivity
+  - automation
+  - claude
+  - orchestration
+
+annotations:
+  category: AI/ML
+  licenses: Apache-2.0
+
+dependencies:
+  - name: postgresql
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: 18.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: prometheus
+    version: 25.x.x
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+    alias: monitoring-prometheus
+  - name: grafana
+    version: 7.x.x
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled
+    alias: monitoring-grafana

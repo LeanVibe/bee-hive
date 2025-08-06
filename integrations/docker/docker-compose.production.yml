@@ -1,0 +1,341 @@
+version: '3.8'
+
+# LeanVibe Agent Hive - Production Docker Compose
+# Optimized for high-performance autonomous development platform deployment
+
+services:
+  # PostgreSQL with pgvector for semantic memory
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: leanvibe_postgres_prod
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-leanvibe_agent_hive}
+      POSTGRES_USER: ${POSTGRES_USER:-leanvibe_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=md5"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+      - postgres_backups:/backups
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-leanvibe_user} -d ${POSTGRES_DB:-leanvibe_agent_hive}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  # Redis for high-performance message broker and caching
+  redis:
+    image: redis:7-alpine
+    container_name: leanvibe_redis_prod
+    command: |
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --auto-aof-rewrite-percentage 100
+      --auto-aof-rewrite-min-size 64mb
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 60
+      --timeout 300
+      --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_prod_data:/data
+      - ./integrations/docker/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # LeanVibe Agent Hive API - Production
+  api:
+    build:
+      context: ../..
+      dockerfile: integrations/docker/Dockerfile.optimized
+      target: production
+    container_name: leanvibe_api_prod
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-leanvibe_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-leanvibe_agent_hive}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - MAX_AGENTS=${MAX_AGENTS:-10}
+      - AGENT_TIMEOUT=${AGENT_TIMEOUT:-300}
+      - TASK_QUEUE_SIZE=${TASK_QUEUE_SIZE:-1000}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+    volumes:
+      - agent_workspaces:/app/workspaces
+      - agent_logs:/app/logs
+      - agent_checkpoints:/app/checkpoints
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # NGINX Load Balancer and Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: leanvibe_nginx_prod
+    volumes:
+      - ./integrations/docker/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./integrations/docker/ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - api
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "80:80"
+      - "443:443"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: leanvibe_prometheus_prod
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--storage.tsdb.wal-compression'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./integrations/docker/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
+      - ./integrations/docker/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - ./integrations/docker/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_prod_data:/prometheus
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Grafana for Monitoring Dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: leanvibe_grafana_prod
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=true
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3000}
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./integrations/docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./integrations/docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # Alertmanager for Alert Management
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: leanvibe_alertmanager_prod
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--cluster.advertise-address=0.0.0.0:9093'
+    volumes:
+      - ./integrations/docker/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_prod_data:/alertmanager
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:9093:9093"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+
+  # Log Aggregation with Loki
+  loki:
+    image: grafana/loki:latest
+    container_name: leanvibe_loki_prod
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./integrations/docker/loki.yml:/etc/loki/loki.yml:ro
+      - loki_prod_data:/loki
+    networks:
+      - leanvibe_prod_network
+    ports:
+      - "127.0.0.1:3100:3100"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # Vector for Log Collection
+  vector:
+    image: timberio/vector:latest-alpine
+    container_name: leanvibe_vector_prod
+    volumes:
+      - ./integrations/docker/vector.toml:/etc/vector/vector.toml:ro
+      - agent_logs:/app/logs:ro
+      - nginx_logs:/var/log/nginx:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - leanvibe_prod_network
+    depends_on:
+      - loki
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+
+  # Backup Service
+  backup:
+    image: postgres:15-alpine
+    container_name: leanvibe_backup_prod
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-leanvibe_agent_hive}
+      - POSTGRES_USER=${POSTGRES_USER:-leanvibe_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - postgres_backups:/backups
+      - ./integrations/docker/backup-script.sh:/usr/local/bin/backup.sh:ro
+    networks:
+      - leanvibe_prod_network
+    depends_on:
+      - postgres
+    command: |
+      sh -c 'while true; do
+        sleep 24h;
+        /usr/local/bin/backup.sh;
+      done'
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+
+networks:
+  leanvibe_prod_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: leanvibe-prod
+
+volumes:
+  postgres_prod_data:
+    driver: local
+  redis_prod_data:
+    driver: local
+  prometheus_prod_data:
+    driver: local
+  grafana_prod_data:
+    driver: local
+  alertmanager_prod_data:
+    driver: local
+  loki_prod_data:
+    driver: local
+  agent_workspaces:
+    driver: local
+  agent_logs:
+    driver: local
+  agent_checkpoints:
+    driver: local
+  postgres_backups:
+    driver: local
+  nginx_cache:
+    driver: local
+  nginx_logs:
+    driver: local

@@ -1,0 +1,168 @@
+# LeanVibe Agent Hive - Optimized Production Dockerfile
+# Multi-stage build for minimal production image with intelligent caching
+
+# Stage 1: Python Base with Dependencies
+FROM python:3.12-slim as python-base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VENV_IN_PROJECT=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install poetry==1.7.1
+
+# Stage 2: Dependencies Installation
+FROM python-base as dependencies
+
+WORKDIR /app
+
+# Copy dependency files first (for better caching)
+COPY pyproject.toml poetry.lock ./
+
+# Install dependencies
+RUN poetry install --only=main --no-root && rm -rf $POETRY_CACHE_DIR
+
+# Stage 3: Development Image
+FROM python-base as development
+
+WORKDIR /app
+
+# Copy virtual environment from dependencies stage
+COPY --from=dependencies /app/.venv /app/.venv
+
+# Make sure we use venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copy application code
+COPY . .
+
+# Install application in development mode
+RUN poetry install
+
+# Expose ports
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Default command
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Stage 4: Production Base
+FROM python:3.12-slim as production-base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r leanvibe \
+    && useradd -r -g leanvibe leanvibe
+
+# Stage 5: Production Image
+FROM production-base as production
+
+WORKDIR /app
+
+# Copy virtual environment from dependencies stage
+COPY --from=dependencies /app/.venv /app/.venv
+
+# Copy application code
+COPY --chown=leanvibe:leanvibe . .
+
+# Switch to non-root user
+USER leanvibe
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production command with Gunicorn
+CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+
+# Stage 6: Agent Development Container
+FROM development as agent-dev
+
+# Install additional development tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tmux \
+    vim \
+    htop \
+    postgresql-client \
+    redis-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development Python packages
+RUN poetry install --with dev,test
+
+# Configure tmux for agent orchestration
+COPY integrations/docker/tmux.conf /home/leanvibe/.tmux.conf
+
+# Set up workspace directories
+RUN mkdir -p /app/workspaces /app/logs /app/checkpoints
+
+# Default development command
+CMD ["python", "-m", "app.cli", "start", "--dev-mode"]
+
+# Stage 7: CI/CD Image
+FROM development as ci-cd
+
+# Install additional CI/CD tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    docker.io \
+    kubectl \
+    helm \
+    terraform \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install CI/CD Python packages
+RUN poetry install --with dev,test,ci
+
+# Set up CI/CD scripts
+COPY integrations/docker/ci-scripts/ /usr/local/bin/
+
+# Default CI/CD command
+CMD ["python", "-m", "pytest", "--cov=app", "--cov-report=xml", "--cov-report=html"]
+
+# Stage 8: Monitoring Image
+FROM production as monitoring
+
+USER root
+
+# Install monitoring tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    prometheus-node-exporter \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy monitoring configuration
+COPY integrations/docker/monitoring/ /etc/monitoring/
+
+USER leanvibe
+
+# Expose monitoring ports
+EXPOSE 8000 9100
+
+# Monitoring command
+CMD ["bash", "-c", "node_exporter --web.listen-address=:9100 & gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"]

@@ -1,0 +1,495 @@
+# Default values for LeanVibe Agent Hive
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Application configuration
+app:
+  name: leanvibe-agent-hive
+  version: "2.0.0"
+  
+# Image configuration
+image:
+  registry: docker.io
+  repository: leanvibe/agent-hive
+  tag: "2.0.0"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Deployment configuration
+replicaCount: 2
+
+deployment:
+  annotations: {}
+  labels: {}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+
+# Pod configuration
+pod:
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+  labels: {}
+  securityContext:
+    fsGroup: 1000
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+
+# Container configuration
+container:
+  port: 8000
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+    - name: LOG_LEVEL
+      value: "INFO"
+    - name: MAX_AGENTS
+      value: "10"
+    - name: AGENT_TIMEOUT
+      value: "300"
+    - name: TASK_QUEUE_SIZE
+      value: "1000"
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+# Resource configuration
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+
+# Vertical Pod Autoscaler
+vpa:
+  enabled: false
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: agent-hive
+        minAllowed:
+          cpu: 250m
+          memory: 512Mi
+        maxAllowed:
+          cpu: 2000m
+          memory: 4Gi
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  annotations: {}
+  labels: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/websocket-services: "leanvibe-agent-hive"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: agent-hive.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: leanvibe-agent-hive-tls
+      hosts:
+        - agent-hive.example.com
+
+# Health checks
+healthCheck:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  readinessProbe:
+    httpGet:
+      path: /health/ready
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+  startupProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+# Volume mounts
+volumes:
+  workspaces:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    mountPath: /app/workspaces
+  logs:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    mountPath: /app/logs
+  checkpoints:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    mountPath: /app/checkpoints
+
+# Configuration management
+config:
+  # Create a ConfigMap
+  create: true
+  data:
+    app_config.yaml: |
+      app:
+        name: "LeanVibe Agent Hive"
+        version: "2.0.0"
+        debug: false
+      agents:
+        max_concurrent: 10
+        timeout_seconds: 300
+        auto_scaling: true
+      tasks:
+        queue_size: 1000
+        retry_attempts: 3
+        batch_size: 50
+      performance:
+        enable_caching: true
+        cache_ttl: 3600
+        enable_compression: true
+
+# Secrets management
+secrets:
+  # Create secrets from external secret store
+  create: false
+  # Or provide secret name if using external secrets
+  name: "leanvibe-agent-hive-secrets"
+  # Keys expected in the secret
+  keys:
+    - anthropic_api_key
+    - database_password
+    - redis_password
+    - secret_key
+
+# External secrets (if using external-secrets-operator)
+externalSecrets:
+  enabled: false
+  secretStore:
+    name: vault-secret-store
+    kind: SecretStore
+  target:
+    name: leanvibe-agent-hive-secrets
+  data:
+    - secretKey: anthropic_api_key
+      remoteRef:
+        key: leanvibe/anthropic
+        property: api_key
+    - secretKey: database_password
+      remoteRef:
+        key: leanvibe/postgres
+        property: password
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "change-me-in-production"
+    username: "leanvibe_user"
+    password: "change-me-in-production"
+    database: "leanvibe_agent_hive"
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    initdb:
+      scripts:
+        01-enable-extensions.sql: |
+          CREATE EXTENSION IF NOT EXISTS vector;
+          CREATE EXTENSION IF NOT EXISTS pgcrypto;
+          CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Redis configuration  
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "change-me-in-production"
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      limits:
+        cpu: 250m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    configuration: |-
+      maxmemory 256mb
+      maxmemory-policy allkeys-lru
+      save 900 1
+      save 300 10
+      save 60 10000
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      scrapeTimeout: 10s
+      labels: {}
+      annotations: {}
+    rules:
+      enabled: true
+      spec:
+        - alert: AgentHiveHighCPU
+          expr: rate(container_cpu_usage_seconds_total{container="agent-hive"}[5m]) > 0.8
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage detected"
+            description: "Agent Hive CPU usage is above 80%"
+        - alert: AgentHiveHighMemory
+          expr: container_memory_working_set_bytes{container="agent-hive"} / container_spec_memory_limit_bytes{container="agent-hive"} > 0.9
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage detected"
+            description: "Agent Hive memory usage is above 90%"
+        - alert: AgentHiveDown
+          expr: up{job="leanvibe-agent-hive"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Agent Hive is down"
+            description: "Agent Hive service is not responding"
+
+  grafana:
+    enabled: true
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+
+# Logging configuration
+logging:
+  enabled: true
+  level: INFO
+  format: json
+  destination: stdout
+  
+  # Fluent Bit sidecar for log forwarding
+  fluentbit:
+    enabled: false
+    image:
+      repository: fluent/fluent-bit
+      tag: "2.1.8"
+    config:
+      outputs: |
+        [OUTPUT]
+            Name es
+            Match *
+            Host elasticsearch-master
+            Port 9200
+            Index agent-hive-logs
+            Type _doc
+
+# Backup configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  retention: "7d"
+  storage:
+    type: s3
+    config:
+      bucket: leanvibe-backups
+      region: us-west-2
+
+# Network policies
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 6379  # Redis
+        - protocol: TCP
+          port: 443   # HTTPS outbound
+        - protocol: TCP
+          port: 80    # HTTP outbound
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 50%
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: true
+
+# RBAC
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "services", "configmaps", "secrets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments", "replicasets"]
+      verbs: ["get", "list", "watch"]
+
+# Node selector and tolerations
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - leanvibe-agent-hive
+          topologyKey: kubernetes.io/hostname
+
+# Priority class
+priorityClassName: ""
+
+# Runtime class
+runtimeClassName: ""
+
+# Topology spread constraints
+topologySpreadConstraints: []
+
+# Init containers
+initContainers:
+  database-migration:
+    enabled: true
+    image:
+      repository: leanvibe/agent-hive
+      tag: "2.0.0"
+      pullPolicy: IfNotPresent
+    command:
+      - "alembic"
+      - "upgrade"
+      - "head"
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# Additional containers (sidecars)
+sidecars: []
+
+# Tests
+tests:
+  enabled: true
+  image:
+    repository: leanvibe/agent-hive
+    tag: "2.0.0"
+    pullPolicy: IfNotPresent

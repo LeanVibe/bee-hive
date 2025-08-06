@@ -1,0 +1,253 @@
+{
+  "name": "leanvibe-agent-hive",
+  "displayName": "LeanVibe Agent Hive",
+  "description": "AI-powered autonomous development platform integration for VS Code",
+  "version": "1.0.0",
+  "publisher": "leanvibe",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leanvibe-dev/bee-hive"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "AI",
+    "Productivity",
+    "Debuggers",
+    "Testing"
+  ],
+  "keywords": [
+    "ai",
+    "autonomous-development", 
+    "multi-agent",
+    "productivity",
+    "automation",
+    "claude",
+    "orchestration"
+  ],
+  "activationEvents": [
+    "onCommand:leanvibe.startHive",
+    "onWebviewPanel:leanvibe.dashboard",
+    "onUri",
+    "workspaceContains:**/.leanvibe/**"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "leanvibe.startHive",
+        "title": "Start Agent Hive",
+        "category": "LeanVibe",
+        "icon": "$(play)"
+      },
+      {
+        "command": "leanvibe.stopHive",
+        "title": "Stop Agent Hive", 
+        "category": "LeanVibe",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "leanvibe.openDashboard",
+        "title": "Open Dashboard",
+        "category": "LeanVibe",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "leanvibe.createAgent",
+        "title": "Create New Agent",
+        "category": "LeanVibe",
+        "icon": "$(robot)"
+      },
+      {
+        "command": "leanvibe.deployProject",
+        "title": "Deploy with Agent Hive",
+        "category": "LeanVibe",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "leanvibe.runTests",
+        "title": "Run AI-Enhanced Tests",
+        "category": "LeanVibe",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "leanvibe.optimizeCode",
+        "title": "AI Code Optimization",
+        "category": "LeanVibe",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "leanvibe.generateDocumentation",
+        "title": "Generate Documentation",
+        "category": "LeanVibe",
+        "icon": "$(book)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "leanvibe-explorer",
+          "title": "Agent Hive",
+          "icon": "$(layers)"
+        }
+      ]
+    },
+    "views": {
+      "leanvibe-explorer": [
+        {
+          "id": "leanvibe.agents",
+          "name": "Active Agents",
+          "when": "leanvibe.connected"
+        },
+        {
+          "id": "leanvibe.tasks", 
+          "name": "Task Queue",
+          "when": "leanvibe.connected"
+        },
+        {
+          "id": "leanvibe.logs",
+          "name": "Agent Logs",
+          "when": "leanvibe.connected"
+        },
+        {
+          "id": "leanvibe.settings",
+          "name": "Configuration"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "leanvibe.startHive",
+          "when": "view == leanvibe.agents && !leanvibe.connected",
+          "group": "navigation"
+        },
+        {
+          "command": "leanvibe.stopHive",
+          "when": "view == leanvibe.agents && leanvibe.connected",
+          "group": "navigation"
+        },
+        {
+          "command": "leanvibe.openDashboard",
+          "when": "view == leanvibe.agents && leanvibe.connected",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "leanvibe.stopHive",
+          "when": "leanvibe.connected"
+        },
+        {
+          "command": "leanvibe.createAgent",
+          "when": "leanvibe.connected"
+        },
+        {
+          "command": "leanvibe.deployProject",
+          "when": "leanvibe.connected"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "leanvibe.optimizeCode",
+          "when": "resourceExtname =~ /\\.(py|js|ts|json|md)$/",
+          "group": "7_modification"
+        },
+        {
+          "command": "leanvibe.generateDocumentation",
+          "when": "explorerResourceIsFolder",
+          "group": "7_modification"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "LeanVibe Agent Hive",
+      "properties": {
+        "leanvibe.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "Agent Hive API URL"
+        },
+        "leanvibe.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Agent Hive API Key (optional for local development)"
+        },
+        "leanvibe.autoStart": {
+          "type": "boolean", 
+          "default": false,
+          "description": "Automatically start Agent Hive when VS Code opens a compatible project"
+        },
+        "leanvibe.maxAgents": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum number of concurrent agents",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "leanvibe.logLevel": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+          "default": "INFO",
+          "description": "Agent Hive log level"
+        },
+        "leanvibe.enableCodeSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered code suggestions"
+        },
+        "leanvibe.enableAutonomousMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable fully autonomous development mode (experimental)"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "leanvibe.startHive",
+        "key": "ctrl+shift+a ctrl+shift+s",
+        "mac": "cmd+shift+a cmd+shift+s",
+        "when": "!leanvibe.connected"
+      },
+      {
+        "command": "leanvibe.openDashboard", 
+        "key": "ctrl+shift+a ctrl+shift+d",
+        "mac": "cmd+shift+a cmd+shift+d",
+        "when": "leanvibe.connected"
+      },
+      {
+        "command": "leanvibe.optimizeCode",
+        "key": "ctrl+shift+a ctrl+shift+o",
+        "mac": "cmd+shift+a cmd+shift+o",
+        "when": "leanvibe.connected && editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "eslint": "^8.28.0",
+    "typescript": "^4.9.4",
+    "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "ws": "^8.13.0",
+    "axios": "^1.3.0",
+    "uuid": "^9.0.0"
+  }
+}
