@@ -129,7 +129,7 @@ class Settings(BaseSettings):
     OPENAI_EMBEDDING_RATE_LIMIT_RPM: int = Field(default=3000, env="OPENAI_EMBEDDING_RATE_LIMIT_RPM")
     OPENAI_EMBEDDING_BATCH_SIZE: int = Field(default=100, env="OPENAI_EMBEDDING_BATCH_SIZE")
     
-    # Security
+    # Security - Enhanced Enterprise Configuration
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
     JWT_EXPIRE_MINUTES: int = Field(default=30, env="JWT_EXPIRE_MINUTES")
     ALLOWED_HOSTS: List[str] = Field(default=["*"], env="ALLOWED_HOSTS")
@@ -137,6 +137,23 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"],
         env="CORS_ORIGINS"
     )
+    
+    # Enterprise Security Settings
+    SECURITY_ENABLED: bool = Field(default=True, env="SECURITY_ENABLED")
+    MFA_ENABLED: bool = Field(default=True, env="MFA_ENABLED")
+    API_RATE_LIMIT_ENABLED: bool = Field(default=True, env="API_RATE_LIMIT_ENABLED")
+    THREAT_DETECTION_ENABLED: bool = Field(default=True, env="THREAT_DETECTION_ENABLED")
+    SECURITY_AUDIT_ENABLED: bool = Field(default=True, env="SECURITY_AUDIT_ENABLED")
+    
+    # Compliance Settings
+    COMPLIANCE_ENABLED: bool = Field(default=True, env="COMPLIANCE_ENABLED")
+    SOC2_COMPLIANCE: bool = Field(default=True, env="SOC2_COMPLIANCE")
+    GDPR_COMPLIANCE: bool = Field(default=True, env="GDPR_COMPLIANCE")
+    AUDIT_LOG_RETENTION_DAYS: int = Field(default=2555, env="AUDIT_LOG_RETENTION_DAYS")  # 7 years
+    
+    # Secrets Management
+    SECRETS_ENCRYPTION_ENABLED: bool = Field(default=True, env="SECRETS_ENCRYPTION_ENABLED")
+    SECRET_ROTATION_ENABLED: bool = Field(default=True, env="SECRET_ROTATION_ENABLED")
     
     # Multi-Agent Configuration
     MAX_CONCURRENT_AGENTS: int = Field(default=50, env="MAX_CONCURRENT_AGENTS")

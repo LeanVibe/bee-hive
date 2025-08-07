@@ -45,6 +45,7 @@ from .api.intelligence import router as intelligence_router
 from .api.claude_integration import router as claude_integration_router
 from .api.dx_debugging import router as dx_debugging_router
 from .api.enterprise_sales import router as enterprise_sales_router
+from .api.enterprise_security import router as enterprise_security_router
 
 
 # Configure structured logging
@@ -102,6 +103,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             enable_detailed_logging=settings.DEBUG
         )
         app.state.error_integration = error_integration
+        
+        # Initialize enterprise security system
+        from .core.enterprise_security_system import get_security_system
+        from .core.enterprise_secrets_manager import get_secrets_manager
+        from .core.enterprise_compliance import get_compliance_system
+        
+        security_system = await get_security_system()
+        secrets_manager = await get_secrets_manager()
+        compliance_system = await get_compliance_system()
+        
+        app.state.security_system = security_system
+        app.state.secrets_manager = secrets_manager
+        app.state.compliance_system = compliance_system
+        
+        logger.info("✅ Enterprise security systems initialized")
         
         # Start configuration hot-reload if enabled
         if settings.DEBUG:
@@ -176,6 +192,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
+    # Enterprise security middleware
+    from .core.enterprise_security_system import SecurityMiddleware
+    app.add_middleware(BaseHTTPMiddleware, dispatch=SecurityMiddleware())
+    
     # Error handling middleware (high priority - before other middleware)
     # Will be initialized during app startup if available
     try:
@@ -226,6 +246,7 @@ def create_app() -> FastAPI:
     app.include_router(claude_integration_router, prefix="/api", tags=["claude-integration"])
     app.include_router(dx_debugging_router, tags=["dx-debugging"])
     app.include_router(enterprise_sales_router, tags=["enterprise-sales"])
+    app.include_router(enterprise_security_router, tags=["enterprise-security"])
     
     @app.get("/debug-agents")
     async def debug_agents():
