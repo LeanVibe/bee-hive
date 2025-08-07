@@ -571,13 +571,48 @@ Make it professional and user-friendly.
                 
                 # Run tests using subprocess
                 import subprocess
-                result = subprocess.run(
-                    ["python", "-m", "unittest", test_file.stem],
-                    cwd=self.workspace_dir,
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
+                
+                # Check if test file actually contains test classes/methods
+                if not ("class Test" in test_artifact.content or "def test_" in test_artifact.content):
+                    logger.warning("Test file contains no actual test methods")
+                    validation_results["tests_pass"] = False
+                    return validation_results
+                
+                # Try multiple test execution strategies
+                result = None
+                
+                # Strategy 1: Try python -m unittest discover
+                try:
+                    result = subprocess.run(
+                        ["python", "-m", "unittest", "discover", "-s", ".", "-p", f"{test_file.name}"],
+                        cwd=self.workspace_dir,
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    if result.returncode == 0:
+                        logger.info("Tests passed using unittest discover")
+                    else:
+                        # Strategy 2: Try running the test file directly
+                        result = subprocess.run(
+                            ["python", str(test_file.name)],
+                            cwd=self.workspace_dir,
+                            capture_output=True,
+                            text=True,
+                            timeout=30
+                        )
+                except Exception:
+                    # Strategy 3: Try pytest if available
+                    try:
+                        result = subprocess.run(
+                            ["python", "-m", "pytest", str(test_file.name), "-v"],
+                            cwd=self.workspace_dir,
+                            capture_output=True,
+                            text=True,
+                            timeout=30
+                        )
+                    except Exception:
+                        logger.warning("No suitable test runner found")
                 
                 validation_results["tests_pass"] = result.returncode == 0
                 if result.returncode == 0:

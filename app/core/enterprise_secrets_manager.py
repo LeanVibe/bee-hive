@@ -111,9 +111,11 @@ class EnterpriseSecretsManager:
         self.config = config or {}
         self.redis = None
         
+        # Initialize salt first (needed for encryption)
+        self.key_derivation_salt = b'leanvibe_secrets_salt_v2'
+        
         # Initialize encryption
         self.cipher_suite = self._initialize_encryption()
-        self.key_derivation_salt = b'leanvibe_secrets_salt_v2'
         
         # Storage backends
         self.storage_backends = {}

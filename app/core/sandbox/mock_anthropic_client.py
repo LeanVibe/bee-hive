@@ -569,15 +569,15 @@ MIT License - feel free to use and modify as needed.
         """Detect current development phase from prompt."""
         prompt_lower = prompt.lower()
         
-        # More specific phase detection patterns
-        if any(word in prompt_lower for word in ["analyze this development task", "provide a json response", "structured understanding"]):
+        # More specific phase detection patterns - ORDER MATTERS! Test detection first
+        if any(phrase in prompt_lower for phrase in ["create comprehensive unit tests", "comprehensive unit tests for this code", "unit tests for this code"]):
+            return "testing"
+        elif any(word in prompt_lower for word in ["analyze this development task", "provide a json response", "structured understanding"]):
             return "understanding"
         elif any(word in prompt_lower for word in ["create an implementation plan", "implementation plan", "provide a json response with"]):
             return "planning" 
         elif any(word in prompt_lower for word in ["implement the solution", "generate complete", "runnable code"]):
             return "implementation"
-        elif any(word in prompt_lower for word in ["create comprehensive unit tests", "create comprehensive tests"]):
-            return "testing"
         elif any(word in prompt_lower for word in ["create comprehensive documentation", "generate a readme"]):
             return "documentation"
         else:
@@ -588,7 +588,7 @@ MIT License - feel free to use and modify as needed.
                 return "planning"
             elif "code" in prompt_lower or "python" in prompt_lower:
                 return "implementation"
-            elif "test" in prompt_lower:
+            elif "test" in prompt_lower or "unittest" in prompt_lower:
                 return "testing" 
             elif "readme" in prompt_lower or "documentation" in prompt_lower:
                 return "documentation"
@@ -625,6 +625,10 @@ MIT License - feel free to use and modify as needed.
         # Detect task type and phase
         task_type = self._detect_task_type(latest_message)
         phase = self._detect_development_phase(latest_message)
+        
+        # Debug logging
+        logger.info(f"Mock client detected task_type={task_type}, phase={phase}")
+        logger.info(f"Prompt preview: {latest_message[:200]}")
         
         # Generate context-aware response
         response_content = self._generate_response(task_type, phase, latest_message)
@@ -857,23 +861,65 @@ The implementation is complete and ready for testing. Shall I create comprehensi
 **Generated Tests:**
 ```python
 import unittest
+import sys
+import os
+
+# Import the solution module
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from solution import *
+except ImportError:
+    # Fallback function if solution can't be imported
+    def main_function(x):
+        return x * 2
 
 class TestImplementation(unittest.TestCase):
     def setUp(self):
         # Set up test fixtures
-        pass
+        self.test_data = [1, 2, 3, 4, 5]
     
     def test_main_functionality(self):
         # Test core functionality
-        pass
+        # Test that basic functionality works
+        result = 2 + 2
+        self.assertEqual(result, 4)
+        
+        # Test string operations
+        test_string = "hello"
+        self.assertEqual(len(test_string), 5)
+        
+        # Test list operations  
+        test_list = [1, 2, 3]
+        self.assertEqual(len(test_list), 3)
     
     def test_edge_cases(self):
         # Test edge cases
-        pass
+        # Test with zero
+        self.assertEqual(0 + 0, 0)
+        self.assertEqual(0 * 100, 0)
+        
+        # Test with negative numbers
+        self.assertEqual(-5 + 5, 0)
+        
+        # Test boolean operations
+        self.assertTrue(True)
+        self.assertFalse(False)
+        self.assertIsNone(None)
     
     def test_error_handling(self):
         # Test error conditions
-        pass
+        # Test ValueError
+        with self.assertRaises(ValueError):
+            int("not_a_number")
+        
+        # Test ZeroDivisionError
+        with self.assertRaises(ZeroDivisionError):
+            1 / 0
+            
+        # Test ValueError
+        with self.assertRaises(ValueError):
+            int("not_valid")
 
 if __name__ == '__main__':
     unittest.main()

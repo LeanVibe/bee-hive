@@ -1,721 +1,303 @@
 # Mobile PWA Dashboard Recovery Work Package
 
-**Mission**: Prepare executable specifications for the Agent Hive to autonomously fix critical Mobile PWA Dashboard runtime errors and restore full production monitoring capabilities.
+**Date**: 2025-08-07  
+**Priority**: CRITICAL - Essential for Agent Hive remote oversight  
+**Status**: Analysis Complete - Ready for Implementation  
 
-## Executive Summary
+## 🔍 ROOT CAUSE ANALYSIS
 
-The Mobile PWA Dashboard currently suffers from several critical runtime issues preventing production monitoring:
+### **PRIMARY ISSUE: Port Configuration Mismatch**
+- **Expected**: PWA dashboard accessible at `:8001` 
+- **Reality**: PWA development server runs on `:5173` (Vite default)
+- **Impact**: Complete inaccessibility for remote oversight operations
 
-1. **Lit Component Runtime Errors**: Class field shadowing and property binding issues
-2. **API Integration Failures**: Backend connectivity and real-time data flow problems  
-3. **PWA Functionality Gaps**: Service worker and offline capability issues
-4. **Performance Degradation**: Frame rate drops and memory usage reporting failures
+### **SECONDARY ISSUES IDENTIFIED**
 
-This work package provides autonomous execution specifications to restore full functionality.
+1. **Backend API Endpoint Confusion**
+   - PWA expects `/dashboard/api/live-data` endpoints
+   - Backend serves different endpoint structure
+   - No working bridge between PWA and backend APIs
+
+2. **WebSocket Connection Issues**
+   - PWA tries to connect to `/dashboard/simple-ws`
+   - Backend WebSocket endpoints may not be properly exposed
+   - Real-time updates completely broken
+
+3. **Service Worker Development Issues**
+   - Service worker disabled in development mode
+   - PWA features not testable during development
+
+## ✅ CURRENT WORKING COMPONENTS
+
+### **PWA Infrastructure** 
+- ✅ **Development Server**: Functional on port 5173
+- ✅ **Build System**: Vite configuration working
+- ✅ **TypeScript Compilation**: No compilation errors
+- ✅ **Dependencies**: All npm packages installed correctly
+- ✅ **Component Architecture**: Lit web components structure sound
+- ✅ **Responsive Design**: Mobile-first CSS framework intact
+
+### **Backend System**
+- ✅ **Core API**: Backend healthy on port 8000
+- ✅ **Database**: PostgreSQL + Redis fully operational
+- ✅ **Agent System**: 5 active agents running
+- ✅ **Health Checks**: System reporting 100% healthy status
+
+### **Integration Layer**
+- ✅ **CORS Configuration**: Properly configured for cross-origin requests
+- ✅ **Proxy Setup**: Vite proxy configured for `/dashboard/api` routes
+- ✅ **Service Architecture**: Backend adapter pattern implemented
+
+## 🚀 RECOVERY PLAN - Step-by-Step Implementation
+
+### **Phase 1: Immediate Port Configuration Fix (15 minutes)**
+
+1. **Configure PWA to serve on port 8001**
+   ```bash
+   # Update vite.config.ts server port
+   server: {
+     host: '0.0.0.0',
+     port: 8001,  // Changed from 5173
+     strictPort: true,
+   }
+   ```
+
+2. **Update all service configurations**
+   - Backend adapter service URLs
+   - WebSocket connection strings
+   - Development scripts
+
+3. **Test accessibility**
+   ```bash
+   npm run dev
+   curl http://localhost:8001
+   ```
+
+### **Phase 2: Backend API Bridge Implementation (30 minutes)**
+
+1. **Create Dashboard Data Endpoint**
+   ```python
+   # In app/dashboard/simple_agent_dashboard.py
+   @router.get("/api/live-data")
+   async def get_live_dashboard_data():
+       # Return structured data for PWA
+   ```
+
+2. **Implement WebSocket Proxy**
+   ```python
+   @router.websocket("/simple-ws")
+   async def dashboard_websocket():
+       # Real-time updates bridge
+   ```
+
+3. **Map Agent Data to PWA Format**
+   - Transform agent status from orchestrator
+   - Map task data to kanban format
+   - Convert metrics to dashboard widgets
+
+### **Phase 3: WebSocket Real-Time Updates (20 minutes)**
+
+1. **Fix WebSocket Connection**
+   - Ensure `/dashboard/simple-ws` endpoint works
+   - Test connection from PWA WebSocket service
+   - Implement reconnection logic
+
+2. **Real-Time Data Flow**
+   ```typescript
+   // PWA WebSocket service connects to working backend
+   wsService.connect('ws://localhost:8000/dashboard/simple-ws')
+   ```
+
+3. **Event Broadcasting**
+   - Agent status changes
+   - Task updates
+   - System health metrics
+
+### **Phase 4: PWA Production Features (15 minutes)**
+
+1. **Enable Service Worker in Development**
+   ```typescript
+   devOptions: {
+     enabled: true  // Enable for testing
+   }
+   ```
+
+2. **Test PWA Installation**
+   - Manifest validation
+   - Install prompt functionality
+   - Offline capabilities
+
+3. **Mobile Touch Optimizations**
+   - Touch target validation
+   - Gesture navigation
+   - Mobile-specific UI components
+
+## 🧪 COMPREHENSIVE TESTING STRATEGY
+
+### **Level 1: Basic Functionality (10 minutes)**
+```bash
+# Start PWA on correct port
+cd mobile-pwa && npm run dev
+
+# Test basic accessibility
+curl http://localhost:8001
+curl http://localhost:8001/manifest.json
+
+# Test backend API bridge
+curl http://localhost:8000/dashboard/api/live-data
+```
+
+### **Level 2: Real-Time Integration (15 minutes)**
+```bash
+# Test WebSocket connection
+wscat -c ws://localhost:8000/dashboard/simple-ws
+
+# Test agent data flow
+curl http://localhost:8000/dashboard/api/agents
+curl http://localhost:8000/dashboard/api/tasks
+
+# Test PWA service integration
+# Open browser console, test window.appServices
+```
+
+### **Level 3: Mobile PWA Features (20 minutes)**
+```bash
+# Run comprehensive e2e tests
+npm run test:e2e
+
+# Test specific dashboard features
+npm run test:e2e tests/e2e/dashboard-basic.spec.ts
+
+# Test mobile responsiveness
+npm run test:e2e tests/e2e/responsive-design.spec.ts
+
+# Test PWA installation
+npm run lighthouse:pwa
+```
+
+### **Level 4: Autonomous Oversight Validation (15 minutes)**
+```bash
+# Test emergency controls
+curl -X POST http://localhost:8001/api/emergency/pause-all
+
+# Test agent activation
+curl -X POST http://localhost:8000/dashboard/api/agents/activate-team
+
+# Test real-time monitoring
+# Validate WebSocket message flow in browser dev tools
+
+# Test offline functionality
+# Disable network in dev tools, verify offline mode
+```
+
+## 🤖 AUTONOMOUS IMPLEMENTATION READINESS
+
+### **✅ FULLY AUTONOMOUS TASKS (Can be delegated to Agent Hive)**
+- Port configuration changes
+- Vite config updates  
+- Basic API endpoint creation
+- WebSocket connection fixes
+- Service worker enablement
+- Testing script execution
+- Documentation updates
+
+### **🔄 SEMI-AUTONOMOUS TASKS (Agent Hive + Human validation)**
+- Backend API data mapping
+- WebSocket message format design
+- PWA manifest optimization
+- Mobile UX enhancements
+
+### **👥 HUMAN-REQUIRED TASKS**
+- Final PWA installation validation
+- Mobile device testing
+- Production deployment decisions
+- Emergency control design validation
+
+### **AUTONOMOUS IMPLEMENTATION CONFIDENCE: 85%**
+- **High Confidence**: Infrastructure and configuration changes
+- **Medium Confidence**: API integration and WebSocket implementation  
+- **Review Required**: Mobile UX and emergency controls
+
+## 📋 IMPLEMENTATION CHECKLIST
+
+### **Immediate Actions (Next 60 minutes)**
+- [ ] Update Vite config to serve on port 8001
+- [ ] Create `/dashboard/api/live-data` endpoint in backend
+- [ ] Fix WebSocket `/dashboard/simple-ws` connection
+- [ ] Test basic PWA accessibility at localhost:8001
+- [ ] Validate real-time agent data flow
+
+### **Validation Actions (Next 30 minutes)**
+- [ ] Run full e2e test suite
+- [ ] Test PWA installation flow
+- [ ] Test mobile responsive design
+- [ ] Test offline functionality
+- [ ] Test emergency control interfaces
+
+### **Production Readiness (Next 30 minutes)**
+- [ ] Enable service worker in development
+- [ ] Test PWA manifest validation
+- [ ] Test push notification capability
+- [ ] Document mobile oversight procedures
+- [ ] Create emergency escalation protocols
+
+## 🎯 SUCCESS CRITERIA
+
+### **Primary Success Metrics**
+- ✅ PWA accessible at `localhost:8001` 
+- ✅ Real-time agent status updates working
+- ✅ Task management interface functional
+- ✅ WebSocket connection stable
+- ✅ Mobile touch controls responsive
+
+### **Secondary Success Metrics**  
+- ✅ PWA installs successfully on mobile devices
+- ✅ Offline mode functions correctly
+- ✅ Emergency controls respond within 2 seconds
+- ✅ All e2e tests pass
+- ✅ Mobile UX meets professional standards
+
+### **Autonomous Development Success**
+- ✅ Agent Hive can implement infrastructure fixes independently
+- ✅ API integration follows documented patterns
+- ✅ Testing validates functionality automatically
+- ✅ Documentation updates maintain accuracy
+
+## 🚨 RISK MITIGATION
+
+### **Technical Risks**
+- **Port conflicts**: Test port availability before changes
+- **WebSocket instability**: Implement reconnection with exponential backoff  
+- **Mobile browser compatibility**: Test on iOS Safari, Android Chrome
+- **Offline data corruption**: Implement data validation and recovery
+
+### **Implementation Risks**
+- **Breaking existing functionality**: Implement with feature flags
+- **Performance degradation**: Monitor resource usage during implementation
+- **Security vulnerabilities**: Validate all API endpoints for security
+
+### **Mitigation Strategies**
+1. **Staged rollout**: Implement one component at a time
+2. **Fallback mechanisms**: Ensure graceful degradation
+3. **Comprehensive testing**: Validate each change before proceeding
+4. **Rollback plan**: Keep working backup configuration
+
+## 🎉 EXPECTED OUTCOMES
+
+### **Immediate Impact (Within 2 hours)**
+- **Full PWA Dashboard functionality restored**
+- **Real-time Agent Hive oversight capability**
+- **Mobile-first remote management interface**
+- **Emergency control systems operational**
+
+### **Strategic Impact**
+- **Autonomous development platform becomes truly mobile**
+- **24/7 agent oversight from any device**
+- **Professional-grade mobile command center**
+- **Foundation for advanced mobile AI management features**
 
 ---
 
-## Work Package 1: Lit Component Runtime Error Fixes
+**🚀 Mobile PWA Dashboard Recovery Package - Ready for Autonomous Implementation**
 
-### Issue Analysis
-- **Class Field Shadowing**: `@state() declare private` pattern causes runtime conflicts
-- **Property Binding Errors**: Missing reactive property declarations in base classes
-- **Component Lifecycle Issues**: Improper initialization order causing undefined states
-
-### Autonomous Fix Specifications
-
-#### File: `/src/app.ts` - Line 23-31
-```typescript
-// CURRENT (BROKEN):
-@state() declare private currentRoute: string
-@state() declare private isAuthenticated: boolean
-// ... other declare statements
-
-// FIX TO:
-@state() private currentRoute: string = '/'
-@state() private isAuthenticated: boolean = false
-@state() private isLoading: boolean = true
-@state() private isOnline: boolean = navigator.onLine
-@state() private hasError: boolean = false
-@state() private errorMessage: string = ''
-@state() private isMobile: boolean = window.innerWidth < 768
-@state() private sidebarCollapsed: boolean = false
-@state() private mobileMenuOpen: boolean = false
-```
-
-#### File: `/src/views/dashboard-view.ts` - Line 25-41
-```typescript
-// CURRENT (BROKEN):
-@state() private declare tasks: Task[]
-@state() private declare agents: AgentStatus[]
-// ... other declare statements
-
-// FIX TO:
-@state() private tasks: Task[] = []
-@state() private agents: AgentStatus[] = []
-@state() private events: TimelineEvent[] = []
-@state() private systemHealth: SystemHealth | null = null
-@state() private performanceMetrics: PerformanceSnapshot | null = null
-@state() private healthSummary: HealthSummary | null = null
-@state() private isLoading: boolean = true
-@state() private error: string = ''
-@state() private lastSync: Date | null = null
-@state() private selectedView: 'overview' | 'kanban' | 'agents' | 'events' = 'overview'
-@state() private servicesInitialized: boolean = false
-@state() private wsConnected: boolean = false
-@state() private realtimeEnabled: boolean = true
-@state() private connectionQuality: 'excellent' | 'good' | 'poor' | 'offline' = 'offline'
-@state() private updateQueue: any[] = []
-@state() private lastUpdateTimestamp: Date | null = null
-```
-
-#### File: `/src/components/layout/sidebar-navigation.ts` - Line 19
-```typescript
-// CURRENT (BROKEN):
-@state() declare private expandedItems: Set<string>
-
-// FIX TO:
-@state() private expandedItems: Set<string> = new Set()
-```
-
-### Testing Specifications
-1. **Component Initialization Test**: Verify all components render without console errors
-2. **Property Binding Test**: Confirm reactive updates work correctly
-3. **State Management Test**: Validate state changes trigger re-renders
-
-### Execution Time Estimate: 2 hours
-
----
-
-## Work Package 2: API Integration Restoration
-
-### Issue Analysis
-- **WebSocket Connection Failures**: Incorrect URL construction in development vs production
-- **Backend Adapter Integration**: Missing error handling and fallback mechanisms
-- **Real-time Data Flow Interruption**: Event handling and state synchronization issues
-
-### Autonomous Fix Specifications
-
-#### File: `/src/services/websocket.ts` - Line 97-100
-```typescript
-// CURRENT (PROBLEMATIC):
-const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-const host = window.location.hostname
-const port = process.env.NODE_ENV === 'development' ? ':8000' : ''
-const wsUrl = `${protocol}//${host}${port}/api/v1/ws/observability`
-
-// FIX TO:
-const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-const host = window.location.hostname
-const port = process.env.NODE_ENV === 'development' ? ':8000' : 
-            window.location.port ? `:${window.location.port}` : ''
-const wsUrl = `${protocol}//${host}${port}/api/v1/ws/observability`
-
-// Add connection validation
-try {
-  // Test connection availability before attempting WebSocket
-  const healthCheck = await fetch(`${window.location.protocol}//${host}${port}/api/v1/health`)
-  if (!healthCheck.ok) {
-    throw new Error('Backend service not available')
-  }
-} catch (error) {
-  console.warn('Backend health check failed, WebSocket connection may fail:', error)
-}
-```
-
-#### File: `/src/services/backend-adapter.ts` - Enhanced Error Handling
-```typescript
-// ADD ERROR RECOVERY MECHANISM:
-private async withRetry<T>(operation: () => Promise<T>, retries: number = 3): Promise<T> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await operation()
-    } catch (error) {
-      if (i === retries - 1) throw error
-      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)))
-    }
-  }
-  throw new Error('Max retries exceeded')
-}
-
-// ENHANCE getTasksFromLiveData:
-async getTasksFromLiveData(): Promise<Task[]> {
-  return this.withRetry(async () => {
-    const response = await fetch('/api/v1/tasks', {
-      headers: this.getAuthHeaders()
-    })
-    
-    if (!response.ok) {
-      if (response.status === 401) {
-        this.emit('authError', 'Authentication required')
-        throw new Error('Authentication failed')
-      }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-    
-    return await response.json()
-  })
-}
-```
-
-### API Endpoint Validation Specifications
-
-#### Create: `/mobile-pwa/scripts/validate_api_endpoints.js`
-```javascript
-const endpoints = [
-  '/api/v1/health',
-  '/api/v1/tasks',
-  '/api/v1/agents',
-  '/api/v1/system/health',
-  '/api/v1/events',
-  '/api/v1/metrics/performance',
-  '/api/v1/ws/observability'
-]
-
-async function validateEndpoints() {
-  const results = []
-  
-  for (const endpoint of endpoints) {
-    try {
-      const response = await fetch(endpoint)
-      results.push({
-        endpoint,
-        status: response.status,
-        available: response.ok
-      })
-    } catch (error) {
-      results.push({
-        endpoint,
-        status: 'ERROR',
-        available: false,
-        error: error.message
-      })
-    }
-  }
-  
-  return results
-}
-
-// Export for testing framework
-if (typeof module !== 'undefined') {
-  module.exports = { validateEndpoints }
-}
-```
-
-### Testing Specifications
-1. **API Connectivity Test**: Validate all backend endpoints respond correctly
-2. **WebSocket Connection Test**: Confirm real-time connection establishment
-3. **Data Synchronization Test**: Verify offline/online state transitions
-4. **Error Recovery Test**: Test retry mechanisms and fallback behaviors
-
-### Execution Time Estimate: 4 hours
-
----
-
-## Work Package 3: PWA Functionality Completion
-
-### Issue Analysis
-- **Service Worker Registration Disabled**: Development mode skips service worker entirely
-- **Offline Capability Missing**: No proper caching or offline data access
-- **Push Notification System Incomplete**: Firebase integration hanging in development
-
-### Autonomous Fix Specifications
-
-#### File: `/src/main.ts` - Line 124-128
-```typescript
-// CURRENT (BROKEN):
-// Skip service worker registration completely in development mode
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔧 Development mode: Skipping service worker registration entirely')
-  return
-}
-
-// FIX TO:
-// Allow service worker in development with proper fallbacks
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔧 Development mode: Using service worker with development optimizations')
-  
-  // Use development-specific service worker
-  const registration = await navigator.serviceWorker.register('/sw.dev.js', {
-    scope: '/',
-    updateViaCache: 'none'
-  })
-  
-  console.log('✅ Development service worker registered:', registration)
-  return registration
-}
-```
-
-#### Create: `/mobile-pwa/public/sw.dev.js` - Development Service Worker
-```javascript
-// Development Service Worker - Minimal caching with debugging
-const CACHE_NAME = 'agent-hive-dev-v1'
-const urlsToCache = [
-  '/',
-  '/src/main.ts',
-  '/src/app.ts',
-  '/offline.html'
-]
-
-self.addEventListener('install', event => {
-  console.log('🔧 DEV SW: Installing service worker')
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('🔧 DEV SW: Caching app shell')
-        return cache.addAll(urlsToCache)
-      })
-      .catch(error => {
-        console.warn('🔧 DEV SW: Cache add failed:', error)
-      })
-  )
-})
-
-self.addEventListener('fetch', event => {
-  // Only cache GET requests
-  if (event.request.method !== 'GET') return
-  
-  // Skip API requests in development
-  if (event.request.url.includes('/api/')) return
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          console.log('🔧 DEV SW: Serving from cache:', event.request.url)
-          return response
-        }
-        
-        return fetch(event.request)
-          .catch(() => {
-            // Fallback to offline page
-            return caches.match('/offline.html')
-          })
-      })
-  )
-})
-```
-
-#### File: `/src/services/notification.ts` - Line 92-98
-```typescript
-// CURRENT (HANGING IN DEV):
-// In development mode, skip Firebase initialization to avoid hanging
-if (process.env.NODE_ENV === 'development' && this.fcmConfig.apiKey === 'demo-key') {
-  console.log('🔧 Development mode: Skipping Firebase Cloud Messaging initialization')
-} else {
-  // Initialize Firebase Cloud Messaging
-  await this.initializeFirebaseMessaging()
-}
-
-// FIX TO:
-// Use mock notification service in development
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔧 Development mode: Using mock notification service')
-  await this.initializeMockNotificationService()
-} else {
-  // Initialize Firebase Cloud Messaging for production
-  await this.initializeFirebaseMessaging()
-}
-
-// ADD MOCK SERVICE:
-private async initializeMockNotificationService(): Promise<void> {
-  console.log('🔧 Initializing mock notification service for development')
-  
-  // Mock Firebase messaging behavior
-  this.messaging = {
-    getToken: () => Promise.resolve('dev-token-' + Date.now()),
-    onMessage: (callback) => {
-      // Simulate periodic notifications in development
-      setInterval(() => {
-        callback({
-          notification: {
-            title: '🔧 Dev Notification',
-            body: 'Mock notification for testing',
-            icon: '/icons/icon-192x192.png'
-          },
-          data: { type: 'development_test' }
-        })
-      }, 60000) // Every minute
-    }
-  }
-  
-  this.isInitialized = true
-}
-```
-
-### PWA Manifest Validation
-
-#### File: `/mobile-pwa/public/manifest.json` - Enhancement
-```json
-{
-  "name": "Agent Hive - Autonomous Development Platform",
-  "short_name": "Agent Hive",
-  "description": "Multi-agent autonomous development monitoring dashboard",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#1e293b",
-  "theme_color": "#3b82f6",
-  "icons": [
-    {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "categories": ["development", "productivity", "utilities"],
-  "screenshots": [
-    {
-      "src": "/screenshots/desktop-dashboard.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Main dashboard view"
-    },
-    {
-      "src": "/screenshots/mobile-dashboard.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile dashboard"
-    }
-  ],
-  "orientation": "any",
-  "scope": "/",
-  "id": "agent-hive-pwa",
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "edge_side_panel": {
-    "preferred_width": 400
-  }
-}
-```
-
-### Testing Specifications
-1. **PWA Installation Test**: Validate app can be installed on various devices
-2. **Offline Functionality Test**: Confirm app works without network connectivity
-3. **Service Worker Test**: Verify caching and background sync capabilities
-4. **Notification Test**: Test push notifications and in-app notifications
-
-### Execution Time Estimate: 3 hours
-
----
-
-## Work Package 4: Performance Optimization
-
-### Issue Analysis
-- **Frame Rate Drops**: Excessive DOM updates and inefficient rendering
-- **Memory Usage Reporting Failures**: Performance metrics collection issues
-- **Mobile Responsiveness Problems**: Touch targets and gesture handling
-
-### Autonomous Fix Specifications
-
-#### File: `/src/utils/performance.ts` - Enhanced Performance Monitor
-```typescript
-export class PerformanceOptimizer {
-  private frameCount = 0
-  private lastFrameTime = performance.now()
-  private fps = 0
-  private memoryUsage = { used: 0, total: 0 }
-  private observers: PerformanceObserver[] = []
-  
-  async initialize(): Promise<void> {
-    // Monitor frame rate
-    this.startFrameRateMonitoring()
-    
-    // Monitor memory usage
-    this.startMemoryMonitoring()
-    
-    // Monitor long tasks
-    this.startLongTaskMonitoring()
-    
-    // Monitor resource loading
-    this.startResourceMonitoring()
-    
-    console.log('✅ Performance optimizer initialized')
-  }
-  
-  private startFrameRateMonitoring(): void {
-    const measureFrame = (currentTime: number) => {
-      this.frameCount++
-      
-      if (currentTime - this.lastFrameTime >= 1000) {
-        this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastFrameTime))
-        this.frameCount = 0
-        this.lastFrameTime = currentTime
-        
-        // Emit FPS data
-        this.emit('fps-update', { fps: this.fps })
-        
-        // Warn if FPS drops below 30
-        if (this.fps < 30) {
-          console.warn(`⚠️ Low frame rate detected: ${this.fps} FPS`)
-          this.emit('performance-warning', { type: 'low-fps', value: this.fps })
-        }
-      }
-      
-      requestAnimationFrame(measureFrame)
-    }
-    
-    requestAnimationFrame(measureFrame)
-  }
-  
-  private startMemoryMonitoring(): void {
-    const updateMemoryStats = () => {
-      // @ts-ignore - performance.memory is Chrome-specific
-      const memory = (performance as any).memory
-      if (memory) {
-        this.memoryUsage = {
-          used: Math.round(memory.usedJSHeapSize / 1048576), // MB
-          total: Math.round(memory.totalJSHeapSize / 1048576) // MB
-        }
-        
-        this.emit('memory-update', this.memoryUsage)
-        
-        // Warn if memory usage exceeds 100MB
-        if (this.memoryUsage.used > 100) {
-          console.warn(`⚠️ High memory usage: ${this.memoryUsage.used}MB`)
-          this.emit('performance-warning', { 
-            type: 'high-memory', 
-            value: this.memoryUsage.used 
-          })
-        }
-      }
-    }
-    
-    // Update every 5 seconds
-    setInterval(updateMemoryStats, 5000)
-    updateMemoryStats()
-  }
-  
-  private startLongTaskMonitoring(): void {
-    if ('PerformanceObserver' in window) {
-      const observer = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          if (entry.duration > 50) { // Tasks longer than 50ms
-            console.warn(`⚠️ Long task detected: ${entry.duration.toFixed(2)}ms`)
-            this.emit('performance-warning', { 
-              type: 'long-task', 
-              value: entry.duration,
-              name: entry.name 
-            })
-          }
-        }
-      })
-      
-      try {
-        observer.observe({ entryTypes: ['longtask'] })
-        this.observers.push(observer)
-      } catch (error) {
-        console.warn('Long task monitoring not supported')
-      }
-    }
-  }
-  
-  getFPS(): number {
-    return this.fps
-  }
-  
-  getMemoryUsage(): { used: number; total: number } {
-    return this.memoryUsage
-  }
-}
-```
-
-#### File: `/src/views/dashboard-view.ts` - Render Optimization
-```typescript
-// ADD EFFICIENT RENDERING METHOD:
-private shouldUpdate(changedProperties: PropertyValues): boolean {
-  // Only update if relevant properties changed
-  const relevantProps = [
-    'tasks', 'agents', 'events', 'systemHealth', 
-    'performanceMetrics', 'selectedView', 'isLoading', 'error'
-  ]
-  
-  return relevantProps.some(prop => changedProperties.has(prop as keyof this))
-}
-
-// OPTIMIZE REAL-TIME UPDATES:
-private handleRealtimeTaskUpdate(taskData: Task) {
-  // Batch updates to avoid excessive re-renders
-  if (!this.updateBatch) {
-    this.updateBatch = []
-    
-    // Process batch after current event loop
-    setTimeout(() => {
-      this.processBatchUpdates()
-      this.updateBatch = null
-    }, 0)
-  }
-  
-  this.updateBatch.push({ type: 'task-update', data: taskData })
-}
-
-private updateBatch: any[] | null = null
-
-private processBatchUpdates(): void {
-  if (!this.updateBatch || this.updateBatch.length === 0) return
-  
-  const taskUpdates = this.updateBatch.filter(update => update.type === 'task-update')
-  
-  if (taskUpdates.length > 0) {
-    const updatedTasks = [...this.tasks]
-    
-    taskUpdates.forEach(update => {
-      const index = updatedTasks.findIndex(t => t.id === update.data.id)
-      if (index >= 0) {
-        updatedTasks[index] = { ...update.data, syncStatus: 'synced' }
-      }
-    })
-    
-    this.tasks = updatedTasks
-    this.lastUpdateTimestamp = new Date()
-  }
-}
-```
-
-### Mobile Touch Optimizations
-
-#### File: `/src/components/kanban/task-card.ts` - Touch Enhancements
-```typescript
-// ADD TOUCH-FRIENDLY STYLES:
-static styles = css`
-  /* Existing styles ... */
-  
-  .task-card {
-    /* Ensure minimum touch target size */
-    min-height: 44px;
-    touch-action: manipulation;
-  }
-  
-  /* Enhanced mobile interactions */
-  @media (max-width: 768px) {
-    .task-card {
-      padding: 1rem;
-      min-height: 56px; /* Larger touch targets on mobile */
-    }
-    
-    .task-card:active {
-      transform: scale(0.98);
-      transition: transform 0.1s ease;
-    }
-  }
-  
-  /* Improved accessibility for touch devices */
-  @media (pointer: coarse) {
-    .priority-badge {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.875rem;
-    }
-    
-    .task-meta {
-      font-size: 0.8125rem;
-      gap: 0.75rem;
-    }
-  }
-`
-```
-
-### Testing Specifications
-1. **Frame Rate Test**: Monitor FPS during heavy dashboard usage
-2. **Memory Usage Test**: Validate memory consumption stays under 100MB
-3. **Touch Interaction Test**: Verify all interactive elements have proper touch targets
-4. **Performance Regression Test**: Compare before/after optimization metrics
-
-### Execution Time Estimate: 6 hours
-
----
-
-## Autonomous Execution Framework
-
-### Agent Coordination Specifications
-
-#### Primary Agent Roles
-1. **Frontend Specialist Agent**: Handles Lit component fixes and UI optimization
-2. **Backend Integration Agent**: Manages API connectivity and WebSocket fixes  
-3. **PWA Implementation Agent**: Focuses on service worker and offline capabilities
-4. **Performance Optimization Agent**: Monitors and improves system performance
-5. **Quality Assurance Agent**: Runs comprehensive testing and validation
-
-#### Agent Coordination Protocol
-```typescript
-interface WorkPackageExecution {
-  packageId: string
-  assignedAgent: string
-  status: 'pending' | 'in-progress' | 'completed' | 'failed'
-  startTime: Date
-  estimatedCompletion: Date
-  actualCompletion?: Date
-  dependencies: string[]
-  blockers: string[]
-  testResults: TestResult[]
-}
-
-interface TestResult {
-  testName: string
-  status: 'pass' | 'fail' | 'warning'
-  details: string
-  timestamp: Date
-  affectedComponents: string[]
-}
-```
-
-### Quality Gates
-1. **Component Initialization Gate**: All components must render without console errors
-2. **API Connectivity Gate**: All backend endpoints must respond correctly  
-3. **PWA Validation Gate**: Service worker and offline functionality must work
-4. **Performance Gate**: FPS > 30, Memory < 100MB, Load time < 3s
-5. **Mobile Responsiveness Gate**: All touch targets > 44px, gestures work properly
-
-### Rollback Procedures
-Each work package includes automatic rollback if:
-- More than 2 critical tests fail
-- Performance degrades by >20%
-- New console errors are introduced
-- User interaction becomes unavailable
-
-### Success Criteria
-- **Zero runtime console errors**
-- **All API endpoints responding correctly**
-- **PWA installable and functional offline**
-- **60+ FPS on desktop, 30+ FPS on mobile**
-- **Mobile responsiveness validated across devices**
-- **Real-time dashboard updates functioning**
-- **WebSocket connection stable and recovering properly**
-
-### Monitoring and Reporting
-Each agent will provide progress updates every 30 minutes including:
-- Tasks completed vs. estimated
-- Test results summary
-- Performance metrics comparison
-- Blocker identification and resolution status
-- Next steps and dependencies
-
----
-
-## Expected Timeline
-
-| Work Package | Estimated Duration | Dependencies | Critical Path |
-|--------------|-------------------|--------------|---------------|
-| 1. Lit Component Fixes | 2 hours | None | Yes |
-| 2. API Integration | 4 hours | Package 1 | Yes |
-| 3. PWA Functionality | 3 hours | Package 1 | No |
-| 4. Performance Optimization | 6 hours | Packages 1-2 | No |
-
-**Total Estimated Time**: 8-10 hours (accounting for parallel execution)
-**Critical Path Duration**: 6 hours
-
-### Execution Strategy
-1. **Phase 1** (0-2h): Execute Package 1 (Lit Component Fixes)
-2. **Phase 2** (2-6h): Execute Package 2 (API Integration) while starting Package 3 (PWA) in parallel
-3. **Phase 3** (4-10h): Execute Package 4 (Performance) while finalizing Package 3
-4. **Phase 4** (8-10h): Integration testing, validation, and deployment
-
-This work package provides complete autonomous execution specifications for restoring the Mobile PWA Dashboard to full production monitoring capabilities. Each section includes detailed technical specifications, testing procedures, and quality gates to ensure successful autonomous implementation by the Agent Hive system.
+*This comprehensive recovery plan restores critical Agent Hive oversight capabilities with 85% autonomous implementation readiness. The mobile PWA dashboard will provide professional, real-time control over AI agent teams with enterprise-grade reliability.*
