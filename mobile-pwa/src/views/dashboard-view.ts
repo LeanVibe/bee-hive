@@ -33,13 +33,16 @@ export class DashboardView extends LitElement {
   @state() private declare isLoading: boolean
   @state() private declare error: string
   @state() private declare lastSync: Date | null
-  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'oversight' | 'control'
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control'
   @state() private declare servicesInitialized: boolean
   @state() private declare wsConnected: boolean
   @state() private declare realtimeEnabled: boolean
   @state() private declare connectionQuality: 'excellent' | 'good' | 'poor' | 'offline'
   @state() private declare updateQueue: any[]
   @state() private declare lastUpdateTimestamp: Date | null
+  @state() private declare comprehensivePerformanceMetrics: any | null
+  @state() private declare securityMetrics: any | null
+  @state() private declare securityAlerts: any[]
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
@@ -591,6 +594,9 @@ export class DashboardView extends LitElement {
     this.connectionQuality = 'offline'
     this.updateQueue = []
     this.lastUpdateTimestamp = null
+    this.comprehensivePerformanceMetrics = null
+    this.securityMetrics = null
+    this.securityAlerts = []
     
     this.websocketService = WebSocketService.getInstance()
     this.offlineService = OfflineService.getInstance()
@@ -1066,7 +1072,7 @@ export class DashboardView extends LitElement {
   }
   
   // Accessibility and keyboard navigation methods
-  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events') {
+  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control') {
     this.selectedView = view
     this.announceViewChange(view)
   }

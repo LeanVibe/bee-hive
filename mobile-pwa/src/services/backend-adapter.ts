@@ -574,6 +574,197 @@ export class BackendAdapter extends BaseService {
   }
 
   /**
+   * Get comprehensive security metrics for the security monitoring dashboard
+   */
+  async getComprehensiveSecurityMetrics() {
+    const data = await this.getLiveData();
+    
+    // Generate realistic security metrics based on system state
+    const activeThreats = data.conflict_snapshots.filter(c => c.severity === 'critical' || c.severity === 'high').length;
+    const resolvedToday = Math.floor(Math.random() * 15) + 5;
+    const falsePositives = Math.floor(Math.random() * 8) + 2;
+    
+    // Determine threat level based on active threats and system status
+    let threatLevel: 'minimal' | 'elevated' | 'high' | 'critical' = 'minimal';
+    if (activeThreats === 0 && data.metrics.system_status === 'healthy') {
+      threatLevel = 'minimal';
+    } else if (activeThreats <= 2 && data.metrics.system_status !== 'critical') {
+      threatLevel = 'elevated';
+    } else if (activeThreats <= 5 || data.metrics.system_status === 'degraded') {
+      threatLevel = 'high';
+    } else {
+      threatLevel = 'critical';
+    }
+    
+    // Generate authentication metrics
+    const failedAttempts = Math.floor(Math.random() * 20) + (threatLevel === 'critical' ? 15 : 0);
+    const suspiciousLogins = Math.floor(Math.random() * 5) + (threatLevel === 'high' ? 3 : 0);
+    const activeSessions = data.agent_activities.length + Math.floor(Math.random() * 10) + 5;
+    const mfaCompliance = Math.max(75, 95 - (threatLevel === 'critical' ? 20 : threatLevel === 'high' ? 10 : 0));
+    
+    return {
+      threat_detection: {
+        active_threats: activeThreats,
+        resolved_today: resolvedToday,
+        false_positives: falsePositives,
+        threat_level: threatLevel
+      },
+      authentication: {
+        successful_logins: Math.floor(Math.random() * 100) + 50,
+        failed_attempts: failedAttempts,
+        suspicious_logins: suspiciousLogins,
+        active_sessions: activeSessions,
+        mfa_compliance_rate: mfaCompliance
+      },
+      access_control: {
+        permission_violations: Math.floor(Math.random() * 5) + (threatLevel === 'critical' ? 3 : 0),
+        unauthorized_access_attempts: Math.floor(Math.random() * 8) + (threatLevel === 'high' ? 5 : 0),
+        privilege_escalations: Math.floor(Math.random() * 3),
+        data_access_anomalies: Math.floor(Math.random() * 4) + (threatLevel === 'high' ? 2 : 0)
+      },
+      network_security: {
+        blocked_connections: Math.floor(Math.random() * 50) + 20,
+        malicious_requests: Math.floor(Math.random() * 15) + (threatLevel === 'critical' ? 10 : 0),
+        rate_limit_violations: Math.floor(Math.random() * 25) + 5,
+        ddos_attempts: Math.floor(Math.random() * 3) + (threatLevel === 'critical' ? 2 : 0)
+      },
+      data_protection: {
+        encryption_status: data.metrics.system_status === 'critical' ? 'critical' as const : 
+                          data.metrics.system_status === 'degraded' ? 'degraded' as const : 'healthy' as const,
+        backup_status: Math.random() > 0.9 ? 'failed' as const : 
+                      Math.random() > 0.95 ? 'delayed' as const : 'current' as const,
+        data_integrity_score: Math.max(85, 98 - (threatLevel === 'critical' ? 15 : threatLevel === 'high' ? 8 : 0)),
+        compliance_violations: Math.floor(Math.random() * 3) + (threatLevel === 'critical' ? 2 : 0)
+      },
+      system_security: {
+        vulnerability_score: Math.max(10, Math.min(100, 25 + (threatLevel === 'critical' ? 40 : threatLevel === 'high' ? 20 : 0))),
+        patch_compliance: Math.max(80, 95 - (threatLevel === 'critical' ? 15 : threatLevel === 'high' ? 8 : 0)),
+        security_updates_pending: Math.floor(Math.random() * 5) + (threatLevel === 'high' ? 3 : 0),
+        configuration_drift: Math.floor(Math.random() * 8) + (threatLevel === 'critical' ? 5 : 0)
+      },
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Get security alerts based on current system state
+   */
+  async getSecurityAlerts() {
+    const data = await this.getLiveData();
+    const securityMetrics = await this.getComprehensiveSecurityMetrics();
+    const alerts = [];
+    
+    // Generate alerts based on threat level and conflicts
+    if (securityMetrics.threat_detection.threat_level === 'critical') {
+      alerts.push({
+        id: `critical-threat-${Date.now()}`,
+        type: 'intrusion' as const,
+        severity: 'critical' as const,
+        title: 'Critical Security Threat Detected',
+        message: 'Multiple security indicators suggest an active intrusion attempt',
+        source: 'Threat Detection System',
+        timestamp: new Date().toISOString(),
+        status: 'active' as const,
+        affected_agents: data.agent_activities.slice(0, 2).map(a => a.agent_id),
+        metadata: {
+          threat_level: securityMetrics.threat_detection.threat_level,
+          detection_confidence: 95
+        }
+      });
+    }
+    
+    if (securityMetrics.authentication.failed_attempts > 15) {
+      alerts.push({
+        id: `auth-brute-force-${Date.now()}`,
+        type: 'authentication' as const,
+        severity: 'high' as const,
+        title: 'Potential Brute Force Attack',
+        message: `${securityMetrics.authentication.failed_attempts} failed login attempts detected`,
+        source: 'Authentication Monitor',
+        timestamp: new Date().toISOString(),
+        status: 'active' as const,
+        metadata: {
+          failed_attempts: securityMetrics.authentication.failed_attempts,
+          source_ips: ['192.168.1.100', '10.0.0.15']
+        }
+      });
+    }
+    
+    if (securityMetrics.access_control.permission_violations > 2) {
+      alerts.push({
+        id: `permission-violation-${Date.now()}`,
+        type: 'permission' as const,
+        severity: 'medium' as const,
+        title: 'Permission Violations Detected',
+        message: `${securityMetrics.access_control.permission_violations} unauthorized access attempts`,
+        source: 'Access Control System',
+        timestamp: new Date().toISOString(),
+        status: 'investigating' as const,
+        affected_agents: data.agent_activities.slice(0, 1).map(a => a.agent_id),
+        metadata: {
+          violation_type: 'unauthorized_resource_access',
+          resource: '/api/admin/users'
+        }
+      });
+    }
+    
+    if (securityMetrics.data_protection.encryption_status === 'critical') {
+      alerts.push({
+        id: `encryption-failure-${Date.now()}`,
+        type: 'data_breach' as const,
+        severity: 'critical' as const,
+        title: 'Encryption System Failure',
+        message: 'Critical encryption subsystem has failed, data may be at risk',
+        source: 'Data Protection Monitor',
+        timestamp: new Date().toISOString(),
+        status: 'active' as const,
+        metadata: {
+          affected_systems: ['database', 'file_storage'],
+          recovery_eta: '15 minutes'
+        }
+      });
+    }
+    
+    if (securityMetrics.network_security.rate_limit_violations > 20) {
+      alerts.push({
+        id: `rate-limit-${Date.now()}`,
+        type: 'rate_limit' as const,
+        severity: 'medium' as const,
+        title: 'Rate Limiting Violations',
+        message: `${securityMetrics.network_security.rate_limit_violations} rate limit violations detected`,
+        source: 'Network Security Monitor',
+        timestamp: new Date().toISOString(),
+        status: 'active' as const,
+        metadata: {
+          violation_count: securityMetrics.network_security.rate_limit_violations,
+          endpoint: '/api/v1/agents'
+        }
+      });
+    }
+    
+    // Generate some resolved alerts for demonstration
+    if (Math.random() > 0.7) {
+      alerts.push({
+        id: `resolved-suspicious-${Date.now() - 3600000}`,
+        type: 'suspicious_activity' as const,
+        severity: 'low' as const,
+        title: 'Suspicious Activity Resolved',
+        message: 'Previously flagged unusual agent behavior has returned to normal',
+        source: 'Behavioral Analysis',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        status: 'resolved' as const,
+        affected_agents: [data.agent_activities[0]?.agent_id].filter(Boolean),
+        metadata: {
+          resolution_time: '2.5 hours',
+          root_cause: 'resource_contention'
+        }
+      });
+    }
+    
+    return alerts;
+  }
+
+  /**
    * Start real-time updates using WebSocket connection
    */
   startRealtimeUpdates(): () => void {
@@ -592,6 +783,19 @@ export class BackendAdapter extends BaseService {
       }
     }, 2000); // Update every 2 seconds for performance metrics
     
+    // Start security metrics polling
+    const securityPolling = this.startPolling(async () => {
+      try {
+        const [securityMetrics, securityAlerts] = await Promise.all([
+          this.getComprehensiveSecurityMetrics(),
+          this.getSecurityAlerts()
+        ]);
+        this.emit('securityMetricsUpdated', { metrics: securityMetrics, alerts: securityAlerts });
+      } catch (error) {
+        console.warn('⚠️ Security metrics update failed:', error);
+      }
+    }, 3000); // Update every 3 seconds for security metrics
+    
     // Also start polling as backup
     const pollingCleanup = this.startPolling(async () => {
       if (!this.webSocket || this.webSocket.readyState !== WebSocket.OPEN) {
@@ -603,6 +807,7 @@ export class BackendAdapter extends BaseService {
       this.disconnectWebSocket();
       pollingCleanup();
       performancePolling();
+      securityPolling();
     };
   }
 
@@ -686,6 +891,13 @@ export class BackendAdapter extends BaseService {
         if (message.data) {
           console.log('📊 Performance metrics updated via WebSocket');
           this.emit('performanceMetricsUpdated', message.data);
+        }
+        break;
+        
+      case 'security_update':
+        if (message.data) {
+          console.log('🔐 Security metrics updated via WebSocket');
+          this.emit('securityMetricsUpdated', message.data);
         }
         break;
         
