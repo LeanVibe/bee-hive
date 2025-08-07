@@ -1,7 +1,11 @@
 import { LitElement, html, css } from 'lit'
 import { customElement, state, property } from 'lit/decorators.js'
 import { WebSocketService } from '../services/websocket'
+import { VoiceCommandService } from '../services/voice-commands'
+import { GestureNavigationService } from '../services/gesture-navigation'
 import { backendAdapter } from '../services/backend-adapter'
+import '../components/dashboard/live-agent-monitor'
+import '../components/mobile/emergency-controls'
 
 interface PriorityAlert {
   id: string

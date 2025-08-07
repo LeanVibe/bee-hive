@@ -2,6 +2,8 @@ import './styles/main.css'
 import './app'
 import { AuthService } from './services/auth'
 import { WebSocketService } from './services/websocket'
+import { VoiceCommandService } from './services/voice-commands'
+import { GestureNavigationService } from './services/gesture-navigation'
 import { NotificationService } from './services/notification'
 import { OfflineService } from './services/offline'
 import { PerformanceOptimizer } from './utils/performance'
@@ -10,6 +12,8 @@ import { backendAdapter } from './services/backend-adapter'
 // Initialize services
 const authService = AuthService.getInstance()
 const wsService = WebSocketService.getInstance()
+const voiceService = VoiceCommandService.getInstance()
+const gestureService = GestureNavigationService.getInstance()
 const notificationService = NotificationService.getInstance()
 const offlineService = OfflineService.getInstance()
 const perfMonitor = PerformanceOptimizer.getInstance()
@@ -34,6 +38,9 @@ class AppInitializer {
       
       // Initialize offline service first (sets up IndexedDB)
       await offlineService.initialize()
+      
+      // Initialize advanced mobile features
+      await this.initializeAdvancedFeatures()
       
       // Skip notification service in development to avoid hanging
       if (process.env.NODE_ENV === 'production') {
@@ -78,6 +85,34 @@ class AppInitializer {
     } catch (error) {
       console.error('❌ App initialization failed:', error)
       this.handleInitializationError(error)
+    }
+  }
+  
+  private async initializeAdvancedFeatures(): Promise<void> {
+    try {
+      // Initialize gesture navigation (always available)
+      console.log('🤲 Initializing gesture navigation...')
+      // Note: Actual initialization happens when dashboard component is loaded
+      
+      // Initialize voice commands if supported
+      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        console.log('🎤 Speech recognition supported, initializing voice commands...')
+        try {
+          await voiceService.initialize()
+          console.log('✅ Voice commands initialized successfully')
+        } catch (error) {
+          console.warn('⚠️ Voice commands initialization failed:', error.message)
+          // Continue without voice commands - not critical
+        }
+      } else {
+        console.warn('⚠️ Speech recognition not supported in this browser')
+      }
+      
+      console.log('✅ Advanced mobile features initialization complete')
+      
+    } catch (error) {
+      console.error('❌ Advanced features initialization failed:', error)
+      // Don't throw - these are enhancements, not critical features
     }
   }
   
