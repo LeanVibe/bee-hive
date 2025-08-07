@@ -43,7 +43,7 @@ from ...schemas.github_integration import (
     ConflictResolutionRequest, ConflictResolutionResponse, WorkflowExecutionRequest,
     WorkflowExecutionResponse, RepositoryHealthRequest, RepositoryHealthResponse
 )
-from ...core.auth import get_current_agent
+from ..security import get_current_agent
 from ...core.rate_limiter import rate_limit
 
 logger = structlog.get_logger()
