@@ -68,6 +68,13 @@ scrape_configs:
     scrape_interval: 15s
     scrape_timeout: 10s
 
+  # AlertManager self-monitoring
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
   # Custom application metrics endpoints (enabled with enhanced Prometheus exporter)
   - job_name: 'leanvibe-agents'
     static_configs:
@@ -95,6 +102,66 @@ scrape_configs:
     scrape_timeout: 10s
     params:
       job: ['performance']
+
+  # Dashboard-specific metrics for multi-agent coordination monitoring
+  - job_name: 'leanvibe-dashboard-coordination'
+    static_configs:
+      - targets: ['172.20.0.1:8000']
+    scrape_interval: 5s
+    metrics_path: /metrics/coordination
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+
+  # Dashboard-specific metrics for performance analytics
+  - job_name: 'leanvibe-dashboard-analytics'
+    static_configs:
+      - targets: ['172.20.0.1:8000']
+    scrape_interval: 10s
+    metrics_path: /metrics/analytics
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+
+  # Dashboard-specific metrics for security monitoring
+  - job_name: 'leanvibe-dashboard-security'
+    static_configs:
+      - targets: ['172.20.0.1:8000']
+    scrape_interval: 15s
+    metrics_path: /metrics/security
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+
+  # Dashboard-specific metrics for business intelligence
+  - job_name: 'leanvibe-dashboard-business'
+    static_configs:
+      - targets: ['172.20.0.1:8000']
+    scrape_interval: 60s
+    metrics_path: /metrics/business
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+
+  # WebSocket connection metrics for real-time dashboard monitoring
+  - job_name: 'leanvibe-websockets'
+    static_configs:
+      - targets: ['172.20.0.1:8000']
+    scrape_interval: 10s
+    metrics_path: /metrics/websockets
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+
+  # Mobile dashboard performance metrics
+  - job_name: 'leanvibe-mobile-dashboard'
+    static_configs:
+      - targets: ['172.20.0.1:8000']
+    scrape_interval: 30s
+    metrics_path: /metrics/mobile
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
 
 # Remote write configuration (for production)
 # remote_write:

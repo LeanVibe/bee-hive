@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import { getNotificationService } from '../../services'
+import { getNotificationService, NotificationService } from '../../services'
 import '../common/loading-spinner'
 
 export interface NotificationItem {
@@ -19,12 +19,49 @@ export interface NotificationItem {
 
 @customElement('notification-center')
 export class NotificationCenter extends LitElement {
-  @state() private notifications: NotificationItem[] = []
-  @state() private isOpen = false
-  @state() private isLoading = false
-  @state() private unreadCount = 0
+  private notificationService: NotificationService = getNotificationService()
+  private isMobile: boolean = this.detectMobile()
+  private isIOS: boolean = this.detectIOS()
 
-  private notificationService = getNotificationService()
+  // Reactive properties defined using static properties to avoid class field shadowing
+  static properties = {
+    notifications: { state: true },
+    isOpen: { state: true },
+    isLoading: { state: true },
+    unreadCount: { state: true },
+    permissionState: { state: true },
+    fcmSupported: { state: true },
+    isOnline: { state: true }
+  }
+
+  // Declare property types for TypeScript
+  declare notifications: NotificationItem[]
+  declare isOpen: boolean
+  declare isLoading: boolean
+  declare unreadCount: number
+  declare permissionState: NotificationPermission
+  declare fcmSupported: boolean
+  declare isOnline: boolean
+
+  // Initialize properties in constructor
+  constructor() {
+    super()
+    this.notifications = []
+    this.isOpen = false
+    this.isLoading = false
+    this.unreadCount = 0
+    this.permissionState = 'default'
+    this.fcmSupported = false
+    this.isOnline = navigator.onLine
+  }
+
+  private detectMobile(): boolean {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  }
+
+  private detectIOS(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+  }
 
   static styles = css`
     :host {
@@ -318,15 +355,42 @@ export class NotificationCenter extends LitElement {
       gap: 1rem;
     }
 
-    /* Responsive Design */
+    /* Mobile-first responsive design */
     @media (max-width: 640px) {
       .notification-panel {
         width: 320px;
         right: -50px;
+        max-height: 70vh; /* Better mobile viewport usage */
       }
 
       .notification-item {
         padding: 0.75rem 1rem;
+      }
+
+      .notification-actions {
+        flex-direction: column;
+        gap: 0.375rem;
+      }
+
+      .notification-action {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .panel-header {
+        padding: 1rem;
+      }
+
+      .panel-title {
+        font-size: 1rem;
+      }
+    }
+
+    /* iPhone optimization */
+    @media (max-width: 393px) {
+      .notification-panel {
+        width: 300px;
+        right: -30px;
       }
     }
 
@@ -365,6 +429,102 @@ export class NotificationCenter extends LitElement {
       visibility: visible;
     }
 
+    /* FCM Permission Request Styles */
+    .permission-request {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 0.75rem;
+      margin: 1rem;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .permission-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .permission-message {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin: 0 0 1rem 0;
+      line-height: 1.4;
+    }
+
+    .permission-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .permission-button {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      cursor: pointer;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+
+    .permission-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .permission-button.primary {
+      background: rgba(255, 255, 255, 0.95);
+      color: #667eea;
+    }
+
+    .permission-button.primary:hover {
+      background: white;
+    }
+
+    /* Network status indicator */
+    .network-status {
+      padding: 0.5rem 1rem;
+      background: #f97316;
+      color: white;
+      font-size: 0.75rem;
+      text-align: center;
+      border-radius: 0 0 0.75rem 0.75rem;
+    }
+
+    .network-status.online {
+      background: #10b981;
+    }
+
+    /* FCM status indicator */
+    .fcm-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #f3f4f6;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.75rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6b7280;
+    }
+
+    .status-dot.enabled {
+      background: #10b981;
+    }
+
+    .status-dot.disabled {
+      background: #ef4444;
+    }
+
     @media (max-width: 640px) {
       .notification-panel {
         position: fixed;
@@ -374,27 +534,84 @@ export class NotificationCenter extends LitElement {
         width: auto;
         max-width: none;
       }
+
+      .permission-actions {
+        flex-direction: column;
+      }
+
+      .permission-button {
+        width: 100%;
+      }
     }
   `
 
   connectedCallback() {
     super.connectedCallback()
-    this.loadNotifications()
-    this.setupEventListeners()
+    this.initializeNotificationCenter()
   }
 
   disconnectedCallback() {
     super.disconnectedCallback()
     document.removeEventListener('click', this.handleDocumentClick)
+    window.removeEventListener('online', this.handleNetworkChange)
+    window.removeEventListener('offline', this.handleNetworkChange)
+  }
+
+  private async initializeNotificationCenter() {
+    // Initialize notification service
+    await this.notificationService.initialize()
+    
+    // Get initial state
+    const stats = this.notificationService.getNotificationStats()
+    this.permissionState = stats.permission
+    this.fcmSupported = stats.isSupported && stats.isPushSupported
+    this.isOnline = stats.isOnline
+    
+    console.log('📱 Notification Center initialized:', { stats, isMobile: this.isMobile, isIOS: this.isIOS })
+    
+    this.loadNotifications()
+    this.setupEventListeners()
   }
 
   private setupEventListeners() {
     // Listen for clicks outside to close panel
     document.addEventListener('click', this.handleDocumentClick)
     
+    // Listen for network changes
+    window.addEventListener('online', this.handleNetworkChange)
+    window.addEventListener('offline', this.handleNetworkChange)
+    
     // Listen for notification service events
-    // this.notificationService.addEventListener('newNotification', this.handleNewNotification)
-    // this.notificationService.addEventListener('notificationRead', this.handleNotificationRead)
+    this.notificationService.on('notification_shown', this.handleNotificationShown)
+    this.notificationService.on('permission_changed', this.handlePermissionChanged)
+    this.notificationService.on('fcm_token_received', this.handleFCMTokenReceived)
+    this.notificationService.on('notification_queued', this.handleNotificationQueued)
+  }
+
+  private handleNetworkChange = () => {
+    this.isOnline = navigator.onLine
+    console.log(`🌐 Network status changed: ${this.isOnline ? 'Online' : 'Offline'}`)
+  }
+
+  private handleNotificationShown = (notification: any) => {
+    console.log('🔔 Notification shown:', notification)
+    // Add to local notifications list for UI
+    this.addNotificationToUI(notification)
+  }
+
+  private handlePermissionChanged = (permission: NotificationPermission) => {
+    this.permissionState = permission
+    console.log('🔔 Permission changed:', permission)
+  }
+
+  private handleFCMTokenReceived = (token: string) => {
+    console.log('🔔 FCM token received:', token.substring(0, 20) + '...')
+  }
+
+  private handleNotificationQueued = (notification: any) => {
+    console.log('📦 Notification queued:', notification)
+    // Show visual indicator that notification is queued
+    this.addQueuedNotificationToUI(notification)
   }
 
   private handleDocumentClick = (event: Event) => {
@@ -594,6 +811,93 @@ export class NotificationCenter extends LitElement {
     window.location.hash = `/tasks?task=${taskId}&details=true`
   }
 
+  // FCM-specific methods
+  private async handleRequestPermission() {
+    try {
+      const permission = await this.notificationService.requestPermission()
+      this.permissionState = permission
+      
+      if (permission === 'granted') {
+        // Subscribe to push notifications
+        await this.notificationService.subscribeToPush()
+        
+        // Show success notification
+        this.notifications.unshift({
+          id: crypto.randomUUID(),
+          type: 'success',
+          title: '🔔 Notifications Enabled',
+          message: 'You will now receive real-time updates from Agent Hive',
+          timestamp: new Date().toISOString(),
+          read: false
+        })
+        this.updateUnreadCount()
+      }
+    } catch (error) {
+      console.error('Failed to request notification permission:', error)
+      // Show error notification
+      this.notifications.unshift({
+        id: crypto.randomUUID(),
+        type: 'error',
+        title: '❌ Notification Setup Failed',
+        message: 'Unable to enable notifications. Please check your browser settings.',
+        timestamp: new Date().toISOString(),
+        read: false
+      })
+      this.updateUnreadCount()
+    }
+  }
+
+  private handleDismissPermission() {
+    console.log('📵 User dismissed notification permission request')
+  }
+
+  private addNotificationToUI(notification: any) {
+    const uiNotification: NotificationItem = {
+      id: notification.id || crypto.randomUUID(),
+      type: this.mapNotificationTypeToUI(notification.category),
+      title: notification.title,
+      message: notification.body,
+      timestamp: new Date(notification.timestamp).toISOString(),
+      read: false
+    }
+    
+    this.notifications.unshift(uiNotification)
+    if (this.notifications.length > 50) {
+      this.notifications = this.notifications.slice(0, 50) // Keep only recent 50
+    }
+    this.updateUnreadCount()
+  }
+
+  private addQueuedNotificationToUI(notification: any) {
+    const uiNotification: NotificationItem = {
+      id: notification.id || crypto.randomUUID(),
+      type: 'warning',
+      title: '📦 Queued: ' + notification.title,
+      message: notification.body + ' (Will deliver when online)',
+      timestamp: new Date(notification.timestamp).toISOString(),
+      read: false
+    }
+    
+    this.notifications.unshift(uiNotification)
+    this.updateUnreadCount()
+  }
+
+  private mapNotificationTypeToUI(category: string): NotificationItem['type'] {
+    switch (category) {
+      case 'success':
+      case 'task':
+        return 'success'
+      case 'error':
+      case 'critical':
+        return 'error'
+      case 'warning':
+      case 'agent':
+        return 'warning'
+      default:
+        return 'info'
+    }
+  }
+
   private renderNotificationIcon(type: NotificationItem['type']) {
     switch (type) {
       case 'success':
@@ -623,6 +927,66 @@ export class NotificationCenter extends LitElement {
     }
   }
 
+  private renderStatusIndicators() {
+    return html`
+      ${!this.isOnline ? html`
+        <div class="network-status">
+          📵 Offline - Notifications will be queued
+        </div>
+      ` : html`
+        <div class="network-status online">
+          🌐 Online - Live notifications enabled
+        </div>
+      `}
+      
+      ${this.fcmSupported ? html`
+        <div class="fcm-status">
+          <div class="status-dot ${this.permissionState === 'granted' ? 'enabled' : 'disabled'}"></div>
+          <span>
+            Push notifications: ${this.permissionState === 'granted' ? 'Enabled' : 
+                                this.permissionState === 'denied' ? 'Blocked' : 'Not configured'}
+            ${this.isMobile ? '📱' : '💻'}
+          </span>
+        </div>
+      ` : ''}
+    `
+  }
+
+  private renderPermissionRequest() {
+    if (this.permissionState === 'granted' || this.permissionState === 'denied') {
+      return ''
+    }
+
+    return html`
+      <div class="permission-request">
+        <div class="permission-title">
+          ${this.isMobile ? '📱 Enable Mobile Notifications' : '🔔 Enable Notifications'}
+        </div>
+        <div class="permission-message">
+          ${this.isMobile 
+            ? 'Get instant alerts about agent activities, task completions, and system updates on your mobile device.'
+            : 'Stay informed about agent activities, build status, and system alerts in real-time.'
+          }
+          ${this.isIOS ? ' For iOS users: Add to Home Screen for best experience.' : ''}
+        </div>
+        <div class="permission-actions">
+          <button 
+            class="permission-button primary" 
+            @click=${this.handleRequestPermission}
+          >
+            ${this.isMobile ? '📱 Enable Alerts' : '🔔 Allow Notifications'}
+          </button>
+          <button 
+            class="permission-button" 
+            @click=${this.handleDismissPermission}
+          >
+            Not Now
+          </button>
+        </div>
+      </div>
+    `
+  }
+
   render() {
     return html`
       <div class="notification-overlay ${this.isOpen ? 'show' : ''}" @click=${this.handleTogglePanel}></div>
@@ -637,6 +1001,9 @@ export class NotificationCenter extends LitElement {
       </button>
 
       <div class="notification-panel ${this.isOpen ? 'open' : ''}">
+        ${this.renderStatusIndicators()}
+        ${this.renderPermissionRequest()}
+        
         <div class="panel-header">
           <h3 class="panel-title">Notifications</h3>
           <div class="header-actions">

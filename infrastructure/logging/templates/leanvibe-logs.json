@@ -1,0 +1,224 @@
+{
+  "index_patterns": ["leanvibe-logs-*"],
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "index.refresh_interval": "5s",
+    "index.max_result_window": 10000,
+    "analysis": {
+      "analyzer": {
+        "leanvibe_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "stop"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "@timestamp": {
+        "type": "date"
+      },
+      "timestamp": {
+        "type": "date"
+      },
+      "level": {
+        "type": "keyword"
+      },
+      "logger_name": {
+        "type": "keyword"
+      },
+      "message": {
+        "type": "text",
+        "analyzer": "leanvibe_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "service": {
+        "type": "keyword"
+      },
+      "component": {
+        "type": "keyword"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "environment": {
+        "type": "keyword"
+      },
+      "cluster": {
+        "type": "keyword"
+      },
+      "agent_id": {
+        "type": "keyword"
+      },
+      "agent_identifier": {
+        "type": "keyword"
+      },
+      "task_id": {
+        "type": "keyword"
+      },
+      "session_id": {
+        "type": "keyword"
+      },
+      "user_id": {
+        "type": "keyword"
+      },
+      "request_id": {
+        "type": "keyword"
+      },
+      "correlation_id": {
+        "type": "keyword"
+      },
+      "event_type": {
+        "type": "keyword"
+      },
+      "event": {
+        "type": "keyword"
+      },
+      "success": {
+        "type": "boolean"
+      },
+      "error": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 512
+          }
+        }
+      },
+      "stack_trace": {
+        "type": "text"
+      },
+      "response_time": {
+        "type": "integer"
+      },
+      "status_code": {
+        "type": "integer"
+      },
+      "method": {
+        "type": "keyword"
+      },
+      "path": {
+        "type": "keyword"
+      },
+      "user_agent": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 512
+          }
+        }
+      },
+      "ip_address": {
+        "type": "ip"
+      },
+      "cpu_usage": {
+        "type": "float"
+      },
+      "memory_usage": {
+        "type": "long"
+      },
+      "connection_count": {
+        "type": "integer"
+      },
+      "queue_size": {
+        "type": "integer"
+      },
+      "priority": {
+        "type": "keyword"
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "device_type": {
+        "type": "keyword"
+      },
+      "vulnerability": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "severity": {
+            "type": "keyword"
+          },
+          "component": {
+            "type": "keyword"
+          },
+          "description": {
+            "type": "text"
+          },
+          "cve_id": {
+            "type": "keyword"
+          },
+          "cvss_score": {
+            "type": "float"
+          }
+        }
+      },
+      "performance_metrics": {
+        "type": "object",
+        "properties": {
+          "response_time_p95": {
+            "type": "float"
+          },
+          "response_time_p99": {
+            "type": "float"
+          },
+          "throughput": {
+            "type": "float"
+          },
+          "error_rate": {
+            "type": "float"
+          }
+        }
+      },
+      "coordination_metrics": {
+        "type": "object",
+        "properties": {
+          "success_rate": {
+            "type": "float"
+          },
+          "agent_count": {
+            "type": "integer"
+          },
+          "task_count": {
+            "type": "integer"
+          },
+          "avg_completion_time": {
+            "type": "float"
+          }
+        }
+      },
+      "dashboard_metrics": {
+        "type": "object",
+        "properties": {
+          "load_time": {
+            "type": "integer"
+          },
+          "active_connections": {
+            "type": "integer"
+          },
+          "update_frequency": {
+            "type": "float"
+          }
+        }
+      },
+      "processed_at": {
+        "type": "date"
+      }
+    }
+  },
+  "aliases": {
+    "leanvibe-logs-current": {},
+    "leanvibe-all-logs": {}
+  }
+}

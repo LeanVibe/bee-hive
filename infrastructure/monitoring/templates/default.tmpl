@@ -1,0 +1,83 @@
+{{ define "__subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] LeanVibe Agent Hive Alert
+{{ end }}
+
+{{ define "__description" }}
+{{ range .Alerts -}}
+{{ .Annotations.description }}
+{{ end }}
+{{ end }}
+
+{{ define "__text_alert_list" }}
+{{ range .Alerts -}}
+**Alert:** {{ .Annotations.summary }}  
+**Description:** {{ .Annotations.description }}  
+**Component:** {{ .Labels.component }}  
+**Severity:** {{ .Labels.severity }}  
+**Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}  
+{{ if .Annotations.runbook_url }}**Runbook:** {{ .Annotations.runbook_url }}  {{ end }}
+{{ if .Annotations.dashboard_url }}**Dashboard:** {{ .Annotations.dashboard_url }}  {{ end }}
+{{ end }}
+{{ end }}
+
+{{ define "slack.leanvibe.title" }}
+{{ if eq .Status "firing" }}:rotating_light:{{ else }}:white_check_mark:{{ end }} LeanVibe Alert {{ if eq .Status "firing" }}({{ .Alerts.Firing | len }}){{ end }}
+{{ end }}
+
+{{ define "slack.leanvibe.text" }}
+{{ if eq .Status "firing" }}
+**Firing Alerts:**
+{{ template "__text_alert_list" . }}
+{{ else }}
+**Resolved Alerts:**
+{{ template "__text_alert_list" . }}
+{{ end }}
+{{ end }}
+
+{{ define "email.leanvibe.subject" }}
+{{ template "__subject" . }}
+{{ end }}
+
+{{ define "email.leanvibe.body" }}
+Dear LeanVibe Operations Team,
+
+{{ if eq .Status "firing" }}
+The following alert(s) are currently FIRING:
+{{ else }}
+The following alert(s) have been RESOLVED:
+{{ end }}
+
+{{ range .Alerts }}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Alert Name: {{ .Labels.alertname }}
+Summary: {{ .Annotations.summary }}
+Description: {{ .Annotations.description }}
+
+Component: {{ .Labels.component }}
+Severity: {{ .Labels.severity }}
+Team: {{ .Labels.team }}
+
+Started: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+{{ if ne .EndsAt .StartsAt }}
+Ended: {{ .EndsAt.Format "2006-01-02 15:04:05" }}
+{{ end }}
+
+{{ if .Annotations.runbook_url }}
+Runbook: {{ .Annotations.runbook_url }}
+{{ end }}
+{{ if .Annotations.dashboard_url }}
+Dashboard: {{ .Annotations.dashboard_url }}
+{{ end }}
+
+Labels:
+{{ range .Labels.SortedPairs }}  {{ .Name }}: {{ .Value }}
+{{ end }}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{{ end }}
+
+This is an automated notification from the LeanVibe Agent Hive monitoring system.
+
+Best regards,
+LeanVibe Monitoring System
+{{ end }}

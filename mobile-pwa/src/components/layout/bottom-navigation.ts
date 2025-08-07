@@ -3,7 +3,17 @@ import { customElement, property } from 'lit/decorators.js'
 
 @customElement('bottom-navigation')
 export class BottomNavigation extends LitElement {
-  @property() currentRoute: string = '/'
+  static properties = {
+    currentRoute: { type: String }
+  }
+
+  // Declare property type for TypeScript
+  declare currentRoute: string
+
+  constructor() {
+    super()
+    this.currentRoute = '/'
+  }
   
   static styles = css`
     :host {
@@ -91,7 +101,7 @@ export class BottomNavigation extends LitElement {
     }
   `
   
-  private navItems = [
+  private static navItems = [
     {
       path: '/dashboard',
       label: 'Dashboard',
@@ -99,6 +109,15 @@ export class BottomNavigation extends LitElement {
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v0M8 5a2 2 0 000 4h8a2 2 0 000-4" />
+        </svg>
+      `
+    },
+    {
+      path: '/autonomous',
+      label: 'Autonomous',
+      icon: html`
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
         </svg>
       `
     },
@@ -121,12 +140,11 @@ export class BottomNavigation extends LitElement {
       `
     },
     {
-      path: '/events',
-      label: 'Events',
+      path: '/performance',
+      label: 'Analytics',
       icon: html`
         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m3 0H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h10m-7 4h7" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
       `
     },
@@ -160,7 +178,7 @@ export class BottomNavigation extends LitElement {
   render() {
     return html`
       <nav class="nav">
-        ${this.navItems.map(item => html`
+        ${BottomNavigation.navItems.map(item => html`
           <div
             class="nav-item ${this.isActive(item.path) ? 'active' : ''}"
             @click=${() => this.handleNavigation(item.path)}
@@ -170,9 +188,9 @@ export class BottomNavigation extends LitElement {
           >
             ${item.icon}
             <span class="nav-label">${item.label}</span>
-            ${item.path === '/events' ? html`
-              <!-- Example badge for notifications -->
-              <!-- <span class="badge">3</span> -->
+            ${item.path === '/performance' ? html`
+              <!-- Example badge for performance alerts -->
+              <!-- <span class="badge">2</span> -->
             ` : ''}
           </div>
         `)}

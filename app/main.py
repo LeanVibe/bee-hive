@@ -23,6 +23,7 @@ from .core.redis import init_redis, get_redis
 from .core.orchestrator import AgentOrchestrator
 from .core.event_processor import initialize_event_processor, shutdown_event_processor
 from .core.performance_metrics_publisher import get_performance_publisher, stop_performance_publisher
+from .core.enhanced_coordination_bridge import start_enhanced_coordination_bridge, stop_enhanced_coordination_bridge
 from .api.routes import router as api_router
 from .api.sleep_management import router as sleep_management_router
 from .api.intelligent_scheduling import router as intelligent_scheduling_router
@@ -47,6 +48,10 @@ from .api.dx_debugging import router as dx_debugging_router
 from .api.enterprise_sales import router as enterprise_sales_router
 from .api.enterprise_security import router as enterprise_security_router
 from .api.memory_operations import get_memory_router
+from .api.dashboard_monitoring import router as dashboard_monitoring_router
+from .api.dashboard_task_management import router as dashboard_task_management_router
+from .api.dashboard_websockets import router as dashboard_websockets_router
+from .api.dashboard_prometheus import router as dashboard_prometheus_router
 
 
 # Configure structured logging
@@ -80,6 +85,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Initialize core infrastructure
         await init_database()
         await init_redis()
+        
+        # Initialize enhanced coordination bridge
+        logger.info("🤖 Starting Enhanced Coordination Bridge...")
+        await start_enhanced_coordination_bridge()
         
         # Initialize observability system
         redis_client = get_redis()
@@ -159,6 +168,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         # Stop performance metrics publisher
         await stop_performance_publisher()
+        
+        # Stop enhanced coordination bridge
+        logger.info("🤖 Stopping Enhanced Coordination Bridge...")
+        await stop_enhanced_coordination_bridge()
         
         # Shutdown observability system
         await shutdown_event_processor()
@@ -249,6 +262,12 @@ def create_app() -> FastAPI:
     app.include_router(enterprise_sales_router, tags=["enterprise-sales"])
     app.include_router(enterprise_security_router, tags=["enterprise-security"])
     app.include_router(get_memory_router(), prefix="/api/v1", tags=["memory-operations"])
+    
+    # Dashboard monitoring APIs
+    app.include_router(dashboard_monitoring_router, tags=["dashboard-monitoring"])
+    app.include_router(dashboard_task_management_router, tags=["dashboard-task-management"])  
+    app.include_router(dashboard_websockets_router, tags=["dashboard-websockets"])
+    app.include_router(dashboard_prometheus_router, tags=["dashboard-prometheus"])
     
     @app.get("/debug-agents")
     async def debug_agents():

@@ -40,6 +40,8 @@ from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.task import Task, TaskStatus, TaskPriority
 from ..models.workflow import Workflow, WorkflowStatus
 from ..models.message import MessageType
+from ..models.coordination_event import CoordinationEvent, BusinessValueMetric, CoordinationEventType
+from .database import get_session
 
 logger = structlog.get_logger()
 
@@ -326,6 +328,132 @@ class EnhancedMultiAgentCoordinator:
             self.logger.error("❌ Failed to initialize coordination system", error=str(e))
             raise
     
+    async def record_collaboration_event(self, 
+                                       event_type: CoordinationEventType,
+                                       collaboration_id: str,
+                                       agents: List[str], 
+                                       context: Dict[str, Any], 
+                                       outcome: str = "",
+                                       business_value: float = 0.0,
+                                       quality_score: float = 0.0,
+                                       efficiency: float = 0.0,
+                                       duration: float = 0.0) -> CoordinationEvent:
+        """Record sophisticated coordination activities in database for dashboard visibility."""
+        try:
+            async with get_session() as session:
+                # Create coordination event
+                event = CoordinationEvent(
+                    event_type=event_type,
+                    collaboration_id=collaboration_id,
+                    participating_agents=[uuid.UUID(agent_id) for agent_id in agents],
+                    primary_agent_id=uuid.UUID(agents[0]) if agents else None,
+                    coordination_pattern=context.get('pattern_name', 'unknown'),
+                    title=context.get('title', f'{event_type.value} event'),
+                    description=context.get('description', ''),
+                    context=context,
+                    outcomes={"result": outcome},
+                    quality_score=quality_score,
+                    collaboration_efficiency=efficiency,
+                    business_value_score=business_value,
+                    duration_seconds=duration,
+                    success="true" if outcome != "failed" else "false",
+                    communication_count=context.get('communication_count', 0),
+                    decisions_made_count=context.get('decisions_count', 0),
+                    knowledge_shared_count=context.get('knowledge_shared', 0),
+                    artifacts_created=context.get('artifacts_created', [])
+                )
+                
+                # Calculate business metrics
+                event.update_business_metrics()
+                
+                session.add(event)
+                await session.commit()
+                
+                self.logger.info("✅ Coordination event recorded in database",
+                               event_type=event_type.value,
+                               collaboration_id=collaboration_id,
+                               business_value=business_value,
+                               quality_score=quality_score)
+                
+                return event
+                
+        except Exception as e:
+            self.logger.error("❌ Failed to record coordination event", 
+                            event_type=event_type.value if hasattr(event_type, 'value') else str(event_type),
+                            error=str(e))
+            raise
+    
+    async def update_business_value_metrics(self, period_hours: int = 24) -> BusinessValueMetric:
+        """Update business value metrics for the specified period."""
+        try:
+            period_start = datetime.utcnow() - timedelta(hours=period_hours)
+            period_end = datetime.utcnow()
+            
+            async with get_session() as session:
+                # Get coordination events for the period
+                from sqlalchemy import select
+                
+                events_result = await session.execute(
+                    select(CoordinationEvent).where(
+                        CoordinationEvent.created_at >= period_start,
+                        CoordinationEvent.created_at <= period_end
+                    )
+                )
+                events = events_result.scalars().all()
+                
+                # Calculate business value metrics
+                metric = BusinessValueMetric.calculate_for_period(period_start, period_end, events)
+                session.add(metric)
+                await session.commit()
+                
+                self.logger.info("✅ Business value metrics updated",
+                               period_hours=period_hours,
+                               total_collaborations=metric.total_collaborations,
+                               business_value=metric.total_business_value,
+                               roi_percentage=metric.roi_percentage)
+                
+                return metric
+                
+        except Exception as e:
+            self.logger.error("❌ Failed to update business value metrics", error=str(e))
+            raise
+    
+    async def get_recent_coordination_events(self, limit: int = 50) -> List[CoordinationEvent]:
+        """Get recent coordination events for dashboard display."""
+        try:
+            async with get_session() as session:
+                from sqlalchemy import select
+                
+                result = await session.execute(
+                    select(CoordinationEvent)
+                    .order_by(CoordinationEvent.created_at.desc())
+                    .limit(limit)
+                )
+                return result.scalars().all()
+                
+        except Exception as e:
+            self.logger.error("❌ Failed to get recent coordination events", error=str(e))
+            return []
+    
+    async def get_business_value_metrics(self, days: int = 7) -> List[BusinessValueMetric]:
+        """Get business value metrics for dashboard display."""
+        try:
+            lookback_date = datetime.utcnow() - timedelta(days=days)
+            
+            async with get_session() as session:
+                from sqlalchemy import select
+                
+                result = await session.execute(
+                    select(BusinessValueMetric)
+                    .where(BusinessValueMetric.period_start >= lookback_date)
+                    .order_by(BusinessValueMetric.period_start.desc())
+                )
+                return result.scalars().all()
+                
+        except Exception as e:
+            self.logger.error("❌ Failed to get business value metrics", error=str(e))
+            return []
+    
     def _initialize_default_patterns(self):
         """Initialize default coordination patterns."""
         patterns = [
@@ -549,6 +677,30 @@ class EnhancedMultiAgentCoordinator:
         
         self.coordination_metrics["total_collaborations"] += 1
         
+        # Record collaboration started event in database
+        try:
+            context = {
+                'pattern_name': pattern.name,
+                'title': f'{pattern.name} started',
+                'description': task_description,
+                'requirements': requirements,
+                'estimated_duration': pattern.estimated_duration
+            }
+            
+            await self.record_collaboration_event(
+                event_type=CoordinationEventType.COLLABORATION_STARTED,
+                collaboration_id=collaboration_id,
+                agents=selected_agents,
+                context=context,
+                outcome="started",
+                business_value=0.0,  # Will be calculated on completion
+                quality_score=0.0,   # Will be calculated on completion  
+                efficiency=0.0,      # Will be calculated on completion
+                duration=0.0
+            )
+        except Exception as db_error:
+            self.logger.error("⚠️ Failed to record collaboration started event", error=str(db_error))
+        
         self.logger.info("🤝 Created new collaboration",
                         collaboration_id=collaboration_id,
                         pattern=pattern_id,
@@ -686,6 +838,37 @@ class EnhancedMultiAgentCoordinator:
                         collaboration_id, results["success"], 
                         results["execution_time"], quality_score
                     )
+            
+            # Record coordination event in database for dashboard visibility
+            try:
+                context = {
+                    'pattern_name': pattern.name,
+                    'title': f'{pattern.name} completed',
+                    'description': f'Multi-agent collaboration using {pattern.name} pattern',
+                    'communication_count': len(collaboration.communication_history),
+                    'decisions_count': len(collaboration.decisions_made),
+                    'knowledge_shared': len(collaboration.shared_knowledge),
+                    'artifacts_created': collaboration.artifacts_created,
+                    'estimated_duration': pattern.estimated_duration
+                }
+                
+                business_value = quality_score * results["collaboration_efficiency"]
+                
+                await self.record_collaboration_event(
+                    event_type=CoordinationEventType.COLLABORATION_COMPLETED if results["success"] 
+                             else CoordinationEventType.COLLABORATION_FAILED,
+                    collaboration_id=collaboration_id,
+                    agents=collaboration.participants,
+                    context=context,
+                    outcome="success" if results["success"] else "failed",
+                    business_value=business_value,
+                    quality_score=quality_score,
+                    efficiency=results["collaboration_efficiency"],
+                    duration=results["execution_time"]
+                )
+            except Exception as db_error:
+                self.logger.error("⚠️ Failed to record coordination event in database", error=str(db_error))
+                # Don't fail the entire coordination due to database issues
             
             # Update coordination metrics
             if results["success"]:

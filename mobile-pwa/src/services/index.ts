@@ -97,13 +97,16 @@ export type {
   AutoAssignmentRule 
 } from './task-coordination';
 
-// Notification Service (placeholder)
-export function getNotificationService() {
-  return {
-    subscribe: () => ({ unsubscribe: () => {} }),
-    notify: () => Promise.resolve()
-  };
-}
+// Notification Service
+export { 
+  NotificationService, 
+  getNotificationService 
+} from './notification';
+export type { 
+  NotificationData, 
+  NotificationAction, 
+  PushSubscriptionData 
+} from './notification';
 
 // API Types (re-export for convenience)
 export type {

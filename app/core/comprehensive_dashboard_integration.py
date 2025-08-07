@@ -1425,3 +1425,7 @@ class ComprehensiveDashboardIntegration:
 
 # Global comprehensive dashboard integration instance
 comprehensive_dashboard_integration = ComprehensiveDashboardIntegration()
+
+def get_dashboard_integration() -> ComprehensiveDashboardIntegration:
+    """Get the global dashboard integration instance."""
+    return comprehensive_dashboard_integration

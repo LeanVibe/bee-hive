@@ -21,12 +21,21 @@ from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
 
 class AgentStatus(Enum):
     """Agent lifecycle status."""
+    # Database-compatible lowercase values (primary)
     inactive = "inactive"
     active = "active"
     busy = "busy"
     error = "error"
     maintenance = "maintenance"
     shutting_down = "shutting_down"
+    
+    # Uppercase aliases for backward compatibility with existing code
+    INACTIVE = "inactive"
+    ACTIVE = "active"
+    BUSY = "busy"
+    ERROR = "error"
+    MAINTENANCE = "maintenance"
+    SHUTTING_DOWN = "shutting_down"
 
 
 class AgentType(Enum):

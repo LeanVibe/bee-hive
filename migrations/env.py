@@ -30,8 +30,10 @@ target_metadata = Base.metadata
 # Override database URL from environment if available
 database_url = os.getenv("DATABASE_URL")
 if database_url:
-    # Convert to sync URL for migrations
-    if database_url.startswith("postgresql://"):
+    # Convert to sync URL for migrations (replace asyncpg with psycopg2)
+    if "postgresql+asyncpg://" in database_url:
+        database_url = database_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+    elif database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+psycopg2://")
     config.set_main_option("sqlalchemy.url", database_url)
 

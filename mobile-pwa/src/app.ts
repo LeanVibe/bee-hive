@@ -16,7 +16,9 @@ import './views/mobile-enhanced-dashboard-view'
 import './views/agents-view'
 import './views/tasks-view'
 import './views/system-health-view'
+import './views/performance-analytics-view'
 import './views/login-view'
+import './components/autonomous-development-dashboard'
 
 @customElement('agent-hive-app')
 export class AgentHiveApp extends LitElement {
@@ -276,9 +278,11 @@ export class AgentHiveApp extends LitElement {
     // Protected routes
     this.router.addRoute('/', () => this.setRoute('/'), { requireAuth: true })
     this.router.addRoute('/dashboard', () => this.setRoute('/dashboard'), { requireAuth: true })
+    this.router.addRoute('/autonomous', () => this.setRoute('/autonomous'), { requireAuth: true })
     this.router.addRoute('/tasks', () => this.setRoute('/tasks'), { requireAuth: true })
     this.router.addRoute('/agents', () => this.setRoute('/agents'), { requireAuth: true })
     this.router.addRoute('/system-health', () => this.setRoute('/system-health'), { requireAuth: true })
+    this.router.addRoute('/performance', () => this.setRoute('/performance'), { requireAuth: true })
     this.router.addRoute('/events', () => this.setRoute('/events'), { requireAuth: true })
     this.router.addRoute('/settings', () => this.setRoute('/settings'), { requireAuth: true })
     
@@ -407,12 +411,16 @@ export class AgentHiveApp extends LitElement {
         return this.isMobile ? 
           html`<mobile-enhanced-dashboard-view .mobile=${true} .decisionMode=${true}></mobile-enhanced-dashboard-view>` :
           html`<dashboard-view></dashboard-view>`
+      case '/autonomous':
+        return html`<autonomous-development-dashboard></autonomous-development-dashboard>`
       case '/tasks':
         return html`<tasks-view></tasks-view>`
       case '/agents':
         return html`<agents-view></agents-view>`
       case '/system-health':
         return html`<system-health-view></system-health-view>`
+      case '/performance':
+        return html`<performance-analytics-view></performance-analytics-view>`
       case '/events':
       case '/settings':
         return html`<div style="padding: 2rem; text-align: center; color: #6b7280;">

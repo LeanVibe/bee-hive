@@ -29,6 +29,13 @@ from .prompt_optimization import (
     ABTestResult, PromptFeedback, PromptTestCase, OptimizationMetric,
     PromptStatus, ExperimentStatus, OptimizationMethod
 )
+from .coordination_event import (
+    CoordinationEvent, BusinessValueMetric, CoordinationEventType, CollaborationQuality
+)
+from .coordination import (
+    EnhancedCoordinationEvent, AgentCollaboration, CoordinationPattern, CoordinationPatternType, 
+    SpecializedAgentRole, TaskComplexity
+)
 
 __all__ = [
     "Agent", "AgentStatus", "AgentType",
@@ -51,5 +58,8 @@ __all__ = [
     "ModificationStatus", "ModificationType", "SandboxExecutionType",
     "PromptTemplate", "PromptVariant", "OptimizationExperiment", "PromptEvaluation",
     "ABTestResult", "PromptFeedback", "PromptTestCase", "OptimizationMetric",
-    "PromptStatus", "ExperimentStatus", "OptimizationMethod"
+    "PromptStatus", "ExperimentStatus", "OptimizationMethod",
+    "CoordinationEvent", "BusinessValueMetric", "CoordinationEventType", "CollaborationQuality",
+    "EnhancedCoordinationEvent", "AgentCollaboration", "CoordinationPattern", "CoordinationPatternType", 
+    "SpecializedAgentRole", "TaskComplexity"
 ]

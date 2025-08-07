@@ -12,6 +12,7 @@ from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Boolean
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from ..core.database import Base
 from ..core.database_types import DatabaseAgnosticUUID, UUIDArray, StringArray
@@ -239,3 +240,7 @@ class Session(Base):
     def get_participant_count(self) -> int:
         """Get number of participating agents."""
         return len(self.participant_agents or [])
+    
+    # Coordination relationships (added for enhanced multi-agent coordination)
+    coordination_events = relationship("CoordinationEvent", back_populates="session", cascade="all, delete-orphan")
+    collaborations = relationship("AgentCollaboration", back_populates="session", cascade="all, delete-orphan")

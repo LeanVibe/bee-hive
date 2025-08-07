@@ -766,4 +766,380 @@ export class AdvancedTaskDistributionPanel extends LitElement {
     
     if (target === 'column') {
       // Task moved to different status column
-      assignmentEvent = {\n        taskId: this.draggedTask.id,\n        fromStatus: this.draggedTask.status,\n        toStatus: identifier,\n        fromAgent: this.draggedTask.assignedTo,\n        toAgent: this.draggedTask.assignedTo\n      }\n    } else {\n      // Task assigned to agent\n      assignmentEvent = {\n        taskId: this.draggedTask.id,\n        fromAgent: this.draggedTask.assignedTo,\n        toAgent: identifier,\n        fromStatus: this.draggedTask.status,\n        toStatus: this.draggedTask.status\n      }\n    }\n    \n    this.dispatchTaskAssignment(assignmentEvent)\n    this.draggedTask = null\n    this.draggedOverAgent = null\n  }\n  \n  private dispatchTaskAssignment(assignment: TaskAssignmentEvent) {\n    console.log('Task assignment:', assignment)\n    \n    const assignmentEvent = new CustomEvent('task-assigned', {\n      detail: assignment,\n      bubbles: true,\n      composed: true\n    })\n    \n    this.dispatchEvent(assignmentEvent)\n  }\n  \n  private handleTaskClick(task: TaskItem) {\n    this.selectedTask = task\n    this.showAssignmentModal = true\n  }\n  \n  private handleAgentClick(agent: AgentInfo) {\n    this.selectedAgent = agent\n    console.log('Agent selected:', agent)\n    \n    const agentEvent = new CustomEvent('agent-selected', {\n      detail: { agent },\n      bubbles: true,\n      composed: true\n    })\n    \n    this.dispatchEvent(agentEvent)\n  }\n  \n  private closeAssignmentModal() {\n    this.showAssignmentModal = false\n    this.selectedTask = null\n  }\n  \n  private confirmAssignment() {\n    if (this.selectedTask && this.selectedAgent) {\n      const assignment: TaskAssignmentEvent = {\n        taskId: this.selectedTask.id,\n        fromAgent: this.selectedTask.assignedTo,\n        toAgent: this.selectedAgent.id,\n        fromStatus: this.selectedTask.status,\n        toStatus: this.selectedTask.status\n      }\n      \n      this.dispatchTaskAssignment(assignment)\n      this.closeAssignmentModal()\n    }\n  }\n  \n  private toggleAutoAssign() {\n    this.autoAssignMode = !this.autoAssignMode\n    \n    const autoAssignEvent = new CustomEvent('auto-assign-toggled', {\n      detail: { enabled: this.autoAssignMode },\n      bubbles: true,\n      composed: true\n    })\n    \n    this.dispatchEvent(autoAssignEvent)\n  }\n  \n  private handleViewChange(view: 'kanban' | 'assignment' | 'workflow') {\n    this.selectedView = view\n    \n    const viewEvent = new CustomEvent('view-changed', {\n      detail: { view },\n      bubbles: true,\n      composed: true\n    })\n    \n    this.dispatchEvent(viewEvent)\n  }\n  \n  private handleFilterChange(event: Event, type: 'priority' | 'status' | 'search') {\n    const target = event.target as HTMLInputElement | HTMLSelectElement\n    \n    switch (type) {\n      case 'priority':\n        this.filterPriority = target.value\n        break\n      case 'status':\n        this.filterStatus = target.value\n        break\n      case 'search':\n        this.searchQuery = target.value\n        break\n    }\n  }\n  \n  private renderTaskCard(task: TaskItem) {\n    return html`\n      <div \n        class=\"task-card ${task.priority}\"\n        draggable=\"true\"\n        @dragstart=${(e: DragEvent) => this.handleDragStart(e, task)}\n        @dragend=${this.handleDragEnd}\n        @click=${() => this.handleTaskClick(task)}\n      >\n        <div class=\"task-title\">${task.title}</div>\n        <div class=\"task-description\">${task.description}</div>\n        <div class=\"task-meta\">\n          <div class=\"task-assignee\">\n            ${task.assignedToName ? html`\n              <svg width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\"/>\n              </svg>\n              ${task.assignedToName}\n            ` : 'Unassigned'}\n          </div>\n          <div>${task.priority.toUpperCase()}</div>\n        </div>\n        ${task.tags.length > 0 ? html`\n          <div class=\"task-tags\">\n            ${task.tags.map(tag => html`<span class=\"task-tag\">${tag}</span>`)}\n          </div>\n        ` : ''}\n      </div>\n    `\n  }\n  \n  private renderKanbanView() {\n    const statuses = [\n      { key: 'pending', title: 'Pending', tasks: this.getTasksByStatus('pending') },\n      { key: 'in-progress', title: 'In Progress', tasks: this.getTasksByStatus('in-progress') },\n      { key: 'review', title: 'Review', tasks: this.getTasksByStatus('review') },\n      { key: 'completed', title: 'Completed', tasks: this.getTasksByStatus('completed') }\n    ]\n    \n    return html`\n      <div class=\"kanban-board\">\n        ${statuses.map(status => html`\n          <div class=\"kanban-column\">\n            <div class=\"column-header\">\n              <span>${status.title}</span>\n              <span class=\"column-count\">${status.tasks.length}</span>\n            </div>\n            <div \n              class=\"column-content\"\n              @dragover=${this.handleDragOver}\n              @dragenter=${(e: DragEvent) => this.handleDragEnter(e, 'column')}\n              @dragleave=${this.handleDragLeave}\n              @drop=${(e: DragEvent) => this.handleDrop(e, 'column', status.key)}\n            >\n              ${status.tasks.map(task => this.renderTaskCard(task))}\n              ${status.tasks.length === 0 ? html`\n                <div class=\"drop-zone ${this.draggedTask ? 'active' : ''}\">\n                  Drop tasks here\n                </div>\n              ` : ''}\n            </div>\n          </div>\n        `)}\n      </div>\n    `\n  }\n  \n  private renderAssignmentView() {\n    return html`\n      <div class=\"assignment-view\">\n        <div class=\"agents-panel\">\n          <div class=\"panel-header\">Available Agents</div>\n          <div class=\"panel-content\">\n            ${this.agents.map(agent => html`\n              <div \n                class=\"agent-card ${agent.status}\"\n                @click=${() => this.handleAgentClick(agent)}\n                @dragover=${this.handleDragOver}\n                @dragenter=${(e: DragEvent) => this.handleDragEnter(e, 'agent', agent.id)}\n                @dragleave=${this.handleDragLeave}\n                @drop=${(e: DragEvent) => this.handleDrop(e, 'agent', agent.id)}\n              >\n                <div class=\"agent-header\">\n                  <div class=\"agent-name\">${agent.name}</div>\n                  <div class=\"agent-status ${agent.status}\">${agent.status}</div>\n                </div>\n                <div class=\"agent-metrics\">\n                  <div class=\"agent-load\">\n                    Load: ${agent.currentLoad}%\n                    <div class=\"load-bar\">\n                      <div class=\"load-fill ${this.getAgentLoadClass(agent.currentLoad)}\" style=\"width: ${agent.currentLoad}%\"></div>\n                    </div>\n                  </div>\n                  <div>Tasks: ${agent.currentTasks}/${agent.maxCapacity}</div>\n                  <div>Score: ${agent.performanceScore}%</div>\n                </div>\n                <div class=\"agent-capabilities\">\n                  ${agent.capabilities.map(cap => html`<span class=\"capability-tag\">${cap}</span>`)}\n                </div>\n                <div class=\"drop-zone ${this.draggedOverAgent === agent.id ? 'active' : ''}\">\n                  Drop task to assign\n                </div>\n              </div>\n            `)}\n          </div>\n        </div>\n        \n        <div class=\"agents-panel\">\n          <div class=\"panel-header\">Unassigned Tasks</div>\n          <div class=\"panel-content\">\n            ${this.filteredTasks.filter(task => !task.assignedTo).map(task => this.renderTaskCard(task))}\n            ${this.filteredTasks.filter(task => !task.assignedTo).length === 0 ? html`\n              <div class=\"empty-state\">\n                <p>No unassigned tasks</p>\n                <small>All tasks are currently assigned to agents</small>\n              </div>\n            ` : ''}\n          </div>\n        </div>\n      </div>\n    `\n  }\n  \n  private renderCurrentView() {\n    switch (this.selectedView) {\n      case 'assignment':\n        return this.renderAssignmentView()\n      case 'workflow':\n        return html`<div class=\"empty-state\">Workflow view coming soon...</div>`\n      default:\n        return this.renderKanbanView()\n    }\n  }\n  \n  render() {\n    return html`\n      <div class=\"distribution-header\">\n        <div class=\"header-title\">\n          <svg class=\"distribution-icon\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 10h16M4 14h16M4 18h16\"/>\n          </svg>\n          Task Distribution\n        </div>\n        <div class=\"header-controls\">\n          <button \n            class=\"auto-assign-toggle ${this.autoAssignMode ? 'active' : ''}\"\n            @click=${this.toggleAutoAssign}\n            title=\"${this.autoAssignMode ? 'Disable' : 'Enable'} automatic task assignment\"\n          >\n            ${this.autoAssignMode ? '🤖 Auto-Assign ON' : '🤖 Auto-Assign OFF'}\n          </button>\n          <button class=\"control-button\">\n            ${this.realtime ? '🔴 Live' : '⏸️ Paused'}\n          </button>\n        </div>\n      </div>\n      \n      <div class=\"distribution-content\">\n        <div class=\"view-tabs\">\n          <button \n            class=\"tab-button ${this.selectedView === 'kanban' ? 'active' : ''}\"\n            @click=${() => this.handleViewChange('kanban')}\n          >\n            <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2\"/>\n            </svg>\n            Kanban Board\n          </button>\n          <button \n            class=\"tab-button ${this.selectedView === 'assignment' ? 'active' : ''}\"\n            @click=${() => this.handleViewChange('assignment')}\n          >\n            <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z\"/>\n            </svg>\n            Agent Assignment\n          </button>\n          <button \n            class=\"tab-button ${this.selectedView === 'workflow' ? 'active' : ''}\"\n            @click=${() => this.handleViewChange('workflow')}\n          >\n            <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\"/>\n            </svg>\n            Workflow\n          </button>\n        </div>\n        \n        <div class=\"distribution-panel\">\n          <div class=\"filters-bar\">\n            <input \n              class=\"search-input\" \n              type=\"text\" \n              placeholder=\"Search tasks...\"\n              .value=${this.searchQuery}\n              @input=${(e: Event) => this.handleFilterChange(e, 'search')}\n            />\n            <select class=\"filter-select\" .value=${this.filterPriority} @change=${(e: Event) => this.handleFilterChange(e, 'priority')}>\n              <option value=\"all\">All Priorities</option>\n              <option value=\"critical\">Critical</option>\n              <option value=\"high\">High</option>\n              <option value=\"medium\">Medium</option>\n              <option value=\"low\">Low</option>\n            </select>\n            <select class=\"filter-select\" .value=${this.filterStatus} @change=${(e: Event) => this.handleFilterChange(e, 'status')}>\n              <option value=\"all\">All Statuses</option>\n              <option value=\"pending\">Pending</option>\n              <option value=\"in-progress\">In Progress</option>\n              <option value=\"review\">Review</option>\n              <option value=\"completed\">Completed</option>\n            </select>\n          </div>\n          \n          ${this.renderCurrentView()}\n        </div>\n      </div>\n      \n      ${this.showAssignmentModal ? html`\n        <div class=\"assignment-modal\" @click=${(e: Event) => e.target === e.currentTarget && this.closeAssignmentModal()}>\n          <div class=\"modal-content\">\n            <div class=\"modal-header\">\n              <h3 class=\"modal-title\">Task Assignment</h3>\n              <button class=\"close-button\" @click=${this.closeAssignmentModal}>\n                <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\n                  <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"/>\n                </svg>\n              </button>\n            </div>\n            \n            ${this.selectedTask ? html`\n              <div class=\"assignment-details\">\n                <div class=\"detail-row\">\n                  <span class=\"detail-label\">Task:</span>\n                  <span class=\"detail-value\">${this.selectedTask.title}</span>\n                </div>\n                <div class=\"detail-row\">\n                  <span class=\"detail-label\">Priority:</span>\n                  <span class=\"detail-value\">${this.selectedTask.priority.toUpperCase()}</span>\n                </div>\n                <div class=\"detail-row\">\n                  <span class=\"detail-label\">Current Assignee:</span>\n                  <span class=\"detail-value\">${this.selectedTask.assignedToName || 'Unassigned'}</span>\n                </div>\n                ${this.selectedAgent ? html`\n                  <div class=\"detail-row\">\n                    <span class=\"detail-label\">New Assignee:</span>\n                    <span class=\"detail-value\">${this.selectedAgent.name}</span>\n                  </div>\n                ` : ''}\n              </div>\n            ` : ''}\n            \n            <div class=\"modal-actions\">\n              <button class=\"btn btn-secondary\" @click=${this.closeAssignmentModal}>Cancel</button>\n              <button class=\"btn btn-primary\" @click=${this.confirmAssignment} ?disabled=${!this.selectedAgent}>\n                Assign Task\n              </button>\n            </div>\n          </div>\n        </div>\n      ` : ''}\n    `\n  }\n}"
+      assignmentEvent = {
+        taskId: this.draggedTask.id,
+        fromStatus: this.draggedTask.status,
+        toStatus: identifier,
+        fromAgent: this.draggedTask.assignedTo,
+        toAgent: this.draggedTask.assignedTo
+      }
+    } else {
+      // Task assigned to agent
+      assignmentEvent = {
+        taskId: this.draggedTask.id,
+        fromAgent: this.draggedTask.assignedTo,
+        toAgent: identifier,
+        fromStatus: this.draggedTask.status,
+        toStatus: this.draggedTask.status
+      }
+    }
+    
+    this.dispatchTaskAssignment(assignmentEvent)
+    this.draggedTask = null
+    this.draggedOverAgent = null
+  }
+  
+  private dispatchTaskAssignment(assignment: TaskAssignmentEvent) {
+    console.log('Task assignment:', assignment)
+    
+    const assignmentEvent = new CustomEvent('task-assigned', {
+      detail: assignment,
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(assignmentEvent)
+  }
+  
+  private handleTaskClick(task: TaskItem) {
+    this.selectedTask = task
+    this.showAssignmentModal = true
+  }
+  
+  private handleAgentClick(agent: AgentInfo) {
+    this.selectedAgent = agent
+    console.log('Agent selected:', agent)
+    
+    const agentEvent = new CustomEvent('agent-selected', {
+      detail: { agent },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(agentEvent)
+  }
+  
+  private closeAssignmentModal() {
+    this.showAssignmentModal = false
+    this.selectedTask = null
+  }
+  
+  private confirmAssignment() {
+    if (this.selectedTask && this.selectedAgent) {
+      const assignment: TaskAssignmentEvent = {
+        taskId: this.selectedTask.id,
+        fromAgent: this.selectedTask.assignedTo,
+        toAgent: this.selectedAgent.id,
+        fromStatus: this.selectedTask.status,
+        toStatus: this.selectedTask.status
+      }
+      
+      this.dispatchTaskAssignment(assignment)
+      this.closeAssignmentModal()
+    }
+  }
+  
+  private toggleAutoAssign() {
+    this.autoAssignMode = !this.autoAssignMode
+    
+    const autoAssignEvent = new CustomEvent('auto-assign-toggled', {
+      detail: { enabled: this.autoAssignMode },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(autoAssignEvent)
+  }
+  
+  private handleViewChange(view: 'kanban' | 'assignment' | 'workflow') {
+    this.selectedView = view
+    
+    const viewEvent = new CustomEvent('view-changed', {
+      detail: { view },
+      bubbles: true,
+      composed: true
+    })
+    
+    this.dispatchEvent(viewEvent)
+  }
+  
+  private handleFilterChange(event: Event, type: 'priority' | 'status' | 'search') {
+    const target = event.target as HTMLInputElement | HTMLSelectElement
+    
+    switch (type) {
+      case 'priority':
+        this.filterPriority = target.value
+        break
+      case 'status':
+        this.filterStatus = target.value
+        break
+      case 'search':
+        this.searchQuery = target.value
+        break
+    }
+  }
+  
+  private renderTaskCard(task: TaskItem) {
+    return html`
+      <div 
+        class=\"task-card ${task.priority}\"
+        draggable=\"true\"
+        @dragstart=${(e: DragEvent) => this.handleDragStart(e, task)}
+        @dragend=${this.handleDragEnd}
+        @click=${() => this.handleTaskClick(task)}
+      >
+        <div class=\"task-title\">${task.title}</div>
+        <div class=\"task-description\">${task.description}</div>
+        <div class=\"task-meta\">
+          <div class=\"task-assignee\">
+            ${task.assignedToName ? html`
+              <svg width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\"/>
+              </svg>
+              ${task.assignedToName}
+            ` : 'Unassigned'}
+          </div>
+          <div>${task.priority.toUpperCase()}</div>
+        </div>
+        ${task.tags.length > 0 ? html`
+          <div class=\"task-tags\">
+            ${task.tags.map(tag => html`<span class=\"task-tag\">${tag}</span>`)}
+          </div>
+        ` : ''}
+      </div>
+    `
+  }
+  
+  private renderKanbanView() {
+    const statuses = [
+      { key: 'pending', title: 'Pending', tasks: this.getTasksByStatus('pending') },
+      { key: 'in-progress', title: 'In Progress', tasks: this.getTasksByStatus('in-progress') },
+      { key: 'review', title: 'Review', tasks: this.getTasksByStatus('review') },
+      { key: 'completed', title: 'Completed', tasks: this.getTasksByStatus('completed') }
+    ]
+    
+    return html`
+      <div class=\"kanban-board\">
+        ${statuses.map(status => html`
+          <div class=\"kanban-column\">
+            <div class=\"column-header\">
+              <span>${status.title}</span>
+              <span class=\"column-count\">${status.tasks.length}</span>
+            </div>
+            <div 
+              class=\"column-content\"
+              @dragover=${this.handleDragOver}
+              @dragenter=${(e: DragEvent) => this.handleDragEnter(e, 'column')}
+              @dragleave=${this.handleDragLeave}
+              @drop=${(e: DragEvent) => this.handleDrop(e, 'column', status.key)}
+            >
+              ${status.tasks.map(task => this.renderTaskCard(task))}
+              ${status.tasks.length === 0 ? html`
+                <div class=\"drop-zone ${this.draggedTask ? 'active' : ''}\">
+                  Drop tasks here
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `)}
+      </div>
+    `
+  }
+  
+  private renderAssignmentView() {
+    return html`
+      <div class=\"assignment-view\">
+        <div class=\"agents-panel\">
+          <div class=\"panel-header\">Available Agents</div>
+          <div class=\"panel-content\">
+            ${this.agents.map(agent => html`
+              <div 
+                class=\"agent-card ${agent.status}\"
+                @click=${() => this.handleAgentClick(agent)}
+                @dragover=${this.handleDragOver}
+                @dragenter=${(e: DragEvent) => this.handleDragEnter(e, 'agent', agent.id)}
+                @dragleave=${this.handleDragLeave}
+                @drop=${(e: DragEvent) => this.handleDrop(e, 'agent', agent.id)}
+              >
+                <div class=\"agent-header\">
+                  <div class=\"agent-name\">${agent.name}</div>
+                  <div class=\"agent-status ${agent.status}\">${agent.status}</div>
+                </div>
+                <div class=\"agent-metrics\">
+                  <div class=\"agent-load\">
+                    Load: ${agent.currentLoad}%
+                    <div class=\"load-bar\">
+                      <div class=\"load-fill ${this.getAgentLoadClass(agent.currentLoad)}\" style=\"width: ${agent.currentLoad}%\"></div>
+                    </div>
+                  </div>
+                  <div>Tasks: ${agent.currentTasks}/${agent.maxCapacity}</div>
+                  <div>Score: ${agent.performanceScore}%</div>
+                </div>
+                <div class=\"agent-capabilities\">
+                  ${agent.capabilities.map(cap => html`<span class=\"capability-tag\">${cap}</span>`)}
+                </div>
+                <div class=\"drop-zone ${this.draggedOverAgent === agent.id ? 'active' : ''}\">
+                  Drop task to assign
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+        
+        <div class=\"agents-panel\">
+          <div class=\"panel-header\">Unassigned Tasks</div>
+          <div class=\"panel-content\">
+            ${this.filteredTasks.filter(task => !task.assignedTo).map(task => this.renderTaskCard(task))}
+            ${this.filteredTasks.filter(task => !task.assignedTo).length === 0 ? html`
+              <div class=\"empty-state\">
+                <p>No unassigned tasks</p>
+                <small>All tasks are currently assigned to agents</small>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `
+  }
+  
+  private renderCurrentView() {
+    switch (this.selectedView) {
+      case 'assignment':
+        return this.renderAssignmentView()
+      case 'workflow':
+        return html`<div class=\"empty-state\">Workflow view coming soon...</div>`
+      default:
+        return this.renderKanbanView()
+    }
+  }
+  
+  render() {
+    return html`
+      <div class=\"distribution-header\">
+        <div class=\"header-title\">
+          <svg class=\"distribution-icon\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+            <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 10h16M4 14h16M4 18h16\"/>
+          </svg>
+          Task Distribution
+        </div>
+        <div class=\"header-controls\">
+          <button 
+            class=\"auto-assign-toggle ${this.autoAssignMode ? 'active' : ''}\"
+            @click=${this.toggleAutoAssign}
+            title=\"${this.autoAssignMode ? 'Disable' : 'Enable'} automatic task assignment\"
+          >
+            ${this.autoAssignMode ? '🤖 Auto-Assign ON' : '🤖 Auto-Assign OFF'}
+          </button>
+          <button class=\"control-button\">
+            ${this.realtime ? '🔴 Live' : '⏸️ Paused'}
+          </button>
+        </div>
+      </div>
+      
+      <div class=\"distribution-content\">
+        <div class=\"view-tabs\">
+          <button 
+            class=\"tab-button ${this.selectedView === 'kanban' ? 'active' : ''}\"
+            @click=${() => this.handleViewChange('kanban')}
+          >
+            <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2\"/>
+            </svg>
+            Kanban Board
+          </button>
+          <button 
+            class=\"tab-button ${this.selectedView === 'assignment' ? 'active' : ''}\"
+            @click=${() => this.handleViewChange('assignment')}
+          >
+            <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z\"/>
+            </svg>
+            Agent Assignment
+          </button>
+          <button 
+            class=\"tab-button ${this.selectedView === 'workflow' ? 'active' : ''}\"
+            @click=${() => this.handleViewChange('workflow')}
+          >
+            <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+              <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\"/>
+            </svg>
+            Workflow
+          </button>
+        </div>
+        
+        <div class=\"distribution-panel\">
+          <div class=\"filters-bar\">
+            <input 
+              class=\"search-input\" 
+              type=\"text\" 
+              placeholder=\"Search tasks...\"
+              .value=${this.searchQuery}
+              @input=${(e: Event) => this.handleFilterChange(e, 'search')}
+            />
+            <select class=\"filter-select\" .value=${this.filterPriority} @change=${(e: Event) => this.handleFilterChange(e, 'priority')}>
+              <option value=\"all\">All Priorities</option>
+              <option value=\"critical\">Critical</option>
+              <option value=\"high\">High</option>
+              <option value=\"medium\">Medium</option>
+              <option value=\"low\">Low</option>
+            </select>
+            <select class=\"filter-select\" .value=${this.filterStatus} @change=${(e: Event) => this.handleFilterChange(e, 'status')}>
+              <option value=\"all\">All Statuses</option>
+              <option value=\"pending\">Pending</option>
+              <option value=\"in-progress\">In Progress</option>
+              <option value=\"review\">Review</option>
+              <option value=\"completed\">Completed</option>
+            </select>
+          </div>
+          
+          ${this.renderCurrentView()}
+        </div>
+      </div>
+      
+      ${this.showAssignmentModal ? html`
+        <div class=\"assignment-modal\" @click=${(e: Event) => e.target === e.currentTarget && this.closeAssignmentModal()}>
+          <div class=\"modal-content\">
+            <div class=\"modal-header\">
+              <h3 class=\"modal-title\">Task Assignment</h3>
+              <button class=\"close-button\" @click=${this.closeAssignmentModal}>
+                <svg width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">
+                  <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"/>
+                </svg>
+              </button>
+            </div>
+            
+            ${this.selectedTask ? html`
+              <div class=\"assignment-details\">
+                <div class=\"detail-row\">
+                  <span class=\"detail-label\">Task:</span>
+                  <span class=\"detail-value\">${this.selectedTask.title}</span>
+                </div>
+                <div class=\"detail-row\">
+                  <span class=\"detail-label\">Priority:</span>
+                  <span class=\"detail-value\">${this.selectedTask.priority.toUpperCase()}</span>
+                </div>
+                <div class=\"detail-row\">
+                  <span class=\"detail-label\">Current Assignee:</span>
+                  <span class=\"detail-value\">${this.selectedTask.assignedToName || 'Unassigned'}</span>
+                </div>
+                ${this.selectedAgent ? html`
+                  <div class=\"detail-row\">
+                    <span class=\"detail-label\">New Assignee:</span>
+                    <span class=\"detail-value\">${this.selectedAgent.name}</span>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+            
+            <div class=\"modal-actions\">
+              <button class=\"btn btn-secondary\" @click=${this.closeAssignmentModal}>Cancel</button>
+              <button class=\"btn btn-primary\" @click=${this.confirmAssignment} ?disabled=${!this.selectedAgent}>
+                Assign Task
+              </button>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+    `
+  }
+}

@@ -17,6 +17,11 @@ import type {
 import '../components/kanban/kanban-board'
 import '../components/dashboard/agent-health-panel'
 import '../components/dashboard/event-timeline'
+import '../components/dashboard/coordination-success-panel'
+import '../components/dashboard/realtime-agent-status-panel'
+import '../components/dashboard/task-distribution-panel'
+import '../components/dashboard/recovery-controls-panel'
+import '../components/dashboard/communication-monitoring-panel'
 import '../components/autonomous-development/multi-agent-oversight-dashboard'
 import '../components/autonomous-development/remote-control-center'
 
@@ -33,7 +38,7 @@ export class DashboardView extends LitElement {
   @state() private declare isLoading: boolean
   @state() private declare error: string
   @state() private declare lastSync: Date | null
-  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control'
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination'
   @state() private declare servicesInitialized: boolean
   @state() private declare wsConnected: boolean
   @state() private declare realtimeEnabled: boolean
@@ -1072,7 +1077,7 @@ export class DashboardView extends LitElement {
   }
   
   // Accessibility and keyboard navigation methods
-  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control') {
+  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination') {
     this.selectedView = view
     this.announceViewChange(view)
   }
@@ -1361,6 +1366,73 @@ export class DashboardView extends LitElement {
       </div>
     `
   }
+
+  private renderCoordinationView() {
+    return html`
+      <div id="coordination-panel" role="tabpanel" aria-labelledby="coordination-tab" style="height: calc(100vh - 140px); padding: 1rem; overflow-y: auto;">
+        <h2 class="sr-only">Multi-Agent Coordination Monitoring</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+          <!-- Critical Success Rate Tracking -->
+          <section aria-label="Coordination success rate monitoring">
+            <coordination-success-panel
+              .realtime=${this.realtimeEnabled}
+              .compact=${false}
+              .timeRange=${'1h'}
+              role="region"
+              aria-label="Real-time coordination success rate with failure analysis and recovery actions"
+            ></coordination-success-panel>
+          </section>
+
+          <!-- Agent Status Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <section aria-label="Real-time agent status monitoring">
+              <realtime-agent-status-panel
+                .realtime=${this.realtimeEnabled}
+                .compact=${false}
+                .viewMode=${'grid'}
+                role="region"
+                aria-label="Live agent health monitoring with performance metrics and recovery controls"
+              ></realtime-agent-status-panel>
+            </section>
+
+            <section aria-label="Task distribution and queue management">
+              <task-distribution-panel
+                .realtime=${this.realtimeEnabled}
+                .enableDragDrop=${true}
+                .agents=${this.agents}
+                role="region"
+                aria-label="Interactive task queue with drag-and-drop reassignment capabilities"
+              ></task-distribution-panel>
+            </section>
+          </div>
+
+          <!-- Communication and Recovery -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <section aria-label="Communication health monitoring">
+              <communication-monitoring-panel
+                .realtime=${this.realtimeEnabled}
+                .compact=${false}
+                .timeRange=${'1h'}
+                role="region"
+                aria-label="Agent communication monitoring with Redis health and latency tracking"
+              ></communication-monitoring-panel>
+            </section>
+
+            <section aria-label="Emergency recovery controls">
+              <recovery-controls-panel
+                .agents=${this.agents}
+                .systemHealth=${this.systemHealth}
+                .emergencyMode=${this.error ? true : false}
+                role="region"
+                aria-label="Emergency recovery actions and system diagnostic tools"
+              ></recovery-controls-panel>
+            </section>
+          </div>
+        </div>
+      </div>
+    `
+  }
   
   private announceAgentSelection(agent: any) {
     const announcement = `Agent ${agent.name} selected. Status: ${agent.status}. Performance: ${agent.performance?.score || 'unknown'}%`
@@ -1443,6 +1515,8 @@ export class DashboardView extends LitElement {
         return this.renderOversightView()
       case 'control':
         return this.renderControlView()
+      case 'coordination':
+        return this.renderCoordinationView()
       default:
         return this.renderOverviewView()
     }
@@ -1627,6 +1701,21 @@ export class DashboardView extends LitElement {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
             </svg>
             Control
+          </button>
+
+          <button 
+            class="tab-button ${this.selectedView === 'coordination' ? 'active' : ''}"
+            role="tab"
+            aria-selected=${this.selectedView === 'coordination'}
+            aria-controls="coordination-panel"
+            tabindex=${this.selectedView === 'coordination' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('coordination')}
+            @keydown=${this.handleTabKeydown}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            🚨 Coordination
           </button>
         </div>
       </div>

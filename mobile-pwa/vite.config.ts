@@ -177,17 +177,49 @@ export default defineConfig({
     strictPort: true,
     open: false,
     cors: true,
+    // Allow access from Tailscale network
+    allowedHosts: [
+      'code-mb16-1.taild7760a.ts.net',
+      '100.107.91.78',
+      'localhost',
+      '127.0.0.1'
+    ],
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    },
     proxy: {
       '/dashboard/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
+        headers: {
+          'Host': 'localhost:8000'
+        }
       },
       '/dashboard/simple-ws': {
         target: 'ws://localhost:8000',
         ws: true,
         changeOrigin: true,
       },
+      // Proxy API calls to backend for Tailscale access
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          'Host': 'localhost:8000'
+        }
+      },
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          'Host': 'localhost:8000'
+        }
+      }
     },
   },
   build: {

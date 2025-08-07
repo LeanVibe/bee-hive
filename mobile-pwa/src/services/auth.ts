@@ -618,48 +618,6 @@ export class AuthService extends EventEmitter {
     }
   }
   
-  private async saveSession(): Promise<void> {
-    try {
-      const sessionData = {
-        user: this.state.user,
-        token: this.state.token,
-        refreshToken: this.state.refreshToken,
-        lastActivity: this.state.lastActivity
-      }
-      
-      localStorage.setItem('auth_state', JSON.stringify(sessionData))
-    } catch (error) {
-      console.error('Failed to save session:', error)
-    }
-  }
-  
-  private async restoreSession(): Promise<void> {
-    try {
-      const savedSession = localStorage.getItem('auth_state')
-      if (!savedSession) return
-      
-      const sessionData = JSON.parse(savedSession)
-      
-      // Check if session is not too old
-      const timeSinceLastActivity = Date.now() - sessionData.lastActivity
-      if (timeSinceLastActivity > this.SESSION_TIMEOUT) {
-        localStorage.removeItem('auth_state')
-        return
-      }
-      
-      this.state = {
-        user: sessionData.user,
-        token: sessionData.token,
-        refreshToken: sessionData.refreshToken,
-        isAuthenticated: true,
-        lastActivity: sessionData.lastActivity
-      }
-      
-    } catch (error) {
-      console.error('Failed to restore session:', error)
-      localStorage.removeItem('auth_state')
-    }
-  }
   
   private setupTokenRefresh(): void {
     this.clearTimers()

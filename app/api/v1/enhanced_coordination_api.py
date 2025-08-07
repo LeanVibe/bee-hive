@@ -36,6 +36,7 @@ from ...core.enhanced_agent_implementations import (
 )
 from ...core.database import get_session
 from ...core.redis import get_message_broker
+from ...models.coordination_event import CoordinationEvent, BusinessValueMetric, CoordinationEventType
 
 logger = structlog.get_logger()
 
@@ -135,6 +136,56 @@ class CoordinationAnalyticsResponse(BaseModel):
     success_insights: List[Dict[str, Any]]
     improvement_recommendations: List[str]
     trend_analysis: Dict[str, Any]
+
+
+class CoordinationEventResponse(BaseModel):
+    """Response model for coordination events."""
+    id: str
+    event_type: str
+    collaboration_id: Optional[str]
+    participating_agents: List[str]
+    coordination_pattern: Optional[str]
+    title: str
+    description: Optional[str]
+    quality_score: Optional[float]
+    collaboration_efficiency: Optional[float]
+    business_value_score: Optional[float]
+    duration_seconds: Optional[float]
+    success: bool
+    created_at: str
+    artifacts_created: List[str]
+
+
+class BusinessValueMetricsResponse(BaseModel):
+    """Response model for business value metrics."""
+    id: str
+    metric_type: str
+    period_start: str
+    period_end: str
+    total_collaborations: int
+    successful_collaborations: int
+    success_rate: float
+    average_quality_score: Optional[float]
+    average_efficiency: Optional[float]
+    total_time_saved_hours: float
+    total_coordination_time_hours: float
+    cost_efficiency_ratio: Optional[float]
+    total_business_value: float
+    roi_percentage: Optional[float]
+    most_effective_pattern: Optional[str]
+    pattern_success_rates: Dict[str, float]
+
+
+class CoordinationDashboardResponse(BaseModel):
+    """Comprehensive dashboard response with sophisticated coordination metrics."""
+    coordination_events: List[CoordinationEventResponse]
+    business_value_metrics: List[BusinessValueMetricsResponse] 
+    live_collaborations: int
+    autonomous_development_progress: Dict[str, Any]
+    sophisticated_coordination_metrics: Dict[str, Any]
+    real_time_business_value: float
+    productivity_improvements: Dict[str, Any]
+    agent_collaboration_matrix: Dict[str, Any]
 
 
 # API Endpoints

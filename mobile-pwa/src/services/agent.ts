@@ -357,37 +357,6 @@ export class AgentService extends BaseService {
     return summary;
   }
 
-  /**
-   * Get team composition breakdown
-   */
-  getTeamComposition(): TeamComposition {
-    const agents = this.getAgents();
-    const composition: TeamComposition = {};
-
-    agents.forEach(agent => {
-      const roleKey = agent.role;
-      
-      if (!composition[roleKey]) {
-        composition[roleKey] = {
-          count: 0,
-          agents: [],
-          capabilities: []
-        };
-      }
-
-      composition[roleKey].count++;
-      composition[roleKey].agents.push(agent);
-      
-      // Collect unique capabilities
-      agent.capabilities.forEach(capability => {
-        if (!composition[roleKey].capabilities.includes(capability)) {
-          composition[roleKey].capabilities.push(capability);
-        }
-      });
-    });
-
-    return composition;
-  }
 
   /**
    * Get agent capabilities overview
@@ -720,7 +689,7 @@ export class AgentService extends BaseService {
   /**
    * Configure individual agent with enhanced settings
    */
-  async configureAgent(agentId: string, configuration: {
+  async configureAgentEnhanced(agentId: string, configuration: {
     specialization?: string[];
     maxConcurrency?: number;
     priority?: 'low' | 'medium' | 'high';

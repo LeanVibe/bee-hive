@@ -1,0 +1,330 @@
+# AlertManager configuration for LeanVibe Agent Hive 2.0
+# Enterprise-grade alert routing and notification management
+
+global:
+  # Global SMTP configuration
+  smtp_smarthost: '${SMTP_HOST:-localhost:587}'
+  smtp_from: '${SMTP_FROM:-alerts@leanvibe.dev}'
+  smtp_auth_username: '${SMTP_USERNAME:-}'
+  smtp_auth_password: '${SMTP_PASSWORD:-}'
+  smtp_require_tls: true
+
+  # Global webhook configuration
+  slack_api_url: '${SLACK_WEBHOOK_URL:-}'
+  
+  # Global configuration
+  resolve_timeout: 5m
+
+# Templates for alert notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert routing
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default'
+
+  # Child routes with specific routing rules
+  routes:
+    # Critical alerts - immediate notification via multiple channels
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+      routes:
+        # System down alerts
+        - match:
+            alertname: ApplicationDown
+          receiver: 'system-down-alerts'
+          group_wait: 0s
+          repeat_interval: 2m
+
+        # Security incidents
+        - match:
+            component: security
+          receiver: 'security-critical-alerts'
+          group_wait: 0s
+          repeat_interval: 1m
+
+        # Multi-agent coordination failures
+        - match:
+            alertname: CriticalCoordinationFailure
+          receiver: 'coordination-critical-alerts'
+          group_wait: 0s
+          repeat_interval: 3m
+
+    # Warning alerts - standard notification channels
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 2h
+
+    # Dashboard-specific alerts
+    - match:
+        component: dashboard
+      receiver: 'dashboard-alerts'
+      group_wait: 15s
+      repeat_interval: 30m
+
+    # Performance alerts
+    - match:
+        team: performance
+      receiver: 'performance-alerts'
+      group_wait: 60s
+      repeat_interval: 1h
+
+    # Infrastructure alerts
+    - match:
+        team: infrastructure
+      receiver: 'infrastructure-alerts'
+      group_wait: 30s
+      repeat_interval: 1h
+
+    # Business logic alerts
+    - match:
+        team: product
+      receiver: 'business-alerts'
+      group_wait: 2m
+      repeat_interval: 4h
+
+# Inhibit rules to reduce noise
+inhibit_rules:
+  # If ApplicationDown is firing, inhibit all other alerts for the same service
+  - source_match:
+      alertname: ApplicationDown
+    target_match:
+      service: leanvibe-agent-hive
+    equal: ['service']
+
+  # If system CPU is critical, inhibit high CPU warnings
+  - source_match:
+      alertname: SystemCPUCritical
+    target_match:
+      alertname: SystemCPUHigh
+    equal: ['instance']
+
+  # If coordination is critically failing, inhibit coordination warnings
+  - source_match:
+      alertname: CriticalCoordinationFailure
+    target_match:
+      alertname: LowCoordinationSuccessRate
+    equal: ['cluster']
+
+# Alert receivers/notification channels
+receivers:
+  # Default receiver (fallback)
+  - name: 'default'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-alerts'
+        title: 'LeanVibe Agent Hive Alert'
+        text: >
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        send_resolved: true
+
+  # Critical alerts - multiple notification channels
+  - name: 'critical-alerts'
+    email_configs:
+      - to: '${CRITICAL_EMAIL_LIST:-admin@leanvibe.dev,ops@leanvibe.dev}'
+        subject: 'CRITICAL: LeanVibe Agent Hive Alert - {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          
+          Description: {{ .Annotations.description }}
+          
+          Labels:
+          {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+          {{ end }}
+          
+          Runbook: {{ .Annotations.runbook_url }}
+          Dashboard: {{ .Annotations.dashboard_url }}
+          {{ end }}
+        send_resolved: true
+    
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-critical'
+        title: ':rotating_light: CRITICAL ALERT - LeanVibe Agent Hive'
+        color: 'danger'
+        text: >
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Component:* {{ .Labels.component }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          *Dashboard:* {{ .Annotations.dashboard_url }}
+          {{ end }}
+        send_resolved: true
+        
+    webhook_configs:
+      - url: '${PAGERDUTY_WEBHOOK_URL:-}'
+        send_resolved: true
+      - url: '${MOBILE_PUSH_WEBHOOK_URL:-}'
+        send_resolved: true
+
+  # System down alerts - immediate escalation
+  - name: 'system-down-alerts'
+    email_configs:
+      - to: '${EMERGENCY_EMAIL_LIST:-admin@leanvibe.dev}'
+        subject: 'EMERGENCY: LeanVibe System Down - {{ .GroupLabels.alertname }}'
+        body: |
+          EMERGENCY ALERT: The LeanVibe Agent Hive system is experiencing a critical outage.
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+          
+          Immediate action required.
+        send_resolved: true
+    
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-emergency'
+        title: ':fire: EMERGENCY - System Down'
+        color: 'danger'
+        text: >
+          @channel EMERGENCY: LeanVibe Agent Hive system is DOWN
+          
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Time:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        send_resolved: true
+
+  # Security critical alerts
+  - name: 'security-critical-alerts'
+    email_configs:
+      - to: '${SECURITY_EMAIL_LIST:-security@leanvibe.dev,admin@leanvibe.dev}'
+        subject: 'SECURITY ALERT: {{ .GroupLabels.alertname }}'
+        body: |
+          SECURITY INCIDENT DETECTED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Component: {{ .Labels.component }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+          
+          Immediate security review required.
+        send_resolved: true
+    
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-security'
+        title: ':warning: Security Alert'
+        color: 'danger'
+        text: >
+          @security-team Security incident detected
+          
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Component:* {{ .Labels.component }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+        send_resolved: true
+
+  # Coordination critical alerts
+  - name: 'coordination-critical-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-agents'
+        title: ':exclamation: Multi-Agent Coordination Failure'
+        color: 'warning'
+        text: >
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Current Success Rate:* {{ .Labels.success_rate }}%
+          *Dashboard:* {{ .Annotations.dashboard_url }}
+          {{ end }}
+        send_resolved: true
+
+  # Warning alerts
+  - name: 'warning-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-alerts'
+        title: ':warning: Warning Alert'
+        color: 'warning'
+        text: >
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Component:* {{ .Labels.component }}
+          *Team:* {{ .Labels.team }}
+          {{ end }}
+        send_resolved: true
+
+  # Dashboard-specific alerts
+  - name: 'dashboard-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-dashboard'
+        title: 'Dashboard Alert'
+        color: 'warning'
+        text: >
+          {{ range .Alerts }}
+          *Dashboard Issue:* {{ .Annotations.summary }}
+          *Component:* {{ .Labels.component }}
+          *Dashboard:* {{ .Annotations.dashboard_url }}
+          {{ end }}
+        send_resolved: true
+
+  # Performance alerts
+  - name: 'performance-alerts'
+    email_configs:
+      - to: '${PERFORMANCE_EMAIL_LIST:-engineering@leanvibe.dev}'
+        subject: 'Performance Alert - {{ .GroupLabels.alertname }}'
+        body: |
+          Performance issue detected in LeanVibe Agent Hive
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Current Value: {{ .Labels.current_value }}
+          Threshold: {{ .Labels.threshold }}
+          {{ end }}
+        send_resolved: true
+
+  # Infrastructure alerts
+  - name: 'infrastructure-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL:-}'
+        channel: '#leanvibe-infrastructure'
+        title: 'Infrastructure Alert'
+        color: 'warning'
+        text: >
+          {{ range .Alerts }}
+          *Infrastructure Issue:* {{ .Annotations.summary }}
+          *Component:* {{ .Labels.component }}
+          *Instance:* {{ .Labels.instance }}
+          {{ end }}
+        send_resolved: true
+
+  # Business alerts - lower priority
+  - name: 'business-alerts'
+    email_configs:
+      - to: '${BUSINESS_EMAIL_LIST:-product@leanvibe.dev}'
+        subject: 'Business Metric Alert - {{ .GroupLabels.alertname }}'
+        body: |
+          Business metric threshold exceeded
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true

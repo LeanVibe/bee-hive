@@ -1686,22 +1686,18 @@ class WorkflowEngine:
             
             # Initialize semantic memory task processor
             self.semantic_memory_processor = SemanticMemoryTaskProcessor(
-                redis_url="redis://localhost:6379",
-                consumer_group="workflow_engine_semantic_memory",
-                consumer_name=f"workflow_engine_{uuid.uuid4().hex[:8]}",
+                redis_client=self.message_broker.redis,
+                memory_service_url="http://semantic-memory-service:8001/api/v1",
+                processor_id=f"workflow_engine_{uuid.uuid4().hex[:8]}",
                 max_concurrent_tasks=5,
-                enable_dead_letter_queue=True
+                batch_size=5
             )
-            await self.semantic_memory_processor.initialize()
+            await self.semantic_memory_processor.start()
             
             # Initialize workflow context manager
             self.workflow_context_manager = WorkflowContextManager(
-                semantic_memory_processor=self.semantic_memory_processor,
-                max_context_fragments=100,
-                default_compression_threshold=0.7,
-                enable_intelligent_routing=True
+                task_processor=self.semantic_memory_processor
             )
-            await self.workflow_context_manager.initialize()
             
             # Initialize agent knowledge manager
             self.agent_knowledge_manager = AgentKnowledgeManager(

@@ -491,6 +491,12 @@ export class SidebarNavigation extends LitElement {
           path: '/system-health',
           label: 'System Health',
           icon: '💚'
+        },
+        {
+          id: 'performance',
+          path: '/performance',
+          label: 'Performance Analytics',
+          icon: '📈'
         }
       ]
     },

@@ -104,11 +104,11 @@ export class WebSocketService extends EventEmitter {
       // Clear any existing connection
       this.cleanup()
       
-      // Determine WebSocket URL
+      // Determine WebSocket URL - Using new dashboard endpoint
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const host = window.location.hostname
       const port = process.env.NODE_ENV === 'development' ? ':8000' : ''
-      const wsUrl = `${protocol}//${host}${port}/api/v1/ws/observability`
+      const wsUrl = `${protocol}//${host}${port}/api/dashboard/ws/dashboard`
       
       console.log('🔌 Connecting to WebSocket:', wsUrl)
       

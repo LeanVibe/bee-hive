@@ -40,16 +40,21 @@ export class NotificationService extends EventEmitter {
   private isInitialized: boolean = false
   private messaging: any = null
   private fcmToken: string | null = null
+  private offlineQueue: NotificationData[] = []
+  private isOnline: boolean = navigator.onLine
+  private isMobile: boolean = this.detectMobile()
+  private iosInstallPromptShown: boolean = false
   
-  // FCM configuration (these would come from environment variables)
+  // FCM configuration using environment variables with proper fallbacks
   private readonly fcmConfig = {
-    apiKey: process.env.VITE_FCM_API_KEY || 'demo-key',
-    authDomain: process.env.VITE_FCM_AUTH_DOMAIN || 'agent-hive-demo.firebaseapp.com',
-    projectId: process.env.VITE_FCM_PROJECT_ID || 'agent-hive-demo',
-    storageBucket: process.env.VITE_FCM_STORAGE_BUCKET || 'agent-hive-demo.appspot.com',
-    messagingSenderId: process.env.VITE_FCM_SENDER_ID || '123456789',
-    appId: process.env.VITE_FCM_APP_ID || '1:123456789:web:abcdef',
-    vapidKey: process.env.VITE_FCM_VAPID_KEY || 'demo-vapid-key'
+    apiKey: process.env.VITE_FIREBASE_API_KEY || 'demo-key',
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || 'agent-hive-demo.firebaseapp.com',
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'agent-hive-demo',
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || 'agent-hive-demo.appspot.com',
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789',
+    appId: process.env.VITE_FIREBASE_APP_ID || '1:123456789:web:abcdef',
+    measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-DEMO123456',
+    vapidKey: process.env.VITE_FIREBASE_VAPID_KEY || 'demo-vapid-key'
   }
   
   static getInstance(): NotificationService {
@@ -59,9 +64,26 @@ export class NotificationService extends EventEmitter {
     return NotificationService.instance
   }
   
+  private detectMobile(): boolean {
+    const userAgent = navigator.userAgent
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+    return isMobile || isTouchDevice
+  }
+  
+  private isIOS(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+  }
+  
+  private isInStandaloneMode(): boolean {
+    return (window.navigator as any).standalone === true ||
+           window.matchMedia('(display-mode: standalone)').matches
+  }
+  
   async initialize(): Promise<void> {
     try {
       console.log('🔔 Initializing notification service...')
+      console.log(`📱 Mobile device: ${this.isMobile}, iOS: ${this.isIOS()}`)
       
       // Check if notifications are supported
       if (!('Notification' in window)) {
@@ -77,6 +99,9 @@ export class NotificationService extends EventEmitter {
       
       // Get current permission status
       this.permission = Notification.permission
+      
+      // Setup online/offline monitoring
+      this.setupNetworkMonitoring()
       
       // Skip service worker registration in development mode
       if (process.env.NODE_ENV === 'development') {
@@ -101,6 +126,17 @@ export class NotificationService extends EventEmitter {
       if ('PushManager' in window) {
         await this.initializePushMessaging()
       }
+      
+      // Load offline notification queue
+      await this.loadOfflineQueue()
+      
+      // Process queued notifications if online
+      if (this.isOnline) {
+        await this.processOfflineQueue()
+      }
+      
+      // Show iOS install prompt if appropriate
+      this.handleIOSInstallPrompt()
       
       this.isInitialized = true
       console.log('✅ Notification service initialized')
@@ -151,6 +187,11 @@ export class NotificationService extends EventEmitter {
     try {
       if (this.permission !== 'granted') {
         console.warn('Cannot show notification - permission not granted')
+        
+        // Queue notification for offline/no-permission scenarios
+        if (!this.isOnline) {
+          await this.queueNotification(data)
+        }
         return
       }
       
@@ -167,6 +208,15 @@ export class NotificationService extends EventEmitter {
         priority: data.priority || 'normal',
         category: data.category || 'general',
         requireInteraction: data.requireInteraction || false
+      }
+      
+      // Apply mobile-specific optimizations
+      if (this.isMobile) {
+        notification.requireInteraction = notification.priority === 'high'
+        // Shorter body text for mobile
+        if (notification.body.length > 100) {
+          notification.body = notification.body.substring(0, 97) + '...'
+        }
       }
       
       // Show notification via service worker for better reliability
@@ -195,6 +245,10 @@ export class NotificationService extends EventEmitter {
       
     } catch (error) {
       console.error('Failed to show notification:', error)
+      // Queue notification for retry if offline
+      if (!this.isOnline) {
+        await this.queueNotification(data)
+      }
       throw error
     }
   }
@@ -625,4 +679,196 @@ export class NotificationService extends EventEmitter {
       ]
     })
   }
+
+  // Network monitoring for offline support
+  private setupNetworkMonitoring(): void {
+    window.addEventListener('online', () => {
+      console.log('🌐 Network: Online')
+      this.isOnline = true
+      this.processOfflineQueue()
+    })
+    
+    window.addEventListener('offline', () => {
+      console.log('📵 Network: Offline')
+      this.isOnline = false
+    })
+    
+    // Also check using navigator.onLine
+    this.isOnline = navigator.onLine
+  }
+  
+  // Offline notification queuing
+  private async queueNotification(data: Partial<NotificationData>): Promise<void> {
+    const notification: NotificationData = {
+      id: data.id || crypto.randomUUID(),
+      title: data.title || 'Agent Hive',
+      body: data.body || '',
+      icon: data.icon || '/icons/icon-192x192.png',
+      badge: data.badge || '/icons/icon-96x96.png',
+      tag: data.tag,
+      data: data.data,
+      actions: data.actions,
+      timestamp: Date.now(),
+      priority: data.priority || 'normal',
+      category: data.category || 'general',
+      requireInteraction: data.requireInteraction || false
+    }
+    
+    this.offlineQueue.push(notification)
+    await this.saveOfflineQueue()
+    
+    console.log(`📦 Queued notification for offline: ${notification.title}`)
+    this.emit('notification_queued', notification)
+  }
+  
+  private async loadOfflineQueue(): Promise<void> {
+    try {
+      const stored = localStorage.getItem('notification_queue')
+      if (stored) {
+        this.offlineQueue = JSON.parse(stored)
+        console.log(`📦 Loaded ${this.offlineQueue.length} queued notifications`)
+      }
+    } catch (error) {
+      console.error('Failed to load offline notification queue:', error)
+      this.offlineQueue = []
+    }
+  }
+  
+  private async saveOfflineQueue(): Promise<void> {
+    try {
+      localStorage.setItem('notification_queue', JSON.stringify(this.offlineQueue))
+    } catch (error) {
+      console.error('Failed to save offline notification queue:', error)
+    }
+  }
+  
+  private async processOfflineQueue(): Promise<void> {
+    if (this.offlineQueue.length === 0) return
+    
+    console.log(`📦 Processing ${this.offlineQueue.length} queued notifications`)
+    
+    const notifications = [...this.offlineQueue]
+    this.offlineQueue = []
+    await this.saveOfflineQueue()
+    
+    for (const notification of notifications) {
+      try {
+        await this.showNotification(notification)
+        await new Promise(resolve => setTimeout(resolve, 500)) // Throttle notifications
+      } catch (error) {
+        console.error('Failed to process queued notification:', error)
+        // Re-queue failed notifications
+        this.offlineQueue.push(notification)
+      }
+    }
+    
+    if (this.offlineQueue.length > 0) {
+      await this.saveOfflineQueue()
+    }
+  }
+  
+  // iOS install prompt handling
+  private handleIOSInstallPrompt(): void {
+    if (!this.isIOS() || this.isInStandaloneMode() || this.iosInstallPromptShown) {
+      return
+    }
+    
+    // Show iOS install prompt after a delay
+    setTimeout(() => {
+      if (this.permission === 'granted') {
+        this.showIOSInstallPrompt()
+        this.iosInstallPromptShown = true
+      }
+    }, 10000) // Show after 10 seconds
+  }
+  
+  private async showIOSInstallPrompt(): Promise<void> {
+    await this.showNotification({
+      title: '📱 Install Agent Hive',
+      body: 'Add to Home Screen for the best experience with push notifications',
+      category: 'install',
+      priority: 'normal',
+      requireInteraction: true,
+      tag: 'ios-install-prompt',
+      data: { type: 'ios_install_prompt' },
+      actions: [
+        { action: 'install_guide', title: 'Show How' },
+        { action: 'dismiss_install', title: 'Not Now' }
+      ]
+    })
+  }
+  
+  // Enhanced mobile notification methods
+  async showCriticalMobileAlert(title: string, body: string, data?: any): Promise<void> {
+    if (!this.isMobile) {
+      return this.showNotification({ title, body, data, priority: 'high' })
+    }
+    
+    // Mobile-optimized critical alert
+    await this.showNotification({
+      title: `🚨 ${title}`,
+      body,
+      data,
+      priority: 'high',
+      requireInteraction: true,
+      category: 'critical',
+      actions: [
+        { action: 'view_dashboard', title: 'Open Dashboard' },
+        { action: 'dismiss', title: 'OK' }
+      ]
+    })
+  }
+  
+  async showMobileTaskUpdate(taskInfo: any): Promise<void> {
+    const title = taskInfo.status === 'completed' ? '✅ Task Complete' : '🔄 Task Update'
+    const body = this.isMobile 
+      ? `${taskInfo.title}` // Shorter for mobile
+      : `Task "${taskInfo.title}" status: ${taskInfo.status}`
+    
+    await this.showNotification({
+      title,
+      body,
+      category: 'task',
+      priority: taskInfo.status === 'completed' ? 'normal' : 'low',
+      tag: `task-${taskInfo.id}`,
+      data: { type: 'task_update', taskId: taskInfo.id, status: taskInfo.status }
+    })
+  }
+  
+  // Get notification statistics
+  getNotificationStats(): {
+    permission: NotificationPermission
+    isSupported: boolean
+    isPushSupported: boolean
+    isSubscribed: boolean
+    isMobile: boolean
+    isIOS: boolean
+    isOnline: boolean
+    queueLength: number
+    fcmToken: string | null
+  } {
+    return {
+      permission: this.permission,
+      isSupported: this.isSupported(),
+      isPushSupported: this.isPushSupported(),
+      isSubscribed: this.isSubscribedToPush(),
+      isMobile: this.isMobile,
+      isIOS: this.isIOS(),
+      isOnline: this.isOnline,
+      queueLength: this.offlineQueue.length,
+      fcmToken: this.fcmToken
+    }
+  }
+  
+  // Clear notification queue (for testing/debugging)
+  async clearNotificationQueue(): Promise<void> {
+    this.offlineQueue = []
+    await this.saveOfflineQueue()
+    console.log('🗑️ Cleared notification queue')
+  }
+}
+
+// Factory function for service consistency
+export function getNotificationService(): NotificationService {
+  return NotificationService.getInstance()
 }

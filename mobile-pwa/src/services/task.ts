@@ -1558,9 +1558,9 @@ export class TaskService extends BaseService {
   }
 
   /**
-   * Sprint planning and management
+   * Sprint planning and management with duration
    */
-  async createSprint(sprintData: {
+  async createSprintWithDuration(sprintData: {
     name: string;
     description: string;
     duration: number; // in days
@@ -1688,16 +1688,16 @@ export class TaskService extends BaseService {
   }
 
   /**
-   * Get task templates for common patterns
+   * Get task templates from template registry
    */
-  getTaskTemplates(): TaskTemplate[] {
+  getRegisteredTaskTemplates(): TaskTemplate[] {
     return Array.from(this.templates.values());
   }
 
   /**
-   * Create task from template
+   * Create task from registered template with customizations
    */
-  async createTaskFromTemplate(templateId: string, customizations: {
+  async createTaskFromRegisteredTemplate(templateId: string, customizations: {
     title?: string;
     description?: string;
     assignedAgentId?: string;
