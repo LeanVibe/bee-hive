@@ -1,0 +1,158 @@
+groups:
+  - name: mobile_performance
+    rules:
+      # Mobile WebSocket connection health
+      - alert: MobileWebSocketConnectionsHigh
+        expr: mobile_websocket_connections > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: websocket
+          platform: mobile
+        annotations:
+          summary: "High number of mobile WebSocket connections"
+          description: "Mobile WebSocket connections are {{ $value }}, which is above the threshold of 1000."
+          
+      - alert: MobileWebSocketLatencyHigh
+        expr: mobile_websocket_latency_ms > 500
+        for: 2m
+        labels:
+          severity: critical
+          component: websocket
+          platform: mobile
+        annotations:
+          summary: "High mobile WebSocket latency"
+          description: "Mobile WebSocket latency is {{ $value }}ms, which is above 500ms threshold."
+          
+      # FCM Push Notification metrics
+      - alert: FCMDeliveryRateLow
+        expr: fcm_delivery_success_rate < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          component: notifications
+          platform: mobile
+        annotations:
+          summary: "Low FCM delivery rate"
+          description: "FCM delivery success rate is {{ $value }}, which is below 95%."
+          
+      - alert: FCMTokenRefreshRateHigh
+        expr: rate(fcm_token_refresh_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          component: notifications
+          platform: mobile
+        annotations:
+          summary: "High FCM token refresh rate"
+          description: "FCM token refresh rate is {{ $value }} per second, indicating potential issues."
+          
+      # Mobile API performance
+      - alert: MobileAPILatencyHigh
+        expr: histogram_quantile(0.95, rate(mobile_api_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+          component: api
+          platform: mobile
+        annotations:
+          summary: "High mobile API latency"
+          description: "95th percentile mobile API latency is {{ $value }}s, which is above 2s threshold."
+          
+      - alert: MobileAPIErrorRateHigh
+        expr: rate(mobile_api_errors_total[5m]) / rate(mobile_api_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+          platform: mobile
+        annotations:
+          summary: "High mobile API error rate"
+          description: "Mobile API error rate is {{ $value }}, which is above 5% threshold."
+          
+      # Mobile cache performance
+      - alert: MobileCacheHitRateLow
+        expr: mobile_cache_hit_rate < 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+          platform: mobile
+        annotations:
+          summary: "Low mobile cache hit rate"
+          description: "Mobile cache hit rate is {{ $value }}, which is below 80%."
+          
+      # Mobile PWA metrics
+      - alert: PWAServiceWorkerFailureHigh
+        expr: rate(pwa_service_worker_failures_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          component: pwa
+          platform: mobile
+        annotations:
+          summary: "High PWA Service Worker failure rate"
+          description: "PWA Service Worker failure rate is {{ $value }} per second."
+          
+      - alert: PWAOfflineFunctionalityBroken
+        expr: pwa_offline_availability < 1
+        for: 1m
+        labels:
+          severity: critical
+          component: pwa
+          platform: mobile
+        annotations:
+          summary: "PWA offline functionality broken"
+          description: "PWA offline functionality is not working properly."
+
+  - name: mobile_security
+    rules:
+      # Mobile authentication metrics
+      - alert: MobileAuthFailureRateHigh
+        expr: rate(mobile_auth_failures_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          component: auth
+          platform: mobile
+        annotations:
+          summary: "High mobile authentication failure rate"
+          description: "Mobile authentication failure rate is {{ $value }} per second."
+          
+      # Rate limiting alerts
+      - alert: MobileRateLimitHit
+        expr: increase(mobile_rate_limit_exceeded_total[1m]) > 100
+        for: 1m
+        labels:
+          severity: warning
+          component: security
+          platform: mobile
+        annotations:
+          summary: "Mobile rate limit frequently exceeded"
+          description: "Mobile rate limit has been exceeded {{ $value }} times in the last minute."
+          
+  - name: mobile_business_metrics
+    rules:
+      # User engagement metrics
+      - alert: MobileActiveUsersLow
+        expr: mobile_active_users < 100
+        for: 15m
+        labels:
+          severity: info
+          component: business
+          platform: mobile
+        annotations:
+          summary: "Low mobile active users"
+          description: "Current mobile active users: {{ $value }}, which is below expected threshold."
+          
+      # Dashboard usage metrics
+      - alert: MobileDashboardLoadTimeSlow
+        expr: histogram_quantile(0.95, rate(mobile_dashboard_load_time_seconds_bucket[5m])) > 3
+        for: 3m
+        labels:
+          severity: warning
+          component: dashboard
+          platform: mobile
+        annotations:
+          summary: "Slow mobile dashboard load time"
+          description: "95th percentile mobile dashboard load time is {{ $value }}s, which is above 3s threshold."

@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- text: 🤖
+- heading "Agent Hive" [level=1]
+- paragraph: Autonomous Development
+- navigation:
+  - text: Main
+  - list:
+    - listitem:
+      - button "Dashboard": 📊 Dashboard Dashboard
+    - listitem:
+      - button "Agents": 🤖 Agents 3 Agents
+    - listitem:
+      - button "Tasks": ✅ Tasks Tasks
+    - listitem:
+      - button "System Health": 💚 System Health System Health
+    - listitem:
+      - button "Performance Analytics": 📈 Performance Analytics Performance Analytics
+  - text: Administration
+  - list:
+    - listitem:
+      - button "Settings": ⚙️ Settings Settings
+- text: All systems operational
+- banner:
+  - button "Open menu":
+    - img
+  - text: 🤖
+  - button "2":
+    - img
+    - text: "2"
+  - text: Online
+- main
+- navigation:
+  - button "Dashboard":
+    - img
+    - text: Dashboard
+  - button "Autonomous":
+    - img
+    - text: Autonomous
+  - button "Tasks":
+    - img
+    - text: Tasks
+  - button "Agents":
+    - img
+    - text: Agents
+  - button "Analytics":
+    - img
+    - text: Analytics
+  - button "Settings":
+    - img
+    - text: Settings
+- text: 📱
+- heading "Install Agent Hive" [level=3]
+- paragraph: Install the app for the best mobile experience with offline support and push notifications.
+- button "Install":
+  - img
+  - text: Install
+- button "Not now"
+- button "Close":
+  - img
+```

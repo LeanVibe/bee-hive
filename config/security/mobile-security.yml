@@ -1,0 +1,266 @@
+# Mobile Security Configuration for Production
+# LeanVibe Agent Hive Mobile Dashboard
+
+security:
+  # Content Security Policy for mobile PWA
+  csp:
+    default-src: "'self'"
+    script-src: 
+      - "'self'"
+      - "'unsafe-inline'"  # Required for PWA functionality
+      - "'unsafe-eval'"    # Required for dynamic imports
+      - "https://www.gstatic.com"
+      - "https://www.googleapis.com"
+      - "https://securetoken.googleapis.com"
+    style-src:
+      - "'self'"
+      - "'unsafe-inline'"
+      - "https://fonts.googleapis.com"
+    img-src:
+      - "'self'"
+      - "data:"
+      - "https:"
+    connect-src:
+      - "'self'"
+      - "wss:"
+      - "https:"
+      - "https://fcm.googleapis.com"
+      - "https://firebase.googleapis.com"
+    font-src:
+      - "'self'"
+      - "https://fonts.gstatic.com"
+    manifest-src: "'self'"
+    worker-src: "'self'"
+    
+  # HTTP Security Headers
+  headers:
+    # HSTS Configuration
+    strict-transport-security:
+      max-age: 31536000
+      include-subdomains: true
+      preload: true
+      
+    # Frame Options
+    x-frame-options: "DENY"
+    
+    # Content Type Options
+    x-content-type-options: "nosniff"
+    
+    # XSS Protection
+    x-xss-protection: "1; mode=block"
+    
+    # Referrer Policy
+    referrer-policy: "strict-origin-when-cross-origin"
+    
+    # Permissions Policy (mobile-specific)
+    permissions-policy:
+      camera: "()"
+      microphone: "()"
+      geolocation: "(self)"
+      notifications: "(self)"
+      push: "(self)"
+      payment: "()"
+      usb: "()"
+      
+    # Feature Policy (legacy)
+    feature-policy:
+      camera: "'none'"
+      microphone: "'none'"
+      payment: "'none'"
+      usb: "'none'"
+
+  # Rate Limiting Configuration
+  rate-limiting:
+    # Mobile API endpoints
+    mobile-api:
+      window: 60  # seconds
+      max-requests: 100
+      burst: 20
+      
+    # Authentication endpoints
+    auth:
+      window: 60
+      max-requests: 10
+      burst: 3
+      
+    # WebSocket connections
+    websocket:
+      window: 60
+      max-connections: 5
+      burst: 2
+      
+    # Push notifications
+    notifications:
+      window: 3600  # 1 hour
+      max-requests: 100
+      burst: 10
+
+  # CORS Configuration
+  cors:
+    allowed-origins:
+      - "${DOMAIN_NAME}"
+      - "https://${DOMAIN_NAME}"
+      - "https://www.${DOMAIN_NAME}"
+      - "https://app.${DOMAIN_NAME}"
+    allowed-methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    allowed-headers:
+      - "Origin"
+      - "X-Requested-With"
+      - "Content-Type"
+      - "Accept"
+      - "Authorization"
+      - "X-Mobile-Client"
+      - "X-FCM-Token"
+    exposed-headers:
+      - "X-RateLimit-Remaining"
+      - "X-RateLimit-Reset"
+    max-age: 86400
+    credentials: true
+
+  # Mobile-specific security measures
+  mobile:
+    # Device fingerprinting for security
+    device-fingerprinting:
+      enabled: true
+      collect:
+        - user-agent
+        - screen-resolution
+        - timezone
+        - language
+      exclude:
+        - detailed-hardware  # Privacy consideration
+        
+    # Certificate pinning for API calls
+    certificate-pinning:
+      enabled: true
+      domains:
+        - "${DOMAIN_NAME}"
+      backup-pins: 2
+      
+    # App integrity verification
+    app-integrity:
+      enabled: true
+      verification-endpoint: "/api/mobile/integrity"
+      
+    # Biometric authentication support
+    biometric-auth:
+      enabled: true
+      fallback-to-password: true
+      timeout: 30000  # 30 seconds
+
+  # API Security
+  api:
+    # JWT Configuration
+    jwt:
+      algorithm: "RS256"
+      expires-in: "24h"
+      refresh-expires-in: "7d"
+      issuer: "leanvibe.com"
+      audience: "mobile-app"
+      
+    # API Key Management
+    api-keys:
+      rotation-interval: 86400  # 24 hours
+      max-keys-per-user: 5
+      rate-limit: 1000
+      
+    # Request Validation
+    validation:
+      max-payload-size: 1048576  # 1MB
+      max-query-params: 20
+      max-header-size: 8192
+      
+    # Input Sanitization
+    sanitization:
+      xss-protection: true
+      sql-injection-protection: true
+      path-traversal-protection: true
+
+  # Data Privacy and Compliance
+  privacy:
+    # GDPR Compliance
+    gdpr:
+      enabled: true
+      consent-management: true
+      data-retention-days: 365
+      anonymization: true
+      
+    # Data Classification
+    data-classification:
+      public: []
+      internal:
+        - "dashboard-metrics"
+        - "agent-status"
+      confidential:
+        - "user-preferences"
+        - "session-data"
+      restricted:
+        - "authentication-tokens"
+        - "api-keys"
+        
+    # Data Encryption
+    encryption:
+      at-rest:
+        algorithm: "AES-256-GCM"
+        key-rotation: 90  # days
+      in-transit:
+        tls-version: "1.2"
+        cipher-suites:
+          - "ECDHE-RSA-AES256-GCM-SHA384"
+          - "ECDHE-RSA-AES128-GCM-SHA256"
+
+  # Monitoring and Alerting
+  monitoring:
+    # Security Events
+    events:
+      failed-auth: 
+        threshold: 5
+        window: 300  # 5 minutes
+      rate-limit-exceeded:
+        threshold: 10
+        window: 60
+      suspicious-patterns:
+        threshold: 3
+        window: 1800  # 30 minutes
+        
+    # Log Security Events
+    logging:
+      level: "INFO"
+      include:
+        - authentication
+        - authorization
+        - rate-limiting
+        - security-headers
+      exclude:
+        - sensitive-data
+        
+    # Alerting
+    alerts:
+      slack-webhook: "${SECURITY_SLACK_WEBHOOK}"
+      email: "${SECURITY_TEAM_EMAIL}"
+      pagerduty: "${SECURITY_PAGERDUTY_KEY}"
+
+  # Incident Response
+  incident-response:
+    # Automated responses
+    auto-responses:
+      block-suspicious-ips: true
+      temporary-lockout: true
+      alert-security-team: true
+      
+    # Manual response procedures
+    procedures:
+      security-breach: "/runbooks/security-breach.md"
+      data-leak: "/runbooks/data-leak.md"
+      ddos-attack: "/runbooks/ddos-response.md"
+      
+    # Recovery procedures
+    recovery:
+      backup-restoration: true
+      service-restoration: true
+      communication-plan: true

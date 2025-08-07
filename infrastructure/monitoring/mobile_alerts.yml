@@ -1,0 +1,181 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@leanvibe.com'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+
+# Alert routing configuration for mobile platform
+route:
+  group_by: ['alertname', 'platform', 'component']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'mobile-alerts'
+  routes:
+    # Critical mobile alerts
+    - match:
+        severity: critical
+        platform: mobile
+      receiver: 'mobile-critical'
+      continue: true
+      
+    # WebSocket specific alerts
+    - match:
+        component: websocket
+        platform: mobile
+      receiver: 'mobile-websocket'
+      
+    # FCM notification alerts
+    - match:
+        component: notifications
+        platform: mobile
+      receiver: 'mobile-notifications'
+      
+    # PWA specific alerts
+    - match:
+        component: pwa
+        platform: mobile
+      receiver: 'mobile-pwa'
+      
+    # Security alerts for mobile
+    - match:
+        component: security
+        platform: mobile
+      receiver: 'mobile-security'
+      continue: true
+
+receivers:
+  # Default mobile alerts receiver
+  - name: 'mobile-alerts'
+    email_configs:
+      - to: '${MOBILE_ALERTS_EMAIL}'
+        subject: 'LeanVibe Mobile Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Platform: {{ .Labels.platform }}
+          Component: {{ .Labels.component }}
+          Severity: {{ .Labels.severity }}
+          {{ end }}
+    webhook_configs:
+      - url: '${MOBILE_WEBHOOK_URL}'
+        send_resolved: true
+        http_config:
+          bearer_token: '${MOBILE_WEBHOOK_TOKEN}'
+
+  # Critical mobile alerts (immediate notification)
+  - name: 'mobile-critical'
+    email_configs:
+      - to: '${MOBILE_ONCALL_EMAIL}'
+        subject: '🚨 CRITICAL: LeanVibe Mobile Alert - {{ .GroupLabels.alertname }}'
+        body: |
+          CRITICAL MOBILE ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Platform: {{ .Labels.platform }}
+          Component: {{ .Labels.component }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+          
+          Please investigate immediately.
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#mobile-alerts'
+        title: '🚨 Critical Mobile Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          Component: {{ .Labels.component }}
+          {{ .Annotations.description }}
+          {{ end }}
+    pagerduty_configs:
+      - routing_key: '${PAGERDUTY_MOBILE_KEY}'
+        description: 'LeanVibe Mobile Critical Alert: {{ .GroupLabels.alertname }}'
+
+  # WebSocket specific alerts
+  - name: 'mobile-websocket'
+    email_configs:
+      - to: '${MOBILE_TEAM_EMAIL}'
+        subject: 'LeanVibe Mobile WebSocket Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          WebSocket Alert Details:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Metric Value: {{ .Annotations.value }}
+          {{ end }}
+
+  # FCM notification alerts
+  - name: 'mobile-notifications'
+    email_configs:
+      - to: '${MOBILE_TEAM_EMAIL}'
+        subject: 'LeanVibe FCM Notification Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          FCM Notification Alert:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    webhook_configs:
+      - url: '${FCM_MONITORING_WEBHOOK}'
+        send_resolved: true
+
+  # PWA specific alerts
+  - name: 'mobile-pwa'
+    email_configs:
+      - to: '${MOBILE_TEAM_EMAIL}'
+        subject: 'LeanVibe PWA Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          PWA Alert Details:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+  # Security alerts for mobile
+  - name: 'mobile-security'
+    email_configs:
+      - to: '${SECURITY_TEAM_EMAIL}'
+        subject: '🔒 LeanVibe Mobile Security Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          SECURITY ALERT - Mobile Platform
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Component: {{ .Labels.component }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+    slack_configs:
+      - api_url: '${SLACK_SECURITY_WEBHOOK_URL}'
+        channel: '#security-alerts'
+        title: '🔒 Mobile Security Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+
+# Inhibition rules for mobile alerts
+inhibit_rules:
+  # Inhibit mobile API alerts when WebSocket is down
+  - source_match:
+      alertname: 'MobileWebSocketConnectionsHigh'
+    target_match:
+      component: 'api'
+      platform: 'mobile'
+    equal: ['platform']
+    
+  # Inhibit cache alerts when API is having issues
+  - source_match:
+      component: 'api'
+      severity: 'critical'
+    target_match:
+      component: 'cache'
+    equal: ['platform']

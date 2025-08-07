@@ -1,0 +1,291 @@
+version: '3.8'
+
+services:
+  # Production PostgreSQL with optimizations
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: leanvibe_postgres_prod
+    environment:
+      POSTGRES_DB: leanvibe_agent_hive
+      POSTGRES_USER: leanvibe_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+      - ./database/backups:/backups
+    networks:
+      - leanvibe_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leanvibe_user -d leanvibe_agent_hive"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # Production Redis with persistence
+  redis:
+    image: redis:7-alpine
+    container_name: leanvibe_redis_prod
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 1gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - leanvibe_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Production API with mobile optimizations
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: leanvibe_api_prod
+    environment:
+      - DATABASE_URL=postgresql://leanvibe_user:${POSTGRES_PASSWORD}@postgres:5432/leanvibe_agent_hive
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      
+      # Firebase FCM Configuration
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_PRIVATE_KEY_ID=${FIREBASE_PRIVATE_KEY_ID}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_CLIENT_ID=${FIREBASE_CLIENT_ID}
+      - FCM_SERVER_KEY=${FCM_SERVER_KEY}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_SUBJECT=${VAPID_SUBJECT}
+      
+      # Mobile PWA Configuration
+      - PWA_NAME=${PWA_NAME}
+      - PWA_SHORT_NAME=${PWA_SHORT_NAME}
+      - PWA_DESCRIPTION=${PWA_DESCRIPTION}
+      - PWA_THEME_COLOR=${PWA_THEME_COLOR}
+      - PWA_BACKGROUND_COLOR=${PWA_BACKGROUND_COLOR}
+      
+      # Performance Configuration
+      - WEBSOCKET_HEARTBEAT_INTERVAL=${WEBSOCKET_HEARTBEAT_INTERVAL}
+      - WEBSOCKET_TIMEOUT=${WEBSOCKET_TIMEOUT}
+      - MAX_REQUESTS_PER_MINUTE=${MAX_REQUESTS_PER_MINUTE}
+      - CACHE_TTL=${CACHE_TTL}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # Production Nginx with SSL and mobile optimizations
+  nginx:
+    image: nginx:alpine
+    container_name: leanvibe_nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./mobile-pwa/dist:/usr/share/nginx/html:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+      - ./config/nginx/mobile-cache.conf:/etc/nginx/conf.d/mobile-cache.conf:ro
+    depends_on:
+      - api
+    networks:
+      - leanvibe_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Production Prometheus with mobile metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: leanvibe_prometheus_prod
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/monitoring/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - ./infrastructure/monitoring/mobile_rules.yml:/etc/prometheus/mobile_rules.yml:ro
+      - prometheus_prod_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=90d'
+      - '--storage.tsdb.retention.size=50GB'
+      - '--storage.tsdb.wal-compression'
+      - '--web.enable-lifecycle'
+    networks:
+      - leanvibe_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+
+  # Production Grafana with mobile dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: leanvibe_grafana_prod
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+      - GF_SERVER_ROOT_URL=https://${DOMAIN_NAME}/grafana/
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+    volumes:
+      - grafana_prod_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infrastructure/monitoring/grafana/mobile:/etc/grafana/provisioning/mobile:ro
+    depends_on:
+      - prometheus
+    networks:
+      - leanvibe_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Mobile performance monitoring
+  mobile-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobile-monitor
+    container_name: leanvibe_mobile_monitor
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - PROMETHEUS_URL=http://prometheus:9090
+      - MOBILE_METRICS_INTERVAL=30
+    depends_on:
+      - redis
+      - prometheus
+    networks:
+      - leanvibe_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+
+  # Production AlertManager for mobile alerts
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: leanvibe_alertmanager_prod
+    volumes:
+      - ./infrastructure/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./infrastructure/monitoring/templates:/etc/alertmanager/templates:ro
+      - ./infrastructure/monitoring/mobile_alerts.yml:/etc/alertmanager/mobile_alerts.yml:ro
+      - alertmanager_prod_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://${DOMAIN_NAME}/alertmanager/'
+      - '--cluster.listen-address='
+    networks:
+      - leanvibe_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.3'
+
+  # Certificate renewal service
+  certbot:
+    image: certbot/certbot:latest
+    container_name: leanvibe_certbot
+    volumes:
+      - ./config/ssl:/etc/letsencrypt
+      - ./config/nginx/webroot:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${ADMIN_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN_NAME} -d www.${DOMAIN_NAME} -d app.${DOMAIN_NAME}
+    profiles:
+      - ssl-renewal
+
+networks:
+  leanvibe_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/leanvibe/postgres
+  redis_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/leanvibe/redis
+  prometheus_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/leanvibe/prometheus
+  grafana_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/leanvibe/grafana
+  alertmanager_prod_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/leanvibe/alertmanager

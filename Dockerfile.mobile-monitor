@@ -1,0 +1,244 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies for mobile monitoring
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements for mobile monitoring
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install additional mobile monitoring dependencies
+RUN pip install --no-cache-dir \
+    prometheus-client==0.19.0 \
+    redis==5.0.1 \
+    aiohttp==3.9.1 \
+    websockets==12.0 \
+    python-json-logger==2.0.7
+
+# Copy mobile monitoring source code
+COPY app/monitoring/ /app/monitoring/
+COPY app/core/mobile_api_cache.py /app/core/
+COPY mobile-pwa/src/services/ /app/mobile_services/
+
+# Create mobile monitoring script
+RUN cat > /app/mobile_monitor.py << 'EOF'
+#!/usr/bin/env python3
+"""
+Mobile Performance Monitor for LeanVibe Agent Hive
+Monitors mobile-specific metrics and exports to Prometheus
+"""
+
+import asyncio
+import logging
+import os
+import time
+from typing import Dict, List, Optional
+import aiohttp
+import redis.asyncio as redis
+from prometheus_client import start_http_server, Counter, Gauge, Histogram
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Prometheus metrics for mobile monitoring
+mobile_websocket_connections = Gauge('mobile_websocket_connections', 'Number of active mobile WebSocket connections')
+mobile_websocket_latency = Histogram('mobile_websocket_latency_seconds', 'Mobile WebSocket message latency')
+mobile_api_requests = Counter('mobile_api_requests_total', 'Total mobile API requests', ['method', 'endpoint', 'status'])
+mobile_api_duration = Histogram('mobile_api_duration_seconds', 'Mobile API request duration', ['method', 'endpoint'])
+mobile_cache_hits = Counter('mobile_cache_hits_total', 'Mobile cache hits', ['cache_type'])
+mobile_cache_misses = Counter('mobile_cache_misses_total', 'Mobile cache misses', ['cache_type'])
+mobile_fcm_notifications = Counter('mobile_fcm_notifications_total', 'FCM notifications sent', ['status'])
+mobile_pwa_events = Counter('mobile_pwa_events_total', 'PWA events', ['event_type'])
+mobile_active_users = Gauge('mobile_active_users', 'Current active mobile users')
+mobile_auth_attempts = Counter('mobile_auth_attempts_total', 'Mobile authentication attempts', ['status'])
+
+class MobileMonitor:
+    def __init__(self):
+        self.redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+        self.prometheus_url = os.getenv('PROMETHEUS_URL', 'http://localhost:9090')
+        self.metrics_interval = int(os.getenv('MOBILE_METRICS_INTERVAL', 30))
+        self.redis_client = None
+        
+    async def initialize(self):
+        """Initialize Redis connection"""
+        self.redis_client = redis.from_url(self.redis_url)
+        
+    async def collect_websocket_metrics(self):
+        """Collect WebSocket connection metrics"""
+        try:
+            # Get WebSocket connection count from Redis
+            ws_connections = await self.redis_client.get('mobile:websocket:connections')
+            if ws_connections:
+                mobile_websocket_connections.set(int(ws_connections))
+            
+            # Get WebSocket latency metrics
+            latency_samples = await self.redis_client.lrange('mobile:websocket:latency', 0, -1)
+            if latency_samples:
+                for sample in latency_samples:
+                    mobile_websocket_latency.observe(float(sample) / 1000)  # Convert ms to seconds
+                await self.redis_client.delete('mobile:websocket:latency')  # Clear after processing
+                
+        except Exception as e:
+            logger.error(f"Error collecting WebSocket metrics: {e}")
+    
+    async def collect_api_metrics(self):
+        """Collect mobile API performance metrics"""
+        try:
+            # Get API request metrics from Redis
+            api_metrics = await self.redis_client.hgetall('mobile:api:metrics')
+            
+            for key, value in api_metrics.items():
+                key_str = key.decode('utf-8')
+                if key_str.startswith('requests:'):
+                    # Parse method:endpoint:status
+                    parts = key_str.replace('requests:', '').split(':')
+                    if len(parts) == 3:
+                        method, endpoint, status = parts
+                        mobile_api_requests.labels(method=method, endpoint=endpoint, status=status).inc(int(value))
+                
+                elif key_str.startswith('duration:'):
+                    # Parse method:endpoint and duration
+                    parts = key_str.replace('duration:', '').split(':')
+                    if len(parts) == 2:
+                        method, endpoint = parts
+                        mobile_api_duration.labels(method=method, endpoint=endpoint).observe(float(value))
+            
+            # Clear processed metrics
+            await self.redis_client.delete('mobile:api:metrics')
+            
+        except Exception as e:
+            logger.error(f"Error collecting API metrics: {e}")
+    
+    async def collect_cache_metrics(self):
+        """Collect mobile cache performance metrics"""
+        try:
+            cache_metrics = await self.redis_client.hgetall('mobile:cache:metrics')
+            
+            for key, value in cache_metrics.items():
+                key_str = key.decode('utf-8')
+                if key_str.startswith('hits:'):
+                    cache_type = key_str.replace('hits:', '')
+                    mobile_cache_hits.labels(cache_type=cache_type).inc(int(value))
+                elif key_str.startswith('misses:'):
+                    cache_type = key_str.replace('misses:', '')
+                    mobile_cache_misses.labels(cache_type=cache_type).inc(int(value))
+            
+            await self.redis_client.delete('mobile:cache:metrics')
+            
+        except Exception as e:
+            logger.error(f"Error collecting cache metrics: {e}")
+    
+    async def collect_fcm_metrics(self):
+        """Collect FCM notification metrics"""
+        try:
+            fcm_metrics = await self.redis_client.hgetall('mobile:fcm:metrics')
+            
+            for key, value in fcm_metrics.items():
+                key_str = key.decode('utf-8')
+                if key_str.startswith('notifications:'):
+                    status = key_str.replace('notifications:', '')
+                    mobile_fcm_notifications.labels(status=status).inc(int(value))
+            
+            await self.redis_client.delete('mobile:fcm:metrics')
+            
+        except Exception as e:
+            logger.error(f"Error collecting FCM metrics: {e}")
+    
+    async def collect_pwa_metrics(self):
+        """Collect PWA performance metrics"""
+        try:
+            pwa_metrics = await self.redis_client.hgetall('mobile:pwa:metrics')
+            
+            for key, value in pwa_metrics.items():
+                key_str = key.decode('utf-8')
+                if key_str.startswith('events:'):
+                    event_type = key_str.replace('events:', '')
+                    mobile_pwa_events.labels(event_type=event_type).inc(int(value))
+            
+            await self.redis_client.delete('mobile:pwa:metrics')
+            
+        except Exception as e:
+            logger.error(f"Error collecting PWA metrics: {e}")
+    
+    async def collect_user_metrics(self):
+        """Collect mobile user engagement metrics"""
+        try:
+            # Get active mobile users count
+            active_users = await self.redis_client.get('mobile:users:active')
+            if active_users:
+                mobile_active_users.set(int(active_users))
+            
+            # Get authentication metrics
+            auth_metrics = await self.redis_client.hgetall('mobile:auth:metrics')
+            for key, value in auth_metrics.items():
+                key_str = key.decode('utf-8')
+                if key_str.startswith('attempts:'):
+                    status = key_str.replace('attempts:', '')
+                    mobile_auth_attempts.labels(status=status).inc(int(value))
+            
+            await self.redis_client.delete('mobile:auth:metrics')
+            
+        except Exception as e:
+            logger.error(f"Error collecting user metrics: {e}")
+    
+    async def run_monitoring_loop(self):
+        """Main monitoring loop"""
+        logger.info("Starting mobile monitoring loop")
+        
+        while True:
+            try:
+                await asyncio.gather(
+                    self.collect_websocket_metrics(),
+                    self.collect_api_metrics(),
+                    self.collect_cache_metrics(),
+                    self.collect_fcm_metrics(),
+                    self.collect_pwa_metrics(),
+                    self.collect_user_metrics()
+                )
+                
+                logger.debug(f"Mobile metrics collection completed")
+                await asyncio.sleep(self.metrics_interval)
+                
+            except Exception as e:
+                logger.error(f"Error in monitoring loop: {e}")
+                await asyncio.sleep(5)  # Short delay before retry
+    
+    async def health_check(self):
+        """Health check endpoint handler"""
+        return {"status": "healthy", "timestamp": time.time()}
+
+async def main():
+    """Main entry point"""
+    monitor = MobileMonitor()
+    await monitor.initialize()
+    
+    # Start Prometheus metrics server
+    start_http_server(9091)
+    logger.info("Mobile monitor started on port 9091")
+    
+    # Start monitoring loop
+    await monitor.run_monitoring_loop()
+
+if __name__ == '__main__':
+    asyncio.run(main())
+EOF
+
+# Make the monitor executable
+RUN chmod +x /app/mobile_monitor.py
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:9091/ || exit 1
+
+EXPOSE 9091
+
+CMD ["python", "/app/mobile_monitor.py"]

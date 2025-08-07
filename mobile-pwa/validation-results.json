@@ -1,0 +1,70 @@
+{
+  "websocket_connectivity": {
+    "endpoint": "ws://localhost:8000/api/dashboard/ws/dashboard",
+    "avg_connection_time_ms": 0,
+    "success_rate_percent": 0.0,
+    "successful_connections": 0,
+    "errors": [
+      "BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'",
+      "BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'",
+      "BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'"
+    ],
+    "meets_target": false
+  },
+  "api_performance": {
+    "endpoints_tested": 5,
+    "successful_endpoints": 0,
+    "avg_response_time_ms": 0,
+    "meets_mobile_targets": true,
+    "endpoint_details": {
+      "/api/dashboard/health": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)",
+        "status": "failed"
+      },
+      "/api/dashboard/websocket/stats": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)",
+        "status": "failed"
+      },
+      "/api/v1/agents": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)",
+        "status": "failed"
+      },
+      "/api/v1/tasks": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)",
+        "status": "failed"
+      },
+      "/health": {
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Read timed out. (read timeout=5)",
+        "status": "failed"
+      }
+    }
+  },
+  "mobile_optimizations": {
+    "optimizations": {
+      "compression_headers": false,
+      "mobile_user_agent_handling": false,
+      "responsive_payload_sizes": false,
+      "touch_friendly_timeouts": false
+    },
+    "score_percent": 0.0,
+    "meets_mobile_standards": false
+  },
+  "fcm_readiness": {
+    "checks": {
+      "fcm_endpoint_available": false,
+      "notification_service_configured": false,
+      "mobile_notification_optimization": false,
+      "offline_queue_support": false
+    },
+    "score_percent": 0.0,
+    "production_ready": false
+  },
+  "overall_score": 0.0,
+  "validation_summary": {
+    "total_time_seconds": 36.6,
+    "success_criteria_met": 1,
+    "success_criteria_total": 4,
+    "success_rate_percent": 25.0,
+    "overall_status": "FAIL"
+  }
+}
