@@ -1,0 +1,724 @@
+# Production Monitoring Stack for LeanVibe Agent Hive 2.0
+# Comprehensive Prometheus, Grafana, and Alertmanager deployment
+
+---
+# Prometheus ConfigMap with production recording rules
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: leanvibe-hive
+  labels:
+    app: prometheus
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'leanvibe-production'
+        environment: 'production'
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+
+    scrape_configs:
+      # Kubernetes API server
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes nodes
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+      # Kubernetes pods
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # LeanVibe Agent metrics
+      - job_name: 'leanvibe-agents'
+        static_configs:
+          - targets: ['leanvibe-api-service:8000']
+        metrics_path: /metrics/custom
+        scrape_interval: 30s
+
+      # PostgreSQL metrics
+      - job_name: 'postgresql'
+        static_configs:
+          - targets: ['postgresql:9187']
+
+      # Redis metrics
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis:9121']
+
+      # Node exporter
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_endpoints_name]
+            action: keep
+            regex: node-exporter
+          - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+            action: replace
+            regex: Node;(.*)
+            target_label: node
+            replacement: ${1}
+
+  recording_rules.yml: |
+    groups:
+      - name: leanvibe.agent.rules
+        interval: 30s
+        rules:
+          # Agent utilization rates
+          - record: leanvibe:agent_cpu_utilization_rate
+            expr: |
+              (
+                rate(container_cpu_usage_seconds_total{pod=~"agent-.*"}[5m])
+              ) * 100
+
+          - record: leanvibe:agent_memory_utilization_rate
+            expr: |
+              (
+                container_memory_working_set_bytes{pod=~"agent-.*"} /
+                container_spec_memory_limit_bytes{pod=~"agent-.*"}
+              ) * 100
+
+          # Task processing rates
+          - record: leanvibe:agent_task_completion_rate
+            expr: |
+              rate(agent_tasks_completed_total[5m])
+
+          - record: leanvibe:agent_task_failure_rate
+            expr: |
+              rate(agent_tasks_failed_total[5m])
+
+          # Context engine performance
+          - record: leanvibe:context_engine_ops_per_second
+            expr: |
+              sum(rate(context_engine_processing_rate[5m])) by (operation_type)
+
+          # System health aggregations
+          - record: leanvibe:total_active_agents_by_type
+            expr: |
+              sum(total_active_agents) by (agent_type)
+
+          - record: leanvibe:average_queue_depth_by_agent_type
+            expr: |
+              avg(agent_task_queue_depth) by (agent_type)
+
+      - name: leanvibe.system.rules
+        interval: 60s
+        rules:
+          # System resource utilization
+          - record: leanvibe:cluster_cpu_utilization
+            expr: |
+              (
+                sum(rate(container_cpu_usage_seconds_total[5m])) /
+                sum(machine_cpu_cores)
+              ) * 100
+
+          - record: leanvibe:cluster_memory_utilization
+            expr: |
+              (
+                sum(container_memory_working_set_bytes) /
+                sum(machine_memory_bytes)
+              ) * 100
+
+          # Database performance
+          - record: leanvibe:database_connection_utilization
+            expr: |
+              (
+                pg_stat_database_numbackends /
+                pg_settings_max_connections
+              ) * 100
+
+          - record: leanvibe:database_query_rate
+            expr: |
+              rate(pg_stat_database_xact_commit[5m]) +
+              rate(pg_stat_database_xact_rollback[5m])
+
+  alert_rules.yml: |
+    groups:
+      - name: leanvibe.agent.alerts
+        rules:
+          # Agent health alerts
+          - alert: AgentDown
+            expr: up{job="leanvibe-agents"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: leanvibe-agent
+            annotations:
+              summary: "LeanVibe agent is down"
+              description: "LeanVibe agent {{ $labels.instance }} has been down for more than 1 minute."
+
+          - alert: HighAgentCPUUsage
+            expr: leanvibe:agent_cpu_utilization_rate > 80
+            for: 5m
+            labels:
+              severity: warning
+              service: leanvibe-agent
+            annotations:
+              summary: "High CPU usage for agent"
+              description: "Agent {{ $labels.pod }} has been using >80% CPU for 5 minutes."
+
+          - alert: HighAgentMemoryUsage
+            expr: leanvibe:agent_memory_utilization_rate > 85
+            for: 3m
+            labels:
+              severity: warning
+              service: leanvibe-agent
+            annotations:
+              summary: "High memory usage for agent"
+              description: "Agent {{ $labels.pod }} has been using >85% memory for 3 minutes."
+
+          # Task processing alerts
+          - alert: HighTaskFailureRate
+            expr: leanvibe:agent_task_failure_rate > 0.1
+            for: 2m
+            labels:
+              severity: critical
+              service: task-processing
+            annotations:
+              summary: "High task failure rate"
+              description: "Agent {{ $labels.agent_id }} has >10% task failure rate for 2 minutes."
+
+          - alert: TaskQueueBacklog
+            expr: agent_task_queue_depth > 50
+            for: 10m
+            labels:
+              severity: warning
+              service: task-processing
+            annotations:
+              summary: "Task queue backlog building up"
+              description: "Agent {{ $labels.agent_id }} has >50 tasks in queue for 10 minutes."
+
+          # Auto-scaling alerts
+          - alert: AutoScalingNotWorking
+            expr: |
+              (
+                increase(total_active_agents[10m]) == 0
+              ) and (
+                avg_over_time(agent_task_queue_depth[10m]) > 20
+              )
+            for: 5m
+            labels:
+              severity: critical
+              service: autoscaling
+            annotations:
+              summary: "Auto-scaling appears to be stuck"
+              description: "High queue depth but no new agents scaled in 10 minutes."
+
+      - name: leanvibe.system.alerts
+        rules:
+          # Infrastructure alerts
+          - alert: HighClusterCPUUsage
+            expr: leanvibe:cluster_cpu_utilization > 75
+            for: 10m
+            labels:
+              severity: warning
+              service: infrastructure
+            annotations:
+              summary: "High cluster CPU usage"
+              description: "Cluster CPU usage has been >75% for 10 minutes."
+
+          - alert: HighClusterMemoryUsage
+            expr: leanvibe:cluster_memory_utilization > 80
+            for: 5m
+            labels:
+              severity: critical
+              service: infrastructure
+            annotations:
+              summary: "High cluster memory usage"
+              description: "Cluster memory usage has been >80% for 5 minutes."
+
+          # Database alerts
+          - alert: DatabaseConnectionsHigh
+            expr: leanvibe:database_connection_utilization > 80
+            for: 2m
+            labels:
+              severity: warning
+              service: database
+            annotations:
+              summary: "High database connection usage"
+              description: "Database connection usage >80% for 2 minutes."
+
+          - alert: DatabaseQueryRateHigh
+            expr: leanvibe:database_query_rate > 1000
+            for: 5m
+            labels:
+              severity: warning
+              service: database
+            annotations:
+              summary: "High database query rate"
+              description: "Database query rate >1000 queries/sec for 5 minutes."
+
+          # Redis alerts
+          - alert: RedisMemoryHigh
+            expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              service: redis
+            annotations:
+              summary: "High Redis memory usage"
+              description: "Redis memory usage >80% for 5 minutes."
+
+          - alert: RedisConnectionsHigh
+            expr: redis_connected_clients > 100
+            for: 5m
+            labels:
+              severity: warning
+              service: redis
+            annotations:
+              summary: "High Redis connection count"
+              description: "Redis has >100 connected clients for 5 minutes."
+
+---
+# Prometheus Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: leanvibe-hive
+  labels:
+    app: prometheus
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus/'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--storage.tsdb.retention.time=30d'
+            - '--web.enable-lifecycle'
+            - '--web.enable-admin-api'
+          ports:
+            - containerPort: 9090
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus/
+            - name: prometheus-storage
+              mountPath: /prometheus/
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        - name: prometheus-storage
+          persistentVolumeClaim:
+            claimName: prometheus-storage
+
+---
+# Prometheus Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: leanvibe-hive
+  labels:
+    app: prometheus
+    component: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      name: web
+
+---
+# Prometheus ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: leanvibe-hive
+  labels:
+    app: prometheus
+    component: monitoring
+
+---
+# Prometheus ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+
+---
+# Prometheus ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: leanvibe-hive
+
+---
+# Prometheus Storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  namespace: leanvibe-hive
+  labels:
+    app: prometheus
+    component: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: fast-ssd  # Use fast storage for metrics
+
+---
+# Alertmanager ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: leanvibe-hive
+  labels:
+    app: alertmanager
+    component: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'localhost:587'
+      smtp_from: 'alerts@leanvibe.com'
+      
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'web.hook'
+      routes:
+        # Critical alerts - immediate notification
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+          group_wait: 0s
+          repeat_interval: 5m
+          
+        # Warning alerts - less frequent
+        - match:
+            severity: warning
+          receiver: 'warning-alerts'
+          repeat_interval: 30m
+
+    receivers:
+      - name: 'web.hook'
+        webhook_configs:
+          - url: 'http://leanvibe-api-service:8000/api/v1/alerts/webhook'
+            send_resolved: true
+
+      - name: 'critical-alerts'
+        slack_configs:
+          - api_url: '${SLACK_WEBHOOK_URL}'
+            channel: '#leanvibe-critical-alerts'
+            title: 'CRITICAL: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+            send_resolved: true
+        email_configs:
+          - to: 'oncall@leanvibe.com'
+            subject: 'CRITICAL Alert: {{ .GroupLabels.alertname }}'
+            body: |
+              {{ range .Alerts }}
+              Alert: {{ .Annotations.summary }}
+              Description: {{ .Annotations.description }}
+              Instance: {{ .Labels.instance }}
+              {{ end }}
+
+      - name: 'warning-alerts'
+        slack_configs:
+          - api_url: '${SLACK_WEBHOOK_URL}'
+            channel: '#leanvibe-alerts'
+            title: 'WARNING: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'instance']
+
+---
+# Alertmanager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: leanvibe-hive
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:latest
+          args:
+            - '--config.file=/etc/alertmanager/alertmanager.yml'
+            - '--storage.path=/alertmanager'
+            - '--web.external-url=http://alertmanager:9093'
+          ports:
+            - containerPort: 9093
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            - name: alertmanager-config
+              mountPath: /etc/alertmanager
+            - name: alertmanager-storage
+              mountPath: /alertmanager
+          env:
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: leanvibe-secrets
+                  key: SLACK_WEBHOOK_URL
+      volumes:
+        - name: alertmanager-config
+          configMap:
+            name: alertmanager-config
+        - name: alertmanager-storage
+          emptyDir: {}
+
+---
+# Alertmanager Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: leanvibe-hive
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  selector:
+    app: alertmanager
+  ports:
+    - port: 9093
+      targetPort: 9093
+      name: web
+
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: leanvibe-hive
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: leanvibe-secrets
+                  key: GRAFANA_ADMIN_PASSWORD
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-piechart-panel,grafana-worldmap-panel"
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboards
+              mountPath: /etc/grafana/provisioning/dashboards
+      volumes:
+        - name: grafana-storage
+          persistentVolumeClaim:
+            claimName: grafana-storage
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboards
+
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: leanvibe-hive
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+      name: web
+
+---
+# Grafana Storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: leanvibe-hive
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Grafana Datasources ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: leanvibe-hive
+  labels:
+    app: grafana
+    component: monitoring
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+      - name: Alertmanager
+        type: alertmanager
+        access: proxy
+        url: http://alertmanager:9093

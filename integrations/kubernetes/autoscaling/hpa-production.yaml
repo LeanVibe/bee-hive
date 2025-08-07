@@ -1,0 +1,421 @@
+# Production Horizontal Pod Autoscaler for LeanVibe Agent Hive 2.0
+# Implements intelligent scaling based on agent workload and custom metrics
+
+---
+# HPA for Developer Agents (highest scaling requirements)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-developer-hpa
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: developer
+    component: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-developer
+  minReplicas: 2
+  maxReplicas: 20  # Scale up to 20 developer agents
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    
+    # Custom metric: Task queue depth
+    - type: Pods
+      pods:
+        metric:
+          name: agent_task_queue_depth
+        target:
+          type: AverageValue
+          averageValue: "10"  # Scale when avg queue depth > 10 tasks
+    
+    # Custom metric: Active development sessions
+    - type: Pods
+      pods:
+        metric:
+          name: agent_active_sessions
+        target:
+          type: AverageValue
+          averageValue: "3"  # Scale when avg sessions > 3 per agent
+    
+    # Custom metric: Context engine load
+    - type: Object
+      object:
+        metric:
+          name: context_engine_processing_rate
+        describedObject:
+          apiVersion: v1
+          kind: Service
+          name: leanvibe-api-service
+        target:
+          type: Value
+          value: "100"  # Scale when processing > 100 ops/sec
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Quick scale-up for development workload
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 4
+          periodSeconds: 30
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Conservative scale-down
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+      selectPolicy: Min
+
+---
+# HPA for Architect Agents (strategic scaling)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-architect-hpa
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: architect
+    component: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-architect
+  minReplicas: 1
+  maxReplicas: 8  # Moderate scaling for architect agents
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    
+    # Memory-based scaling  
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+    
+    # Custom metric: Architecture planning requests
+    - type: Pods
+      pods:
+        metric:
+          name: agent_architecture_requests
+        target:
+          type: AverageValue
+          averageValue: "5"  # Scale when avg requests > 5 per agent
+    
+    # Custom metric: System design complexity
+    - type: Pods
+      pods:
+        metric:
+          name: agent_design_complexity_score
+        target:
+          type: AverageValue
+          averageValue: "80"  # Scale when complexity > 80/100
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120  # Moderate scale-up for architects
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 600  # Very conservative scale-down
+      policies:
+        - type: Percent
+          value: 5
+          periodSeconds: 120
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+      selectPolicy: Min
+
+---
+# HPA for QA Agents (quality-focused scaling)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-qa-hpa
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: qa
+    component: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-qa
+  minReplicas: 1
+  maxReplicas: 10  # QA scaling based on testing load
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+    
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+    
+    # Custom metric: Test execution queue
+    - type: Pods
+      pods:
+        metric:
+          name: agent_test_queue_size
+        target:
+          type: AverageValue
+          averageValue: "15"  # Scale when test queue > 15 per agent
+    
+    # Custom metric: Code review backlog
+    - type: Pods
+      pods:
+        metric:
+          name: agent_review_backlog_size
+        target:
+          type: AverageValue
+          averageValue: "8"  # Scale when review backlog > 8 per agent
+    
+    # Custom metric: CI/CD pipeline demand
+    - type: Object
+      object:
+        metric:
+          name: cicd_pipeline_queue_depth
+        describedObject:
+          apiVersion: v1
+          kind: Service
+          name: leanvibe-api-service
+        target:
+          type: Value
+          value: "20"  # Scale when CI/CD queue > 20 jobs
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 90  # Balanced scale-up for QA
+      policies:
+        - type: Percent
+          value: 75
+          periodSeconds: 45
+        - type: Pods
+          value: 2
+          periodSeconds: 45
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 450  # Conservative scale-down for QA
+      policies:
+        - type: Percent
+          value: 15
+          periodSeconds: 90
+        - type: Pods
+          value: 1
+          periodSeconds: 90
+      selectPolicy: Min
+
+---
+# HPA for Meta Agent (coordination scaling)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-meta-hpa
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: meta
+    component: autoscaling
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-meta
+  minReplicas: 1
+  maxReplicas: 3  # Limited scaling for coordination agents
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+    
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+    
+    # Custom metric: Coordination complexity
+    - type: Pods
+      pods:
+        metric:
+          name: agent_coordination_complexity
+        target:
+          type: AverageValue
+          averageValue: "50"  # Scale when coordination load > 50/100
+    
+    # Custom metric: Total agent count
+    - type: Object
+      object:
+        metric:
+          name: total_active_agents
+        describedObject:
+          apiVersion: v1
+          kind: Service
+          name: leanvibe-api-service
+        target:
+          type: Value
+          value: "25"  # Scale meta agents when total agents > 25
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 180  # Slow scale-up for coordination
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 180
+      selectPolicy: Min
+    scaleDown:
+      stabilizationWindowSeconds: 900  # Very slow scale-down
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+      selectPolicy: Min
+
+---
+# Vertical Pod Autoscaler for right-sizing
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: agent-developer-vpa
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: developer
+    component: autoscaling
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-developer
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: agent-developer
+        controlledResources: ["cpu", "memory"]
+        minAllowed:
+          cpu: 100m
+          memory: 256Mi
+        maxAllowed:
+          cpu: 2000m
+          memory: 4Gi
+        controlledValues: RequestsAndLimits
+
+---
+# Pod Disruption Budget for availability during scaling
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agent-developer-pdb
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: developer
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: leanvibe-agent
+      agent-type: developer
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agent-architect-pdb
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: architect
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: leanvibe-agent
+      agent-type: architect
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agent-qa-pdb
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: qa
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: leanvibe-agent
+      agent-type: qa
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: agent-meta-pdb
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-agent
+    agent-type: meta
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: leanvibe-agent
+      agent-type: meta

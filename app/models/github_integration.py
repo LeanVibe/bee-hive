@@ -731,3 +731,137 @@ class BranchOperation(Base):
         self.completed_at = datetime.utcnow()
         if error_message:
             self.error_message = error_message
+
+
+class WebhookStatus(Enum):
+    """Webhook processing status."""
+    RECEIVED = "received"
+    PROCESSING = "processing"
+    PROCESSED = "processed"
+    FAILED = "failed"
+
+
+class WebhookEvent(Base):
+    """
+    GitHub webhook event tracking and processing.
+    
+    Tracks all incoming webhook events for audit, retry, and
+    performance monitoring with detailed processing metadata.
+    """
+    
+    __tablename__ = "webhook_events"
+    
+    # Primary identification
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    repository_id = Column(DatabaseAgnosticUUID(), ForeignKey('github_repositories.id', ondelete='CASCADE'), 
+                          nullable=True, index=True)
+    
+    # Webhook identification
+    delivery_id = Column(String(255), nullable=False, unique=True, index=True)
+    event_type = Column(String(100), nullable=False, index=True)
+    event_action = Column(String(100), nullable=True, index=True)
+    
+    # Webhook payload
+    payload = Column(JSON, nullable=False, default=dict)
+    headers = Column(JSON, nullable=True, default=dict)
+    
+    # Processing status
+    status = Column(SQLEnum(WebhookStatus), nullable=False, default=WebhookStatus.RECEIVED, index=True)
+    processing_result = Column(JSON, nullable=True, default=dict)
+    error_message = Column(Text, nullable=True)
+    retry_count = Column(Integer, nullable=False, default=0)
+    
+    # Processing metadata
+    processing_duration_ms = Column(Float, nullable=True)
+    processing_metadata = Column(JSON, nullable=True, default=dict)
+    
+    # Timestamps
+    received_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    repository = relationship("GitHubRepository", backref="webhook_events")
+    
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_webhook_event_type_status', 'event_type', 'status'),
+        Index('idx_webhook_received_at', 'received_at'),
+        Index('idx_webhook_repository_event', 'repository_id', 'event_type'),
+    )
+    
+    def __repr__(self) -> str:
+        return f"<WebhookEvent(id={self.id}, delivery_id='{self.delivery_id}', event_type='{self.event_type}', status='{self.status}')>"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert webhook event to dictionary for serialization."""
+        return {
+            "id": str(self.id),
+            "repository_id": str(self.repository_id) if self.repository_id else None,
+            "delivery_id": self.delivery_id,
+            "event_type": self.event_type,
+            "event_action": self.event_action,
+            "status": self.status.value,
+            "processing_result": self.processing_result,
+            "error_message": self.error_message,
+            "retry_count": self.retry_count,
+            "processing_duration_ms": self.processing_duration_ms,
+            "processing_metadata": self.processing_metadata,
+            "received_at": self.received_at.isoformat() if self.received_at else None,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+    
+    def is_processed(self) -> bool:
+        """Check if webhook has been processed successfully."""
+        return self.status == WebhookStatus.PROCESSED
+    
+    def is_failed(self) -> bool:
+        """Check if webhook processing failed."""
+        return self.status == WebhookStatus.FAILED
+    
+    def should_retry(self, max_retries: int = 3) -> bool:
+        """Check if webhook should be retried."""
+        return self.is_failed() and self.retry_count < max_retries
+    
+    def start_processing(self) -> None:
+        """Mark webhook as being processed."""
+        self.status = WebhookStatus.PROCESSING
+        self.started_at = datetime.utcnow()
+    
+    def complete_processing(self, success: bool = True, result: Dict[str, Any] = None, error_message: str = None) -> None:
+        """Mark webhook processing as completed."""
+        self.status = WebhookStatus.PROCESSED if success else WebhookStatus.FAILED
+        self.completed_at = datetime.utcnow()
+        
+        if result:
+            self.processing_result = result
+            
+        if error_message:
+            self.error_message = error_message
+            
+        # Calculate processing duration
+        if self.started_at:
+            duration = (self.completed_at - self.started_at).total_seconds() * 1000
+            self.processing_duration_ms = duration
+    
+    def increment_retry(self) -> None:
+        """Increment retry counter and reset status."""
+        self.retry_count += 1
+        self.status = WebhookStatus.RECEIVED
+        self.error_message = None
+        self.started_at = None
+        self.completed_at = None
+    
+    def get_processing_summary(self) -> str:
+        """Get human-readable processing summary."""
+        if self.is_processed():
+            duration = f" ({self.processing_duration_ms:.1f}ms)" if self.processing_duration_ms else ""
+            return f"Successfully processed {self.event_type} event{duration}"
+        elif self.is_failed():
+            retry_info = f" (retry {self.retry_count}/3)" if self.retry_count > 0 else ""
+            return f"Failed to process {self.event_type} event{retry_info}: {self.error_message}"
+        else:
+            return f"Processing {self.event_type} event..."

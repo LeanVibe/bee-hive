@@ -1,0 +1,573 @@
+# Cross-Region Disaster Recovery for LeanVibe Agent Hive 2.0
+# Implements automated backup, replication, and failover capabilities
+
+---
+# Velero Backup Configuration
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: primary-backup-location
+  namespace: velero
+  labels:
+    component: disaster-recovery
+spec:
+  provider: aws
+  objectStorage:
+    bucket: leanvibe-production-backups
+    prefix: cluster-backups
+  config:
+    region: us-west-2
+    s3ForcePathStyle: "false"
+    serverSideEncryption: AES256
+
+---
+# Secondary Backup Location (Cross-Region)
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: secondary-backup-location
+  namespace: velero
+  labels:
+    component: disaster-recovery
+spec:
+  provider: aws
+  objectStorage:
+    bucket: leanvibe-dr-backups
+    prefix: cluster-backups-dr
+  config:
+    region: us-east-1
+    s3ForcePathStyle: "false"
+    serverSideEncryption: AES256
+
+---
+# Volume Snapshot Location
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: primary-volume-snapshots
+  namespace: velero
+  labels:
+    component: disaster-recovery
+spec:
+  provider: aws
+  config:
+    region: us-west-2
+
+---
+# Scheduled Backup - Critical Data (Every 4 hours)
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: critical-data-backup
+  namespace: velero
+  labels:
+    component: disaster-recovery
+    priority: critical
+spec:
+  schedule: "0 */4 * * *"  # Every 4 hours
+  template:
+    metadata:
+      labels:
+        backup-type: critical
+    includedNamespaces:
+      - leanvibe-hive
+    includedResources:
+      - secrets
+      - configmaps
+      - persistentvolumeclaims
+      - persistentvolumes
+    labelSelector:
+      matchLabels:
+        backup: critical
+    storageLocation: primary-backup-location
+    volumeSnapshotLocations:
+      - primary-volume-snapshots
+    ttl: 168h  # 7 days retention
+    hooks:
+      resources:
+        - name: database-backup-hook
+          includedNamespaces:
+            - leanvibe-hive
+          labelSelector:
+            matchLabels:
+              app: postgresql
+          hooks:
+            - exec:
+                container: postgresql
+                command:
+                  - /bin/bash
+                  - -c
+                  - "pg_dump -h localhost -U $POSTGRES_USER $POSTGRES_DB > /backup/database_$(date +%Y%m%d_%H%M%S).sql"
+                onError: Continue
+
+---
+# Scheduled Backup - Full System (Daily)
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: full-system-backup
+  namespace: velero
+  labels:
+    component: disaster-recovery
+    priority: full
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  template:
+    metadata:
+      labels:
+        backup-type: full
+    includedNamespaces:
+      - leanvibe-hive
+      - monitoring
+      - ingress-nginx
+    storageLocation: primary-backup-location
+    volumeSnapshotLocations:
+      - primary-volume-snapshots
+    ttl: 720h  # 30 days retention
+
+---
+# Cross-Region Replication Job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cross-region-backup-replication
+  namespace: velero
+  labels:
+    component: disaster-recovery
+spec:
+  schedule: "30 */6 * * *"  # Every 6 hours, 30 minutes after backup
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: velero
+          containers:
+            - name: backup-replicator
+              image: amazon/aws-cli:latest
+              env:
+                - name: AWS_DEFAULT_REGION
+                  value: us-west-2
+                - name: SOURCE_BUCKET
+                  value: leanvibe-production-backups
+                - name: DEST_BUCKET
+                  value: leanvibe-dr-backups
+                - name: DEST_REGION
+                  value: us-east-1
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  # Sync latest backups to DR region
+                  aws s3 sync s3://${SOURCE_BUCKET}/cluster-backups/ s3://${DEST_BUCKET}/cluster-backups-dr/ \
+                    --region ${DEST_REGION} \
+                    --exclude "*" \
+                    --include "backups/*" \
+                    --include "restores/*" \
+                    --include "metadata/*" \
+                    --delete
+                  
+                  # Verify replication
+                  SOURCE_COUNT=$(aws s3 ls s3://${SOURCE_BUCKET}/cluster-backups/ --recursive | wc -l)
+                  DEST_COUNT=$(aws s3 ls s3://${DEST_BUCKET}/cluster-backups-dr/ --recursive | wc -l)
+                  
+                  if [ $DEST_COUNT -lt $(($SOURCE_COUNT * 95 / 100)) ]; then
+                    echo "ERROR: Cross-region replication incomplete. Source: $SOURCE_COUNT, Dest: $DEST_COUNT"
+                    exit 1
+                  fi
+                  
+                  echo "Cross-region replication successful. Files: $DEST_COUNT"
+          restartPolicy: OnFailure
+          
+---
+# Database Backup ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-backup-script
+  namespace: leanvibe-hive
+  labels:
+    component: disaster-recovery
+data:
+  backup-database.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    # Database backup script
+    BACKUP_DIR="/backup"
+    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+    BACKUP_FILE="${BACKUP_DIR}/leanvibe_backup_${TIMESTAMP}.sql"
+    
+    echo "Starting database backup at $(date)"
+    
+    # Create backup directory
+    mkdir -p $BACKUP_DIR
+    
+    # Perform database backup
+    pg_dump -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d $DATABASE_NAME > $BACKUP_FILE
+    
+    # Compress backup
+    gzip $BACKUP_FILE
+    
+    # Upload to S3
+    aws s3 cp ${BACKUP_FILE}.gz s3://leanvibe-database-backups/$(date +%Y/%m/%d)/
+    
+    # Cleanup old local backups (keep last 3)
+    ls -t ${BACKUP_DIR}/*.sql.gz | tail -n +4 | xargs rm -f
+    
+    echo "Database backup completed: ${BACKUP_FILE}.gz"
+    
+  restore-database.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_FILE="$1"
+    
+    if [ -z "$BACKUP_FILE" ]; then
+        echo "Usage: $0 <backup_file>"
+        exit 1
+    fi
+    
+    echo "Starting database restore from $BACKUP_FILE at $(date)"
+    
+    # Download from S3 if it's an S3 path
+    if [[ $BACKUP_FILE == s3://* ]]; then
+        LOCAL_FILE="/tmp/restore_$(basename $BACKUP_FILE)"
+        aws s3 cp $BACKUP_FILE $LOCAL_FILE
+        BACKUP_FILE=$LOCAL_FILE
+    fi
+    
+    # Decompress if needed
+    if [[ $BACKUP_FILE == *.gz ]]; then
+        gunzip $BACKUP_FILE
+        BACKUP_FILE="${BACKUP_FILE%.gz}"
+    fi
+    
+    # Drop existing database and recreate
+    echo "Recreating database..."
+    dropdb -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER $DATABASE_NAME || true
+    createdb -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER $DATABASE_NAME
+    
+    # Restore from backup
+    psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d $DATABASE_NAME < $BACKUP_FILE
+    
+    echo "Database restore completed at $(date)"
+
+---
+# Database Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: leanvibe-hive
+  labels:
+    component: disaster-recovery
+spec:
+  schedule: "0 */2 * * *"  # Every 2 hours
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: database-backup
+        spec:
+          containers:
+            - name: database-backup
+              image: postgres:14-alpine
+              env:
+                - name: DATABASE_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      name: leanvibe-config
+                      key: DATABASE_HOST
+                - name: DATABASE_PORT
+                  valueFrom:
+                    configMapKeyRef:
+                      name: leanvibe-config
+                      key: DATABASE_PORT
+                - name: DATABASE_USER
+                  valueFrom:
+                    configMapKeyRef:
+                      name: leanvibe-config
+                      key: DATABASE_USER
+                - name: DATABASE_NAME
+                  valueFrom:
+                    configMapKeyRef:
+                      name: leanvibe-config
+                      key: DATABASE_NAME
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: leanvibe-secrets
+                      key: DATABASE_PASSWORD
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: access-key-id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: secret-access-key
+              command:
+                - /bin/bash
+                - /scripts/backup-database.sh
+              volumeMounts:
+                - name: backup-scripts
+                  mountPath: /scripts
+                - name: backup-storage
+                  mountPath: /backup
+          volumes:
+            - name: backup-scripts
+              configMap:
+                name: database-backup-script
+                defaultMode: 0755
+            - name: backup-storage
+              emptyDir: {}
+          restartPolicy: OnFailure
+
+---
+# Disaster Recovery Testing Job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: disaster-recovery-test
+  namespace: velero
+  labels:
+    component: disaster-recovery
+spec:
+  schedule: "0 4 * * 0"  # Weekly on Sunday at 4 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: velero
+          containers:
+            - name: dr-tester
+              image: vmware/velero:latest
+              env:
+                - name: AWS_DEFAULT_REGION
+                  value: us-west-2
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  echo "Starting DR test at $(date)"
+                  
+                  # List available backups
+                  LATEST_BACKUP=$(velero backup get --output json | jq -r '.items | sort_by(.metadata.creationTimestamp) | last | .metadata.name')
+                  
+                  if [ "$LATEST_BACKUP" == "null" ]; then
+                    echo "ERROR: No backups found"
+                    exit 1
+                  fi
+                  
+                  echo "Testing restore from backup: $LATEST_BACKUP"
+                  
+                  # Create test restore
+                  TEST_RESTORE_NAME="dr-test-$(date +%Y%m%d-%H%M%S)"
+                  
+                  velero restore create $TEST_RESTORE_NAME \
+                    --from-backup $LATEST_BACKUP \
+                    --namespace-mappings leanvibe-hive:leanvibe-hive-dr-test \
+                    --wait
+                  
+                  # Verify restore
+                  RESTORE_STATUS=$(velero restore get $TEST_RESTORE_NAME -o json | jq -r '.status.phase')
+                  
+                  if [ "$RESTORE_STATUS" == "Completed" ]; then
+                    echo "DR test PASSED: Restore completed successfully"
+                    
+                    # Cleanup test namespace
+                    kubectl delete namespace leanvibe-hive-dr-test --ignore-not-found=true
+                    
+                    # Log success metric
+                    curl -X POST http://leanvibe-api-service:8000/api/v1/metrics/dr-test \
+                      -H "Content-Type: application/json" \
+                      -d '{"status": "success", "backup": "'$LATEST_BACKUP'", "timestamp": "'$(date -Iseconds)'"}'
+                  else
+                    echo "DR test FAILED: Restore status: $RESTORE_STATUS"
+                    
+                    # Log failure metric
+                    curl -X POST http://leanvibe-api-service:8000/api/v1/metrics/dr-test \
+                      -H "Content-Type: application/json" \
+                      -d '{"status": "failure", "backup": "'$LATEST_BACKUP'", "error": "'$RESTORE_STATUS'", "timestamp": "'$(date -Iseconds)'"}'
+                    
+                    exit 1
+                  fi
+          restartPolicy: OnFailure
+
+---
+# Failover Automation ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: failover-automation
+  namespace: leanvibe-hive
+  labels:
+    component: disaster-recovery
+data:
+  initiate-failover.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    FAILOVER_REGION="${1:-us-east-1}"
+    BACKUP_NAME="${2:-latest}"
+    
+    echo "Initiating failover to region: $FAILOVER_REGION"
+    echo "Using backup: $BACKUP_NAME"
+    
+    # Step 1: Switch DNS to DR region
+    echo "Switching DNS to DR region..."
+    aws route53 change-resource-record-sets \
+      --hosted-zone-id $HOSTED_ZONE_ID \
+      --change-batch file:///scripts/dns-failover.json
+    
+    # Step 2: Scale down primary region (if accessible)
+    echo "Scaling down primary region..."
+    kubectl scale deployment --all --replicas=0 -n leanvibe-hive || echo "Primary region not accessible"
+    
+    # Step 3: Restore in DR region
+    echo "Restoring services in DR region..."
+    export AWS_DEFAULT_REGION=$FAILOVER_REGION
+    
+    if [ "$BACKUP_NAME" == "latest" ]; then
+      BACKUP_NAME=$(velero backup get --output json | jq -r '.items | sort_by(.metadata.creationTimestamp) | last | .metadata.name')
+    fi
+    
+    velero restore create failover-restore-$(date +%Y%m%d-%H%M%S) \
+      --from-backup $BACKUP_NAME \
+      --wait
+    
+    # Step 4: Verify services
+    echo "Verifying services in DR region..."
+    kubectl wait --for=condition=available --timeout=300s deployment/agent-developer -n leanvibe-hive
+    kubectl wait --for=condition=available --timeout=300s deployment/agent-architect -n leanvibe-hive
+    
+    # Step 5: Run health check
+    HEALTH_CHECK=$(kubectl exec deployment/agent-developer -n leanvibe-hive -- curl -s http://localhost:8080/health)
+    
+    if [[ $HEALTH_CHECK == *"healthy"* ]]; then
+      echo "Failover completed successfully"
+      
+      # Send notification
+      curl -X POST $SLACK_WEBHOOK_URL \
+        -H "Content-Type: application/json" \
+        -d '{"text": "🚨 FAILOVER COMPLETED: LeanVibe Agent Hive has been failed over to '$FAILOVER_REGION' successfully"}'
+      
+      exit 0
+    else
+      echo "Failover failed - services not healthy"
+      exit 1
+    fi
+    
+  dns-failover.json: |
+    {
+      "Changes": [
+        {
+          "Action": "UPSERT",
+          "ResourceRecordSet": {
+            "Name": "api.leanvibe.com",
+            "Type": "CNAME",
+            "TTL": 60,
+            "ResourceRecords": [
+              {
+                "Value": "leanvibe-dr-alb-123456789.us-east-1.elb.amazonaws.com"
+              }
+            ]
+          }
+        }
+      ]
+    }
+
+---
+# RTO/RPO Monitoring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rto-rpo-monitor
+  namespace: leanvibe-hive
+  labels:
+    component: disaster-recovery
+data:
+  monitor-rto-rpo.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    # RTO/RPO Monitoring Script
+    
+    # Current time
+    CURRENT_TIME=$(date +%s)
+    
+    # Check last backup time (RPO)
+    LAST_BACKUP_TIME=$(velero backup get --output json | jq -r '.items | sort_by(.metadata.creationTimestamp) | last | .metadata.creationTimestamp')
+    LAST_BACKUP_TIMESTAMP=$(date -d "$LAST_BACKUP_TIME" +%s)
+    RPO_MINUTES=$(( (CURRENT_TIME - LAST_BACKUP_TIMESTAMP) / 60 ))
+    
+    # Check restore capability (RTO estimation)
+    echo "Testing restore capability..."
+    RTO_START=$(date +%s)
+    
+    # Simulate quick restore test
+    kubectl create namespace rto-test-$(date +%s) --dry-run=client -o yaml | kubectl apply -f -
+    RTO_END=$(date +%s)
+    RTO_SECONDS=$((RTO_END - RTO_START))
+    
+    # Cleanup test
+    kubectl delete namespace rto-test-* --ignore-not-found=true
+    
+    # Report metrics
+    echo "RPO: $RPO_MINUTES minutes"
+    echo "RTO estimate: $RTO_SECONDS seconds"
+    
+    # Send metrics to monitoring
+    curl -X POST http://leanvibe-api-service:8000/api/v1/metrics/rto-rpo \
+      -H "Content-Type: application/json" \
+      -d '{"rpo_minutes": '$RPO_MINUTES', "rto_seconds": '$RTO_SECONDS', "timestamp": "'$(date -Iseconds)'"}'
+    
+    # Alert if RPO exceeds target (15 minutes)
+    if [ $RPO_MINUTES -gt 15 ]; then
+      echo "ALERT: RPO exceeds target (15 minutes). Current: $RPO_MINUTES minutes"
+      
+      curl -X POST $SLACK_WEBHOOK_URL \
+        -H "Content-Type: application/json" \
+        -d '{"text": "⚠️ RPO Alert: Last backup is '$RPO_MINUTES' minutes old (target: <15 minutes)"}'
+    fi
+
+---
+# RTO/RPO Monitoring CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rto-rpo-monitor
+  namespace: leanvibe-hive
+  labels:
+    component: disaster-recovery
+spec:
+  schedule: "*/10 * * * *"  # Every 10 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: velero
+          containers:
+            - name: rto-rpo-monitor
+              image: vmware/velero:latest
+              env:
+                - name: SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: leanvibe-secrets
+                      key: SLACK_WEBHOOK_URL
+              command:
+                - /bin/bash
+                - /scripts/monitor-rto-rpo.sh
+              volumeMounts:
+                - name: monitor-scripts
+                  mountPath: /scripts
+          volumes:
+            - name: monitor-scripts
+              configMap:
+                name: rto-rpo-monitor
+                defaultMode: 0755
+          restartPolicy: OnFailure

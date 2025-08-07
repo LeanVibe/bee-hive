@@ -1,0 +1,597 @@
+# Production Deployment Guide for LeanVibe Agent Hive 2.0
+# Enterprise-grade deployment with security, compliance, and disaster recovery
+
+---
+# Production Namespace with Security Policies
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-production
+  labels:
+    name: leanvibe-production
+    environment: production
+    security-policy: restricted
+    compliance: soc2-gdpr
+    data-classification: confidential
+  annotations:
+    # Network policies enabled
+    net.beta.kubernetes.io/network-policy: |
+      {
+        "ingress": {
+          "isolation": "DefaultDeny"
+        }
+      }
+    # Pod Security Standards
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+
+---
+# Production Configuration Template
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: production-deployment-config
+  namespace: leanvibe-production
+  labels:
+    component: deployment-guide
+data:
+  deployment-checklist.yaml: |
+    # Production Deployment Checklist for LeanVibe Agent Hive 2.0
+    
+    ## Phase 1: Pre-Deployment Security Validation (Required)
+    security_validation:
+      - verify_pod_security_standards_enabled: true
+      - verify_network_policies_applied: true
+      - verify_rbac_configured: true
+      - verify_secrets_externalized: true
+      - verify_security_scanning_passed: true
+    
+    ## Phase 2: Infrastructure Readiness
+    infrastructure:
+      - kubernetes_cluster_version: ">=1.24"
+      - cluster_autoscaler_enabled: true
+      - monitoring_stack_deployed: true
+      - backup_solution_configured: true
+      - disaster_recovery_tested: true
+    
+    ## Phase 3: Application Configuration
+    application:
+      - external_secrets_configured: true
+      - database_migrations_applied: true
+      - custom_metrics_enabled: true
+      - hpa_policies_configured: true
+      - resource_limits_set: true
+    
+    ## Phase 4: Compliance Validation
+    compliance:
+      - gdpr_data_processing_documented: true
+      - soc2_controls_implemented: true
+      - audit_logging_enabled: true
+      - data_retention_policies_configured: true
+      - incident_response_tested: true
+    
+    ## Phase 5: Production Readiness
+    production_readiness:
+      - load_testing_completed: true
+      - performance_benchmarks_met: true
+      - security_penetration_testing: true
+      - disaster_recovery_validated: true
+      - operational_runbooks_ready: true
+
+  environment-variables.env: |
+    # Production Environment Variables Template
+    
+    # Application Configuration
+    ENVIRONMENT=production
+    LOG_LEVEL=INFO
+    DEBUG_MODE=false
+    
+    # Security Configuration
+    JWT_SECRET_KEY=${JWT_SECRET_KEY}  # From external secrets
+    ENCRYPTION_KEY=${ENCRYPTION_KEY}  # From external secrets
+    API_KEY_REQUIRED=true
+    RATE_LIMITING_ENABLED=true
+    
+    # Database Configuration (Externalized)
+    DATABASE_URL=${DATABASE_URL}
+    DATABASE_SSL_MODE=require
+    DATABASE_POOL_SIZE=20
+    DATABASE_MAX_OVERFLOW=30
+    
+    # Redis Configuration (Externalized)
+    REDIS_URL=${REDIS_URL}
+    REDIS_SSL_ENABLED=true
+    REDIS_CONNECTION_POOL_SIZE=20
+    
+    # Monitoring & Observability
+    PROMETHEUS_ENABLED=true
+    METRICS_PORT=9090
+    HEALTH_CHECK_PORT=8080
+    JAEGER_ENABLED=true
+    
+    # Compliance & Audit
+    AUDIT_LOGGING_ENABLED=true
+    GDPR_COMPLIANCE_ENABLED=true
+    SOC2_CONTROLS_ENABLED=true
+    DATA_RETENTION_ENABLED=true
+    
+    # Agent Configuration
+    MAX_AGENTS_PER_TYPE=20
+    AGENT_MEMORY_LIMIT=2Gi
+    AGENT_CPU_LIMIT=1000m
+    CONTEXT_MEMORY_SIZE=500MB
+
+  deployment-commands.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    echo "🚀 LeanVibe Agent Hive 2.0 Production Deployment"
+    echo "================================================"
+    
+    # Configuration
+    NAMESPACE="leanvibe-production"
+    KUBECTL_CONTEXT="${KUBECTL_CONTEXT:-production}"
+    
+    # Pre-deployment validation
+    echo "📋 Step 1: Pre-deployment validation"
+    
+    # Check cluster version
+    CLUSTER_VERSION=$(kubectl version --short | grep "Server Version" | cut -d' ' -f3 | cut -d'v' -f2)
+    echo "✓ Kubernetes cluster version: $CLUSTER_VERSION"
+    
+    # Validate RBAC permissions
+    if kubectl auth can-i create deployments --namespace=$NAMESPACE; then
+        echo "✓ RBAC permissions validated"
+    else
+        echo "❌ Insufficient RBAC permissions"
+        exit 1
+    fi
+    
+    # Security validation
+    echo "🔒 Step 2: Security validation"
+    
+    # Apply security policies first
+    echo "Applying Pod Security Standards..."
+    kubectl apply -f ../security/pod-security-standards.yaml
+    
+    echo "Applying Network Policies..."
+    kubectl apply -f ../security/network-policies.yaml
+    
+    # External secrets validation
+    echo "🔐 Step 3: External secrets validation"
+    
+    # Check external secrets operator
+    if kubectl get deployment external-secrets -n external-secrets-system; then
+        echo "✓ External Secrets Operator running"
+    else
+        echo "❌ External Secrets Operator not found"
+        echo "Please install: helm install external-secrets external-secrets/external-secrets -n external-secrets-system --create-namespace"
+        exit 1
+    fi
+    
+    # Apply external secrets configuration
+    kubectl apply -f ../security/external-secrets.yaml
+    
+    # Wait for secrets to be created
+    echo "Waiting for external secrets to be synced..."
+    kubectl wait --for=condition=Ready externalsecret/leanvibe-api-keys-secret -n $NAMESPACE --timeout=300s
+    
+    # Database deployment
+    echo "🗄️ Step 4: Database deployment"
+    
+    # Apply database migration job
+    envsubst < database-migration-job.yaml | kubectl apply -f -
+    kubectl wait --for=condition=complete job/database-migration -n $NAMESPACE --timeout=600s
+    
+    # Core application deployment
+    echo "🤖 Step 5: Core application deployment"
+    
+    # Apply autoscaling configuration
+    kubectl apply -f ../autoscaling/hpa-production.yaml
+    
+    # Apply agent deployments with production security context
+    envsubst < agent-deployments-production.yaml | kubectl apply -f -
+    
+    # Apply services and ingress
+    kubectl apply -f ../services.yaml
+    kubectl apply -f ingress-production.yaml
+    
+    # Monitoring deployment
+    echo "📊 Step 6: Monitoring stack deployment"
+    
+    # Deploy monitoring stack
+    kubectl apply -f ../monitoring/production-monitoring.yaml
+    
+    # Wait for monitoring to be ready
+    kubectl wait --for=condition=available deployment/prometheus -n $NAMESPACE --timeout=300s
+    kubectl wait --for=condition=available deployment/grafana -n $NAMESPACE --timeout=300s
+    
+    # Disaster recovery setup
+    echo "🛡️ Step 7: Disaster recovery setup"
+    
+    # Install Velero if not present
+    if ! kubectl get deployment velero -n velero; then
+        echo "Installing Velero backup solution..."
+        velero install \
+            --provider aws \
+            --plugins velero/velero-plugin-for-aws:v1.7.0 \
+            --bucket leanvibe-production-backups \
+            --secret-file ./velero-credentials \
+            --use-volume-snapshots=true \
+            --backup-location-config region=us-west-2
+    fi
+    
+    # Apply disaster recovery configuration
+    kubectl apply -f ../../disaster-recovery/cross-region-backup.yaml
+    
+    # Post-deployment validation
+    echo "✅ Step 8: Post-deployment validation"
+    
+    # Wait for all deployments
+    echo "Waiting for agent deployments to be ready..."
+    kubectl wait --for=condition=available deployment/agent-developer -n $NAMESPACE --timeout=600s
+    kubectl wait --for=condition=available deployment/agent-architect -n $NAMESPACE --timeout=600s
+    kubectl wait --for=condition=available deployment/agent-qa -n $NAMESPACE --timeout=600s
+    kubectl wait --for=condition=available deployment/agent-meta -n $NAMESPACE --timeout=600s
+    
+    # Validate HPA
+    echo "Validating auto-scaling configuration..."
+    kubectl get hpa -n $NAMESPACE
+    
+    # Health check
+    echo "Performing health checks..."
+    API_ENDPOINT=$(kubectl get ingress leanvibe-ingress -n $NAMESPACE -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+    
+    if [ -n "$API_ENDPOINT" ]; then
+        if curl -f "https://${API_ENDPOINT}/health" > /dev/null 2>&1; then
+            echo "✅ Health check passed"
+        else
+            echo "⚠️ Health check failed - investigating..."
+            kubectl logs deployment/agent-developer -n $NAMESPACE --tail=10
+        fi
+    fi
+    
+    # Compliance validation
+    echo "🔍 Step 9: Compliance validation"
+    
+    # Run compliance checks
+    kubectl exec deployment/agent-developer -n $NAMESPACE -- curl -X POST http://localhost:8000/api/v1/compliance/validate
+    
+    # Security scan
+    echo "Running security validation..."
+    kubectl exec deployment/agent-developer -n $NAMESPACE -- python -c "
+    from app.core.compliance_framework import ComplianceAuditManager
+    import asyncio
+    async def run_checks():
+        manager = ComplianceAuditManager(None, None)
+        results = await manager.run_automated_compliance_checks()
+        print(f'Compliance Status: {results[\"overall_status\"]}')
+        return results['overall_status'] == 'COMPLIANT'
+    result = asyncio.run(run_checks())
+    exit(0 if result else 1)
+    "
+    
+    # Final status
+    echo "🎉 Deployment Summary"
+    echo "==================="
+    kubectl get pods -n $NAMESPACE -o wide
+    echo ""
+    kubectl get services -n $NAMESPACE
+    echo ""
+    kubectl get hpa -n $NAMESPACE
+    echo ""
+    echo "✅ LeanVibe Agent Hive 2.0 successfully deployed to production!"
+    echo ""
+    echo "🔗 Access URLs:"
+    echo "  - API: https://${API_ENDPOINT}/api/v1/"
+    echo "  - Grafana: https://${API_ENDPOINT}/grafana/"
+    echo "  - Prometheus: https://${API_ENDPOINT}/prometheus/"
+    echo ""
+    echo "📚 Next Steps:"
+    echo "  1. Configure DNS to point to ${API_ENDPOINT}"
+    echo "  2. Set up monitoring alerts"
+    echo "  3. Test disaster recovery procedures"
+    echo "  4. Review security and compliance reports"
+
+---
+# Production Agent Deployments with Enhanced Security
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-deployments-production
+  namespace: leanvibe-production
+data:
+  agent-deployments-production.yaml: |
+    # Production Agent Deployments with Security Hardening
+    
+    ---
+    # Developer Agent - Production Configuration
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: agent-developer
+      namespace: leanvibe-production
+      labels:
+        app: leanvibe-agent
+        agent-type: developer
+        environment: production
+        compliance: soc2-gdpr
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
+          app: leanvibe-agent
+          agent-type: developer
+      template:
+        metadata:
+          labels:
+            app: leanvibe-agent
+            agent-type: developer
+            data-classification: confidential
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9090"
+            prometheus.io/path: "/metrics"
+        spec:
+          serviceAccountName: leanvibe-agent-service-account
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: agent-developer
+            image: leanvibe/agent-developer:v2.0-production
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 1001
+              capabilities:
+                drop:
+                  - ALL
+            env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: AGENT_TYPE
+              value: "developer"
+            - name: AGENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            # All sensitive environment variables from external secrets
+            envFrom:
+            - secretRef:
+                name: leanvibe-api-keys
+            - secretRef:
+                name: leanvibe-database-credentials
+            - secretRef:
+                name: leanvibe-redis-credentials
+            ports:
+            - name: health
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+                ephemeral-storage: "2Gi"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+                ephemeral-storage: "4Gi"
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: health
+                scheme: HTTP
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
+              successThreshold: 1
+              failureThreshold: 3
+            readinessProbe:
+              httpGet:
+                path: /ready
+                port: health
+                scheme: HTTP
+              initialDelaySeconds: 15
+              periodSeconds: 5
+              timeoutSeconds: 3
+              successThreshold: 1
+              failureThreshold: 3
+            startupProbe:
+              httpGet:
+                path: /startup
+                port: health
+                scheme: HTTP
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 3
+              successThreshold: 1
+              failureThreshold: 30
+            volumeMounts:
+            - name: workspace
+              mountPath: /app/workspace
+            - name: logs
+              mountPath: /app/logs
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: workspace
+            emptyDir:
+              sizeLimit: 5Gi
+          - name: logs
+            emptyDir:
+              sizeLimit: 1Gi
+          - name: tmp
+            emptyDir:
+              sizeLimit: 1Gi
+          nodeSelector:
+            node-type: compute-optimized
+          tolerations:
+          - key: "production-workload"
+            operator: "Equal"
+            value: "true"
+            effect: "NoSchedule"
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: agent-type
+                      operator: In
+                      values: ["developer"]
+                  topologyKey: kubernetes.io/hostname
+
+---
+# Production Ingress with Security Headers
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-production
+  namespace: leanvibe-production
+data:
+  ingress-production.yaml: |
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: leanvibe-production-ingress
+      namespace: leanvibe-production
+      labels:
+        app: leanvibe-ingress
+        environment: production
+      annotations:
+        # SSL and security
+        kubernetes.io/ingress.class: "nginx"
+        cert-manager.io/cluster-issuer: "letsencrypt-production"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        
+        # Security headers
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          add_header X-Content-Type-Options nosniff;
+          add_header X-Frame-Options DENY;
+          add_header X-XSS-Protection "1; mode=block";
+          add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+          add_header Referrer-Policy "strict-origin-when-cross-origin";
+          add_header Permissions-Policy "geolocation=(), microphone=(), camera=()";
+        
+        # Rate limiting
+        nginx.ingress.kubernetes.io/rate-limit: "100"
+        nginx.ingress.kubernetes.io/rate-limit-burst-multiplier: "2"
+        
+        # WAF protection
+        nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+        nginx.ingress.kubernetes.io/modsecurity-snippet: |
+          SecRuleEngine On
+          SecRequestBodyAccess On
+          SecRule REQUEST_HEADERS:User-Agent "@detectSQLi" "id:1001,deny,status:403,msg:'SQL Injection Attack Detected'"
+          SecRule ARGS "@detectXSS" "id:1002,deny,status:403,msg:'XSS Attack Detected'"
+    spec:
+      tls:
+      - hosts:
+        - api.leanvibe.com
+        - dashboard.leanvibe.com
+        secretName: leanvibe-production-tls
+      rules:
+      - host: api.leanvibe.com
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: leanvibe-api-service
+                port:
+                  number: 8000
+      - host: dashboard.leanvibe.com
+        http:
+          paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: leanvibe-dashboard-service
+                port:
+                  number: 3000
+
+---
+# Production Deployment Validation
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: production-validation
+  namespace: leanvibe-production
+  labels:
+    component: validation
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: validator
+        image: leanvibe/deployment-validator:latest
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "🔍 Production Deployment Validation"
+          echo "==================================="
+          
+          # Validate security policies
+          echo "Checking Pod Security Standards..."
+          if kubectl get psp leanvibe-restricted-psp; then
+            echo "✅ Pod Security Policy applied"
+          else
+            echo "❌ Pod Security Policy missing"
+            exit 1
+          fi
+          
+          # Validate network policies
+          echo "Checking Network Policies..."
+          if kubectl get networkpolicy leanvibe-default-deny-all -n leanvibe-production; then
+            echo "✅ Network Policies applied"
+          else
+            echo "❌ Network Policies missing"
+            exit 1
+          fi
+          
+          # Validate external secrets
+          echo "Checking External Secrets..."
+          if kubectl get secret leanvibe-api-keys -n leanvibe-production; then
+            echo "✅ External Secrets configured"
+          else
+            echo "❌ External Secrets missing"
+            exit 1
+          fi
+          
+          # Validate monitoring
+          echo "Checking Monitoring Stack..."
+          if kubectl get deployment prometheus -n leanvibe-production; then
+            echo "✅ Monitoring deployed"
+          else
+            echo "❌ Monitoring stack missing"
+            exit 1
+          fi
+          
+          # Validate backup
+          echo "Checking Backup Configuration..."
+          if kubectl get schedule critical-data-backup -n velero; then
+            echo "✅ Backup configured"
+          else
+            echo "❌ Backup not configured"
+            exit 1
+          fi
+          
+          echo "🎉 Production validation completed successfully!"

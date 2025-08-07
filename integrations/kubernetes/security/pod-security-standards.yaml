@@ -1,0 +1,263 @@
+# Pod Security Standards for LeanVibe Agent Hive 2.0
+# Implements enterprise-grade container security policies
+
+---
+# Pod Security Policy - Restricted Profile
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: leanvibe-restricted-psp
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-hive
+    security-profile: restricted
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+  seLinux:
+    rule: 'RunAsAny'
+
+---
+# ClusterRole for using the Pod Security Policy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: leanvibe-restricted-psp-user
+rules:
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames:
+      - leanvibe-restricted-psp
+
+---
+# ClusterRoleBinding for the service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: leanvibe-restricted-psp-binding
+roleRef:
+  kind: ClusterRole
+  name: leanvibe-restricted-psp-user
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: leanvibe-agent-service-account
+    namespace: leanvibe-hive
+
+---
+# Service Account for agents with minimal privileges
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: leanvibe-agent-service-account
+  namespace: leanvibe-hive
+  labels:
+    app: leanvibe-hive
+    component: agent-security
+automountServiceAccountToken: false
+
+---
+# Security Context Constraints (for OpenShift compatibility)
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: leanvibe-restricted-scc
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+allowedCapabilities: []
+defaultAddCapabilities: []
+fsGroup:
+  type: MustRunAs
+  ranges:
+    - min: 1
+      max: 65535
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+  - ALL
+runAsUser:
+  type: MustRunAsNonRoot
+supplementalGroups:
+  type: MustRunAs
+  ranges:
+    - min: 1
+      max: 65535
+users:
+  - system:serviceaccount:leanvibe-hive:leanvibe-agent-service-account
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
+
+---
+# Network Policy - Default Deny All
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-default-deny-all
+  namespace: leanvibe-hive
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# Network Policy - Allow Agent Communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-agent-communication
+  namespace: leanvibe-hive
+spec:
+  podSelector:
+    matchLabels:
+      app: leanvibe-agent
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow health checks from Kubernetes
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow metrics collection from Prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+    # Allow inter-agent communication
+    - from:
+        - podSelector:
+            matchLabels:
+              app: leanvibe-agent
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow database connections
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow Redis connections
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow HTTPS outbound (for Claude API)
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow HTTP outbound (for internal services)
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 80
+
+---
+# Network Policy - Database Access Control
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-database-access
+  namespace: leanvibe-hive
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow connections only from agents
+    - from:
+        - podSelector:
+            matchLabels:
+              app: leanvibe-agent
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow connections from API server
+    - from:
+        - podSelector:
+            matchLabels:
+              app: leanvibe-api
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+# Network Policy - Redis Access Control
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-redis-access
+  namespace: leanvibe-hive
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow connections only from agents and API
+    - from:
+        - podSelector:
+            matchLabels:
+              app: leanvibe-agent
+        - podSelector:
+            matchLabels:
+              app: leanvibe-api
+      ports:
+        - protocol: TCP
+          port: 6379
