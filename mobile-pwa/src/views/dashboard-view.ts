@@ -17,6 +17,8 @@ import type {
 import '../components/kanban/kanban-board'
 import '../components/dashboard/agent-health-panel'
 import '../components/dashboard/event-timeline'
+import '../components/autonomous-development/multi-agent-oversight-dashboard'
+import '../components/autonomous-development/remote-control-center'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
@@ -31,7 +33,7 @@ export class DashboardView extends LitElement {
   @state() private declare isLoading: boolean
   @state() private declare error: string
   @state() private declare lastSync: Date | null
-  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events'
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'oversight' | 'control'
   @state() private declare servicesInitialized: boolean
   @state() private declare wsConnected: boolean
   @state() private declare realtimeEnabled: boolean
@@ -726,6 +728,9 @@ export class DashboardView extends LitElement {
       // If online, fetch fresh data using integrated services
       if (!this.offline) {
         await this.syncAllIntegratedData()
+        
+        // Enable mobile dashboard optimizations
+        this.websocketService.enableMobileDashboardMode()
       }
       
     } catch (error) {
@@ -1321,6 +1326,35 @@ export class DashboardView extends LitElement {
       </div>
     `
   }
+
+  private renderOversightView() {
+    return html`
+      <div id="oversight-panel" role="tabpanel" aria-labelledby="oversight-tab" style="height: calc(100vh - 140px);">
+        <h2 class="sr-only">Multi-Agent Oversight Dashboard</h2>
+        <multi-agent-oversight-dashboard
+          .fullscreen=${false}
+          .viewMode=${'grid'}
+          role="application"
+          aria-label="Advanced multi-agent oversight with real-time monitoring and control"
+        ></multi-agent-oversight-dashboard>
+      </div>
+    `
+  }
+
+  private renderControlView() {
+    return html`
+      <div id="control-panel" role="tabpanel" aria-labelledby="control-tab" style="height: calc(100vh - 140px);">
+        <h2 class="sr-only">Remote Control Center</h2>
+        <remote-control-center
+          .expanded=${true}
+          .selectedAgents=${[]}
+          .emergencyMode=${this.error ? true : false}
+          role="application"
+          aria-label="Remote agent control center with voice commands and emergency controls"
+        ></remote-control-center>
+      </div>
+    `
+  }
   
   private announceAgentSelection(agent: any) {
     const announcement = `Agent ${agent.name} selected. Status: ${agent.status}. Performance: ${agent.performance?.score || 'unknown'}%`
@@ -1375,6 +1409,10 @@ export class DashboardView extends LitElement {
         return this.renderAgentsView()
       case 'events':
         return this.renderEventsView()
+      case 'oversight':
+        return this.renderOversightView()
+      case 'control':
+        return this.renderControlView()
       default:
         return this.renderOverviewView()
     }
@@ -1514,6 +1552,36 @@ export class DashboardView extends LitElement {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Events
+          </button>
+
+          <button 
+            class="tab-button ${this.selectedView === 'oversight' ? 'active' : ''}"
+            role="tab"
+            aria-selected=${this.selectedView === 'oversight'}
+            aria-controls="oversight-panel"
+            tabindex=${this.selectedView === 'oversight' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('oversight')}
+            @keydown=${this.handleTabKeydown}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Oversight
+          </button>
+
+          <button 
+            class="tab-button ${this.selectedView === 'control' ? 'active' : ''}"
+            role="tab"
+            aria-selected=${this.selectedView === 'control'}
+            aria-controls="control-panel"
+            tabindex=${this.selectedView === 'control' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('control')}
+            @keydown=${this.handleTabKeydown}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+            </svg>
+            Control
           </button>
         </div>
       </div>
