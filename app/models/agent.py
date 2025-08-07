@@ -76,6 +76,12 @@ class Agent(Base):
     last_heartbeat = Column(DateTime(timezone=True), nullable=True)
     last_active = Column(DateTime(timezone=True), nullable=True)
     
+    # Sleep-Wake System Integration (added by migration 006)
+    current_sleep_state = Column(String(30), nullable=False, server_default='AWAKE')
+    current_cycle_id = Column(DatabaseAgnosticUUID(), nullable=True)
+    last_sleep_time = Column(DateTime(timezone=True), nullable=True)
+    last_wake_time = Column(DateTime(timezone=True), nullable=True)
+    
     # Relationships
     sleep_windows = relationship("SleepWindow", back_populates="agent", cascade="all, delete-orphan")
     checkpoints = relationship("Checkpoint", back_populates="agent", cascade="all, delete-orphan") 
@@ -103,7 +109,11 @@ class Agent(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "last_heartbeat": self.last_heartbeat.isoformat() if self.last_heartbeat else None,
-            "last_active": self.last_active.isoformat() if self.last_active else None
+            "last_active": self.last_active.isoformat() if self.last_active else None,
+            "current_sleep_state": self.current_sleep_state,
+            "current_cycle_id": str(self.current_cycle_id) if self.current_cycle_id else None,
+            "last_sleep_time": self.last_sleep_time.isoformat() if self.last_sleep_time else None,
+            "last_wake_time": self.last_wake_time.isoformat() if self.last_wake_time else None
         }
     
     def update_heartbeat(self) -> None:

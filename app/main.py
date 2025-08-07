@@ -46,6 +46,7 @@ from .api.claude_integration import router as claude_integration_router
 from .api.dx_debugging import router as dx_debugging_router
 from .api.enterprise_sales import router as enterprise_sales_router
 from .api.enterprise_security import router as enterprise_security_router
+from .api.memory_operations import get_memory_router
 
 
 # Configure structured logging
@@ -247,6 +248,7 @@ def create_app() -> FastAPI:
     app.include_router(dx_debugging_router, tags=["dx-debugging"])
     app.include_router(enterprise_sales_router, tags=["enterprise-sales"])
     app.include_router(enterprise_security_router, tags=["enterprise-security"])
+    app.include_router(get_memory_router(), prefix="/api/v1", tags=["memory-operations"])
     
     @app.get("/debug-agents")
     async def debug_agents():
