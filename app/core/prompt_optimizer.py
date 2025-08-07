@@ -28,6 +28,7 @@ from .ab_testing_engine import ABTestingEngine
 from .evolutionary_optimizer import EvolutionaryOptimizer
 from .feedback_analyzer import FeedbackAnalyzer
 from .context_adapter import ContextAdapter
+from .gradient_optimizer import GradientOptimizer
 
 logger = structlog.get_logger()
 
@@ -64,6 +65,7 @@ class PromptOptimizer:
         self.evolutionary_optimizer = EvolutionaryOptimizer(db_session)
         self.feedback_analyzer = FeedbackAnalyzer(db_session)
         self.context_adapter = ContextAdapter(db_session)
+        self.gradient_optimizer = GradientOptimizer(db_session)
         
         # Configuration
         self.max_concurrent_optimizations = 5
@@ -647,11 +649,11 @@ class PromptOptimizer:
                 feedback_text=feedback_text,
                 feedback_categories=feedback_categories or [],
                 context_data=context_data or {},
-                response_quality_score=analysis_results.get('quality_score'),
-                relevance_score=analysis_results.get('relevance_score'),
-                clarity_score=analysis_results.get('clarity_score'),
-                usefulness_score=analysis_results.get('usefulness_score'),
-                sentiment_score=analysis_results.get('sentiment_score'),
+                response_quality_score=analysis_results.quality_scores.overall_quality,
+                relevance_score=analysis_results.quality_scores.relevance,
+                clarity_score=analysis_results.quality_scores.clarity,
+                usefulness_score=analysis_results.quality_scores.usefulness,
+                sentiment_score=analysis_results.sentiment_analysis.compound_score,
                 feedback_weight=feedback_weight
             )
             
@@ -672,11 +674,11 @@ class PromptOptimizer:
                 'feedback_id': str(feedback.id),
                 'influence_weight': feedback_weight,
                 'quality_scores': {
-                    'response_quality': analysis_results.get('quality_score'),
-                    'relevance': analysis_results.get('relevance_score'),
-                    'clarity': analysis_results.get('clarity_score'),
-                    'usefulness': analysis_results.get('usefulness_score'),
-                    'sentiment': analysis_results.get('sentiment_score')
+                    'response_quality': analysis_results.quality_scores.overall_quality,
+                    'relevance': analysis_results.quality_scores.relevance,
+                    'clarity': analysis_results.quality_scores.clarity,
+                    'usefulness': analysis_results.quality_scores.usefulness,
+                    'sentiment': analysis_results.sentiment_analysis.compound_score
                 }
             }
             
@@ -767,9 +769,158 @@ class PromptOptimizer:
         max_iterations: Optional[int]
     ) -> Dict[str, Any]:
         """Run meta-prompting optimization."""
-        # Implementation for meta-prompting optimization
-        # This would use the prompt generator to iteratively improve prompts
-        pass
+        try:
+            max_iterations = max_iterations or experiment.max_iterations or 10
+            
+            self.logger.info(
+                "Running meta-prompting optimization",
+                experiment_id=str(experiment.id),
+                max_iterations=max_iterations
+            )
+            
+            base_prompt = experiment.base_prompt.template_content
+            best_score = 0.0
+            best_variant_id = None
+            baseline_score = 0.0
+            optimization_history = []
+            
+            # Get target metrics for optimization goals
+            target_metrics = experiment.target_metrics or {'accuracy': 0.8}
+            performance_goals = list(target_metrics.keys())
+            
+            # Generate test cases for evaluation
+            test_cases = await self._get_default_test_cases_for_domain(
+                experiment.base_prompt.domain
+            )
+            
+            for iteration in range(max_iterations):
+                iteration_start_time = time.time()
+                
+                # Generate improved candidates using meta-prompting
+                candidates = await self.prompt_generator.generate_candidates(
+                    base_prompt=base_prompt,
+                    task_description=experiment.experiment_name,
+                    domain=experiment.base_prompt.domain,
+                    performance_goals=performance_goals,
+                    baseline_examples=[],  # Could be populated from successful variants
+                    constraints=experiment.experiment_config.get('constraints', {}),
+                    num_candidates=3  # Generate 3 candidates per iteration
+                )
+                
+                # Evaluate candidates
+                best_candidate = None
+                best_candidate_score = 0.0
+                
+                for candidate in candidates:
+                    # Evaluate candidate performance
+                    evaluation_result = await self.performance_evaluator.evaluate_prompt(
+                        prompt_content=candidate['content'],
+                        test_cases=test_cases,
+                        metrics=performance_goals
+                    )
+                    
+                    candidate_score = evaluation_result['performance_score']
+                    
+                    # Store variant
+                    variant = PromptVariant(
+                        experiment_id=experiment.id,
+                        parent_prompt_id=experiment.base_prompt_id,
+                        variant_content=candidate['content'],
+                        generation_method="meta_prompting",
+                        generation_reasoning=candidate.get('reasoning', f"Meta-prompting iteration {iteration}"),
+                        confidence_score=candidate_score,
+                        iteration=iteration,
+                        parameters={
+                            'iteration': iteration,
+                            'method': 'meta_prompting',
+                            'performance_goals': performance_goals
+                        },
+                        ancestry=[]
+                    )
+                    
+                    self.db.add(variant)
+                    await self.db.commit()
+                    await self.db.refresh(variant)
+                    
+                    # Track best candidate
+                    if candidate_score > best_candidate_score:
+                        best_candidate = candidate
+                        best_candidate_score = candidate_score
+                    
+                    # Track overall best
+                    if candidate_score > best_score:
+                        best_score = candidate_score
+                        best_variant_id = variant.id
+                
+                # Record baseline from first iteration
+                if iteration == 0:
+                    baseline_score = best_candidate_score
+                
+                # Update base prompt to best candidate for next iteration
+                if best_candidate and best_candidate_score > baseline_score * (1 + self.min_improvement_threshold):
+                    base_prompt = best_candidate['content']
+                
+                # Record iteration statistics
+                iteration_time = time.time() - iteration_start_time
+                optimization_history.append({
+                    'iteration': iteration,
+                    'best_score': best_candidate_score,
+                    'num_candidates': len(candidates),
+                    'improvement_from_baseline': best_candidate_score - baseline_score,
+                    'iteration_time': iteration_time
+                })
+                
+                # Update progress
+                progress = (iteration + 1) / max_iterations * 100
+                await self._update_experiment_progress(experiment.id, progress, iteration)
+                
+                # Check for convergence (minimal improvement)
+                if (iteration > 2 and 
+                    all(step['best_score'] - optimization_history[0]['best_score'] < self.min_improvement_threshold 
+                        for step in optimization_history[-3:])):
+                    self.logger.info("Meta-prompting convergence achieved", iteration=iteration)
+                    break
+                
+                self.logger.info(
+                    "Meta-prompting iteration completed",
+                    iteration=iteration,
+                    best_score=best_candidate_score,
+                    improvement=best_candidate_score - baseline_score,
+                    iteration_time=iteration_time
+                )
+            
+            result = {
+                'best_score': best_score,
+                'baseline_score': baseline_score,
+                'iterations_completed': len(optimization_history),
+                'convergence_achieved': len(optimization_history) < max_iterations,
+                'optimization_time_seconds': sum(step['iteration_time'] for step in optimization_history),
+                'best_variant_id': best_variant_id,
+                'optimization_history': optimization_history,
+                'improvement_percentage': (
+                    ((best_score - baseline_score) / baseline_score * 100)
+                    if baseline_score > 0 else 0.0
+                ),
+                'method': 'meta_prompting'
+            }
+            
+            self.logger.info(
+                "Meta-prompting optimization completed",
+                experiment_id=str(experiment.id),
+                best_score=best_score,
+                improvement=result['improvement_percentage'],
+                iterations=result['iterations_completed']
+            )
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(
+                "Meta-prompting optimization failed",
+                experiment_id=str(experiment.id),
+                error=str(e)
+            )
+            raise
     
     async def _run_few_shot_optimization(
         self, 
@@ -777,9 +928,210 @@ class PromptOptimizer:
         max_iterations: Optional[int]
     ) -> Dict[str, Any]:
         """Run few-shot learning optimization."""
-        # Implementation for few-shot optimization
-        # This would use successful examples to improve prompts
-        pass
+        try:
+            max_iterations = max_iterations or experiment.max_iterations or 8
+            
+            self.logger.info(
+                "Running few-shot optimization",
+                experiment_id=str(experiment.id),
+                max_iterations=max_iterations
+            )
+            
+            base_prompt = experiment.base_prompt.template_content
+            best_score = 0.0
+            best_variant_id = None
+            baseline_score = 0.0
+            optimization_history = []
+            successful_examples = []
+            
+            # Get target metrics for optimization goals
+            target_metrics = experiment.target_metrics or {'accuracy': 0.8}
+            performance_goals = list(target_metrics.keys())
+            
+            # Generate test cases for evaluation
+            test_cases = await self._get_default_test_cases_for_domain(
+                experiment.base_prompt.domain
+            )
+            
+            # Build initial few-shot examples from configuration
+            config = experiment.experiment_config or {}
+            initial_examples = config.get('baseline_examples', [])
+            
+            for iteration in range(max_iterations):
+                iteration_start_time = time.time()
+                
+                # Enhance prompt with few-shot examples
+                enhanced_prompt = await self._enhance_prompt_with_examples(
+                    base_prompt, successful_examples + initial_examples
+                )
+                
+                # Generate candidates using enhanced prompt
+                candidates = await self.prompt_generator.generate_candidates(
+                    base_prompt=enhanced_prompt,
+                    task_description=experiment.experiment_name,
+                    domain=experiment.base_prompt.domain,
+                    performance_goals=performance_goals,
+                    baseline_examples=successful_examples + initial_examples,
+                    constraints=config.get('constraints', {}),
+                    num_candidates=2  # Fewer candidates but higher quality
+                )
+                
+                # Evaluate candidates and collect examples
+                best_candidate = None
+                best_candidate_score = 0.0
+                
+                for candidate in candidates:
+                    # Evaluate candidate performance
+                    evaluation_result = await self.performance_evaluator.evaluate_prompt(
+                        prompt_content=candidate['content'],
+                        test_cases=test_cases,
+                        metrics=performance_goals
+                    )
+                    
+                    candidate_score = evaluation_result['performance_score']
+                    
+                    # Store variant
+                    variant = PromptVariant(
+                        experiment_id=experiment.id,
+                        parent_prompt_id=experiment.base_prompt_id,
+                        variant_content=candidate['content'],
+                        generation_method="few_shot_learning",
+                        generation_reasoning=candidate.get('reasoning', f"Few-shot learning iteration {iteration}"),
+                        confidence_score=candidate_score,
+                        iteration=iteration,
+                        parameters={
+                            'iteration': iteration,
+                            'method': 'few_shot',
+                            'num_examples': len(successful_examples) + len(initial_examples),
+                            'performance_goals': performance_goals
+                        },
+                        ancestry=[]
+                    )
+                    
+                    self.db.add(variant)
+                    await self.db.commit()
+                    await self.db.refresh(variant)
+                    
+                    # Collect successful examples for next iteration
+                    if candidate_score > 0.7:  # Threshold for "successful"
+                        example = {
+                            'prompt': candidate['content'],
+                            'score': candidate_score,
+                            'iteration': iteration,
+                            'test_results': evaluation_result['detailed_metrics']
+                        }
+                        successful_examples.append(example)
+                        
+                        # Limit examples to most recent and highest scoring
+                        if len(successful_examples) > 5:
+                            successful_examples.sort(key=lambda x: x['score'], reverse=True)
+                            successful_examples = successful_examples[:5]
+                    
+                    # Track best candidate
+                    if candidate_score > best_candidate_score:
+                        best_candidate = candidate
+                        best_candidate_score = candidate_score
+                    
+                    # Track overall best
+                    if candidate_score > best_score:
+                        best_score = candidate_score
+                        best_variant_id = variant.id
+                
+                # Record baseline from first iteration
+                if iteration == 0:
+                    baseline_score = best_candidate_score
+                
+                # Record iteration statistics
+                iteration_time = time.time() - iteration_start_time
+                optimization_history.append({
+                    'iteration': iteration,
+                    'best_score': best_candidate_score,
+                    'num_candidates': len(candidates),
+                    'num_examples': len(successful_examples),
+                    'improvement_from_baseline': best_candidate_score - baseline_score,
+                    'iteration_time': iteration_time
+                })
+                
+                # Update progress
+                progress = (iteration + 1) / max_iterations * 100
+                await self._update_experiment_progress(experiment.id, progress, iteration)
+                
+                # Check for convergence
+                if (iteration > 2 and len(successful_examples) >= 3 and
+                    all(step['best_score'] - optimization_history[0]['best_score'] < self.min_improvement_threshold 
+                        for step in optimization_history[-2:])):
+                    self.logger.info("Few-shot learning convergence achieved", iteration=iteration)
+                    break
+                
+                self.logger.info(
+                    "Few-shot optimization iteration completed",
+                    iteration=iteration,
+                    best_score=best_candidate_score,
+                    num_examples=len(successful_examples),
+                    improvement=best_candidate_score - baseline_score,
+                    iteration_time=iteration_time
+                )
+            
+            result = {
+                'best_score': best_score,
+                'baseline_score': baseline_score,
+                'iterations_completed': len(optimization_history),
+                'convergence_achieved': len(optimization_history) < max_iterations,
+                'optimization_time_seconds': sum(step['iteration_time'] for step in optimization_history),
+                'best_variant_id': best_variant_id,
+                'optimization_history': optimization_history,
+                'successful_examples_count': len(successful_examples),
+                'improvement_percentage': (
+                    ((best_score - baseline_score) / baseline_score * 100)
+                    if baseline_score > 0 else 0.0
+                ),
+                'method': 'few_shot_learning'
+            }
+            
+            self.logger.info(
+                "Few-shot optimization completed",
+                experiment_id=str(experiment.id),
+                best_score=best_score,
+                improvement=result['improvement_percentage'],
+                iterations=result['iterations_completed'],
+                examples_collected=len(successful_examples)
+            )
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(
+                "Few-shot optimization failed",
+                experiment_id=str(experiment.id),
+                error=str(e)
+            )
+            raise
+    
+    async def _enhance_prompt_with_examples(
+        self,
+        base_prompt: str,
+        examples: List[Dict[str, Any]]
+    ) -> str:
+        """Enhance prompt with few-shot examples."""
+        if not examples:
+            return base_prompt
+        
+        # Sort examples by score (highest first)
+        sorted_examples = sorted(examples, key=lambda x: x.get('score', 0), reverse=True)
+        
+        # Take top examples
+        top_examples = sorted_examples[:3]
+        
+        # Build example section
+        example_text = "\n\nHere are examples of high-quality approaches:\n"
+        for i, example in enumerate(top_examples, 1):
+            score = example.get('score', 0)
+            example_text += f"\nExample {i} (Score: {score:.2f}):\n"
+            example_text += f"{example.get('prompt', '')[:200]}...\n"
+        
+        example_text += "\nPlease follow the patterns demonstrated in these successful examples.\n"
+        
+        return base_prompt + example_text
     
     async def _run_gradient_based_optimization(
         self, 
@@ -787,9 +1139,46 @@ class PromptOptimizer:
         max_iterations: Optional[int]
     ) -> Dict[str, Any]:
         """Run gradient-based optimization."""
-        # Implementation for gradient-based optimization
-        # This would use gradient information to optimize prompts
-        pass
+        try:
+            # Get optimization configuration
+            config = experiment.experiment_config or {}
+            gradient_config = config.get('gradient_optimization', {})
+            
+            # Determine optimization method from config
+            method_name = gradient_config.get('method', 'adam')
+            from .gradient_optimizer import OptimizationDirection
+            
+            method_mapping = {
+                'gradient_ascent': OptimizationDirection.GRADIENT_ASCENT,
+                'adam': OptimizationDirection.ADAM,
+                'rmsprop': OptimizationDirection.RMSPROP
+            }
+            
+            optimization_method = method_mapping.get(method_name, OptimizationDirection.ADAM)
+            
+            self.logger.info(
+                "Running gradient-based optimization",
+                experiment_id=str(experiment.id),
+                method=optimization_method.value,
+                max_iterations=max_iterations or experiment.max_iterations
+            )
+            
+            # Run gradient optimization
+            result = await self.gradient_optimizer.optimize(
+                experiment=experiment,
+                max_iterations=max_iterations or experiment.max_iterations,
+                optimization_method=optimization_method
+            )
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(
+                "Gradient-based optimization failed",
+                experiment_id=str(experiment.id),
+                error=str(e)
+            )
+            raise
     
     async def _calculate_feedback_weight(
         self, 
@@ -827,3 +1216,50 @@ class PromptOptimizer:
         expertise_factor = context_data.get('user_expertise_level', 1.0)
         
         return min(2.0, base_weight * consistency_factor * quality_factor * expertise_factor)
+    
+    async def _get_default_test_cases_for_domain(self, domain: Optional[str]) -> List[Dict[str, Any]]:
+        """Get default test cases for a specific domain."""
+        # Try to get domain-specific test cases from database
+        if domain:
+            test_case_query = select(PromptTestCase).where(
+                and_(
+                    PromptTestCase.is_active == True,
+                    PromptTestCase.domain == domain
+                )
+            ).limit(5)
+            
+            result = await self.db.execute(test_case_query)
+            db_test_cases = result.scalars().all()
+            
+            if db_test_cases:
+                return [
+                    {
+                        'id': str(tc.id),
+                        'input_data': tc.input_data,
+                        'expected_output': tc.expected_output,
+                        'evaluation_criteria': tc.evaluation_criteria
+                    }
+                    for tc in db_test_cases
+                ]
+        
+        # Fallback to general test cases
+        return [
+            {
+                'id': 'general_test_1',
+                'input_data': {'text': 'General test query for optimization'},
+                'expected_output': 'Clear, accurate response',
+                'evaluation_criteria': {'accuracy': True, 'clarity': True}
+            },
+            {
+                'id': 'general_test_2',
+                'input_data': {'text': 'Complex multi-part question'},
+                'expected_output': 'Comprehensive structured response',
+                'evaluation_criteria': {'completeness': True, 'coherence': True}
+            },
+            {
+                'id': 'general_test_3',
+                'input_data': {'text': 'Domain-specific question requiring expertise'},
+                'expected_output': 'Expert-level accurate response',
+                'evaluation_criteria': {'accuracy': True, 'relevance': True}
+            }
+        ]

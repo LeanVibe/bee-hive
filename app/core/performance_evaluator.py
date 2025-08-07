@@ -1,8 +1,8 @@
 """
-Performance Evaluator for comprehensive prompt performance measurement.
+Comprehensive Performance Evaluator for prompt optimization.
 
-Evaluates prompts across multiple dimensions including accuracy, relevance,
-coherence, token efficiency, and user satisfaction metrics.
+Evaluates prompt performance using multiple metrics including accuracy,
+relevance, coherence, token efficiency, and statistical analysis.
 """
 
 import asyncio
