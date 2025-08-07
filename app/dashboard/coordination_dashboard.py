@@ -745,7 +745,7 @@ async def dashboard_home(request: Request):
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "title": "LeanVibe Agent Hive 2.0 - Coordination Dashboard",
-        "websocket_url": f"ws://{request.headers.get('host', 'localhost:8000')}/dashboard/ws"
+        "websocket_url": f"ws://{request.headers.get('host', 'localhost:8000')}/api/dashboard/ws/dashboard"
     })
 
 
@@ -844,6 +844,41 @@ async def get_live_dashboard_data():
             "project_snapshots": [],
             "conflict_snapshots": []
         }
+
+
+@router.websocket("/ws")
+async def dashboard_websocket_alias(websocket: WebSocket):
+    """WebSocket endpoint alias for dashboard compatibility - redirects to main dashboard WebSocket."""
+    import uuid
+    from fastapi import Query
+    from urllib.parse import parse_qs
+    
+    # Extract connection_id from query parameters if provided
+    query_string = str(websocket.url.query) if hasattr(websocket.url, 'query') else ''
+    query_params = parse_qs(query_string)
+    connection_id = query_params.get('connection_id', [str(uuid.uuid4())])[0]
+    
+    await coordination_dashboard.connect_client(websocket, connection_id)
+    
+    try:
+        while True:
+            # Keep connection alive and handle client messages
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            
+            # Handle client commands
+            if message.get("type") == "ping":
+                await websocket.send_text(json.dumps({"type": "pong"}))
+            elif message.get("type") == "request_update":
+                # Force immediate update
+                await coordination_dashboard._update_dashboard_metrics()
+                await coordination_dashboard._broadcast_dashboard_updates()
+                
+    except WebSocketDisconnect:
+        coordination_dashboard.disconnect_client(connection_id)
+    except Exception as e:
+        logger.error("Dashboard WebSocket error", connection_id=connection_id, error=str(e))
+        coordination_dashboard.disconnect_client(connection_id)
 
 
 @router.websocket("/ws/{connection_id}")

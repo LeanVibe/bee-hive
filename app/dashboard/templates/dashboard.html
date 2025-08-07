@@ -279,6 +279,71 @@
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
         }
+        
+        /* iPhone 14 Pro and mobile optimization */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+                gap: 15px;
+            }
+            
+            .dashboard-header {
+                padding: 15px;
+            }
+            
+            .header-title {
+                font-size: 1.5rem;
+            }
+            
+            .metric-card {
+                padding: 15px;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 10px;
+            }
+        }
+        
+        /* iPhone 14 Pro specific optimizations (390x844px) */
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 8px;
+                gap: 12px;
+            }
+            
+            .header-title {
+                font-size: 1.2rem;
+            }
+            
+            .metric-card {
+                padding: 12px;
+            }
+            
+            .metric-value {
+                font-size: 1.3rem;
+            }
+            
+            .metric-title {
+                font-size: 0.8rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            /* Optimize for touch interaction */
+            .item-header {
+                min-height: 44px; /* iOS minimum touch target */
+                display: flex;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -397,7 +462,7 @@
             
             connect() {
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const wsUrl = `${protocol}//${window.location.host}/dashboard/simple-ws/${this.generateConnectionId()}`;
+                const wsUrl = `${protocol}//${window.location.host}/api/dashboard/ws/dashboard?connection_id=${this.generateConnectionId()}`;
                 
                 this.socket = new WebSocket(wsUrl);
                 
