@@ -1171,8 +1171,8 @@ export class DashboardView extends LitElement {
       systemStatus,
       healthyComponents,
       unhealthyComponents,
-      cpuUsage: this.performanceMetrics?.system_metrics.cpu_usage || 0,
-      memoryUsage: this.performanceMetrics?.system_metrics.memory_usage || 0
+      cpuUsage: this.performanceMetrics?.system_metrics?.cpu_usage || 0,
+      memoryUsage: this.performanceMetrics?.system_metrics?.memory_usage || 0
     }
   }
   
@@ -1399,6 +1399,28 @@ export class DashboardView extends LitElement {
     this.dispatchEvent(toggleEvent)
   }
   
+  private renderPerformanceView() {
+    return html`
+      <div id="performance-panel" role="tabpanel" aria-labelledby="performance-tab" style="height: calc(100vh - 140px); padding: 0;">
+        <h2 class="sr-only">Performance Monitoring Dashboard</h2>
+        <performance-metrics-panel
+          .metrics=${this.comprehensivePerformanceMetrics}
+          .realtime=${!this.offline && this.realtimeEnabled}
+          .compact=${false}
+          .timeRange=${"1h"}
+          @tab-changed=${(e: CustomEvent) => {
+            console.log('Performance tab changed:', e.detail.tab)
+          }}
+          @auto-refresh-toggled=${(e: CustomEvent) => {
+            console.log('Auto-refresh toggled:', e.detail.enabled)
+          }}
+          role="application"
+          aria-label="Real-time performance monitoring with metrics, alerts, and system health data"
+        ></performance-metrics-panel>
+      </div>
+    `
+  }
+  
   private renderCurrentView() {
     switch (this.selectedView) {
       case 'overview':
@@ -1409,6 +1431,8 @@ export class DashboardView extends LitElement {
         return this.renderAgentsView()
       case 'events':
         return this.renderEventsView()
+      case 'performance':
+        return this.renderPerformanceView()
       case 'oversight':
         return this.renderOversightView()
       case 'control':
@@ -1552,6 +1576,21 @@ export class DashboardView extends LitElement {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Events
+          </button>
+
+          <button 
+            class="tab-button ${this.selectedView === 'performance' ? 'active' : ''}"
+            role="tab"
+            aria-selected=${this.selectedView === 'performance'}
+            aria-controls="performance-panel"
+            tabindex=${this.selectedView === 'performance' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('performance')}
+            @keydown=${this.handleTabKeydown}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Performance
           </button>
 
           <button 

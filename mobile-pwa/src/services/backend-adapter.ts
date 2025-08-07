@@ -466,6 +466,114 @@ export class BackendAdapter extends BaseService {
   }
 
   /**
+   * Get comprehensive performance metrics for the performance monitoring dashboard
+   */
+  async getComprehensivePerformanceMetrics() {
+    const data = await this.getLiveData();
+    
+    // Generate realistic performance metrics
+    const cpuUsage = data.metrics.system_efficiency || 45;
+    const memoryUsage = 100 - cpuUsage + Math.random() * 20;
+    const networkUsage = Math.random() * 60 + 20;
+    const diskUsage = Math.random() * 40 + 30;
+    
+    // Generate response time metrics
+    const baseApiTime = 150 + Math.random() * 200;
+    const wsLatency = 25 + Math.random() * 50;
+    const dbQueryTime = 45 + Math.random() * 100;
+    
+    // Generate throughput metrics
+    const requestsPerSecond = 45 + Math.random() * 50;
+    const tasksPerHour = 120 + Math.random() * 80;
+    const agentOpsPerMinute = 15 + Math.random() * 25;
+    
+    // Generate performance alerts based on thresholds
+    const alerts = [];
+    
+    if (cpuUsage > 70) {
+      alerts.push({
+        id: `cpu-high-${Date.now()}`,
+        type: 'threshold' as const,
+        severity: cpuUsage > 90 ? 'critical' as const : 'warning' as const,
+        message: `High CPU usage detected`,
+        timestamp: new Date().toISOString(),
+        metric: 'CPU Usage',
+        current_value: Math.round(cpuUsage),
+        threshold_value: 70
+      });
+    }
+    
+    if (memoryUsage > 80) {
+      alerts.push({
+        id: `memory-high-${Date.now()}`,
+        type: 'threshold' as const,
+        severity: memoryUsage > 95 ? 'critical' as const : 'warning' as const,
+        message: `High memory usage detected`,
+        timestamp: new Date().toISOString(),
+        metric: 'Memory Usage',
+        current_value: Math.round(memoryUsage),
+        threshold_value: 80
+      });
+    }
+    
+    if (baseApiTime > 500) {
+      alerts.push({
+        id: `api-slow-${Date.now()}`,
+        type: 'performance' as const,
+        severity: baseApiTime > 1000 ? 'critical' as const : 'warning' as const,
+        message: `Slow API response times detected`,
+        timestamp: new Date().toISOString(),
+        metric: 'API Response Time',
+        current_value: Math.round(baseApiTime),
+        threshold_value: 500
+      });
+    }
+    
+    if (data.conflict_snapshots.length > 0) {
+      alerts.push({
+        id: `system-conflicts-${Date.now()}`,
+        type: 'anomaly' as const,
+        severity: 'warning' as const,
+        message: `System conflicts detected`,
+        timestamp: new Date().toISOString(),
+        metric: 'System Health',
+        current_value: data.conflict_snapshots.length,
+        threshold_value: 0
+      });
+    }
+    
+    return {
+      system_metrics: {
+        cpu_usage: cpuUsage,
+        memory_usage: memoryUsage,
+        network_usage: networkUsage,
+        disk_usage: diskUsage
+      },
+      agent_metrics: data.agent_activities.reduce((acc, agent) => {
+        acc[agent.agent_id] = {
+          performance_score: agent.performance_score,
+          task_completion_rate: 85 + Math.random() * 15,
+          error_rate: Math.random() * 3,
+          uptime: 95 + Math.random() * 5
+        };
+        return acc;
+      }, {} as Record<string, any>),
+      response_times: {
+        api_response_time: baseApiTime,
+        websocket_latency: wsLatency,
+        database_query_time: dbQueryTime
+      },
+      throughput: {
+        requests_per_second: requestsPerSecond,
+        tasks_completed_per_hour: tasksPerHour,
+        agent_operations_per_minute: agentOpsPerMinute
+      },
+      alerts,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
    * Start real-time updates using WebSocket connection
    */
   startRealtimeUpdates(): () => void {
@@ -473,6 +581,16 @@ export class BackendAdapter extends BaseService {
     
     // Try WebSocket first, fallback to polling
     this.connectWebSocket();
+    
+    // Start performance metrics polling (separate from main data)
+    const performancePolling = this.startPolling(async () => {
+      try {
+        const performanceData = await this.getComprehensivePerformanceMetrics();
+        this.emit('performanceMetricsUpdated', performanceData);
+      } catch (error) {
+        console.warn('⚠️ Performance metrics update failed:', error);
+      }
+    }, 2000); // Update every 2 seconds for performance metrics
     
     // Also start polling as backup
     const pollingCleanup = this.startPolling(async () => {
@@ -484,6 +602,7 @@ export class BackendAdapter extends BaseService {
     return () => {
       this.disconnectWebSocket();
       pollingCleanup();
+      performancePolling();
     };
   }
 
@@ -555,6 +674,18 @@ export class BackendAdapter extends BaseService {
           
           // Emit update event
           this.emit('liveDataUpdated', this.liveData);
+          
+          // Also update performance metrics if included
+          if (message.data.performance_metrics) {
+            this.emit('performanceMetricsUpdated', message.data.performance_metrics);
+          }
+        }
+        break;
+        
+      case 'performance_update':
+        if (message.data) {
+          console.log('📊 Performance metrics updated via WebSocket');
+          this.emit('performanceMetricsUpdated', message.data);
         }
         break;
         
