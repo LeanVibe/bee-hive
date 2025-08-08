@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hiveops.dev/schemas/ws_messages.schema.json",
+  "title": "HiveOps WebSocket Messages",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "ConnectionEstablished",
+      "type": "object",
+      "properties": {
+        "type": { "const": "connection_established" },
+        "connection_id": { "type": "string" },
+        "subscriptions": { "type": "array", "items": { "type": "string" } },
+        "server_time": { "type": "string" }
+      },
+      "required": ["type", "subscriptions"],
+      "additionalProperties": true
+    },
+    {
+      "title": "DashboardInitialized",
+      "type": "object",
+      "properties": {
+        "type": { "const": "dashboard_initialized" },
+        "subscriptions": { "type": "array", "items": { "type": "string" } },
+        "connection_info": { "type": "object" }
+      },
+      "required": ["type", "subscriptions"],
+      "additionalProperties": true
+    },
+    {
+      "title": "SubscriptionUpdated",
+      "type": "object",
+      "properties": {
+        "type": { "const": "subscription_updated" },
+        "subscriptions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type", "subscriptions"],
+      "additionalProperties": true
+    },
+    {
+      "title": "UpdateMessage",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "pattern": ".*_update$" },
+        "subscription": { "type": "string", "enum": ["agents", "coordination", "tasks", "system", "alerts"] },
+        "data": { "type": "object" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["type", "subscription", "data"],
+      "additionalProperties": true
+    }
+  ]
+}
