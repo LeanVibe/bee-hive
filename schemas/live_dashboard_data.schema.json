@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leanvibe.ai/schemas/live_dashboard_data.schema.json",
+  "title": "LiveDashboardData",
+  "type": "object",
+  "required": ["metrics", "agent_activities", "project_snapshots", "conflict_snapshots"],
+  "properties": {
+    "metrics": {
+      "type": "object",
+      "required": [
+        "active_projects",
+        "active_agents",
+        "agent_utilization",
+        "completed_tasks",
+        "active_conflicts",
+        "system_efficiency",
+        "system_status",
+        "last_updated"
+      ],
+      "properties": {
+        "active_projects": { "type": "integer", "minimum": 0 },
+        "active_agents": { "type": "integer", "minimum": 0 },
+        "agent_utilization": { "type": "number", "minimum": 0 },
+        "completed_tasks": { "type": "integer", "minimum": 0 },
+        "active_conflicts": { "type": "integer", "minimum": 0 },
+        "system_efficiency": { "type": "number", "minimum": 0 },
+        "system_status": { "enum": ["healthy", "degraded", "critical"] },
+        "last_updated": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "agent_activities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["agent_id", "name", "status", "performance_score", "specializations"],
+        "properties": {
+          "agent_id": { "type": "string" },
+          "name": { "type": "string" },
+          "status": { "enum": ["active", "busy", "idle", "error", "unknown"] },
+          "current_project": { "type": ["string", "null"] },
+          "current_task": { "type": ["string", "null"] },
+          "task_progress": { "type": ["number", "null"] },
+          "performance_score": { "type": "number" },
+          "specializations": { "type": "array", "items": {"type": "string"} }
+        },
+        "additionalProperties": true
+      }
+    },
+    "project_snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "progress_percentage", "participating_agents", "completed_tasks", "active_tasks", "conflicts", "quality_score"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "enum": ["active", "planning", "completed", "unknown"] },
+          "progress_percentage": { "type": "number" },
+          "participating_agents": { "type": "array", "items": {"type": "string"} },
+          "completed_tasks": { "type": "integer" },
+          "active_tasks": { "type": "integer" },
+          "conflicts": { "type": "integer" },
+          "quality_score": { "type": "number" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "conflict_snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["conflict_type", "severity", "project_name", "description", "affected_agents", "impact_score", "auto_resolvable"],
+        "properties": {
+          "conflict_type": { "type": "string" },
+          "severity": { "enum": ["critical", "high", "medium", "low"] },
+          "project_name": { "type": "string" },
+          "description": { "type": "string" },
+          "affected_agents": { "type": "array", "items": {"type": "string"} },
+          "impact_score": { "type": "number" },
+          "auto_resolvable": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
