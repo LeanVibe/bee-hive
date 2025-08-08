@@ -70,7 +70,7 @@ async def test_db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture
 def mock_redis():
-    """Mock Redis client for testing."""
+    """Mock Redis client for testing with async pubsub."""
     mock_redis = AsyncMock()
     mock_redis.ping.return_value = True
     mock_redis.xadd.return_value = "1234567890-0"
@@ -79,6 +79,17 @@ def mock_redis():
     mock_redis.setex.return_value = True
     mock_redis.get.return_value = None
     mock_redis.delete.return_value = 1
+
+    class _PubSub:
+        async def subscribe(self, *channels):  # type: ignore[no-redef]
+            return True
+
+        async def listen(self):  # async generator
+            if False:
+                yield None  # pragma: no cover
+            return
+
+    mock_redis.pubsub.return_value = _PubSub()
     return mock_redis
 
 
@@ -184,7 +195,7 @@ async def async_test_client(test_app) -> AsyncGenerator[AsyncClient, None]:
     """Create async test client for async requests."""
     from httpx import ASGITransport
     transport = ASGITransport(app=test_app)
-    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost:8000", headers={"host": "localhost:8000"}) as client:
         yield client
 
 
