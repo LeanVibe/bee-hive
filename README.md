@@ -7,6 +7,36 @@
 >
 > Server-rendered dashboards are deprecated; use the mobile PWA + API/WS.
 
+### Quickstart (PWA-first, 2 terminals)
+
+Backend + Infra
+
+```bash
+docker compose up -d postgres redis
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Mobile PWA
+
+```bash
+cd mobile-pwa
+npm ci
+npm run dev
+# Visit the dev URL (e.g., http://localhost:5173)
+```
+
+Testing (focused, fast)
+
+```bash
+# Backend: contracts, websockets, smoke (with pragmatic coverage gate)
+pytest -q
+
+# Frontend (PWA) unit tests
+cd mobile-pwa && npm run -s test
+```
+
+Note: tests that hit HTTP/WS endpoints run under TrustedHost; when using raw clients, include `Host: localhost:8000`.
+
 # 🚀 LeanVibe Agent Hive 2.0
 
 **Working autonomous development prototype. Experience AI agents collaborating on software development tasks with real-time demonstrations.**
