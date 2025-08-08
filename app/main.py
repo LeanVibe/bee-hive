@@ -15,6 +15,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
+import types
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .core.config import settings
@@ -478,7 +480,15 @@ def create_app() -> FastAPI:
         except Exception:
             status["components"]["redis"]["connected"] = False
         
-        return status
+        # Ensure response is JSON-serializable even if any nested value is unexpected
+        encoded = jsonable_encoder(
+            status,
+            custom_encoder={
+                bytes: lambda b: b.decode("utf-8", errors="ignore"),
+                types.CoroutineType: lambda c: "<coroutine>",
+            },
+        )
+        return JSONResponse(content=encoded)
     
     @app.get("/metrics")
     async def system_metrics():
