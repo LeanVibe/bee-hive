@@ -39,5 +39,14 @@ jobs:
           cache-dependency-path: mobile-pwa/package.json
       - name: Install deps
         run: npm ci
+      - name: Generate types from JSON schemas
+        run: npm run -s generate:schemas
+      - name: Check for generated types drift
+        run: |
+          git status --porcelain
+          if ! git diff --exit-code; then
+            echo "Type definitions drift detected. Please run 'npm run generate:schemas' and commit changes." >&2
+            exit 1
+          fi
       - name: Run Vitest unit tests
         run: npm run -s test
