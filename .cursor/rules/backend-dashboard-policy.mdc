@@ -1,0 +1,14 @@
+---
+globs: app/**/*.py
+---
+# Backend Dashboard Policy (API/WebSocket only)
+
+- Do NOT add or re-enable server-rendered dashboard routes.
+- Allowed:
+  - WebSocket endpoints under `/api/dashboard/ws/*` → [app/api/dashboard_websockets.py](mdc:app/api/dashboard_websockets.py)
+  - Compatibility REST data under `/dashboard/api/*` → [app/api/dashboard_compat.py](mdc:app/api/dashboard_compat.py)
+- Disallowed:
+  - New Jinja templates or HTML views under `/dashboard` (legacy is deprecated)
+
+Main app wiring: [app/main.py](mdc:app/main.py)
+Legacy template retained only with deprecation notice: [app/dashboard/templates/dashboard.html](mdc:app/dashboard/templates/dashboard.html)

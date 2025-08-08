@@ -38,8 +38,6 @@ from .core.error_handling_integration import initialize_error_handling_integrati
 from .api.v1.error_handling_health import router as error_handling_router
 from .api.v1.enhanced_coordination_api import router as enhanced_coordination_router
 from .api.v1.global_coordination import router as global_coordination_router
-from .dashboard.coordination_dashboard import router as dashboard_router
-from .dashboard.simple_agent_dashboard import router as simple_dashboard_router
 from .api.agent_activation import router as agent_activation_router
 from .api.hive_commands import router as hive_commands_router
 from .api.intelligence import router as intelligence_router
@@ -52,6 +50,7 @@ from .api.dashboard_monitoring import router as dashboard_monitoring_router
 from .api.dashboard_task_management import router as dashboard_task_management_router
 from .api.dashboard_websockets import router as dashboard_websockets_router
 from .api.dashboard_prometheus import router as dashboard_prometheus_router
+from .api.dashboard_compat import router as dashboard_compat_router
 
 
 # Configure structured logging
@@ -252,8 +251,7 @@ def create_app() -> FastAPI:
     app.include_router(intelligent_scheduling_router)
     app.include_router(monitoring_router)
     app.include_router(analytics_router)
-    app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
-    app.include_router(simple_dashboard_router, prefix="/dashboard", tags=["simple-dashboard"])
+    # Removed legacy server-rendered dashboard; keep API/WebSocket endpoints under /api/dashboard/*
     app.include_router(agent_activation_router, prefix="/api/agents", tags=["agent-activation"])
     app.include_router(hive_commands_router, prefix="/api/hive", tags=["hive-commands"])
     app.include_router(intelligence_router, tags=["intelligence"])
@@ -268,6 +266,8 @@ def create_app() -> FastAPI:
     app.include_router(dashboard_task_management_router, tags=["dashboard-task-management"])  
     app.include_router(dashboard_websockets_router, tags=["dashboard-websockets"])
     app.include_router(dashboard_prometheus_router, tags=["dashboard-prometheus"])
+    # Legacy compatibility routes for PWA expecting /dashboard/api/* (no HTML)
+    app.include_router(dashboard_compat_router)
     
     @app.get("/debug-agents")
     async def debug_agents():

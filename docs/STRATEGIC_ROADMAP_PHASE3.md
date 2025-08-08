@@ -1,5 +1,7 @@
 # Strategic Roadmap: Phase 3 - Revolutionary Multi-Agent Coordination
 
+> NOTE: Archived. See `docs/TODO.md` (live plan), `docs/PRD.md`, and `docs/CORE.md`.
+
 ## Executive Summary
 
 LeanVibe Agent Hive 2.0 has achieved 83% completion of core infrastructure. The next phase represents a paradigm shift from **individual autonomous agents** to **coordinated hive intelligence** capable of managing complex, multi-agent software development projects.

@@ -1,0 +1,17 @@
+---
+globs: mobile-pwa/tests/**/*.ts,mobile-pwa/playwright.config.ts
+---
+# Playwright E2E Guidelines
+
+- Install deps and browsers before running tests:
+
+```sh
+cd mobile-pwa && npm ci && npx playwright install --with-deps
+```
+
+- Always include a smoke test that verifies navigation and initial data render on `/dashboard`.
+- Save screenshots under `mobile-pwa/test-results/` for manual review.
+- Prefer short, stable selectors (data-testids) over brittle text selectors.
+- MCP Playwright review each major screen before closing tasks.
+
+Config: [mobile-pwa/playwright.config.ts](mdc:mobile-pwa/playwright.config.ts)

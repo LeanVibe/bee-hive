@@ -1,3 +1,5 @@
+> NOTE: Archived in favor of `docs/ARCHITECTURE.md` (implementation) and `docs/CORE.md` (overview). See `docs/DOCS_INDEX.md` for the complete map.
+
 # Developer Guide
 
 This guide provides comprehensive information for developers working on LeanVibe Agent Hive.

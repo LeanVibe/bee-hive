@@ -1,0 +1,12 @@
+---
+globs: mobile-pwa/**/*.ts,mobile-pwa/**/*.tsx,mobile-pwa/**/*.js,mobile-pwa/**/*.jsx,mobile-pwa/**/*.html,mobile-pwa/**/*.css
+---
+# Frontend Branding, Routing, and Data Contracts
+
+- Brand: “HiveOps.” Default title from [mobile-pwa/src/components/layout/app-header.ts](mdc:mobile-pwa/src/components/layout/app-header.ts)
+- WebSocket: `/api/dashboard/ws/dashboard` (derive protocol via `window.location`)
+- REST (compat): `/dashboard/api/live-data` for live dashboard data
+- Centralize backend URLs in the adapter; do not duplicate endpoints across components → [mobile-pwa/src/services/backend-adapter.ts](mdc:mobile-pwa/src/services/backend-adapter.ts)
+- Keep the PWA modern, minimal, and responsive (Tailwind config: [mobile-pwa/tailwind.config.js](mdc:mobile-pwa/tailwind.config.js))
+
+Routing entry: [mobile-pwa/src/router/router.ts](mdc:mobile-pwa/src/router/router.ts)

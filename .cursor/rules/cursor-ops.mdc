@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+# Cursor Ops for This Repo
+
+- Prefer absolute paths for tool calls (workspace root is `/Users/bogdan/work/leanvibe-dev/bee-hive`).
+- Batch read-only operations in parallel to speed up discovery.
+- After edits, run lints/tests for changed areas; keep green.
+- Validate the running system locally before completing tasks:
+  - Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
+  - PWA: `cd mobile-pwa && npm run dev`
+  - E2E: `cd mobile-pwa && npx playwright test`
+- Use MCP Playwright to navigate `http://localhost:5173` and verify primary screens render data without errors before closing.

@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+# Environment & LLM Assumptions
+
+- The Hive can start without external API keys; sandbox mode is supported.
+- If a local LLM is required, prefer Ollama; do not block startup on keys.
+- Avoid introducing hard requirements for `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` for local dev.
+
+Reference fallback config: [app/core/autonomous_development_engine.py](mdc:app/core/autonomous_development_engine.py)

@@ -1,0 +1,35 @@
+---
+alwaysApply: true
+---
+# Development Process (Pragmatic, Value-First)
+
+## Prioritization
+
+- Apply Pareto: ship the 20% that delivers 80% value
+- Focus on must-have flows in the core user journey first
+
+## TDD Workflow
+
+1) Write a failing test that defines expected behavior
+2) Implement the minimal code to pass
+3) Refactor with tests green
+
+## Engineering Principles
+
+- YAGNI: avoid speculative complexity
+- Clean architecture boundaries (data / domain / presentation)
+- Dependency injection for testability
+- Meaningful names; self-documenting code
+
+## Implementation Approach
+
+- Prefer vertical slices over broad abstractions
+- Favor simple solutions over clever ones
+- Timebox exploration to 30m; seek input if blocked
+
+## Workflow After Each Change
+
+1) Run affected tests
+2) Address code smells immediately
+3) Commit with descriptive message linking to requirements (see [docs/PLAN.md](mdc:docs/PLAN.md))
+4) Move to the next highest priority item

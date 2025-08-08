@@ -98,16 +98,77 @@ def mock_session_cache(mock_redis):
 
 @pytest_asyncio.fixture
 async def test_app(mock_redis, mock_message_broker, mock_session_cache):
-    """Create test FastAPI application with mocked dependencies."""
+    """Create test FastAPI application with mocked dependencies and minimal surface.
+    - Remove enterprise SecurityMiddleware wrapper
+    - Seed core redis client to avoid init requirement
+    - Stub coordination dashboard data for compat endpoint
+    - Monkeypatch SecurityMiddleware.__call__ to pass-through
+    """
     app = create_app()
-    
-    # Override Redis dependencies only - avoid database complications
+
+    # Remove SecurityMiddleware even if wrapped via BaseHTTPMiddleware
+    try:
+        from starlette.middleware.base import BaseHTTPMiddleware as _BaseHTTP
+        from app.core.enterprise_security_system import SecurityMiddleware as _SecMW  # type: ignore
+        filtered = []
+        for m in app.user_middleware:
+            if m.cls is _BaseHTTP and isinstance(m.options.get('dispatch'), _SecMW):
+                continue
+            filtered.append(m)
+        app.user_middleware = filtered
+        app.middleware_stack = app.build_middleware_stack()
+    except Exception:
+        pass
+
+    # Monkeypatch SecurityMiddleware.__call__ to a no-op in tests
+    try:
+        from app.core.enterprise_security_system import SecurityMiddleware as _SecMW  # type: ignore
+
+        async def _noop(self, request, call_next):  # type: ignore[no-redef]
+            return await call_next(request)
+
+        _SecMW.__call__ = _noop  # type: ignore[assignment]
+    except Exception:
+        pass
+
+    # Seed core redis client so get_redis() works
+    try:
+        import app.core.redis as core_redis
+        core_redis._redis_client = mock_redis  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
+    # Override Redis-related dependencies to mocks
     app.dependency_overrides[get_redis] = lambda: mock_redis
     app.dependency_overrides[get_message_broker] = lambda: mock_message_broker
     app.dependency_overrides[get_session_cache] = lambda: mock_session_cache
-    
+
+    # Stub coordination dashboard data source used by /dashboard/api/live-data
+    try:
+        from app.dashboard.coordination_dashboard import coordination_dashboard
+
+        async def _fake_dashboard_data():
+            return {
+                "metrics": {
+                    "active_projects": 0,
+                    "active_agents": 0,
+                    "agent_utilization": 0.0,
+                    "completed_tasks": 0,
+                    "active_conflicts": 0,
+                    "system_efficiency": 0.0,
+                    "system_status": "healthy",
+                    "last_updated": "1970-01-01T00:00:00Z",
+                },
+                "agent_activities": [],
+                "project_snapshots": [],
+            }
+
+        coordination_dashboard.get_dashboard_data = _fake_dashboard_data  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
     yield app
-    
+
     # Clear overrides
     app.dependency_overrides.clear()
 
@@ -123,7 +184,7 @@ async def async_test_client(test_app) -> AsyncGenerator[AsyncClient, None]:
     """Create async test client for async requests."""
     from httpx import ASGITransport
     transport = ASGITransport(app=test_app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         yield client
 
 

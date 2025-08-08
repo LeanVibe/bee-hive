@@ -1,5 +1,7 @@
 # LeanVibe Agent Hive 2.0 - Strategic Roadmap
 
+> NOTE: Archived. See `docs/TODO.md` (live plan), `docs/PRD.md`, and `docs/CORE.md`.
+
 ## Phase 2: Autonomous Development Collective
 
 ### 🎯 VISION

@@ -1,0 +1,64 @@
+# Page snapshot
+
+```yaml
+- text: 🤖
+- heading "Agent Hive" [level=1]
+- paragraph: Autonomous Development
+- navigation:
+  - text: Main
+  - list:
+    - listitem:
+      - button "Dashboard": 📊 Dashboard Dashboard
+    - listitem:
+      - button "Agents": 🤖 Agents 3 Agents
+    - listitem:
+      - button "Tasks": ✅ Tasks Tasks
+    - listitem:
+      - button "System Health": 💚 System Health System Health
+    - listitem:
+      - button "Performance Analytics": 📈 Performance Analytics Performance Analytics
+  - text: Administration
+  - list:
+    - listitem:
+      - button "Settings": ⚙️ Settings Settings
+- text: All systems operational
+- banner:
+  - button "Open menu":
+    - img
+  - text: HO
+  - button "2":
+    - img
+    - text: "2"
+  - text: Online
+- main:
+  - text: System Operational 4/5 agents active • 1 critical issues
+  - button:
+    - img
+  - text: 📈 Developer Productivity 78% good 4 Active Agents 3 Recommendations
+  - button "All Alerts 2"
+  - button "Critical (1)"
+  - button "High (1)"
+  - heading "🚨 Priority Alerts (Attention Required)" [level=2]
+  - text: Agent Communication Failure critical Backend developer agent lost connection - may impact active development tasks Restart agent or check network connectivity 2-3 min High Memory Usage Detected high System memory usage at 87% - consider scaling or optimization Review running processes and scale resources 5-10 min
+  - heading "⚡ Quick Actions" [level=2]
+  - text: 🚀 Start Development 5-30 min 🔍 Check Agent Health < 1 min 🤖 Add Agent 1-2 min 📊 Full Dashboard < 30 sec
+- navigation:
+  - button "Dashboard":
+    - img
+    - text: Dashboard
+  - button "Autonomous":
+    - img
+    - text: Autonomous
+  - button "Tasks":
+    - img
+    - text: Tasks
+  - button "Agents":
+    - img
+    - text: Agents
+  - button "Analytics":
+    - img
+    - text: Analytics
+  - button "Settings":
+    - img
+    - text: Settings
+```

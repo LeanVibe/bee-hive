@@ -1,5 +1,8 @@
 # Product Requirements Document (PRD) - LeanVibe Agent Hive Rewrite
 
+> --- ARCHIVED DOCUMENT ---
+> This document is superseded by `docs/PRD.md`, `docs/CORE.md`, and `docs/ARCHITECTURE.md`.
+
 ## Executive Summary
 
 **Product**: LeanVibe Agent Hive 2.0 - Autonomous Multi-Agent Development System

@@ -1,5 +1,8 @@
 # LeanVibe Agent Hive Rewrite - System Architecture Specifications
 
+> --- ARCHIVED DOCUMENT ---
+> This document is superseded by `docs/ARCHITECTURE.md` and `docs/CORE.md`.
+
 ## Executive Summary
 
 The LeanVibe Agent Hive rewrite is a comprehensive multi-agent orchestration system designed for autonomous software development using Claude instances. This document outlines the technical architecture, database design, and implementation specifications for a complete ground-up rewrite incorporating modern patterns and lessons learned from existing systems.

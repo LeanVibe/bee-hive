@@ -20,6 +20,8 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+logger = structlog.get_logger()
+
 try:
     from ..core.coordination import coordination_engine, ProjectStatus, ConflictType
     COORDINATION_ENGINE_AVAILABLE = True
@@ -31,7 +33,6 @@ except ImportError as e:
     ConflictType = None
 from ..core.config import settings
 
-logger = structlog.get_logger()
 router = APIRouter()
 
 # Dashboard templates

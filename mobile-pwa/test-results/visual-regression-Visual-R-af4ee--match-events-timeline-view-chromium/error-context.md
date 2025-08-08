@@ -1,0 +1,111 @@
+# Page snapshot
+
+```yaml
+- text: 🤖
+- heading "Agent Hive" [level=1]
+- paragraph: Autonomous Development
+- button "Collapse sidebar": ◀
+- navigation:
+  - text: Main
+  - list:
+    - listitem:
+      - button "Dashboard": 📊 Dashboard Dashboard
+    - listitem:
+      - button "Agents": 🤖 Agents 3 Agents
+    - listitem:
+      - button "Tasks": ✅ Tasks Tasks
+    - listitem:
+      - button "System Health": 💚 System Health System Health
+    - listitem:
+      - button "Performance Analytics": 📈 Performance Analytics Performance Analytics
+  - text: Administration
+  - list:
+    - listitem:
+      - button "Settings": ⚙️ Settings Settings
+- text: All systems operational
+- main:
+  - heading "Agent Dashboard" [level=1]:
+    - img
+    - text: Agent Dashboard
+  - text: "Live • 0s ago Last sync: just now"
+  - button "Disable real-time updates": 🔴 Live
+  - button "Refresh dashboard data":
+    - img
+  - tablist "Dashboard navigation":
+    - tab "Overview"
+    - tab "Tasks"
+    - tab "Agents"
+    - tab "Events" [selected]
+    - tab "Performance"
+    - tab "Oversight"
+    - tab "Control"
+    - tab "🚨 Coordination"
+  - main:
+    - link "Skip to main content":
+      - /url: "#main-content"
+    - text: Real-time updates connected
+    - tabpanel:
+      - heading "System Events Timeline" [level=2]
+      - log "System events and activities timeline":
+        - heading "Event Timeline LIVE" [level=3]:
+          - img
+          - text: Event Timeline LIVE
+        - button "Pause updates":
+          - img
+        - button "Clear all events":
+          - img
+        - button "Scroll to latest":
+          - img
+        - combobox:
+          - option "All Agents" [selected]
+          - option "agent-001"
+          - option "agent-002"
+          - option
+        - combobox:
+          - option "All Types" [selected]
+          - option "agent status change"
+          - option "conflict detected"
+          - option "project progress"
+        - combobox:
+          - option "All Levels" [selected]
+          - option "Info"
+          - option "Success"
+          - option "Warning"
+          - option "Error"
+        - heading "Development Agent is active" [level=4]
+        - text: 0s ago agent-001 agent status change
+        - paragraph: Implementing mobile PWA features
+        - strong: "performance_score:"
+        - text: "92"
+        - strong: "specializations:"
+        - text: frontendpwatypescript
+        - heading "QA Agent is idle" [level=4]
+        - text: 0s ago agent-002 agent status change
+        - paragraph: No active task
+        - strong: "performance_score:"
+        - text: "88"
+        - strong: "specializations:"
+        - text: testingautomationquality-assurance
+        - heading "Resource Contention in Dashboard Enhancement" [level=4]
+        - text: 0s ago agent-001 conflict detected
+        - paragraph: Multiple agents trying to access the same configuration file
+        - strong: "impact_score:"
+        - text: "3"
+        - strong: "auto_resolvable:"
+        - text: "true"
+        - heading "Dashboard Enhancement at 75% completion" [level=4]
+        - text: 0s ago project progress
+        - paragraph: 8 tasks completed, 3 in progress
+        - strong: "progress:"
+        - text: "75"
+        - strong: "quality_score:"
+        - text: "95"
+        - heading "Performance Optimization at 100% completion" [level=4]
+        - text: 0s ago project progress
+        - paragraph: 12 tasks completed, 0 in progress
+        - strong: "progress:"
+        - text: "100"
+        - strong: "quality_score:"
+        - text: "98"
+- text: Switched to System events timeline view
+```

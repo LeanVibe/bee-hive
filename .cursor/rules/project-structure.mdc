@@ -1,0 +1,45 @@
+---
+alwaysApply: true
+---
+# Bee Hive / HiveOps — Project Structure & Startup
+
+This workspace contains a FastAPI backend and a Lit + Vite mobile PWA. The server-rendered dashboard is deprecated; use API/WebSocket endpoints only.
+
+## Entry Points
+
+- Backend app: [app/main.py](mdc:app/main.py) exports `app` for Uvicorn
+- Mobile PWA: [mobile-pwa/src/app.ts](mdc:mobile-pwa/src/app.ts), router at [mobile-pwa/src/router/router.ts](mdc:mobile-pwa/src/router/router.ts)
+
+## Core Interfaces
+
+- WebSocket: [app/api/dashboard_websockets.py](mdc:app/api/dashboard_websockets.py) → `/api/dashboard/ws/dashboard`
+- REST live data (compat): [app/api/dashboard_compat.py](mdc:app/api/dashboard_compat.py) → `/dashboard/api/live-data`
+- Health: `GET /health`
+
+## Frontend Services
+
+- Backend adapter & WS wiring: [mobile-pwa/src/services/backend-adapter.ts](mdc:mobile-pwa/src/services/backend-adapter.ts)
+- System health service: [mobile-pwa/src/services/system-health.ts](mdc:mobile-pwa/src/services/system-health.ts)
+
+## Startup (no external API keys required)
+
+```sh
+# Infra
+docker compose up -d postgres redis
+
+# Backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Mobile PWA
+cd mobile-pwa && npm ci && npm run dev
+# Visit the dev URL (e.g., http://localhost:5173)
+```
+
+## Policies
+
+- Do NOT reintroduce server-rendered dashboard routes. Use API/WebSocket endpoints only. See [backend-dashboard-policy.mdc](mdc:.cursor/rules/backend-dashboard-policy.mdc)
+- Brand as “HiveOps.” Default title lives in [mobile-pwa/src/components/layout/app-header.ts](mdc:mobile-pwa/src/components/layout/app-header.ts)
+
+## Notes
+
+- Postgres/Redis are expected (docker-compose). The app can run in sandbox mode without external LLM keys.

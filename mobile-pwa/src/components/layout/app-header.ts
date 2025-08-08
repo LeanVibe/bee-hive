@@ -55,14 +55,17 @@ export class AppHeader extends LitElement {
     }
     
     .logo-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      width: 28px;
+      height: 28px;
+      background: #1e40af;
       border-radius: 0.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.25rem;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.825rem;
+      letter-spacing: -0.02em;
     }
     
     .title {
@@ -181,7 +184,7 @@ export class AppHeader extends LitElement {
       case '/settings':
         return 'Settings'
       default:
-        return 'Agent Hive'
+        return 'HiveOps'
     }
   }
 
@@ -261,7 +264,7 @@ export class AppHeader extends LitElement {
           ` : ''}
           
           <div class="logo">
-            <div class="logo-icon">🤖</div>
+            <div class="logo-icon" aria-label="HiveOps brand">HO</div>
             <span class="title">${this.getPageTitle()}</span>
           </div>
         </div>

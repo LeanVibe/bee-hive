@@ -1,0 +1,214 @@
+# Page snapshot
+
+```yaml
+- text: 🤖
+- heading "Agent Hive" [level=1]
+- paragraph: Autonomous Development
+- button "Collapse sidebar": ◀
+- navigation:
+  - text: Main
+  - list:
+    - listitem:
+      - button "Dashboard": 📊 Dashboard Dashboard
+    - listitem:
+      - button "Agents": 🤖 Agents 3 Agents
+    - listitem:
+      - button "Tasks": ✅ Tasks Tasks
+    - listitem:
+      - button "System Health": 💚 System Health System Health
+    - listitem:
+      - button "Performance Analytics": 📈 Performance Analytics Performance Analytics
+  - text: Administration
+  - list:
+    - listitem:
+      - button "Settings": ⚙️ Settings Settings
+- text: All systems operational
+- main:
+  - heading "Agent Dashboard" [level=1]:
+    - img
+    - text: Agent Dashboard
+  - text: "Live • 0s ago 1 Last sync: just now"
+  - button "Disable real-time updates": 🔴 Live
+  - button "Refresh dashboard data":
+    - img
+  - tablist "Dashboard navigation":
+    - tab "Overview" [selected]
+    - tab "Tasks"
+    - tab "Agents"
+    - tab "Events"
+    - tab "Performance"
+    - tab "Oversight"
+    - tab "Control"
+    - tab "🚨 Coordination"
+  - paragraph:
+    - strong: "Error:"
+    - text: Connection to backend lost - using cached data
+  - button "Try Again"
+  - main:
+    - link "Skip to main content":
+      - /url: "#main-content"
+    - tabpanel:
+      - heading "Dashboard Overview" [level=2]
+      - region "System metrics summary":
+        - 'img "Active tasks: 4"': Active Tasks
+        - 'img "Completed tasks: 20"': Completed Tasks
+        - 'img "Active agents: 1"': Active Agents
+        - 'img "System health: degraded"': System Health
+        - 'img "CPU usage: 87 percent"':
+          - img
+          - text: CPU Usage
+        - 'img "Memory usage: 13 percent"':
+          - img
+          - text: Memory Usage
+        - 'img "Recent events: 5"': Recent Events
+        - 'img "Healthy components: 1"': Healthy Components
+      - region "Agent health status":
+        - region "Agent health and status information":
+          - button "Activate 5-Agent Team":
+            - img
+            - text: Activate 5-Agent Team
+          - text: System Not Ready (1/2 agents active)
+          - heading "Agent Health & Management" [level=3]:
+            - img
+            - text: Agent Health & Management
+          - button "Refresh agent data":
+            - img
+          - combobox:
+            - option "Sort by Name" [selected]
+            - option "Sort by Status"
+            - option "Sort by Performance"
+            - option "Sort by Uptime"
+          - combobox:
+            - option "All Agents" [selected]
+            - option "Active Only"
+            - option "Idle Only"
+            - option "Errors Only"
+            - option "Offline Only"
+          - text: "Active: 1 Idle: 1 Errors: 0 Offline: 0"
+          - checkbox
+          - text: Development Agent
+          - img
+          - text: 92% task-agent-001 CPU Usage
+          - img
+          - text: 48.1 Memory
+          - img
+          - text: 91.9 Tokens/min
+          - img
+          - text: 7.5K Response Time
+          - img
+          - text: 1.7K
+          - img
+          - text: CPU stable
+          - img
+          - text: Memory stable
+          - button "Pause":
+            - img
+            - text: Pause
+          - button "Config":
+            - img
+            - text: Config
+          - button "Restart":
+            - img
+            - text: Restart
+          - button "Logs":
+            - img
+            - text: Logs
+          - button "Stop":
+            - img
+            - text: Stop
+          - text: "Uptime: 0m Last seen: 11:58:44 PM"
+          - checkbox
+          - text: QA Agent
+          - img
+          - text: 88% CPU Usage
+          - img
+          - text: 42.6 Memory
+          - img
+          - text: 77.5 Tokens/min
+          - img
+          - text: 9.9K Response Time
+          - img
+          - text: "356.4"
+          - img
+          - text: CPU stable
+          - img
+          - text: Memory stable
+          - button "Resume":
+            - img
+            - text: Resume
+          - button "Config":
+            - img
+            - text: Config
+          - button "Restart":
+            - img
+            - text: Restart
+          - button "Logs":
+            - img
+            - text: Logs
+          - button "Stop":
+            - img
+            - text: Stop
+          - text: "Uptime: 0m Last seen: 11:58:44 PM"
+      - region "System events timeline":
+        - region "Recent system events and activities":
+          - heading "Event Timeline LIVE" [level=3]:
+            - img
+            - text: Event Timeline LIVE
+          - button "Pause updates":
+            - img
+          - button "Clear all events":
+            - img
+          - button "Scroll to latest":
+            - img
+          - combobox:
+            - option "All Agents" [selected]
+            - option "agent-001"
+            - option "agent-002"
+            - option
+          - combobox:
+            - option "All Types" [selected]
+            - option "agent status change"
+            - option "conflict detected"
+            - option "project progress"
+          - combobox:
+            - option "All Levels" [selected]
+            - option "Info"
+            - option "Success"
+            - option "Warning"
+            - option "Error"
+          - heading "Development Agent is active" [level=4]
+          - text: 0s ago agent-001 agent status change
+          - paragraph: Implementing mobile PWA features
+          - strong: "performance_score:"
+          - text: "92"
+          - strong: "specializations:"
+          - text: frontendpwatypescript
+          - heading "QA Agent is idle" [level=4]
+          - text: 0s ago agent-002 agent status change
+          - paragraph: No active task
+          - strong: "performance_score:"
+          - text: "88"
+          - strong: "specializations:"
+          - text: testingautomationquality-assurance
+          - heading "Resource Contention in Dashboard Enhancement" [level=4]
+          - text: 0s ago agent-001 conflict detected
+          - paragraph: Multiple agents trying to access the same configuration file
+          - strong: "impact_score:"
+          - text: "3"
+          - strong: "auto_resolvable:"
+          - text: "true"
+          - heading "Dashboard Enhancement at 75% completion" [level=4]
+          - text: 0s ago project progress
+          - paragraph: 8 tasks completed, 3 in progress
+          - strong: "progress:"
+          - text: "75"
+          - strong: "quality_score:"
+          - text: "95"
+          - heading "Performance Optimization at 100% completion" [level=4]
+          - text: 0s ago project progress
+          - paragraph: 12 tasks completed, 0 in progress
+          - strong: "progress:"
+          - text: "100"
+          - strong: "quality_score:"
+          - text: "98"
+```

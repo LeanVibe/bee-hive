@@ -1,3 +1,12 @@
+# HiveOps (formerly LeanVibe Agent Hive)
+
+> Canonical docs have moved:
+> - Overview: `docs/CORE.md`
+> - Architecture & local startup: `docs/ARCHITECTURE.md`
+> - Rolled-up PRD: `docs/PRD.md`
+>
+> Server-rendered dashboards are deprecated; use the mobile PWA + API/WS.
+
 # 🚀 LeanVibe Agent Hive 2.0
 
 **Working autonomous development prototype. Experience AI agents collaborating on software development tasks with real-time demonstrations.**
