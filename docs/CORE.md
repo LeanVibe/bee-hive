@@ -24,6 +24,12 @@ Key interfaces:
 - REST (compat): `/dashboard/api/live-data`
 - Health: `GET /health`
 
+## Current Status (Aug 2025)
+
+- Backend dashboard decommissioned; PWA-first confirmed
+- Contract tests cover REST/WS core paths; WS schema enforced
+- CI/Canary/Nightly guardrails in place to extend safe autonomous operation window
+
 ## Current Scope (Now → Next → Later)
 - Now: API/WS endpoints, PWA dashboard, basic observability
 - Next: Design tokens/dark mode, Playwright coverage, UX polish

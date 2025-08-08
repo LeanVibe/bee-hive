@@ -14,11 +14,22 @@ Backend: FastAPI (Python), Postgres (+pgvector), Redis. Mobile PWA: Lit + Vite. 
 
 - Backend adapter connects WebSocket and REST; mobile-first UI renders live metrics/events
 
+Validation
+
+- PWA unit tests validate `BackendAdapter` fetch/cache/fallback and `BaseService` helpers
+- WS message schema enforces shape for initial/updates; contract tests validate runtime messages
+
 ## Local Startup
 
 - Infra: `docker compose up -d postgres redis`
 - Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
 - PWA: `cd mobile-pwa && npm ci && npm run dev`
+
+CI/CD Guardrails
+
+- PR: focused backend tests + PWA vitest + schema→types check; coverage gate 40%
+- Nightly: focused tests + Playwright smoke + mutation tests (limited scope)
+- Canary: synthetic probes for /health, /metrics, live-data, and WS handshake
 
 ## Optional Enterprise (reference only)
 

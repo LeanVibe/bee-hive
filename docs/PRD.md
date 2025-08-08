@@ -42,3 +42,15 @@ A mobile-first dashboard and API/WS platform for autonomous multi-agent developm
 - Detailed PRDs: `docs/core/*`
 - Architecture: `docs/ARCHITECTURE.md`
 - Core overview: `docs/CORE.md`
+
+## Current Validation Status (Aug 2025)
+
+- PWA-first core journey validated end-to-end:
+  - REST live data `/dashboard/api/live-data`: transform + fallback covered by contract tests
+  - WebSocket `/api/dashboard/ws/dashboard`: connect, subscribe confirmation, stats, broadcast (valid + invalid) with schema-based contract tests
+  - Health/metrics: `/health` structure and `/metrics` exposition + fallback path tests
+  - PWA services: `BackendAdapter` (fetch/cache/fallback) and `BaseService` helpers covered by unit tests
+- Quality gates in place:
+  - CI (PR): focused backend tests + PWA vitest + schema→types enforcement; coverage gate at 40% for targeted modules
+  - Nightly: focused tests + Playwright smoke + limited mutation tests
+  - Canary: synthetic probes for `/health`, `/metrics`, `/dashboard/api/live-data`, and WS handshake
