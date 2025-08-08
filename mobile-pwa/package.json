@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .ts,.js --fix",
     "format": "prettier --write src/",
     "test": "vitest run",
+    "generate:schemas": "npx json-schema-to-typescript -i ../schemas/ws_messages.schema.json -o src/types/ws-messages.d.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
