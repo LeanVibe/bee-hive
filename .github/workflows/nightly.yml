@@ -1,0 +1,35 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mobile-pwa/package.json
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          cd mobile-pwa && npm ci
+      - name: Run focused backend tests + coverage
+        run: pytest -q
+      - name: Run PWA unit tests
+        run: cd mobile-pwa && npm run -s test
+      - name: Run Playwright smoke
+        run: |
+          cd mobile-pwa
+          npx playwright install --with-deps
+          npm run -s test:e2e -- --grep "smoke" || npm run -s test:e2e -- tests/e2e/smoke-dashboard.spec.ts

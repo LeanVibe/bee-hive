@@ -1,0 +1,21 @@
+name: Canary
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run synthetic probes against CANARY_URL
+        env:
+          CANARY_URL: ${{ secrets.CANARY_URL }}
+        run: |
+          python -m pip install httpx websockets
+          python scripts/synthetic_probes.py
