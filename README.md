@@ -20,8 +20,17 @@ WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
   - `make test-prompt` (prompt optimization engines)
 
 ### WebSocket contract invariants
-- All generic `error` frames include a `timestamp` string
-- All `data_error` frames include `timestamp` and `error` message
+- All generic `error` frames include a `timestamp` string and `correlation_id`
+- All `data_error` frames include `timestamp`, `error` message, and `correlation_id`
+- `data_response` messages include `type`, `data_type`, `data`
+- `pong` frames include a `timestamp`
+
+### WebSocket safety & observability
+- Per-connection token bucket rate limiting (20 rps, burst 40); over-limit requests receive an `error` periodically
+- Inbound message size capped (64KB); oversize messages receive an `error`
+- Max subscriptions per connection enforced; unknown subscriptions produce an `error`, responses return sorted unique lists
+- Outbound frames include `correlation_id` for tracing
+- Prometheus metrics at `/api/dashboard/metrics/websockets` include WS counters (messages sent/received/dropped, errors, connections)
 
 ## Policies
 
