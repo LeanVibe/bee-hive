@@ -9,14 +9,12 @@ __version__ = "2.0.0"
 __author__ = "LeanVibe Agent Hive Team"
 __email__ = "dev@leanvibe.com"
 
-# Load environment variables before importing config
+# Load environment variables (optional). Avoid importing settings here to
+# prevent requiring env vars at import time (breaks CI and tests).
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    # If python-dotenv is not installed, continue without it
     pass
 
-from .core.config import settings
-
-__all__ = ["settings"]
+__all__: list[str] = []
