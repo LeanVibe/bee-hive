@@ -185,6 +185,8 @@ class DashboardWebSocketManager:
             ):
                 connection.rate_limit_notified_at = now
                 await self._send_to_connection(connection_id, make_error("Rate limit exceeded"))
+            # Count dropped
+            self.metrics["messages_dropped_rate_limit_total"] += 1
             return
         
         message_type = message.get("type")
@@ -318,6 +320,8 @@ class DashboardWebSocketManager:
                 message["correlation_id"] = str(uuid.uuid4())
             await connection.websocket.send_text(json.dumps(message))
             self.metrics["messages_sent_total"] += 1
+            if message.get("type") in {"error", "data_error"}:
+                self.metrics["errors_sent_total"] += 1
             return True
         except Exception as e:
             logger.warning(
