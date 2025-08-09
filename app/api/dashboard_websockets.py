@@ -25,7 +25,7 @@ from ..core.redis import get_redis, get_message_broker
 from ..models.agent import Agent, AgentStatus
 from ..models.task import Task, TaskStatus
 from .dashboard_monitoring import get_coordination_metrics, get_agent_health_data, get_task_distribution_data
-from .ws_utils import make_error, make_data_error
+from .ws_utils import make_error, make_data_error, WS_CONTRACT_VERSION
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard-websockets"])
@@ -120,7 +120,8 @@ class DashboardWebSocketManager:
             "type": "connection_established",
             "connection_id": connection_id,
             "subscriptions": list(connection.subscriptions),
-            "server_time": datetime.utcnow().isoformat()
+            "server_time": datetime.utcnow().isoformat(),
+            "contract_version": WS_CONTRACT_VERSION,
         })
         
         logger.info("Dashboard WebSocket connected", 
@@ -813,7 +814,8 @@ async def websocket_dashboard_all(
             "connection_info": {
                 "connection_id": connection_id,
                 "client_type": "full_dashboard",
-                "server_time": datetime.utcnow().isoformat()
+                "server_time": datetime.utcnow().isoformat(),
+                "contract_version": WS_CONTRACT_VERSION,
             }
         })
         

@@ -18,6 +18,7 @@
   - TS Types: `mobile-pwa/src/types/ws-messages.d.ts` (generated in CI)
   - Message variants: `connection_established`, `dashboard_initialized`, `subscription_updated`, `*_update`, `data_response`, `error`, `data_error`, `critical_alert`
   - Additional fields allowed; `correlation_id` is present on outbound frames
+  - `contract_version` is included in `connection_established` and `dashboard_initialized`
 
 - Invariants
   - All `error` and `data_error` frames include `timestamp` and `correlation_id`

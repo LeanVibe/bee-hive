@@ -11,6 +11,10 @@ def _new_correlation_id() -> str:
     return str(uuid.uuid4())
 
 
+# Versioning for WS contract/messages
+WS_CONTRACT_VERSION = "1.0.0"
+
+
 def make_error(message: str) -> Dict[str, str]:
     return {
         "type": "error",
