@@ -25,6 +25,7 @@ from ..core.redis import get_redis, get_message_broker
 from ..models.agent import Agent, AgentStatus
 from ..models.task import Task, TaskStatus
 from .dashboard_monitoring import get_coordination_metrics, get_agent_health_data, get_task_distribution_data
+from .ws_utils import make_error, make_data_error
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard-websockets"])
@@ -180,11 +181,7 @@ class DashboardWebSocketManager:
             logger.warning("Unknown WebSocket message type", 
                           connection_id=connection_id, 
                           message_type=message_type)
-            await self._send_to_connection(connection_id, {
-                "type": "error",
-                "message": f"Unknown message type: {message_type}",
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            await self._send_to_connection(connection_id, make_error(f"Unknown message type: {message_type}"))
     
     async def broadcast_to_subscription(
         self, 
@@ -287,12 +284,7 @@ class DashboardWebSocketManager:
                 }
                 
             else:
-                await self._send_to_connection(connection_id, {
-                    "type": "data_error",
-                    "data_type": data_type,
-                    "error": f"Unknown data type: {data_type}",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await self._send_to_connection(connection_id, make_data_error(data_type, f"Unknown data type: {data_type}"))
                 return
             
             await self._send_to_connection(connection_id, {
@@ -302,12 +294,7 @@ class DashboardWebSocketManager:
             })
             
         except Exception as e:
-            await self._send_to_connection(connection_id, {
-                "type": "data_error",
-                "data_type": data_type,
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            await self._send_to_connection(connection_id, make_data_error(data_type, str(e)))
     
     async def _start_background_tasks(self) -> None:
         """Start background tasks for real-time updates."""
