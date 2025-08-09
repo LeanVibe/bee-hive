@@ -156,8 +156,14 @@ Acceptance criteria for this tranche:
 - Simulate Redis disconnects and ensure listener backoff and recovery (unit with monkeypatch)
 - WS reconnection strategy documented for the PWA (follow-up in PWA repo)
 
-4) Security hardening (nice-to-have)
-- Optional origin allowlist and token-based auth for WS (feature-flag); tests off by default
+4) Security hardening (high value, feature-flagged)
+- Add WS auth/allowlist feature flag. Default off for dev; on in prod via env.
+- CLI `doctor` should surface misconfiguration.
+- Tests: only when flag enabled; otherwise skip.
+
+Implementation notes:
+- Env flags: `WS_AUTH_REQUIRED` (true/false), `WS_ALLOWED_ORIGINS` (comma list)
+- Behavior: if allowlist set and `Origin` not in list, connection is closed with 4403
 
 Acceptance criteria for next wave:
 - Backpressure disconnect logic in place and covered by tests

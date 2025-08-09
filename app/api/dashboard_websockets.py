@@ -84,6 +84,13 @@ class DashboardWebSocketManager:
         }
         # Backpressure configuration
         self.backpressure_disconnect_threshold: int = 5
+        # Optional WS auth/allowlist (feature-flagged via env)
+        import os
+        self.auth_required: bool = os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
+        self.allowed_origins: Optional[Set[str]] = None
+        allowlist = os.environ.get("WS_ALLOWED_ORIGINS")
+        if allowlist:
+            self.allowed_origins = {o.strip() for o in allowlist.split(",") if o.strip()}
         
     async def connect(
         self, 
@@ -93,6 +100,14 @@ class DashboardWebSocketManager:
         subscriptions: Optional[List[str]] = None
     ) -> WebSocketConnection:
         """Connect a new WebSocket client with subscription management."""
+        # Optional origin allowlist check
+        try:
+            origin = websocket.headers.get("origin") or websocket.headers.get("Origin")
+        except Exception:
+            origin = None
+        if self.allowed_origins and origin and origin not in self.allowed_origins:
+            await websocket.close(code=4403)
+            return None  # type: ignore
         await websocket.accept()
         
         connection = WebSocketConnection(
