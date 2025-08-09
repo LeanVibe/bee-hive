@@ -94,6 +94,20 @@ class AgentHiveCLI:
             return response.status_code == 200
         except:
             return False
+
+    def check_pwa_dev(self) -> Optional[str]:
+        """Detect running PWA dev server and return URL if available."""
+        for url in [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]:
+            try:
+                r = requests.get(url, timeout=1)
+                if r.status_code < 500:
+                    return url
+            except Exception:
+                continue
+        return None
     
     def get_system_status(self) -> Dict[str, Any]:
         """Get detailed system status."""
@@ -309,9 +323,10 @@ def setup(skip_deps: bool, docker_only: bool):
             # Clone repository
             install_dir = Path.home() / "agent-hive"
             try:
+                repo_url = os.environ.get("AGENT_HIVE_REPO_URL", "https://github.com/LeanVibe/bee-hive.git")
                 subprocess.run([
                     "git", "clone", 
-                    "https://github.com/leanvibe/agent-hive-2.0.git",
+                    repo_url,
                     str(install_dir)
                 ], check=True, capture_output=True)
                 
@@ -378,7 +393,8 @@ def start(quick: bool, dashboard: bool):
         table.add_column("Service", style="cyan")
         table.add_column("URL", style="green")
         
-        table.add_row("🎛️ Dashboard", f"{cli_instance.api_base}/dashboard/")
+        pwa_url = cli_instance.check_pwa_dev()
+        table.add_row("📱 Mobile PWA", pwa_url or "(start via: cd mobile-pwa && npm run dev)")
         table.add_row("📊 API Docs", f"{cli_instance.api_base}/docs")
         table.add_row("🏥 Health", f"{cli_instance.api_base}/health")
         
@@ -386,7 +402,10 @@ def start(quick: bool, dashboard: bool):
         
         if dashboard:
             console.print("\n🖥️ Opening dashboard...")
-            webbrowser.open(f"{cli_instance.api_base}/dashboard/")
+            if pwa_url:
+                webbrowser.open(pwa_url)
+            else:
+                webbrowser.open(f"{cli_instance.api_base}/docs")
     else:
         console.print("❌ [red]Failed to start Agent Hive[/red]")
         console.print("💡 Try: agent-hive setup")
@@ -517,22 +536,90 @@ def dashboard(mobile_info: bool):
         console.print("💡 Try: agent-hive start")
         return
     
-    dashboard_url = f"{cli_instance.api_base}/dashboard/"
-    
+    # Prefer PWA dev if available, otherwise open API docs
+    pwa = cli_instance.check_pwa_dev()
+    target_url = pwa or f"{cli_instance.api_base}/docs"
     console.print("🎛️ [bold]Opening Agent Hive Dashboard[/bold]")
-    console.print(f"🌐 URL: {dashboard_url}")
+    console.print(f"🌐 URL: {target_url}")
     
     try:
-        webbrowser.open(dashboard_url)
+        webbrowser.open(target_url)
         console.print("✅ [green]Dashboard opened in browser[/green]")
     except Exception as e:
         console.print(f"⚠️ Could not auto-open browser: {e}")
-        console.print(f"Please manually visit: {dashboard_url}")
+        console.print(f"Please manually visit: {target_url}")
     
     if mobile_info:
         console.print("\n📱 [bold]Mobile Access[/bold]")
         console.print("Use the same URL on your mobile device for remote oversight")
         console.print("Features: Real-time monitoring, agent status, task progress")
+
+
+@cli.command()
+@click.option('--open', 'open_browser', is_flag=True, help='Open PWA if detected')
+def up(open_browser: bool):
+    """
+    ⬆️ Start services quickly and optionally open the PWA.
+    """
+    start(quick=True, dashboard=open_browser)
+
+
+@cli.command()
+def down():
+    """
+    ⬇️ Stop all services via Makefile/docker compose.
+    """
+    try:
+        subprocess.run(["make", "stop"], check=True)
+        console.print("✅ [green]All services stopped[/green]")
+    except subprocess.CalledProcessError as e:
+        console.print(f"❌ [red]Failed to stop services: {e}[/red]")
+
+
+@cli.command()
+def doctor():
+    """
+    🩺 Diagnose environment and provide actionable fixes.
+    """
+    checks = []
+    def add(name, ok, hint=""):
+        checks.append((name, ok, hint))
+
+    # Tooling
+    for tool in ["python3", "git", "docker", "node", "npm"]:
+        try:
+            subprocess.run([tool, "--version"], capture_output=True, check=True)
+            add(f"{tool}", True)
+        except Exception:
+            add(f"{tool}", False, f"Install {tool}")
+
+    # Ports
+    def port_free(host, port):
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.2)
+            return s.connect_ex((host, port)) != 0
+    add("Port 8000 available", port_free("127.0.0.1", 8000), "API port in use")
+    add("Port 5173 optional (PWA)", True if port_free("127.0.0.1", 5173) or cli_instance.check_pwa_dev() else False, "PWA dev port busy")
+
+    # Backend health
+    add("Backend health", cli_instance.check_system_health(), "Run: make dev or agent-hive start")
+
+    # WS metrics endpoint
+    try:
+        r = requests.get(f"{cli_instance.api_base}/api/dashboard/metrics/websockets", timeout=2)
+        add("WS metrics endpoint", r.status_code == 200, "Check backend routes")
+    except Exception:
+        add("WS metrics endpoint", False, "Backend not reachable or route missing")
+
+    # Render
+    table = Table(title="Environment Diagnostics")
+    table.add_column("Check", style="cyan")
+    table.add_column("Status")
+    table.add_column("Hint")
+    for name, ok, hint in checks:
+        table.add_row(name, "✅" if ok else "❌", hint)
+    console.print(table)
 
 
 @cli.command()
