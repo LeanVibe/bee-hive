@@ -288,6 +288,7 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Comprehensive health check endpoint aggregating all component status."""
+        from .api.ws_utils import WS_CONTRACT_VERSION
         from .core.database import get_async_session
         from .core.redis import get_redis
         from datetime import datetime
@@ -296,6 +297,7 @@ def create_app() -> FastAPI:
         health_status = {
             "status": "healthy",
             "version": "2.0.0",
+            "ws_contract_version": WS_CONTRACT_VERSION,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "components": {},
             "summary": {
