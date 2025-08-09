@@ -1,266 +1,29 @@
-# HiveOps (formerly LeanVibe Agent Hive)
+# HiveOps (Bee Hive)
 
-> Canonical docs have moved:
-> - Overview: `docs/CORE.md`
-> - Architecture & local startup: `docs/ARCHITECTURE.md`
-> - Rolled-up PRD: `docs/PRD.md`
->
-> Server-rendered dashboards are deprecated; use the mobile PWA + API/WS.
+Modern FastAPI backend with a Lit + Vite PWA for real‑time operational dashboards.
 
-### Quickstart (PWA-first, 2 terminals)
+## Quick start
 
-Backend + Infra
+- Infra: `docker compose up -d postgres redis`
+- Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
+- PWA: `cd mobile-pwa && npm ci && npm run dev` then open the dev URL
 
-```bash
-docker compose up -d postgres redis
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+Health: `GET http://localhost:8000/health`
+WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
 
-Mobile PWA
+## Tests
 
-```bash
-cd mobile-pwa
-npm ci
-npm run dev
-# Visit the dev URL (e.g., http://localhost:5173)
-```
+- Full: `make test`
+- Fast lanes:
+  - `make test-core-fast` (smoke + ws + prompt core)
+  - `make test-backend-fast` (contracts + core + smoke)
+  - `make test-prompt` (prompt optimization engines)
 
-Testing (focused, fast)
+## Policies
 
-```bash
-# Backend: contracts, websockets, smoke (with pragmatic coverage gate)
-pytest -q
+- No server-rendered dashboards; use API/WebSocket endpoints.
+- Brand as "HiveOps"; default title in `mobile-pwa/src/components/layout/app-header.ts`.
 
-# Frontend (PWA) unit tests
-cd mobile-pwa && npm run -s test
-```
+## Docs
 
-Note: tests that hit HTTP/WS endpoints run under TrustedHost; when using raw clients, include `Host: localhost:8000`.
-
-# 🚀 LeanVibe Agent Hive 2.0
-
-**Working autonomous development prototype. Experience AI agents collaborating on software development tasks with real-time demonstrations.**
-
-[![Setup Time](https://img.shields.io/badge/Setup_Time-5--15_min-green.svg)]()
-[![Development Status](https://img.shields.io/badge/Status-Working_Prototype-blue.svg)]()
-[![Core Features](https://img.shields.io/badge/Core_Features-Operational-success.svg)]()
-[![Autonomous](https://img.shields.io/badge/Autonomous_Development-✅_Working-success.svg)]()
-
----
-
-## ⚡ See It Working Right Now (No Setup Required)
-
-**Choose your 2-minute proof:**
-
-🎮 **[Try Sandbox Mode](docs/SANDBOX_MODE_GUIDE.md)** → Interactive autonomous development in your browser  
-🎥 **[Watch Live Demo](scripts/demos/autonomous_development_demo.py)** → See AI agents coordinate in real-time  
-📹 **[Video Showcase](docs/AUTONOMOUS_DEVELOPMENT_DEMO.md)** → 2-minute autonomous development overview
-
-*Experience the future of software development before any setup commitment*
-
----
-
-## 🚀 Ready to Build? Choose Your Experience
-
-**Ready to explore autonomous development? Choose your approach:**
-
-### 🎯 DevContainer (Recommended - Quick Setup)
-**Streamlined autonomous development environment:**
-```bash
-git clone https://github.com/LeanVibe/bee-hive.git
-code bee-hive  # Opens in VS Code
-# Click "Reopen in Container" when prompted
-# ✅ DONE! Autonomous AI agents ready to build
-```
-*Prerequisites: [VS Code](https://code.visualstudio.com/) + [DevContainers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) + [Docker Desktop](https://www.docker.com/products/docker-desktop/)*
-
-### ⚡ Professional Setup (5-15 minutes)
-**Full-featured development setup:**
-```bash
-git clone https://github.com/LeanVibe/bee-hive.git && cd bee-hive
-make setup
-echo "ANTHROPIC_API_KEY=your_key_here" >> .env.local
-make start
-```
-
-### 🎮 Keep Trying Sandbox
-**Not ready to install? [Continue in Sandbox Mode](docs/SANDBOX_MODE_GUIDE.md)**
-
-**✅ Success Indicator**: All methods result in working autonomous development at http://localhost:8000
-
----
-
-## 📋 Using Legacy Scripts?
-
-**If you've used old script names** (setup.sh, setup-fast.sh, start-fast.sh, etc.), they still work but now redirect to new standardized commands:
-
-- **Old**: `./setup.sh` → **New**: `make setup`
-- **Old**: `./start-fast.sh` → **New**: `make start`
-- **Old**: `./stop-fast.sh` → **New**: `make stop`
-
-**📖 Full migration guide**: [MIGRATION.md](MIGRATION.md)  
-**🎯 Professional interface**: `make help` - Self-documenting command system
-
----
-
-## 🏆 What Makes This Special
-
-### ✅ Actually Working Autonomous Development
-- **Multi-agent coordination**: Architect, developer, tester, reviewer agents collaborate
-- **Complete feature cycles**: Requirements → Code → Tests → Deployment
-- **Context memory**: Agents learn and remember your project patterns
-- **Self-healing**: Automatic error recovery and intelligent retry logic
-
-### ⚡ Professional Development Experience
-- **DevContainer setup available** - Streamlined configuration process
-- **Docker-based infrastructure** - Containerized development environment
-- **Working autonomous development** - Core functionality operational with ongoing improvements
-- **Comprehensive testing framework** - Test-driven development approach
-- **Professional command interface** - Make-based workflow system
-
-### 🛡️ Production-Ready Platform
-- **Enterprise security**: JWT auth, RBAC, comprehensive audit trails
-- **Real-time monitoring**: Live dashboards and system observability
-- **GitHub integration**: Automated PR creation and intelligent code review
-- **Mobile PWA**: Progressive web app for on-the-go monitoring
-
----
-
-## 🎯 Need More Information?
-
-### 📖 **Want Complete Details?**
-→ **[Full Documentation Guide](WELCOME.md)** - Comprehensive information with role-based paths
-
-### 🏢 **Enterprise Evaluation?**
-→ **[Enterprise Assessment](docs/enterprise/)** - Security, compliance, scalability analysis
-
-### 🛠️ **Developer Deep Dive?**
-→ **[Developer Resources](docs/developer/)** - Architecture, APIs, customization guides
-
-### 📊 **Executive Overview?**
-→ **[Business Case & ROI](docs/executive/)** - Value proposition, competitive analysis, implementation planning
-
----
-
-## ✅ Quick Validation (After Setup)
-
-**Verify everything is working:**
-```bash
-make health                                                # System health check
-curl http://localhost:8000/health                          # API health status  
-make sandbox                                               # Interactive autonomous demo
-```
-
----
-
-## 🛠️ Professional Developer Commands
-
-**All common operations available through standardized Makefile:**
-
-### Core Commands
-```bash
-make setup          # Complete system setup (fast profile)
-make start          # Start all services  
-make test           # Run comprehensive test suite
-make sandbox        # Interactive autonomous development demo
-make clean          # Clean up resources
-make help           # Show all available commands
-```
-
-### Setup Profiles
-```bash
-make setup              # Fast setup (5-8 min) [default]
-make setup-minimal      # Minimal setup for CI/CD (2-3 min)
-make setup-full         # Complete setup with all tools (10-15 min)
-make setup-devcontainer # DevContainer initialization (1-2 min)
-```
-
-### Service Management
-```bash
-make start              # Start services (fast profile)
-make start-minimal      # Start minimal services for CI/CD
-make start-full         # Start all services including monitoring
-make start-bg           # Start services in background
-make stop               # Stop all services
-make restart            # Restart all services
-```
-
-### Testing & Quality
-```bash
-make test               # Run all test suites
-make test-unit          # Run unit tests only
-make test-integration   # Run integration tests
-make test-performance   # Run performance benchmarks
-make test-security      # Run security scans
-make test-e2e           # Run end-to-end tests
-make test-smoke         # Run smoke tests
-```
-
-### Sandbox & Demonstrations
-```bash
-make sandbox            # Interactive sandbox mode
-make sandbox-demo       # Automated demo (5-minute presentation)
-make sandbox-auto       # Autonomous development showcase
-make sandbox-showcase   # Best-of showcase for external audiences
-```
-
-### Development & Monitoring
-```bash
-make dev                # Start development server with auto-reload
-make health             # Run comprehensive health check
-make logs               # View service logs
-make ps                 # Show service status
-make monitor            # Start monitoring (Prometheus + Grafana)
-```
-
-### Utilities
-```bash
-make clean              # Clean up temporary files and containers
-make status             # Show quick system status
-make env-info           # Show environment information
-make emergency-reset    # Emergency reset - stop everything
-```
-
-**🔧 All commands include enterprise-grade error handling, progress indicators, and detailed logging for professional development experience.**
-
-**Key URLs:**
-- **API Documentation**: http://localhost:8000/docs
-- **System Health**: http://localhost:8000/health
-- **Web Dashboard**: http://localhost:3000 (optional)
-
----
-
-## 🆘 Something Not Working?
-
-### Automated Help
-```bash
-make health           # Comprehensive system diagnostics and troubleshooting
-./health-check.sh     # Direct health check script (if needed)
-make setup             # Reset and retry setup
-```
-
-### Get Support
-- **Issues & Bugs**: [GitHub Issues](https://github.com/LeanVibe/bee-hive/issues)
-- **Questions & Discussion**: [GitHub Discussions](https://github.com/LeanVibe/bee-hive/discussions)
-- **Troubleshooting**: [Complete Guide](docs/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md)
-
----
-
-## 🎉 Success! What's Next?
-
-**You now have working autonomous development. Here's how to maximize it:**
-
-1. **🎯 Run the Demo**: `python scripts/demos/autonomous_development_demo.py`
-2. **📖 Learn More**: [Complete Documentation](WELCOME.md) with role-based guidance
-3. **🔧 Customize**: Adapt the system for your specific development needs
-4. **🤝 Contribute**: [Help build the future](CONTRIBUTING.md) of autonomous development
-
----
-
-**Ready to transform software development with AI agents?**
-
-**🚀 Start with the demos above, then explore [WELCOME.md](WELCOME.md) for your role-specific journey.**
-
----
-
-*Built with ❤️ by the LeanVibe team • [MIT Licensed](LICENSE) • Powered by autonomous AI agents*
+See `docs/extra/prompts.md` and `docs/core/prompt-optimization-system-prd.md` for implementation notes and design.
