@@ -6,6 +6,7 @@ context management, and self-modification capabilities.
 """
 
 import asyncio
+import os
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -551,8 +552,9 @@ leanvibe_uptime_seconds 0
     return app
 
 
-# FastAPI application instance
-app = create_app()
+# FastAPI application instance (avoid instantiation during pytest collection)
+if "PYTEST_CURRENT_TEST" not in os.environ:
+    app = create_app()
 
 
 if __name__ == "__main__":
