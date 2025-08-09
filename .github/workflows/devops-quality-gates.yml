@@ -3,6 +3,11 @@ name: DevOps Quality Gates
 on:
   # Manual and nightly only; avoid running on every push/PR
   workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+        default: "manual"
   schedule:
     # Run daily at 2 AM UTC to catch environment drift
     - cron: '0 2 * * *'
