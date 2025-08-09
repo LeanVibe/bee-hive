@@ -164,6 +164,7 @@ Acceptance criteria for this tranche:
 Implementation notes:
 - Env flags: `WS_AUTH_REQUIRED` (true/false), `WS_ALLOWED_ORIGINS` (comma list)
 - Behavior: if allowlist set and `Origin` not in list, connection is closed with 4403
+ - Env `WS_AUTH_TOKEN` used when `WS_AUTH_REQUIRED=true`; connections must include `Authorization: Bearer <token>` or receive 4401
 
 Acceptance criteria for next wave:
 - Backpressure disconnect logic in place and covered by tests

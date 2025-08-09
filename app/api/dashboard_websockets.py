@@ -91,6 +91,7 @@ class DashboardWebSocketManager:
         allowlist = os.environ.get("WS_ALLOWED_ORIGINS")
         if allowlist:
             self.allowed_origins = {o.strip() for o in allowlist.split(",") if o.strip()}
+        self.expected_auth_token: Optional[str] = os.environ.get("WS_AUTH_TOKEN")
         
     async def connect(
         self, 
@@ -108,6 +109,20 @@ class DashboardWebSocketManager:
         if self.allowed_origins and origin and origin not in self.allowed_origins:
             await websocket.close(code=4403)
             return None  # type: ignore
+        # Optional auth token check (Bearer token in Authorization header)
+        if self.auth_required:
+            try:
+                auth_header = websocket.headers.get("authorization") or websocket.headers.get("Authorization")
+            except Exception:
+                auth_header = None
+            token_ok = False
+            if auth_header and isinstance(auth_header, str) and auth_header.lower().startswith("bearer "):
+                provided = auth_header.split(" ", 1)[1].strip()
+                if self.expected_auth_token and provided == self.expected_auth_token:
+                    token_ok = True
+            if not token_ok:
+                await websocket.close(code=4401)
+                return None  # type: ignore
         await websocket.accept()
         
         connection = WebSocketConnection(
