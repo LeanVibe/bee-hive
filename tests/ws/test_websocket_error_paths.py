@@ -15,12 +15,16 @@ async def test_ws_unknown_message_type_returns_error(test_app):
         ws.send_text(json.dumps({"type": "unknown_thing", "foo": "bar"}))
         # Read several frames to find error amidst interleaved updates
         got_error = False
+        error_msg = None
         for _ in range(8):
             msg = json.loads(ws.receive_text())
             if msg.get("type") == "error" and "Unknown message type" in msg.get("message", ""):
                 got_error = True
+                error_msg = msg
                 break
         assert got_error
+        # Error frames must include timestamp for observability
+        assert isinstance(error_msg.get("timestamp"), str)
 
 
 async def test_ws_request_data_unknown_type_produces_data_error(test_app):

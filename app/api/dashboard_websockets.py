@@ -305,7 +305,8 @@ class DashboardWebSocketManager:
             await self._send_to_connection(connection_id, {
                 "type": "data_error",
                 "data_type": data_type,
-                "error": str(e)
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
             })
     
     async def _start_background_tasks(self) -> None:
@@ -401,13 +402,17 @@ class DashboardWebSocketManager:
         while True:
             try:
                 redis_client = get_redis()
-                
-                # Subscribe to system events
+
+                # Subscribe to concrete and pattern channels correctly
                 pubsub = redis_client.pubsub()
-                await pubsub.subscribe("system_events", "agent_events:*")
-                
+                await pubsub.subscribe("system_events")
+                await pubsub.psubscribe("agent_events:*")
+
                 async for message in pubsub.listen():
-                    if message["type"] == "message":
+                    msg_type = message.get("type")
+                    if msg_type == "message":
+                        await self._handle_redis_event(message)
+                    elif msg_type == "pmessage":
                         await self._handle_redis_event(message)
                 
             except Exception as e:
@@ -448,8 +453,11 @@ class DashboardWebSocketManager:
     async def _handle_redis_event(self, message: Dict[str, Any]) -> None:
         """Handle Redis pub/sub events and broadcast to clients."""
         try:
-            channel = message["channel"].decode() if isinstance(message["channel"], bytes) else message["channel"]
-            data = json.loads(message["data"].decode() if isinstance(message["data"], bytes) else message["data"])
+            # Support both message and pmessage formats
+            raw_channel = message.get("channel") or message.get("pattern") or ""
+            channel = raw_channel.decode() if isinstance(raw_channel, (bytes, bytearray)) else raw_channel
+            raw_data = message.get("data", {})
+            data = json.loads(raw_data.decode() if isinstance(raw_data, (bytes, bytearray)) else raw_data) if isinstance(raw_data, (bytes, str)) else raw_data
             
             # Route events to appropriate subscriptions
             if channel == "system_events":
@@ -737,7 +745,8 @@ async def websocket_dashboard_all(
             except json.JSONDecodeError:
                 await websocket_manager._send_to_connection(connection_id, {
                     "type": "error",
-                    "message": "Invalid JSON message format"
+                    "message": "Invalid JSON message format",
+                    "timestamp": datetime.utcnow().isoformat()
                 })
             except Exception as e:
                 logger.error("Error in dashboard WebSocket",

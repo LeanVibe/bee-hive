@@ -19,6 +19,10 @@ WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
   - `make test-backend-fast` (contracts + core + smoke)
   - `make test-prompt` (prompt optimization engines)
 
+### WebSocket contract invariants
+- All generic `error` frames include a `timestamp` string
+- All `data_error` frames include `timestamp` and `error` message
+
 ## Policies
 
 - No server-rendered dashboards; use API/WebSocket endpoints.
