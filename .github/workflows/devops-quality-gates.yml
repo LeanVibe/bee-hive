@@ -1,10 +1,8 @@
 name: DevOps Quality Gates
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+  # Manual and nightly only; avoid running on every push/PR
+  workflow_dispatch:
   schedule:
     # Run daily at 2 AM UTC to catch environment drift
     - cron: '0 2 * * *'
