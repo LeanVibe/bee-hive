@@ -317,27 +317,27 @@ print('✅ API performance targets met')
       
       - name: Validate documentation links
         run: |
-        echo "📚 Validating documentation links..."
-        
-        # Check if documentation files exist
-        required_docs=(
-          "README.md"
-          "CONTRIBUTING.md"
-          "docs/GETTING_STARTED.md"
-          "docs/API_REFERENCE_COMPREHENSIVE.md"
-          "docs/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md"
-        )
-        
-        for doc in "${required_docs[@]}"; do
-          if [[ -f "$doc" ]]; then
-            echo "✅ Found: $doc"
-          else
-            echo "❌ Missing: $doc"
-            exit 1
-          fi
-        done
-        
-        echo "✅ Documentation validation passed"
+          echo "📚 Validating documentation links..."
+          
+          # Check if documentation files exist
+          required_docs=(
+            "README.md"
+            "CONTRIBUTING.md"
+            "docs/GETTING_STARTED.md"
+            "docs/API_REFERENCE_COMPREHENSIVE.md"
+            "docs/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md"
+          )
+          
+          for doc in "${required_docs[@]}"; do
+            if [[ -f "$doc" ]]; then
+              echo "✅ Found: $doc"
+            else
+              echo "❌ Missing: $doc"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Documentation validation passed"
 
       - name: Check API documentation
         run: |
@@ -381,11 +381,11 @@ print('✅ API performance targets met')
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-    
-      - name: Run ultra-fast setup
-        run: |
-          echo "🚀 Running setup for Python ${{ matrix.python-version }}"
-          ./scripts/setup.sh fast
+
+    - name: Run ultra-fast setup
+      run: |
+        echo "🚀 Running setup for Python ${{ matrix.python-version }}"
+        ./scripts/setup.sh fast
     
     - name: Run integration tests
       run: |
