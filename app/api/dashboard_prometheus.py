@@ -973,6 +973,46 @@ async def get_websocket_metrics():
             "type": "gauge",
             "values": [{"labels": {}, "value": 45}]
         }
+        # Manager counters
+        try:
+            counters = websocket_manager.metrics
+            websocket_metrics["leanvibe_ws_messages_sent_total"] = {
+                "help": "Total WS messages sent",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("messages_sent_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_messages_send_failures_total"] = {
+                "help": "Total WS message send failures",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("messages_send_failures_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_messages_received_total"] = {
+                "help": "Total WS messages received",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("messages_received_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_messages_dropped_rate_limit_total"] = {
+                "help": "Total WS messages dropped due to rate limit",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("messages_dropped_rate_limit_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_errors_sent_total"] = {
+                "help": "Total WS error frames sent",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("errors_sent_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_connections_total"] = {
+                "help": "Total WS connections accepted",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("connections_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_disconnections_total"] = {
+                "help": "Total WS disconnections",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("disconnections_total", 0)}],
+            }
+        except Exception:
+            pass
         
         metrics_text = metrics_generator._format_metrics(websocket_metrics)
         

@@ -66,6 +66,19 @@ class DashboardWebSocketManager:
         self.rate_limit_tokens_per_second: float = 20.0
         self.rate_limit_burst_capacity: float = 40.0
         self.rate_limit_notify_cooldown_seconds: int = 5
+        # Input hardening
+        self.max_inbound_message_bytes: int = 64 * 1024
+        self.max_subscriptions_per_connection: int = 10
+        # Observability counters
+        self.metrics: Dict[str, int] = {
+            "messages_sent_total": 0,
+            "messages_send_failures_total": 0,
+            "messages_received_total": 0,
+            "messages_dropped_rate_limit_total": 0,
+            "errors_sent_total": 0,
+            "connections_total": 0,
+            "disconnections_total": 0,
+        }
         
     async def connect(
         self, 
@@ -91,6 +104,7 @@ class DashboardWebSocketManager:
         )
         
         self.connections[connection_id] = connection
+        self.metrics["connections_total"] += 1
         
         # Add to subscription groups
         for subscription in connection.subscriptions:
@@ -130,6 +144,7 @@ class DashboardWebSocketManager:
         
         # Remove connection
         del self.connections[connection_id]
+        self.metrics["disconnections_total"] += 1
         
         # Stop background tasks if no connections remain
         if len(self.connections) == 0:
@@ -144,6 +159,20 @@ class DashboardWebSocketManager:
         
         connection = self.connections[connection_id]
         connection.last_activity = datetime.utcnow()
+
+        # Inbound safety: basic size cap if raw payload length available via metadata
+        # (FastAPI gives text directly; we can approximate by re-serializing if needed)
+        try:
+            encoded = json.dumps(message).encode("utf-8")
+            if len(encoded) > self.max_inbound_message_bytes:
+                await self._send_to_connection(connection_id, make_error("Message too large"))
+                return
+        except Exception:
+            # If serialization fails, proceed; downstream will handle
+            pass
+
+        # Count received messages
+        self.metrics["messages_received_total"] += 1
 
         # Rate limiting guard: drop or notify when exceeded
         if not self._consume_token_allow(connection):
@@ -172,6 +201,10 @@ class DashboardWebSocketManager:
             new_subs = set(requested)
             valid_subs = new_subs.intersection(self.subscription_groups.keys())
             invalid_subs = new_subs.difference(self.subscription_groups.keys())
+            # Enforce max subscriptions per connection
+            if len(connection.subscriptions.union(valid_subs)) > self.max_subscriptions_per_connection:
+                await self._send_to_connection(connection_id, make_error("Too many subscriptions requested"))
+                valid_subs = set(list(valid_subs)[: max(0, self.max_subscriptions_per_connection - len(connection.subscriptions))])
             
             for subscription in valid_subs:
                 connection.subscriptions.add(subscription)
@@ -280,7 +313,11 @@ class DashboardWebSocketManager:
         connection = self.connections[connection_id]
         
         try:
+            # Ensure correlation_id is present
+            if "correlation_id" not in message:
+                message["correlation_id"] = str(uuid.uuid4())
             await connection.websocket.send_text(json.dumps(message))
+            self.metrics["messages_sent_total"] += 1
             return True
         except Exception as e:
             logger.warning(
@@ -291,6 +328,7 @@ class DashboardWebSocketManager:
                 message_type=message.get("type"),
                 subscription=message.get("subscription"),
             )
+            self.metrics["messages_send_failures_total"] += 1
             return False
     
     async def _handle_data_request(

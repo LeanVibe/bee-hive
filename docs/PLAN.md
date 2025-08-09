@@ -84,3 +84,20 @@ Acceptance criteria for this tranche:
 - Rate limiting enforced with tests proving drop/notify behavior without flaking.
 - Subscription validation errors produced for unknowns; updates return sorted lists.
 - Schema and TS types include `data_response` and `data_error`; all tests green.
+
+## Next priorities (new, higher-impact)
+
+1) WS observability metrics (must-have)
+- Add counters in manager: `messages_sent_total`, `messages_send_failures_total`, `messages_received_total`, `messages_dropped_rate_limit_total`, `errors_sent_total`, `connections_total`, `disconnections_total`.
+- Expose them via Prometheus at `/api/dashboard/metrics/websockets`.
+- Tests: metrics endpoint includes these names.
+
+2) Input hardening and safety (must-have)
+- Cap inbound WS message size (e.g., 64KB). On exceed: drop and send a single error message.
+- Cap max subscriptions per connection (e.g., 10) with clear error for extras (future-proofing; current set is <=5).
+- Ensure every outbound frame has a `correlation_id` (inject at send if missing).
+- Tests: invalid large message returns an error; correlation id injection remains schema-compatible.
+
+3) Idle timeout hygiene (nice-to-have)
+- Disconnect connections idle beyond threshold with a `disconnect_notice` reason.
+- Optional server-initiated ping in future if needed (skipped for now to avoid client-side impact).
