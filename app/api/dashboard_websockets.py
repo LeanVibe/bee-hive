@@ -41,6 +41,10 @@ class WebSocketConnection:
     connected_at: datetime
     last_activity: datetime
     metadata: Dict[str, Any]
+    # Rate limiting state
+    tokens: float
+    last_refill: datetime
+    rate_limit_notified_at: Optional[datetime]
 
 
 class DashboardWebSocketManager:
@@ -58,6 +62,10 @@ class DashboardWebSocketManager:
         self.broadcast_task: Optional[asyncio.Task] = None
         self.redis_listener_task: Optional[asyncio.Task] = None
         self.health_monitor_task: Optional[asyncio.Task] = None
+        # Rate limit configuration
+        self.rate_limit_tokens_per_second: float = 20.0
+        self.rate_limit_burst_capacity: float = 40.0
+        self.rate_limit_notify_cooldown_seconds: int = 5
         
     async def connect(
         self, 
@@ -76,7 +84,10 @@ class DashboardWebSocketManager:
             subscriptions=set(subscriptions or ["agents", "coordination", "tasks", "system"]),
             connected_at=datetime.utcnow(),
             last_activity=datetime.utcnow(),
-            metadata={}
+            metadata={},
+            tokens=self.rate_limit_burst_capacity,
+            last_refill=datetime.utcnow(),
+            rate_limit_notified_at=None,
         )
         
         self.connections[connection_id] = connection
@@ -133,6 +144,19 @@ class DashboardWebSocketManager:
         
         connection = self.connections[connection_id]
         connection.last_activity = datetime.utcnow()
+
+        # Rate limiting guard: drop or notify when exceeded
+        if not self._consume_token_allow(connection):
+            # Notify about rate limit at most once per cooldown window
+            now = datetime.utcnow()
+            if (
+                connection.rate_limit_notified_at is None
+                or (now - connection.rate_limit_notified_at).total_seconds()
+                >= self.rate_limit_notify_cooldown_seconds
+            ):
+                connection.rate_limit_notified_at = now
+                await self._send_to_connection(connection_id, make_error("Rate limit exceeded"))
+            return
         
         message_type = message.get("type")
         
@@ -310,6 +334,26 @@ class DashboardWebSocketManager:
             
         except Exception as e:
             await self._send_to_connection(connection_id, make_data_error(data_type, str(e)))
+
+    def _consume_token_allow(self, connection: WebSocketConnection) -> bool:
+        """Refill token bucket and consume one token if available."""
+        now = datetime.utcnow()
+        elapsed = (now - connection.last_refill).total_seconds()
+        if elapsed > 0:
+            refill = elapsed * self.rate_limit_tokens_per_second
+            connection.tokens = min(
+                self.rate_limit_burst_capacity,
+                connection.tokens + refill,
+            )
+            connection.last_refill = now
+
+        if connection.tokens >= 1.0:
+            connection.tokens -= 1.0
+            # Reset notification once we have headroom
+            if connection.tokens > (self.rate_limit_tokens_per_second / 2.0):
+                connection.rate_limit_notified_at = None
+            return True
+        return False
     
     async def _start_background_tasks(self) -> None:
         """Start background tasks for real-time updates."""
