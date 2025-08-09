@@ -2,10 +2,11 @@
 # Provides common development commands and shortcuts
 
 .PHONY: help setup setup-minimal setup-full setup-devcontainer install install-pre-commit \
-	dev start start-minimal start-full start-bg stop restart \
-	sandbox sandbox-demo sandbox-auto sandbox-showcase \
-	test test-unit test-integration test-performance test-security test-e2e test-smoke test-cov test-fast test-integration-pytest test-watch \
-	lint format check security benchmark load-test \
+    dev start start-minimal start-full start-bg stop restart \
+    sandbox sandbox-demo sandbox-auto sandbox-showcase \
+    test test-unit test-integration test-performance test-security test-e2e test-smoke test-cov test-fast test-integration-pytest test-watch \
+    test-core-fast test-backend-fast test-prompt \
+    lint format check security benchmark load-test \
 	migrate rollback db-shell redis-shell monitor dev-tools \
 	logs ps shell build clean docs health status verify-core \
 	frontend-install frontend-dev frontend-build frontend-test \
@@ -167,6 +168,22 @@ test-cov: ## Run tests with coverage report (legacy)
 	@echo "$(BLUE)🧪 Running tests with coverage...$(NC)"
 	@. $(VENV_DIR)/bin/activate && \
 		$(PYTEST) --cov=app --cov-report=html --cov-report=term-missing --cov-fail-under=90
+
+# Focused lanes (fast feedback in CI/PRs)
+test-core-fast: ## Fast lane: smoke + WS + prompt optimization core
+	@echo "$(BLUE)⚡ Running core fast lane (smoke + ws + prompt)...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		$(PYTEST) -q tests/smoke tests/ws tests/test_prompt_optimization_comprehensive.py
+
+test-backend-fast: ## Fast lane: backend core modules (contracts + core + smoke)
+	@echo "$(BLUE)⚡ Running backend fast lane...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		$(PYTEST) -q tests/contracts tests/core tests/smoke -k "not dashboard"
+
+test-prompt: ## Prompt optimization and related engines
+	@echo "$(BLUE)🧠 Running prompt optimization test lane...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		$(PYTEST) -q tests/test_prompt_optimization_* tests/performance/test_prompt_optimization_benchmarks.py -k "not slow"
 
 test-fast: ## Run tests without slow/integration tests
 	@echo "$(BLUE)⚡ Running fast tests...$(NC)"

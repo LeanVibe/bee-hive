@@ -55,7 +55,7 @@ docker-compose logs -f
 make health
 
 # Run tests
-make test
+make test-core-fast
 
 # View dashboard
 open http://localhost:8000/docs
@@ -71,9 +71,15 @@ The bootstrap agent is critical - it's the first agent that creates all others. 
 - Handle errors gracefully
 
 ### 2. Test Everything
-Every component should have tests. The system should maintain >90% test coverage:
+Every component should have tests. Use fast lanes locally for quick feedback, and full runs in CI:
 ```bash
-pytest tests/ -v --cov=src --cov-report=html
+# Fast feedback lanes
+make test-core-fast         # smoke + ws + prompt core
+make test-backend-fast      # contracts + core + smoke
+make test-prompt            # prompt optimization engines
+
+# Full suite
+make test                   # comprehensive test run
 ```
 
 ### 3. Enable Self-Improvement Early
@@ -142,6 +148,10 @@ brew services restart redis
 
 ### If tests fail:
 ```bash
+# Run core lanes quickly
+make test-core-fast
+make test-backend-fast
+
 # Run specific test with details
 pytest tests/test_task_queue.py -vv
 

@@ -98,8 +98,12 @@ class EmbeddingService:
         # Initialize OpenAI client
         self.client = AsyncOpenAI(api_key=self.settings.OPENAI_API_KEY)
         
-        # Initialize Redis client for caching
-        self.redis = redis_client or get_redis_client()
+        # Initialize Redis client for caching (optional in tests)
+        try:
+            self.redis = redis_client or get_redis_client()
+        except Exception:
+            # Fallback to in-memory only cache if Redis not initialized (e.g., unit tests)
+            self.redis = None
         
         # Initialize tokenizer for the model
         try:
@@ -109,7 +113,7 @@ class EmbeddingService:
             self.tokenizer = tiktoken.get_encoding("cl100k_base")
         
         # In-memory cache for embeddings (fallback)
-        self._memory_cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: Dict[str, Dict[str, Any]] = {}
         
         # Rate limiting
         self._request_times: List[float] = []
@@ -329,7 +333,7 @@ class EmbeddingService:
         content = f"{self.model_name}:{text}"
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
     
-    def _get_from_cache(self, cache_key: str) -> Optional[List[float]]:
+    async def _get_from_cache(self, cache_key: str) -> Optional[List[float]]:
         """
         Retrieve embedding from cache if not expired.
         
@@ -351,7 +355,7 @@ class EmbeddingService:
         
         return None
     
-    def _cache_result(self, cache_key: str, embedding: List[float]) -> None:
+    async def _cache_result(self, cache_key: str, embedding: List[float]) -> None:
         """
         Cache embedding result.
         

@@ -13,6 +13,12 @@ import pytest
 import pytest_asyncio
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock
+import random
+
+try:
+    import numpy as _np  # type: ignore
+except Exception:  # pragma: no cover
+    _np = None
 
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
@@ -300,8 +306,21 @@ def setup_test_environment():
         "ENVIRONMENT": "test",
         "LOG_LEVEL": "ERROR",  # Reduce noise
         "TESTING": "true",
-        "SKIP_DATABASE_INIT": "true"
+        "SKIP_DATABASE_INIT": "true",
+        # Ensure deterministic behavior in stochastic tests
+        "PYTHONHASHSEED": "0"
     })
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _seed_rng_session():
+    """Ensure deterministic RNG across stochastic tests (evolutionary, perf)."""
+    random.seed(1337)
+    if _np is not None:
+        try:
+            _np.random.seed(1337)
+        except Exception:
+            pass
 
 
 # Test markers for categorization

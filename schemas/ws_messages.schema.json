@@ -48,6 +48,37 @@
       },
       "required": ["type", "subscription", "data"],
       "additionalProperties": true
+    },
+    {
+      "title": "ErrorMessage",
+      "type": "object",
+      "properties": {
+        "type": { "const": "error" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["type", "message"],
+      "additionalProperties": true
+    },
+    {
+      "title": "CriticalAlertMessage",
+      "type": "object",
+      "properties": {
+        "type": { "const": "critical_alert" },
+        "subscription": { "type": "string", "const": "alerts" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "alerts": { "type": "array", "items": { "type": "object" } },
+            "timestamp": { "type": "string" }
+          },
+          "required": ["alerts"],
+          "additionalProperties": true
+        },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["type", "subscription", "data"],
+      "additionalProperties": true
     }
   ]
 }

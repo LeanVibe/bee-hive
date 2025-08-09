@@ -6,6 +6,7 @@ feedback analysis, context adaptation, and statistical validation.
 """
 
 import pytest
+import asyncio
 import uuid
 import time
 import statistics

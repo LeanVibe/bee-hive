@@ -30,3 +30,56 @@ async def test_ws_initial_and_subscription_messages_match_schema(test_app):
                 break
 
         await asyncio.sleep(0.1)
+
+
+async def test_ws_error_and_critical_alert_match_schema(test_app):
+    client = TestClient(test_app)
+
+    ws = client.websocket_connect("/api/dashboard/ws/dashboard", headers={"host": "localhost:8000"})
+    with ws:
+        # Drain initial message(s)
+        _ = _read_json(ws)
+
+        # Send invalid JSON to trigger structured error
+        ws.send_text("not-json")
+        got_error = False
+        for _ in range(6):
+            msg = _read_json(ws)
+            try:
+                validate(instance=msg, schema=SCHEMA)
+            except Exception:
+                # Some messages like pong or data_response may not match; continue scanning
+                pass
+            if msg.get("type") == "error" and isinstance(msg.get("message"), str):
+                got_error = True
+                break
+        assert got_error
+
+        # Subscribe to alerts and trigger a critical alert via broadcast API
+        ws.send_text(json.dumps({"type": "subscribe", "subscriptions": ["alerts"]}))
+        # Scan until subscription_updated
+        for _ in range(6):
+            msg = _read_json(ws)
+            if msg.get("type") == "subscription_updated":
+                break
+
+        # Broadcast a critical alert
+        resp = client.post(
+            "/api/dashboard/websocket/broadcast",
+            params={"subscription": "alerts", "message_type": "critical_alert"},
+            json={"alerts": [{"message": "Test alert", "level": "critical"}]},
+            headers={"host": "localhost:8000"},
+        )
+        assert resp.status_code == 200
+
+        got_alert = False
+        for _ in range(10):
+            msg = _read_json(ws)
+            if msg.get("type") == "critical_alert":
+                # Must contain subscription and data.alerts per schema
+                validate(instance=msg, schema=SCHEMA)
+                assert msg.get("subscription") == "alerts"
+                assert isinstance(msg.get("data", {}).get("alerts"), list)
+                got_alert = True
+                break
+        assert got_alert

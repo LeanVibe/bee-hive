@@ -22,7 +22,7 @@ async def test_ws_subscription_update_flow(test_app):
         ws.send_text(json.dumps({"type": "subscribe", "subscriptions": ["alerts"]}))
         # Background loop may interleave updates; read a few messages until we see confirmation
         seen_update = False
-        for _ in range(5):
+        for _ in range(10):
             msg = _read_json(ws)
             if msg.get("type") == "subscription_updated":
                 assert "alerts" in set(msg["subscriptions"])  # server echoes new set

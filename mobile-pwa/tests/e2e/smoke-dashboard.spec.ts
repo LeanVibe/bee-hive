@@ -8,4 +8,6 @@ test('dashboard shell loads and shows HiveOps title', async ({ page }) => {
   // Header title component
   await expect(page.locator('header')).toBeVisible()
   await expect(page.locator('text=HiveOps')).toBeVisible()
+  // Also assert one deterministic metric label exists (static UI element)
+  await expect(page.locator('text=Agent Dashboard')).toBeVisible()
 })

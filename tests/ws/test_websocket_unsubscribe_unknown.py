@@ -15,7 +15,7 @@ async def test_ws_unsubscribe_unknown_is_tolerated(test_app):
         ws.send_text(json.dumps({"type": "unsubscribe", "subscriptions": ["does-not-exist"]}))
         # Read a few frames to allow for interleaved periodic updates
         got_confirmation = False
-        for _ in range(5):
+        for _ in range(10):
             msg = json.loads(ws.receive_text())
             if msg.get("type") == "subscription_updated":
                 got_confirmation = True

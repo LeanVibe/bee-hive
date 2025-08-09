@@ -180,6 +180,11 @@ class DashboardWebSocketManager:
             logger.warning("Unknown WebSocket message type", 
                           connection_id=connection_id, 
                           message_type=message_type)
+            await self._send_to_connection(connection_id, {
+                "type": "error",
+                "message": f"Unknown message type: {message_type}",
+                "timestamp": datetime.utcnow().isoformat()
+            })
     
     async def broadcast_to_subscription(
         self, 
@@ -282,7 +287,13 @@ class DashboardWebSocketManager:
                 }
                 
             else:
-                data = {"error": f"Unknown data type: {data_type}"}
+                await self._send_to_connection(connection_id, {
+                    "type": "data_error",
+                    "data_type": data_type,
+                    "error": f"Unknown data type: {data_type}",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+                return
             
             await self._send_to_connection(connection_id, {
                 "type": "data_response",
@@ -516,7 +527,8 @@ async def websocket_agents(
             except json.JSONDecodeError:
                 await websocket_manager._send_to_connection(connection_id, {
                     "type": "error",
-                    "message": "Invalid JSON message format"
+                    "message": "Invalid JSON message format",
+                    "timestamp": datetime.utcnow().isoformat()
                 })
             except Exception as e:
                 logger.error("Error in agent WebSocket", 
@@ -524,7 +536,8 @@ async def websocket_agents(
                            error=str(e))
                 await websocket_manager._send_to_connection(connection_id, {
                     "type": "error", 
-                    "message": str(e)
+                    "message": str(e),
+                    "timestamp": datetime.utcnow().isoformat()
                 })
                 break
                 
@@ -567,7 +580,8 @@ async def websocket_coordination(
             except json.JSONDecodeError:
                 await websocket_manager._send_to_connection(connection_id, {
                     "type": "error",
-                    "message": "Invalid JSON message format"
+                    "message": "Invalid JSON message format",
+                    "timestamp": datetime.utcnow().isoformat()
                 })
             except Exception as e:
                 logger.error("Error in coordination WebSocket",
@@ -614,7 +628,8 @@ async def websocket_tasks(
             except json.JSONDecodeError:
                 await websocket_manager._send_to_connection(connection_id, {
                     "type": "error",
-                    "message": "Invalid JSON message format"
+                    "message": "Invalid JSON message format",
+                    "timestamp": datetime.utcnow().isoformat()
                 })
             except Exception as e:
                 logger.error("Error in task WebSocket",
@@ -661,7 +676,8 @@ async def websocket_system(
             except json.JSONDecodeError:
                 await websocket_manager._send_to_connection(connection_id, {
                     "type": "error",
-                    "message": "Invalid JSON message format"
+                    "message": "Invalid JSON message format",
+                    "timestamp": datetime.utcnow().isoformat()
                 })
             except Exception as e:
                 logger.error("Error in system WebSocket",

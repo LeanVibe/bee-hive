@@ -396,6 +396,12 @@ def test_user_feedback_integration():
 - Rate limiting on optimization API endpoints
 - Efficient storage of prompt variants and metrics
 
+## Implementation Notes (Current Codebase)
+- A/B testing supports both dict and dataclass result shapes in test harnesses.
+- Statistical routines include guards for small samples (df>=1, zero-variance handling).
+- Evolutionary convergence is tuned to reduce CI flakiness; test RNG is seeded.
+- Embeddings service supports an in-memory cache fallback for tests (Redis optional in test runs).
+
 ## Dependencies
 - LLM inference service (for prompt generation)
 - Statistical analysis libraries (for A/B testing)

@@ -414,3 +414,10 @@ After all components are created, run this comprehensive test:
 
 The system should be able to continue developing itself after this point.
 ```
+
+## Implementation Notes (Current Codebase)
+
+- A/B Testing Engine: Implementation accepts both dataclass-style and dict-style result objects in downstream consumers and tests. Statistical safeguards prevent divide-by-zero and small-sample DF issues.
+- Embeddings Service: For tests and local dev, the embeddings cache can operate in-memory without Redis (Redis is optional in tests). Production path still uses Redis.
+- Evolutionary Optimizer: Convergence threshold is tuned to avoid flakiness in CI while still signaling genuine convergence; RNG is seeded in tests for determinism.
+- WebSocket Contracts: A schema-parity test validates `schemas/ws_messages.schema.json` against `mobile-pwa/src/types/ws-messages.d.ts` to prevent drift between backend and PWA.

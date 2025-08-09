@@ -14,7 +14,7 @@ describe('BaseService error mapping', () => {
     const svc = new TService({ baseUrl: 'http://localhost:8000', timeout: 10000 })
 
     const err = new TypeError('failed to fetch')
-    const fetchMock = vi.spyOn(global, 'fetch' as any).mockRejectedValueOnce(err)
+    const fetchMock = vi.spyOn(global, 'fetch' as any).mockRejectedValue(err)
 
     await expect(svc.getWrap('/never')).rejects.toMatchObject({ code: 'NETWORK_ERROR' })
 

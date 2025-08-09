@@ -1,0 +1,328 @@
+<testsuites id="" name="" tests="7" failures="7" skipped="0" errors="0" time="18.990746">
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="chromium" tests="1" failures="1" skipped="0" time="10.536" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="10.536">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [chromium] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ─────────
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('header')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('header')
+
+
+       7 |   await page.goto('/')
+       8 |   // Header title component
+    >  9 |   await expect(page.locator('header')).toBeVisible()
+         |                                        ^
+      10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:9:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-chromium/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-chromium/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-chromium/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="firefox" tests="1" failures="1" skipped="0" time="11.323" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="11.323">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [firefox] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ──────────
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('header')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('header')
+
+
+       7 |   await page.goto('/')
+       8 |   // Header title component
+    >  9 |   await expect(page.locator('header')).toBeVisible()
+         |                                        ^
+      10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:9:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-firefox/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-firefox/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-firefox/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-firefox/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-firefox/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="webkit" tests="1" failures="1" skipped="0" time="11.148" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="11.148">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [webkit] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ───────────
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('header')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('header')
+
+
+       7 |   await page.goto('/')
+       8 |   // Header title component
+    >  9 |   await expect(page.locator('header')).toBeVisible()
+         |                                        ^
+      10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:9:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-webkit/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-webkit/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-webkit/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-webkit/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-webkit/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-webkit/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="Mobile Chrome" tests="1" failures="1" skipped="0" time="11.074" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="11.074">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ────
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('text=HiveOps')
+    Expected: visible
+    Received: hidden
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('text=HiveOps')
+        14 × locator resolved to <div class="loading-text">Loading HiveOps...</div>
+           - unexpected value "hidden"
+
+
+       8 |   // Header title component
+       9 |   await expect(page.locator('header')).toBeVisible()
+    > 10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+         |                                              ^
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+      13 | })
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:10:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Chrome/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Chrome/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Chrome/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Chrome/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Chrome/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="Mobile Safari" tests="1" failures="1" skipped="0" time="15.726" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="15.726">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [Mobile Safari] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ────
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('text=HiveOps')
+    Expected: visible
+    Received: hidden
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('text=HiveOps')
+        14 × locator resolved to <div class="loading-text">Loading HiveOps...</div>
+           - unexpected value "hidden"
+
+
+       8 |   // Header title component
+       9 |   await expect(page.locator('header')).toBeVisible()
+    > 10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+         |                                              ^
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+      13 | })
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:10:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Safari/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Safari/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Safari/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Safari/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Safari/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Mobile-Safari/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="iPad" tests="1" failures="1" skipped="0" time="10.536" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="10.536">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [iPad] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ─────────────
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('header')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('header')
+
+
+       7 |   await page.goto('/')
+       8 |   // Header title component
+    >  9 |   await expect(page.locator('header')).toBeVisible()
+         |                                        ^
+      10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:9:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-iPad/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-iPad/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-iPad/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-iPad/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-iPad/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-iPad/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="smoke-dashboard.spec.ts" timestamp="2025-08-09T08:30:12.934Z" hostname="Microsoft Edge" tests="1" failures="1" skipped="0" time="10.585" errors="0">
+<testcase name="dashboard shell loads and shows HiveOps title" classname="smoke-dashboard.spec.ts" time="10.585">
+<failure message="smoke-dashboard.spec.ts:6:1 dashboard shell loads and shows HiveOps title" type="FAILURE">
+<![CDATA[  [Microsoft Edge] › smoke-dashboard.spec.ts:6:1 › dashboard shell loads and shows HiveOps title ───
+
+    Error: Timed out 10000ms waiting for expect(locator).toBeVisible()
+
+    Locator: locator('header')
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 10000ms
+      - waiting for locator('header')
+
+
+       7 |   await page.goto('/')
+       8 |   // Header title component
+    >  9 |   await expect(page.locator('header')).toBeVisible()
+         |                                        ^
+      10 |   await expect(page.locator('text=HiveOps')).toBeVisible()
+      11 |   // Also assert one deterministic metric label exists (static UI element)
+      12 |   await expect(page.locator('text=Agent Dashboard')).toBeVisible()
+        at /Users/bogdan/work/leanvibe-dev/bee-hive/mobile-pwa/tests/e2e/smoke-dashboard.spec.ts:9:40
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Microsoft-Edge/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Microsoft-Edge/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Microsoft-Edge/error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Microsoft-Edge/test-failed-1.png]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Microsoft-Edge/video.webm]]
+
+[[ATTACHMENT|smoke-dashboard-dashboard--60cfd-ads-and-shows-HiveOps-title-Microsoft-Edge/error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
