@@ -1011,6 +1011,11 @@ async def get_websocket_metrics():
                 "type": "counter",
                 "values": [{"labels": {}, "value": counters.get("disconnections_total", 0)}],
             }
+            websocket_metrics["leanvibe_ws_backpressure_disconnects_total"] = {
+                "help": "Total WS disconnects due to backpressure",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("backpressure_disconnects_total", 0)}],
+            }
         except Exception:
             pass
         

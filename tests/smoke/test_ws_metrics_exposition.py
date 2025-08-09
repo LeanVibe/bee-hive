@@ -23,3 +23,4 @@ def test_websocket_metrics_endpoint_exposes_core_counters(test_app):
     assert "leanvibe_ws_errors_sent_total" in body
     assert "leanvibe_ws_connections_total" in body
     assert "leanvibe_ws_disconnections_total" in body
+    assert "leanvibe_ws_backpressure_disconnects_total" in body

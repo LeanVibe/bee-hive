@@ -45,6 +45,8 @@ class WebSocketConnection:
     tokens: float
     last_refill: datetime
     rate_limit_notified_at: Optional[datetime]
+    # Backpressure state
+    send_failure_streak: int = 0
 
 
 class DashboardWebSocketManager:
@@ -78,7 +80,10 @@ class DashboardWebSocketManager:
             "errors_sent_total": 0,
             "connections_total": 0,
             "disconnections_total": 0,
+            "backpressure_disconnects_total": 0,
         }
+        # Backpressure configuration
+        self.backpressure_disconnect_threshold: int = 5
         
     async def connect(
         self, 
@@ -270,17 +275,10 @@ class DashboardWebSocketManager:
         }
         
         sent_count = 0
-        failed_connections = []
         
-        for connection_id in self.subscription_groups[subscription]:
+        for connection_id in list(self.subscription_groups[subscription]):
             if await self._send_to_connection(connection_id, message):
                 sent_count += 1
-            else:
-                failed_connections.append(connection_id)
-        
-        # Clean up failed connections
-        for connection_id in failed_connections:
-            await self.disconnect(connection_id)
         
         return sent_count
     
@@ -294,17 +292,10 @@ class DashboardWebSocketManager:
         }
         
         sent_count = 0
-        failed_connections = []
         
         for connection_id in list(self.connections.keys()):
             if await self._send_to_connection(connection_id, message):
                 sent_count += 1
-            else:
-                failed_connections.append(connection_id)
-        
-        # Clean up failed connections
-        for connection_id in failed_connections:
-            await self.disconnect(connection_id)
         
         return sent_count
     
@@ -323,6 +314,8 @@ class DashboardWebSocketManager:
             self.metrics["messages_sent_total"] += 1
             if message.get("type") in {"error", "data_error"}:
                 self.metrics["errors_sent_total"] += 1
+            # Reset failure streak on success
+            connection.send_failure_streak = 0
             return True
         except Exception as e:
             logger.warning(
@@ -334,6 +327,11 @@ class DashboardWebSocketManager:
                 subscription=message.get("subscription"),
             )
             self.metrics["messages_send_failures_total"] += 1
+            # Increment failure streak and consider disconnect on threshold
+            connection.send_failure_streak += 1
+            if connection.send_failure_streak >= self.backpressure_disconnect_threshold:
+                await self.disconnect(connection_id)
+                self.metrics["backpressure_disconnects_total"] += 1
             return False
     
     async def _handle_data_request(
