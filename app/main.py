@@ -582,8 +582,9 @@ leanvibe_uptime_seconds 0
     return app
 
 
-# FastAPI application instance (avoid instantiation during pytest collection)
-if "PYTEST_CURRENT_TEST" not in os.environ:
+# FastAPI application instance
+# Avoid instantiation in CI and during pytest collection to prevent early settings validation
+if os.environ.get("CI") != "true" and "PYTEST_CURRENT_TEST" not in os.environ:
     app = create_app()
 
 
