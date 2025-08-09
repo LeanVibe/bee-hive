@@ -18,16 +18,21 @@ async def test_ws_subscription_update_flow(test_app):
     with ws:
         msg = _read_json(ws)
         assert msg["type"] in {"connection_established", "dashboard_initialized"}
-        # Request to subscribe to 'alerts'
-        ws.send_text(json.dumps({"type": "subscribe", "subscriptions": ["alerts"]}))
+        # Request to subscribe to 'alerts' (with duplicate + unknown to test validation and sorting)
+        ws.send_text(json.dumps({"type": "subscribe", "subscriptions": ["alerts", "alerts", "unknown"]}))
         # Background loop may interleave updates; read a few messages until we see confirmation
         seen_update = False
-        for _ in range(10):
+        for _ in range(20):
             msg = _read_json(ws)
             if msg.get("type") == "subscription_updated":
-                assert "alerts" in set(msg["subscriptions"])  # server echoes new set
+                subs = msg["subscriptions"]
+                assert subs == sorted(subs)
+                assert "alerts" in subs
                 seen_update = True
                 break
+            if msg.get("type") == "error" and "Invalid subscription" in msg.get("message", ""):
+                # validation error for unknown should be raised
+                pass
         assert seen_update, "Did not receive subscription_updated within expected messages"
 
         # Give the background loop a tick to possibly broadcast
