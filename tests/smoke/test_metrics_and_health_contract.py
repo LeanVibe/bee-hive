@@ -23,5 +23,5 @@ async def test_metrics_exposition(async_test_client: AsyncClient):
     text = resp.text
     # Basic exposition format
     assert "# HELP" in text and "# TYPE" in text
-    # Contains at least one of our base gauges
-    assert "leanvibe_health_status" in text or len(text) > 0
+    # Contains at least one known gauge from fallback or exporter
+    assert ("leanvibe_health_status" in text) or ("leanvibe_uptime_seconds" in text)
