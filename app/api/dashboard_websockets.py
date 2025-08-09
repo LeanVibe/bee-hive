@@ -160,8 +160,11 @@ class DashboardWebSocketManager:
             remove_subs = set(message.get("subscriptions", []))
             
             for subscription in remove_subs:
+                # Always remove from the connection's subscription set
                 connection.subscriptions.discard(subscription)
-                self.subscription_groups[subscription].discard(connection_id)
+                # Only attempt to update a known subscription group
+                if subscription in self.subscription_groups:
+                    self.subscription_groups[subscription].discard(connection_id)
             
             await self._send_to_connection(connection_id, {
                 "type": "subscription_updated",

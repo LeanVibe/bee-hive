@@ -7,9 +7,9 @@
 	test test-unit test-integration test-performance test-security test-e2e test-smoke test-cov test-fast test-integration-pytest test-watch \
 	lint format check security benchmark load-test \
 	migrate rollback db-shell redis-shell monitor dev-tools \
-	logs ps shell build clean docs health status \
+	logs ps shell build clean docs health status verify-core \
 	frontend-install frontend-dev frontend-build frontend-test \
-	pwa-dev pwa-build \
+	pwa-dev pwa-build pwa-generate-schemas \
 	pre-commit ci release dev-container emergency-reset env-info
 
 # Default target
@@ -311,6 +311,10 @@ pwa-build: ## Build PWA for production
 	@echo "$(BLUE)🏗️  Building PWA...$(NC)"
 	@cd mobile-pwa && npm run build
 
+pwa-generate-schemas: ## Generate TS types from JSON schemas for PWA
+	@echo "$(BLUE)🧬 Generating PWA schema types...$(NC)"
+	@cd mobile-pwa && npm run -s generate:schemas
+
 # CI/CD
 pre-commit: ## Run pre-commit hooks on all files
 	@echo "$(BLUE)🔧 Running pre-commit hooks...$(NC)"
@@ -336,6 +340,11 @@ status: ## Show quick system status
 	@echo ""
 	@echo "$(YELLOW)Virtual Environment:$(NC)"
 	@if [ -d "$(VENV_DIR)" ]; then echo "✅ Virtual environment exists"; else echo "❌ Virtual environment missing"; fi
+
+# Core verification (REST + WS)
+verify-core: ## Verify core endpoints (health, metrics, WebSocket handshake)
+	@echo "$(BLUE)🔎 Verifying core API/WS...$(NC)"
+	@python3 scripts/verify_core.py
 
 # Development container support
 dev-container: ## Open project in VS Code dev container
