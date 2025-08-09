@@ -4,6 +4,42 @@
 - Protect the core user journey (mobile PWA live dashboard) by hardening WebSocket contracts and observability.
 - Prevent regressions via focused, deterministic tests and CI lanes.
 
+## Single source of truth — Dashboard WS contract and ops
+
+- Endpoints
+  - WS multi-subscription: `/api/dashboard/ws/dashboard`
+  - WS health/stats: `/api/dashboard/websocket/health`, `/api/dashboard/websocket/stats`
+  - WS broadcast (admin): `/api/dashboard/websocket/broadcast`
+  - WS limits: `/api/dashboard/websocket/limits` (server thresholds)
+  - Prometheus WS metrics: `/api/dashboard/metrics/websockets`
+
+- Schema & Types
+  - JSON Schema: `schemas/ws_messages.schema.json`
+  - TS Types: `mobile-pwa/src/types/ws-messages.d.ts` (generated in CI)
+  - Message variants: `connection_established`, `dashboard_initialized`, `subscription_updated`, `*_update`, `data_response`, `error`, `data_error`, `critical_alert`
+  - Additional fields allowed; `correlation_id` is present on outbound frames
+
+- Invariants
+  - All `error` and `data_error` frames include `timestamp` and `correlation_id`
+  - `pong` includes `timestamp`
+  - `subscription_updated` lists are unique and sorted
+  - Unknown message types and subscriptions generate `error`
+
+- Operational limits (current defaults)
+  - Rate limit: 20 msgs/sec per connection; burst 40; cooldown 5s between rate-limit errors
+  - Max inbound WS message: 64KB
+  - Max subscriptions per connection: 10
+  - Idle disconnect: 10 minutes (disconnect_notice sent before disconnect)
+
+- Observability
+  - Counters: messages_sent_total, messages_send_failures_total, messages_received_total, messages_dropped_rate_limit_total, errors_sent_total, connections_total, disconnections_total
+  - Exposed via Prometheus `/api/dashboard/metrics/websockets`
+  - Structured logs include `correlation_id`, `type`, `subscription`
+
+- CI
+  - PR: run `pytest tests/unit tests/ws tests/smoke -q`; PWA generates TS types and fails on drift
+  - Nightly: full test suites and limited mutation tests
+
 ## Decisions
 - Centralize WS error-frame creation to guarantee `timestamp` and message shape.
 - Enforce schema parity between `schemas/ws_messages.schema.json` and `mobile-pwa/src/types/ws-messages.d.ts` in CI.
@@ -101,3 +137,26 @@ Acceptance criteria for this tranche:
 3) Idle timeout hygiene (nice-to-have)
 - Disconnect connections idle beyond threshold with a `disconnect_notice` reason.
 - Optional server-initiated ping in future if needed (skipped for now to avoid client-side impact).
+
+## Roadmap (proposed after consolidation)
+
+1) Backpressure and queue metrics (must-have)
+- Track per-connection send failures and consecutive failure streak; disconnect after threshold
+- Expose gauge for current connection count by subscription, and a counter for disconnects due to backpressure
+- Tests: simulate send failures and assert disconnect path
+
+2) Contract versioning (high value)
+- Add optional `contract_version` on `connection_established` and `dashboard_initialized`; expose server version via `/health`
+- Tests: presence and type only; do not gate on specific value
+
+3) Chaos and recovery tests (high value)
+- Simulate Redis disconnects and ensure listener backoff and recovery (unit with monkeypatch)
+- WS reconnection strategy documented for the PWA (follow-up in PWA repo)
+
+4) Security hardening (nice-to-have)
+- Optional origin allowlist and token-based auth for WS (feature-flag); tests off by default
+
+Acceptance criteria for next wave:
+- Backpressure disconnect logic in place and covered by tests
+- Version fields present where applicable without breaking schema
+- Chaos test validates Redis listener resilience
