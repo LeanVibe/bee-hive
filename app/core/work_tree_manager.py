@@ -30,7 +30,12 @@ from ..core.github_api_client import GitHubAPIClient
 
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
+try:
+    settings = get_settings()
+except Exception:
+    class _Minimal:
+        WORK_TREES_BASE_PATH = "/tmp/agent-workspaces"
+    settings = _Minimal()
 
 
 class WorkTreeConfig:

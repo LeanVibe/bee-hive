@@ -21,39 +21,6 @@ import types
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .core.config import settings, get_settings
-from .core.database import init_database
-from .core.redis import init_redis, get_redis
-from .core.orchestrator import AgentOrchestrator
-from .core.event_processor import initialize_event_processor, shutdown_event_processor
-from .core.performance_metrics_publisher import get_performance_publisher, stop_performance_publisher
-from .core.enhanced_coordination_bridge import start_enhanced_coordination_bridge, stop_enhanced_coordination_bridge
-from .api.routes import router as api_router
-from .api.sleep_management import router as sleep_management_router
-from .api.intelligent_scheduling import router as intelligent_scheduling_router
-from .api.monitoring_reporting import router as monitoring_router
-from .api.analytics import router as analytics_router
-from .observability.middleware import ObservabilityMiddleware, ObservabilityHookMiddleware
-from .observability.hooks import HookInterceptor, set_hook_integration_manager
-from .observability.prometheus_middleware import PrometheusMiddleware
-from .core.error_handling_middleware import ErrorHandlingMiddleware, create_error_handling_middleware
-from .core.error_handling_config import initialize_error_handling_config, ErrorHandlingEnvironment, get_config_manager
-from .core.error_handling_integration import initialize_error_handling_integration
-from .api.v1.error_handling_health import router as error_handling_router
-from .api.v1.enhanced_coordination_api import router as enhanced_coordination_router
-from .api.v1.global_coordination import router as global_coordination_router
-from .api.agent_activation import router as agent_activation_router
-from .api.hive_commands import router as hive_commands_router
-from .api.intelligence import router as intelligence_router
-from .api.claude_integration import router as claude_integration_router
-from .api.dx_debugging import router as dx_debugging_router
-from .api.enterprise_sales import router as enterprise_sales_router
-from .api.enterprise_security import router as enterprise_security_router
-from .api.memory_operations import get_memory_router
-from .api.dashboard_monitoring import router as dashboard_monitoring_router
-from .api.dashboard_task_management import router as dashboard_task_management_router
-from .api.dashboard_websockets import router as dashboard_websockets_router
-from .api.dashboard_prometheus import router as dashboard_prometheus_router
-from .api.dashboard_compat import router as dashboard_compat_router
 
 
 # Configure structured logging
@@ -84,6 +51,31 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("🚀 Starting LeanVibe Agent Hive 2.0...")
     
     try:
+        # Import heavy dependencies lazily to avoid import-time side effects
+        from .core.database import init_database
+        from .core.redis import init_redis, get_redis
+        from .core.event_processor import (
+            initialize_event_processor,
+            shutdown_event_processor,
+        )
+        from .core.performance_metrics_publisher import (
+            get_performance_publisher,
+            stop_performance_publisher,
+        )
+        from .core.enhanced_coordination_bridge import (
+            start_enhanced_coordination_bridge,
+            stop_enhanced_coordination_bridge,
+        )
+        from .observability.hooks import HookInterceptor, set_hook_integration_manager
+        from .core.error_handling_config import (
+            initialize_error_handling_config,
+            ErrorHandlingEnvironment,
+        )
+        from .core.error_handling_integration import (
+            initialize_error_handling_integration,
+        )
+        from .core.orchestrator import AgentOrchestrator
+        
         # Initialize core infrastructure
         await init_database()
         await init_redis()
@@ -104,7 +96,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         # Initialize error handling system
         _settings = get_settings()
-        environment = ErrorHandlingEnvironment.PRODUCTION if not _settings.DEBUG else ErrorHandlingEnvironment.DEVELOPMENT
+        environment = (
+            ErrorHandlingEnvironment.PRODUCTION
+            if not _settings.DEBUG
+            else ErrorHandlingEnvironment.DEVELOPMENT
+        )
         error_config_manager = initialize_error_handling_config(
             environment=environment,
             enable_hot_reload=_settings.DEBUG
@@ -142,7 +138,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app.state.orchestrator = orchestrator
         
         # 🚀 COMPOUNDING IMPACT: Enhanced orchestrator with SharedWorldState for 5-10x coordination performance
-        from .core.orchestrator_shared_state_integration import enhance_orchestrator_with_shared_state
+        from .core.orchestrator_shared_state_integration import (
+            enhance_orchestrator_with_shared_state,
+        )
         shared_state_integration = await enhance_orchestrator_with_shared_state(orchestrator)
         app.state.shared_state_integration = shared_state_integration
         logger.info("🚀 SharedWorldState integration enabled - Agent coordination performance multiplied!")
@@ -186,6 +184,38 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     
     _settings = get_settings()
+
+    # Import routers and middleware lazily to avoid import-time settings validation
+    from .api.routes import router as api_router
+    from .api.sleep_management import router as sleep_management_router
+    from .api.intelligent_scheduling import router as intelligent_scheduling_router
+    from .api.monitoring_reporting import router as monitoring_router
+    from .api.analytics import router as analytics_router
+    from .observability.middleware import (
+        ObservabilityMiddleware,
+        ObservabilityHookMiddleware,
+    )
+    from .observability.prometheus_middleware import PrometheusMiddleware
+    from .core.error_handling_middleware import ErrorHandlingMiddleware
+    from .core.error_handling_config import get_config_manager, get_error_handling_config
+    from .api.v1.error_handling_health import router as error_handling_router
+    from .api.v1.enhanced_coordination_api import (
+        router as enhanced_coordination_router,
+    )
+    from .api.v1.global_coordination import router as global_coordination_router
+    from .api.agent_activation import router as agent_activation_router
+    from .api.hive_commands import router as hive_commands_router
+    from .api.intelligence import router as intelligence_router
+    from .api.claude_integration import router as claude_integration_router
+    from .api.dx_debugging import router as dx_debugging_router
+    from .api.enterprise_sales import router as enterprise_sales_router
+    from .api.enterprise_security import router as enterprise_security_router
+    from .api.memory_operations import get_memory_router
+    from .api.dashboard_monitoring import router as dashboard_monitoring_router
+    from .api.dashboard_task_management import router as dashboard_task_management_router
+    from .api.dashboard_websockets import router as dashboard_websockets_router
+    from .api.dashboard_prometheus import router as dashboard_prometheus_router
+    from .api.dashboard_compat import router as dashboard_compat_router
 
     app = FastAPI(
         title="LeanVibe Agent Hive 2.0",
