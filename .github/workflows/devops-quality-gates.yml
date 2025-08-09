@@ -301,22 +301,22 @@ print('✅ API performance targets met')
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
+
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
       
-    - name: Validate documentation links
-      run: |
+      - name: Validate documentation links
+        run: |
         echo "📚 Validating documentation links..."
         
         # Check if documentation files exist
@@ -338,7 +338,7 @@ print('✅ API performance targets met')
         done
         
         echo "✅ Documentation validation passed"
-    
+
       - name: Check API documentation
         run: |
           echo "📖 Validating API documentation..."
