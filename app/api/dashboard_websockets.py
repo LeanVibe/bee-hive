@@ -520,20 +520,16 @@ async def websocket_agents(
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
-                await websocket_manager._send_to_connection(connection_id, {
-                    "type": "error",
-                    "message": "Invalid JSON message format",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await websocket_manager._send_to_connection(
+                    connection_id, make_error("Invalid JSON message format")
+                )
             except Exception as e:
                 logger.error("Error in agent WebSocket", 
                            connection_id=connection_id, 
                            error=str(e))
-                await websocket_manager._send_to_connection(connection_id, {
-                    "type": "error", 
-                    "message": str(e),
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await websocket_manager._send_to_connection(
+                    connection_id, make_error(str(e))
+                )
                 break
                 
     except Exception as e:
@@ -573,11 +569,9 @@ async def websocket_coordination(
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
-                await websocket_manager._send_to_connection(connection_id, {
-                    "type": "error",
-                    "message": "Invalid JSON message format",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await websocket_manager._send_to_connection(
+                    connection_id, make_error("Invalid JSON message format")
+                )
             except Exception as e:
                 logger.error("Error in coordination WebSocket",
                            connection_id=connection_id,
@@ -621,11 +615,9 @@ async def websocket_tasks(
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
-                await websocket_manager._send_to_connection(connection_id, {
-                    "type": "error",
-                    "message": "Invalid JSON message format",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await websocket_manager._send_to_connection(
+                    connection_id, make_error("Invalid JSON message format")
+                )
             except Exception as e:
                 logger.error("Error in task WebSocket",
                            connection_id=connection_id,
@@ -669,11 +661,9 @@ async def websocket_system(
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
-                await websocket_manager._send_to_connection(connection_id, {
-                    "type": "error",
-                    "message": "Invalid JSON message format",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await websocket_manager._send_to_connection(
+                    connection_id, make_error("Invalid JSON message format")
+                )
             except Exception as e:
                 logger.error("Error in system WebSocket",
                            connection_id=connection_id,
@@ -730,11 +720,9 @@ async def websocket_dashboard_all(
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
-                await websocket_manager._send_to_connection(connection_id, {
-                    "type": "error",
-                    "message": "Invalid JSON message format",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                await websocket_manager._send_to_connection(
+                    connection_id, make_error("Invalid JSON message format")
+                )
             except Exception as e:
                 logger.error("Error in dashboard WebSocket",
                            connection_id=connection_id,
