@@ -144,16 +144,24 @@ class DashboardWebSocketManager:
             
         elif message_type == "subscribe":
             # Add new subscriptions
-            new_subs = set(message.get("subscriptions", []))
+            requested = message.get("subscriptions", [])
+            new_subs = set(requested)
             valid_subs = new_subs.intersection(self.subscription_groups.keys())
+            invalid_subs = new_subs.difference(self.subscription_groups.keys())
             
             for subscription in valid_subs:
                 connection.subscriptions.add(subscription)
                 self.subscription_groups[subscription].add(connection_id)
             
+            # Send error for any invalid subscriptions (single consolidated error)
+            if invalid_subs:
+                await self._send_to_connection(connection_id, make_error(
+                    f"Invalid subscription(s): {', '.join(sorted(invalid_subs))}"
+                ))
+
             await self._send_to_connection(connection_id, {
                 "type": "subscription_updated",
-                "subscriptions": list(connection.subscriptions)
+                "subscriptions": sorted(list(connection.subscriptions))
             })
             
         elif message_type == "unsubscribe":
@@ -169,7 +177,7 @@ class DashboardWebSocketManager:
             
             await self._send_to_connection(connection_id, {
                 "type": "subscription_updated",
-                "subscriptions": list(connection.subscriptions)
+                "subscriptions": sorted(list(connection.subscriptions))
             })
             
         elif message_type == "request_data":
@@ -251,9 +259,14 @@ class DashboardWebSocketManager:
             await connection.websocket.send_text(json.dumps(message))
             return True
         except Exception as e:
-            logger.warning("Failed to send WebSocket message", 
-                          connection_id=connection_id, 
-                          error=str(e))
+            logger.warning(
+                "Failed to send WebSocket message",
+                connection_id=connection_id,
+                error=str(e),
+                correlation_id=message.get("correlation_id"),
+                message_type=message.get("type"),
+                subscription=message.get("subscription"),
+            )
             return False
     
     async def _handle_data_request(
@@ -388,6 +401,7 @@ class DashboardWebSocketManager:
     
     async def _redis_listener_loop(self) -> None:
         """Listen for Redis events and broadcast to relevant clients."""
+        backoff_seconds = 5
         while True:
             try:
                 redis_client = get_redis()
@@ -396,6 +410,9 @@ class DashboardWebSocketManager:
                 pubsub = redis_client.pubsub()
                 await pubsub.subscribe("system_events")
                 await pubsub.psubscribe("agent_events:*")
+
+                # Reset backoff after successful subscribe
+                backoff_seconds = 5
 
                 async for message in pubsub.listen():
                     msg_type = message.get("type")
@@ -406,7 +423,8 @@ class DashboardWebSocketManager:
                 
             except Exception as e:
                 logger.error("Error in Redis listener loop", error=str(e))
-                await asyncio.sleep(10)
+                await asyncio.sleep(backoff_seconds)
+                backoff_seconds = min(backoff_seconds * 2, 60)
     
     async def _health_monitor_loop(self) -> None:
         """Monitor system health and send alerts."""

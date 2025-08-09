@@ -79,6 +79,30 @@
       },
       "required": ["type", "subscription", "data"],
       "additionalProperties": true
+    },
+    {
+      "title": "DataResponseMessage",
+      "type": "object",
+      "properties": {
+        "type": { "const": "data_response" },
+        "data_type": { "type": "string" },
+        "data": { "type": "object" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["type", "data_type", "data"],
+      "additionalProperties": true
+    },
+    {
+      "title": "DataErrorMessage",
+      "type": "object",
+      "properties": {
+        "type": { "const": "data_error" },
+        "data_type": { "type": "string" },
+        "error": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["type", "data_type", "error"],
+      "additionalProperties": true
     }
   ]
 }

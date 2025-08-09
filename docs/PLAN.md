@@ -55,31 +55,32 @@ Acceptance criteria:
 
 ## Next priorities (plan and breakdown)
 
-1) Add correlation IDs for observability (must-have)
-- Goal: Attach a `correlation_id` to outbound WS frames for easier tracing.
+1) WS contract completeness and observability (must-have)
+- Correlation IDs for tracing: Implemented (helpers + broadcasts) with tests.
+- Schema completeness: Add explicit `data_response` and `data_error` entries to schema and regenerate TS types.
+- Structured logs: Include `correlation_id`, `type`, `subscription` on send failures.
+- Redis backoff: Exponential backoff on listener reconnects to improve resilience.
+
+2) Rate limiting and flood protection (must-have)
+- Goal: Protect server from client floods and misbehaving subscriptions without impacting UX.
 - Scope:
-  - Extend `make_error`/`make_data_error` to include `correlation_id` (UUID v4).
-  - Include `correlation_id` on broadcast frames (`broadcast_to_subscription`, `broadcast_to_all`).
-  - Do not change schema requirements (keep as additionalProperties) to avoid breaking clients.
+  - Per-connection simple token bucket for incoming messages (e.g., 20 msgs/sec burst 40).
+  - Drop or delay when exceeded; send a single `error` with reason and then silence until within limits.
+  - Broadcast loop safeguards: cap per-connection queued messages; disconnect if backpressure persists.
 - Tests:
-  - Unit: assert `correlation_id` present in `make_error`/`make_data_error`.
-  - WS: assert `correlation_id` on generic error and on a `critical_alert` broadcast.
+  - Unit: token bucket behavior (allowance refills over time).
+  - WS: send >N messages in a tight loop and assert only limited processing plus at least one rate-limit error.
 
-2) Expand `request_data` happy-path tests (high value)
-- Add minimal happy-path coverage for:
-  - `coordination_metrics` (contains `success_rate`, `trend`).
-  - `system_health` (contains `overall_status`, `components`).
-- Keep data shapes minimal and backend-agnostic.
+3) Subscription validation and normalization (high value)
+- Ensure `subscribe`/`unsubscribe` accept only known subscriptions; unknown are ignored with an `error`.
+- Normalize duplicates; always return a sorted `subscriptions` list for deterministic diffs.
+- Tests: subscribe to unknown + duplicates; verify error frame and sorted list.
 
-3) Tighten schema/type contract checks (nice-to-have)
-- Add a backend contract test ensuring enum values in schema are mirrored in TS types (already partly covered, keep maintained).
-- Consider a pre-commit hook (optional) to run `mobile-pwa generate:schemas` and fail on drift locally.
-
-4) Operational hygiene (nice-to-have)
-- Emit structured logs for broadcast failures including `correlation_id`.
-- Consider backoff in `_redis_listener_loop` reconnects (already sleeps; refine thresholds if flakiness observed).
+4) CI/local parity (nice-to-have)
+- Optional pre-commit hook to run `npm -w mobile-pwa run generate:schemas` and fail on drift.
+- Document in CONTRIBUTING; keep CI as source of truth.
 
 Acceptance criteria for this tranche:
-- All WS error and broadcast frames include `correlation_id`.
-- New `request_data` tests for `coordination_metrics` and `system_health` green.
-- All existing ws/unit/smoke tests remain green.
+- Rate limiting enforced with tests proving drop/notify behavior without flaking.
+- Subscription validation errors produced for unknowns; updates return sorted lists.
+- Schema and TS types include `data_response` and `data_error`; all tests green.

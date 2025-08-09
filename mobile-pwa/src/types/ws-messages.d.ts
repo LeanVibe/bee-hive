@@ -11,7 +11,9 @@ export type HiveOpsWebSocketMessages =
   | SubscriptionUpdated
   | UpdateMessage
   | ErrorMessage
-  | CriticalAlertMessage;
+  | CriticalAlertMessage
+  | DataResponseMessage
+  | DataErrorMessage;
 
 export interface ConnectionEstablished {
   type: "connection_established";
@@ -58,6 +60,22 @@ export interface CriticalAlertMessage {
     timestamp?: string;
     [k: string]: unknown;
   };
+  timestamp?: string;
+  [k: string]: unknown;
+}
+export interface DataResponseMessage {
+  type: "data_response";
+  data_type: string;
+  data: {
+    [k: string]: unknown;
+  };
+  timestamp?: string;
+  [k: string]: unknown;
+}
+export interface DataErrorMessage {
+  type: "data_error";
+  data_type: string;
+  error: string;
   timestamp?: string;
   [k: string]: unknown;
 }
