@@ -31,10 +31,14 @@ async def test_ws_request_data_unknown_type_produces_data_error(test_app):
         _ = json.loads(ws.receive_text())
         # Send unknown data request
         ws.send_text(json.dumps({"type": "request_data", "data_type": "does_not_exist"}))
-        got_data_error = False
+        got_data_error = None
         for _ in range(10):
             msg = json.loads(ws.receive_text())
             if msg.get("type") == "data_error" and msg.get("data_type") == "does_not_exist":
-                got_data_error = True
+                got_data_error = msg
                 break
-        assert got_data_error
+        assert got_data_error is not None
+        # Should include timestamp for observability
+        assert isinstance(got_data_error.get("timestamp"), str)
+        # Ensure error message present
+        assert isinstance(got_data_error.get("error"), str) and got_data_error["error"]
