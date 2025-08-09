@@ -31,11 +31,13 @@
   - Max inbound WS message: 64KB
   - Max subscriptions per connection: 10
   - Idle disconnect: 10 minutes (disconnect_notice sent before disconnect)
+  - Backpressure: disconnect after 5 consecutive send failures
 
 - Observability
   - Counters: messages_sent_total, messages_send_failures_total, messages_received_total, messages_dropped_rate_limit_total, errors_sent_total, connections_total, disconnections_total
   - Exposed via Prometheus `/api/dashboard/metrics/websockets`
   - Structured logs include `correlation_id`, `type`, `subscription`
+  - Limits endpoint: `/api/dashboard/websocket/limits` returns all thresholds and `contract_version`
 
 - CI
   - PR: run `pytest tests/unit tests/ws tests/smoke -q`; PWA generates TS types and fails on drift

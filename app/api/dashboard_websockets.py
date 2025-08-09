@@ -990,7 +990,8 @@ async def websocket_health_check():
             "connection_stats": websocket_manager.get_connection_stats(),
             "redis_connectivity": "unknown"
         }
-        
+
+
         # Test Redis connectivity
         try:
             redis_client = get_redis()
@@ -1025,3 +1026,25 @@ async def websocket_health_check():
             },
             "error": str(e)
         }
+
+
+@router.get("/websocket/limits", response_model=Dict[str, Any])
+async def websocket_limits():
+    """
+    Get server-enforced WebSocket limits and contract info for clients.
+    """
+    try:
+        limits = {
+            "rate_limit_tokens_per_second": websocket_manager.rate_limit_tokens_per_second,
+            "rate_limit_burst_capacity": websocket_manager.rate_limit_burst_capacity,
+            "rate_limit_notify_cooldown_seconds": websocket_manager.rate_limit_notify_cooldown_seconds,
+            "max_inbound_message_bytes": websocket_manager.max_inbound_message_bytes,
+            "max_subscriptions_per_connection": websocket_manager.max_subscriptions_per_connection,
+            "backpressure_disconnect_threshold": websocket_manager.backpressure_disconnect_threshold,
+            "contract_version": WS_CONTRACT_VERSION,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        return limits
+    except Exception as e:
+        logger.error("Failed to get WebSocket limits", error=str(e))
+        return {"error": "failed_to_get_limits"}
