@@ -10,6 +10,8 @@ from typing import List, Optional
 from pathlib import Path
 
 from pydantic import Field
+from functools import lru_cache
+from typing import cast
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
 
@@ -245,10 +247,31 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-# Global settings instance
-settings = Settings()
+class _LazySettings:
+    """Lazy accessor that defers Settings() instantiation until first use.
+
+    This prevents environment validation at import time (helps CI/tests).
+    """
+
+    _instance: Settings | None = None
+
+    def _ensure(self) -> Settings:
+        if self._instance is None:
+            self._instance = Settings()
+        return self._instance
+
+    def __getattr__(self, name: str):  # pragma: no cover - simple delegation
+        return getattr(self._ensure(), name)
 
 
+# Backwards-compatible module attribute import pattern: `from app.core.config import settings`
+# Now returns a lazy proxy that only instantiates when accessed.
+settings = _LazySettings()
+
+
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """Get application settings."""
-    return settings
+    """Return a cached Settings instance (explicit access pattern)."""
+    if isinstance(settings, _LazySettings) and settings._instance is not None:
+        return cast(Settings, settings._instance)
+    return Settings()

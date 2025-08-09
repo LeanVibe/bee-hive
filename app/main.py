@@ -19,7 +19,7 @@ from fastapi.encoders import jsonable_encoder
 import types
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .core.config import settings
+from .core.config import settings, get_settings
 from .core.database import init_database
 from .core.redis import init_redis, get_redis
 from .core.orchestrator import AgentOrchestrator
@@ -102,16 +102,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app.state.hook_interceptor = hook_interceptor
         
         # Initialize error handling system
-        environment = ErrorHandlingEnvironment.PRODUCTION if not settings.DEBUG else ErrorHandlingEnvironment.DEVELOPMENT
+        _settings = get_settings()
+        environment = ErrorHandlingEnvironment.PRODUCTION if not _settings.DEBUG else ErrorHandlingEnvironment.DEVELOPMENT
         error_config_manager = initialize_error_handling_config(
             environment=environment,
-            enable_hot_reload=settings.DEBUG
+            enable_hot_reload=_settings.DEBUG
         )
         app.state.error_config_manager = error_config_manager
         
         # Initialize error handling observability integration
         error_integration = initialize_error_handling_integration(
-            enable_detailed_logging=settings.DEBUG
+            enable_detailed_logging=_settings.DEBUG
         )
         app.state.error_integration = error_integration
         
@@ -131,7 +132,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("✅ Enterprise security systems initialized")
         
         # Start configuration hot-reload if enabled
-        if settings.DEBUG:
+        if _settings.DEBUG:
             await error_config_manager.start_hot_reload()
         
         # Start agent orchestrator
@@ -183,25 +184,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     
+    _settings = get_settings()
+
     app = FastAPI(
         title="LeanVibe Agent Hive 2.0",
         description="Multi-Agent Orchestration System for Autonomous Software Development",
         version="2.0.0",
         lifespan=lifespan,
-        docs_url="/docs" if settings.DEBUG else None,
-        redoc_url="/redoc" if settings.DEBUG else None,
+        docs_url="/docs" if _settings.DEBUG else None,
+        redoc_url="/redoc" if _settings.DEBUG else None,
     )
     
     # Security middleware
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=settings.ALLOWED_HOSTS
+        allowed_hosts=_settings.ALLOWED_HOSTS
     )
     
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=_settings.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -559,7 +562,7 @@ if __name__ == "__main__":
         "app.main:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.DEBUG,
+        reload=get_settings().DEBUG,
         log_config=None,  # We use structlog
         access_log=False,  # Handled by middleware
     )
