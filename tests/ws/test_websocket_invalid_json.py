@@ -23,5 +23,6 @@ async def test_ws_invalid_json_message_returns_error(test_app):
                 error_msg = msg
                 break
         assert found_error
-        # Error frames must include a timestamp for observability
+        # Error frames must include a timestamp and correlation_id for observability
         assert isinstance(error_msg.get("timestamp"), str)
+        assert isinstance(error_msg.get("correlation_id"), str)

@@ -25,6 +25,8 @@ async def test_ws_unknown_message_type_returns_error(test_app):
         assert got_error
         # Error frames must include timestamp for observability
         assert isinstance(error_msg.get("timestamp"), str)
+        # And correlation_id for tracing
+        assert isinstance(error_msg.get("correlation_id"), str)
 
 
 async def test_ws_request_data_unknown_type_produces_data_error(test_app):

@@ -21,11 +21,16 @@ async def test_ws_initial_and_subscription_messages_match_schema(test_app):
     with ws:
         msg = _read_json(ws)
         validate(instance=msg, schema=SCHEMA)
+        # additionalProperties allow correlation_id; if present it should be string
+        if "correlation_id" in msg:
+            assert isinstance(msg["correlation_id"], str)
 
         ws.send_text(json.dumps({"type": "subscribe", "subscriptions": ["alerts"]}))
         for _ in range(5):
             msg2 = _read_json(ws)
             validate(instance=msg2, schema=SCHEMA)
+            if "correlation_id" in msg2:
+                assert isinstance(msg2["correlation_id"], str)
             if msg2.get("type") == "subscription_updated":
                 break
 
@@ -52,6 +57,7 @@ async def test_ws_error_and_critical_alert_match_schema(test_app):
                 pass
             if msg.get("type") == "error" and isinstance(msg.get("message"), str):
                 got_error = True
+                assert isinstance(msg.get("correlation_id"), str)
                 break
         assert got_error
 
@@ -80,6 +86,8 @@ async def test_ws_error_and_critical_alert_match_schema(test_app):
                 validate(instance=msg, schema=SCHEMA)
                 assert msg.get("subscription") == "alerts"
                 assert isinstance(msg.get("data", {}).get("alerts"), list)
+                # Optional field should be present: correlation_id
+                assert isinstance(msg.get("correlation_id"), str)
                 got_alert = True
                 break
         assert got_alert

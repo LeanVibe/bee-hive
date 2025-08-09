@@ -197,7 +197,8 @@ class DashboardWebSocketManager:
             "type": message_type,
             "subscription": subscription,
             "data": data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "correlation_id": str(uuid.uuid4()),
         }
         
         sent_count = 0
@@ -220,7 +221,8 @@ class DashboardWebSocketManager:
         message = {
             "type": message_type,
             "data": data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "correlation_id": str(uuid.uuid4()),
         }
         
         sent_count = 0
