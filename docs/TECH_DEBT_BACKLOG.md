@@ -112,3 +112,10 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
 - Action:
   - Remove unused imports/vars; where false-positives (e.g., conditional debug hooks), add `# noqa: F401` or runtime reference.
   - Gate with `ruff --select=F401,F841` in CI for `app/**` except migrations/tests.
+
+## Findings — Dependency vulnerabilities (safety)
+
+- Tooling note: `safety check` is deprecated; `safety scan` errored in local env due to `marshmallow` incompat (post_dump pass_many). We should pin Safety runner in CI and capture SBOM.
+- Action:
+  - Add a CI job using `safety scan --full-report` or `pip-audit` as fallback.
+  - Generate/commit SBOM artifact (CycloneDX) for backend and `npm audit` for PWA; track criticals in this backlog.
