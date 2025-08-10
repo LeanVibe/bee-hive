@@ -19,11 +19,11 @@ Sandbox Mode is a **complete implementation** of LeanVibe's autonomous developme
 
 ## Quick Start
 
+For end-to-end setup, follow `docs/GETTING_STARTED.md`. Sandbox mode requires no external API keys.
+
 ### Option 1: One-Command Demo Launch
 ```bash
-# Clone and start sandbox demo in under 2 minutes
-git clone https://github.com/leanvibe/agent-hive.git
-cd agent-hive
+# Start sandbox demo in under 2 minutes (from repo root)
 ./start-sandbox-demo.sh
 
 # Demo will be available at: http://localhost:8080
@@ -31,22 +31,18 @@ cd agent-hive
 
 ### Option 2: Manual Setup
 ```bash
-# 1. Clone repository
-git clone https://github.com/leanvibe/agent-hive.git
-cd agent-hive
-
-# 2. Create virtual environment
+# 1. Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 
-# 3. Install minimal dependencies
+# 2. Install minimal dependencies
 pip install fastapi uvicorn pydantic structlog
 
-# 4. Set sandbox environment
+# 3. Set sandbox environment
 export SANDBOX_MODE=true
 export SANDBOX_DEMO_MODE=true
 
-# 5. Launch demo
+# 4. Launch demo
 python demo_launcher.py
 ```
 
