@@ -37,3 +37,17 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
 ## Notes
 - Keep focused CI lanes green (tests/unit, tests/ws, tests/smoke).
 - No reintroduction of server-rendered dashboard.
+
+---
+
+## Findings — Ruff (style/lint)
+
+- Result: No lint violations reported by `ruff check`.
+- Config deprecations detected in `pyproject.toml`:
+  - `[tool.ruff]` top-level linter keys are deprecated; migrate to `[tool.ruff.lint]`:
+    - `select` -> `lint.select`
+    - `ignore` -> `lint.ignore`
+    - `unfixable` -> `lint.unfixable`
+    - `isort` -> `lint.isort`
+    - `per-file-ignores` -> `lint.per-file-ignores`
+  - Action: Update `pyproject.toml` to new sections and run Ruff again.
