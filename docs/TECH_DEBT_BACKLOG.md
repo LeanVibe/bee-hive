@@ -103,3 +103,12 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
 - Action:
   - Prioritize E/D ranks for refactoring with tests; extract pure functions, reduce branching, add guards.
   - Schedule MI D files into an incremental refactor queue; enforce max function length in CI for these paths.
+
+## Findings — Vulture (dead code)
+
+- Sample of high-confidence unused code (min-confidence=70):
+  - Unused variables: `app/api/performance_intelligence.py:819` (`admin_access`), several in `app/api/v1/security_dashboard.py` (`admin_claims`), etc.
+  - Unused imports across `app/api/**` and `app/core/**` (e.g., `pd`, `AddressValueError`, `IPv4Address`).
+- Action:
+  - Remove unused imports/vars; where false-positives (e.g., conditional debug hooks), add `# noqa: F401` or runtime reference.
+  - Gate with `ruff --select=F401,F841` in CI for `app/**` except migrations/tests.
