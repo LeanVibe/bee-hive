@@ -39,6 +39,8 @@ The Custom Commands System provides:
 
 ## Getting Started
 
+First complete environment setup via `docs/GETTING_STARTED.md`, then return here for custom commands specifics.
+
 ### Prerequisites
 
 - LeanVibe Agent Hive 2.0 with Phase 5 infrastructure
