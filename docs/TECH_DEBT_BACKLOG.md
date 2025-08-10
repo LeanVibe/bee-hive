@@ -91,3 +91,15 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
 - Action:
   - Audit HIGH first; document accepted risks with rationale.
   - Add helper wrappers for subprocess and parameterized DB ops; enforce via code review checks.
+
+## Findings — Radon (complexity & maintainability)
+
+- Cyclomatic complexity (blocks by rank): A≈10,740, B≈2,197, C≈678, D≈54, E≈5
+- Files with worst ranks:
+  - E: `app/core/communication_analyzer.py`, `app/core/performance_metrics_collector.py`, `app/core/enterprise_roi_tracker.py`, `app/dashboard/coordination_dashboard.py`, `app/api/v1/sleep_wake_vs7_1.py`
+  - D: `app/core/intelligent_workflow_automation.py`, `app/core/enhanced_jwt_manager.py`, `app/core/multi_agent_commands.py`, `app/core/memory_hierarchy_manager.py`, `app/core/workflow_engine.py`, `app/core/capacity_manager.py`, `app/core/enhanced_context_consolidator.py`, `app/core/sleep_analytics.py`, `app/core/enhanced_security_audit.py`, `app/core/optimized_embedding_pipeline.py`
+- Maintainability Index (buckets): D≈441, C≈16, B≈1, A≈29; lowest MI include:
+  - `app/core/intelligent_workflow_automation.py`, `app/core/production_orchestrator.py`, `app/core/advanced_repository_management.py`, `app/core/sleep_wake_system.py`, `app/core/self_optimization_agent.py`, `app/core/orchestrator.py`, `app/core/consolidation_engine.py`
+- Action:
+  - Prioritize E/D ranks for refactoring with tests; extract pure functions, reduce branching, add guards.
+  - Schedule MI D files into an incremental refactor queue; enforce max function length in CI for these paths.
