@@ -65,6 +65,8 @@ LeanVibe Agent Hive is built with a modern, scalable architecture:
 
 ## Getting Started
 
+For the canonical, tested steps, see `docs/GETTING_STARTED.md`. This guide focuses on deeper reference material.
+
 ### Prerequisites
 
 - **Python 3.11+** with pip
@@ -72,7 +74,7 @@ LeanVibe Agent Hive is built with a modern, scalable architecture:
 - **Docker** and **Docker Compose**
 - **Git** with SSH keys
 
-### Quick Setup
+### Quick Setup (summary)
 
 ```bash
 # 1. Clone and enter directory
