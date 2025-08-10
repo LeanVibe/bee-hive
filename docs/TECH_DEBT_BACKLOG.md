@@ -51,3 +51,28 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
     - `isort` -> `lint.isort`
     - `per-file-ignores` -> `lint.per-file-ignores`
   - Action: Update `pyproject.toml` to new sections and run Ruff again.
+
+## Findings — Mypy (typing)
+
+- Scale: 11,289 errors across 1,000+ lines reported; top categories:
+  - `attr-defined` (~2,185): attributes used that types don’t declare (often ORM columns vs. runtime attrs)
+  - `no-untyped-def` (~1,893): missing function type hints
+  - `arg-type` / `assignment` / `call-arg` (~3,197 combined): incompatible types passed/assigned
+  - `union-attr` (857): Optional handling issues
+  - `var-annotated` (506): variables need explicit annotations
+- Heaviest files (top 10 by error count):
+  - `app/core/recovery_manager.py` (~206)
+  - `app/core/config.py` (~146)
+  - `app/api/dashboard_task_management.py` (~123)
+  - `app/core/consolidation_engine.py` (~122)
+  - `app/core/command_templates.py` (~109)
+  - `app/core/self_modification/self_modification_service.py` (~102)
+  - `app/api/v1/comprehensive_dashboard.py` (~102)
+  - `app/core/context_engine_integration.py` (~97)
+  - `app/core/orchestrator.py` (~94)
+  - `app/api/v1/team_coordination.py` (~84)
+- Root causes and plan:
+  - Pydantic v2 `Field` kwargs (`min_items`, `max_items`, `env`) used in v1 style → update to v2 equivalents or model_config.
+  - SQLAlchemy models mixing `Column[...]` with business-return types → add `Mapped[...]` annotations and accessor methods.
+  - Broad `Collection` vs `list`/`dict` misuse; Optional defaults violating `no_implicit_optional`.
+  - Action: Introduce an incremental mypy target focusing on top 5 files, enforce `--warn-unused-ignores`, and add `py.typed` where needed.
