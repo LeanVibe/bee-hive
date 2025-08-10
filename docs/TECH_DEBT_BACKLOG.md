@@ -76,3 +76,18 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
   - SQLAlchemy models mixing `Column[...]` with business-return types → add `Mapped[...]` annotations and accessor methods.
   - Broad `Collection` vs `list`/`dict` misuse; Optional defaults violating `no_implicit_optional`.
   - Action: Introduce an incremental mypy target focusing on top 5 files, enforce `--warn-unused-ignores`, and add `py.typed` where needed.
+
+## Findings — Bandit (security)
+
+- Total findings: 383
+  - Severity: HIGH=6, MEDIUM=41, LOW=336
+  - Common tests triggered:
+    - B311: use of `random` for security (~132) → OK for non-crypto; otherwise use `secrets`/`os.urandom`.
+    - B110: try/except pass (~65) → replace with explicit logging or handling.
+    - B603/B607: subprocess usage (~63) → ensure safe arguments; prefer `shlex.split`, avoid shell=True.
+    - B105/B106: hardcoded password/crypt (~38) → verify these are placeholders/tests; move to secrets management.
+    - B404: import subprocess (~29) → acceptable with guardrails.
+    - B608: SQL injection potential (~9) → parameterize queries.
+- Action:
+  - Audit HIGH first; document accepted risks with rationale.
+  - Add helper wrappers for subprocess and parameterized DB ops; enforce via code review checks.
