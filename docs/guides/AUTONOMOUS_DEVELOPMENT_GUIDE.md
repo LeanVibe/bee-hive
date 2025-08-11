@@ -2,16 +2,11 @@
 
 **Transform from AI-assisted coding to fully autonomous development**
 
-## 🚀 Quick Start (5 Minutes)
+## 🚀 Quick Start
+
+See the canonical `docs/GETTING_STARTED.md` for end-to-end setup. Once running, try:
 
 ```bash
-# 1. Bootstrap the system
-./quick-start.sh
-
-# 2. Add your AI API key (optional but recommended)
-echo "ANTHROPIC_API_KEY=your_key_here" >> .env.local
-
-# 3. Experience autonomous development in 15 minutes
 python3 scripts/demos/user_success_journey_15min.py
 ```
 

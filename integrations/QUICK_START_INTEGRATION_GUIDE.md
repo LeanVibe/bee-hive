@@ -1,5 +1,7 @@
 # 🚀 LeanVibe Agent Hive Integration Quick Start Guide
 
+For base project setup, see `docs/GETTING_STARTED.md`. This guide covers integration entry points only.
+
 **Get up and running with LeanVibe Agent Hive integrations in minutes, not hours.**
 
 ## 🎯 Choose Your Integration Path

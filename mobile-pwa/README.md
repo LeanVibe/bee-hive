@@ -63,6 +63,8 @@ mobile-pwa/
 
 ## 🚀 Quick Start
 
+Ensure the backend is running per `docs/GETTING_STARTED.md`. Then:
+
 ### Prerequisites
 - Node.js 18+
 - LeanVibe Agent Hive 2.0 backend running on port 8000

@@ -1,4 +1,6 @@
-# Getting Started with LeanVibe Agent Hive 2.0
+# Getting Started with LeanVibe Agent Hive 2.0 (Archived)
+
+> DEPRECATED: This long-form guide has been superseded. For the canonical, maintained instructions, see `docs/GETTING_STARTED.md`.
 
 > NOTE: This guide is archived. See `docs/CORE.md` (overview) and `docs/ARCHITECTURE.md` (setup & run). Quick start: `docs-site/learn/getting-started/setup.md`.
 

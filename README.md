@@ -4,6 +4,9 @@ Modern FastAPI backend with a Lit + Vite PWA for real‑time operational dashboa
 
 ## Quick start
 
+For tested, canonical setup steps, see `docs/GETTING_STARTED.md`.
+
+Short version:
 - Infra: `docker compose up -d postgres redis`
 - Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
 - PWA: `cd mobile-pwa && npm ci && npm run dev` then open the dev URL
@@ -39,4 +42,8 @@ WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
 
 ## Docs
 
-See `docs/extra/prompts.md` and `docs/core/prompt-optimization-system-prd.md` for implementation notes and design.
+- Getting started: `docs/GETTING_STARTED.md`
+- Core overview: `docs/CORE.md`
+- Architecture: `docs/ARCHITECTURE.md`
+- Index: `docs/DOCS_INDEX.md`
+- Agent prompt for consolidation/debt cleanup: `docs/AGENT_PROMPT_CONSOLIDATION.md`
