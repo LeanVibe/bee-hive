@@ -174,6 +174,11 @@ class TokenData(BaseModel):
     exp: datetime
 
 
+class RefreshRequest(BaseModel):
+    """Request body for refresh token endpoint."""
+    refresh_token: str
+
+
 # Database Models (Simple in-memory for now, should be moved to database_models.py)
 class User:
     """User model for authentication."""
@@ -530,21 +535,21 @@ async def get_current_user_info(
 
 
 @auth_router.post("/refresh", response_model=Dict[str, Any])
-async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
+async def refresh_access_token(payload: RefreshRequest) -> Dict[str, Any]:
     """Refresh access token using refresh token."""
     
     auth_service = get_auth_service()
     
     try:
-        payload = jwt.decode(refresh_token, auth_service.secret_key, algorithms=[auth_service.algorithm])
+        decoded = jwt.decode(payload.refresh_token, auth_service.secret_key, algorithms=[auth_service.algorithm])
         
-        if payload.get("type") != "refresh":
+        if decoded.get("type") != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token"
             )
         
-        user_id = payload.get("sub")
+        user_id = decoded.get("sub")
         user = auth_service.get_user_by_id(user_id)
         
         if not user or not user.is_active:
@@ -573,6 +578,43 @@ async def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
         )
+
+
+@auth_router.post("/logout", response_model=Dict[str, Any])
+async def logout_user(current_user: User = Depends(get_current_user)) -> Dict[str, Any]:
+    """Logout current user. With stateless JWT we just acknowledge."""
+    logger.info("User logged out", user_id=current_user.id, email=current_user.email)
+    return {"success": True}
+
+
+class SecurityAuditEntry(BaseModel):
+    """Security audit log entry shape from PWA."""
+    timestamp: datetime
+    event: str
+    userId: Optional[str] = None
+    userAgent: Optional[str] = None
+    ipAddress: Optional[str] = None
+    success: bool
+    details: Optional[Any] = None
+
+
+@auth_router.post("/audit", response_model=Dict[str, Any])
+async def audit_security_event(entry: SecurityAuditEntry) -> Dict[str, Any]:
+    """Accept security audit log entries from clients (best-effort)."""
+    try:
+        logger.info(
+            "security_audit_log",
+            event=entry.event,
+            success=entry.success,
+            user_id=entry.userId,
+            user_agent=entry.userAgent,
+            ip_address=entry.ipAddress,
+            details=entry.details,
+        )
+        return {"success": True}
+    except Exception as e:
+        logger.error("Failed to record security audit log", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to record audit log")
 
 
 # Export all authentication components

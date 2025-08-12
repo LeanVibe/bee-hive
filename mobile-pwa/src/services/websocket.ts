@@ -108,7 +108,9 @@ export class WebSocketService extends EventEmitter {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const host = window.location.hostname
       const port = process.env.NODE_ENV === 'development' ? ':8000' : ''
-      const wsUrl = `${protocol}//${host}${port}/api/dashboard/ws/dashboard`
+      const token = this.authService.getToken()
+      const tokenQuery = token ? `?access_token=${encodeURIComponent(token)}` : ''
+      const wsUrl = `${protocol}//${host}${port}/api/dashboard/ws/dashboard${tokenQuery}`
       
       console.log('🔌 Connecting to WebSocket:', wsUrl)
       

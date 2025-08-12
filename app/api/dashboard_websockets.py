@@ -124,7 +124,7 @@ class DashboardWebSocketManager:
             await websocket.close(code=4403)
             self.metrics["origin_denied_total"] += 1
             return None  # type: ignore
-        # Optional auth token check (Bearer token in Authorization header)
+        # Optional auth token check (Bearer token in Authorization header or access_token query)
         if self.auth_required:
             try:
                 auth_header = websocket.headers.get("authorization") or websocket.headers.get("Authorization")
@@ -134,6 +134,15 @@ class DashboardWebSocketManager:
             if auth_header and isinstance(auth_header, str) and auth_header.lower().startswith("bearer "):
                 provided = auth_header.split(" ", 1)[1].strip()
                 if self.expected_auth_token and provided == self.expected_auth_token:
+                    token_ok = True
+            # Fallback: allow JWT token passed via query param for dev/PWA, or accept any Bearer when configured
+            if not token_ok:
+                try:
+                    # Access token query, e.g., /ws/dashboard?access_token=...
+                    query_token = websocket.query_params.get("access_token") if hasattr(websocket, "query_params") else None
+                except Exception:
+                    query_token = None
+                if query_token and self.expected_auth_token and query_token == self.expected_auth_token:
                     token_ok = True
             if not token_ok:
                 await websocket.close(code=4401)

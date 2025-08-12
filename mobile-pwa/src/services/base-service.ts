@@ -109,6 +109,17 @@ export class BaseService extends EventEmitter {
         signal: AbortSignal.timeout(this.config.timeout),
         ...options
       };
+      try {
+        // Inject Authorization header if AuthService is available
+        const { AuthService } = await import('./auth')
+        const auth = AuthService.getInstance()
+        const token = auth.getToken()
+        if (token) {
+          (requestOptions.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+        }
+      } catch (_) {
+        // no-op if auth not available
+      }
 
       if (data) {
         requestOptions.body = JSON.stringify(data);
