@@ -245,7 +245,7 @@ wscat -c ws://localhost:8000/ws/observability
 ## 📚 Developer Resources
 
 ### Essential Documentation
-- **[API Reference](../API_REFERENCE_COMPREHENSIVE.md)** - Complete API documentation
+- **[API Reference](../reference/API_REFERENCE_COMPREHENSIVE.md)** - Complete API documentation
 - **[Developer Guide](../DEVELOPER_GUIDE.md)** - Comprehensive development guide
 - **[Hook Integration](../HOOK_INTEGRATION_GUIDE.md)** - System integration patterns
 - **[Multi-Agent Coordination](../MULTI_AGENT_COORDINATION_GUIDE.md)** - Advanced patterns

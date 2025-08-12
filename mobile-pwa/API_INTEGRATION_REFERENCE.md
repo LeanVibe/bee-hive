@@ -434,7 +434,7 @@ export class TaskService extends BaseService {
 
 - **[Mobile PWA README](README.md)**: Complete PWA documentation
 - **[Testing Guide](README-TESTING.md)**: API integration testing
-- **[Main API Reference](../docs/API_REFERENCE_COMPREHENSIVE.md)**: Full backend API documentation
+- **[Main API Reference](../docs/reference/API_REFERENCE_COMPREHENSIVE.md)**: Full backend API documentation
 
 ---
 
