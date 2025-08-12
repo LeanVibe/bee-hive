@@ -1113,9 +1113,30 @@ async def websocket_limits():
             "ws_auth_required": websocket_manager.auth_required,
             "ws_allowed_origins_configured": bool(websocket_manager.allowed_origins),
             "contract_version": WS_CONTRACT_VERSION,
+            "supported_versions": [WS_CONTRACT_VERSION],
             "timestamp": datetime.utcnow().isoformat(),
         }
         return limits
     except Exception as e:
         logger.error("Failed to get WebSocket limits", error=str(e))
         return {"error": "failed_to_get_limits"}
+
+
+@router.get("/websocket/contract", response_model=Dict[str, Any])
+async def websocket_contract_info():
+    """
+    Provide WebSocket contract versioning information for clients.
+    """
+    try:
+        return {
+            "current_version": WS_CONTRACT_VERSION,
+            "supported_versions": [WS_CONTRACT_VERSION],
+            "deprecation_policy": {
+                "policy": "no_breaking_changes_without_minor_bump",
+                "notice": "Breaking changes require a version bump and migration note"
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        logger.error("Failed to get WebSocket contract info", error=str(e))
+        return {"error": "failed_to_get_contract_info"}
