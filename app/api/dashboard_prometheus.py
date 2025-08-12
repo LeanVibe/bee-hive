@@ -1016,6 +1016,21 @@ async def get_websocket_metrics():
                 "type": "counter",
                 "values": [{"labels": {}, "value": counters.get("backpressure_disconnects_total", 0)}],
             }
+            websocket_metrics["leanvibe_ws_auth_denied_total"] = {
+                "help": "Total WS connections denied due to missing/invalid auth",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("auth_denied_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_origin_denied_total"] = {
+                "help": "Total WS connections denied due to origin allowlist",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("origin_denied_total", 0)}],
+            }
+            websocket_metrics["leanvibe_ws_idle_disconnects_total"] = {
+                "help": "Total WS idle timeouts",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("idle_disconnects_total", 0)}],
+            }
         except Exception:
             pass
         

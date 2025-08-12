@@ -81,6 +81,9 @@ class DashboardWebSocketManager:
             "connections_total": 0,
             "disconnections_total": 0,
             "backpressure_disconnects_total": 0,
+            "auth_denied_total": 0,
+            "origin_denied_total": 0,
+            "idle_disconnects_total": 0,
         }
         # Backpressure configuration
         self.backpressure_disconnect_threshold: int = 5
@@ -103,6 +106,15 @@ class DashboardWebSocketManager:
         subscriptions: Optional[List[str]] = None
     ) -> WebSocketConnection:
         """Connect a new WebSocket client with subscription management."""
+        # Refresh auth/allowlist configuration from environment on each connect
+        try:
+            import os as _os
+            self.auth_required = _os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
+            allowlist = _os.environ.get("WS_ALLOWED_ORIGINS")
+            self.allowed_origins = {o.strip() for o in allowlist.split(",") if o.strip()} if allowlist else None
+            self.expected_auth_token = _os.environ.get("WS_AUTH_TOKEN")
+        except Exception:
+            pass
         # Optional origin allowlist check
         try:
             origin = websocket.headers.get("origin") or websocket.headers.get("Origin")
@@ -110,6 +122,7 @@ class DashboardWebSocketManager:
             origin = None
         if self.allowed_origins and origin and origin not in self.allowed_origins:
             await websocket.close(code=4403)
+            self.metrics["origin_denied_total"] += 1
             return None  # type: ignore
         # Optional auth token check (Bearer token in Authorization header)
         if self.auth_required:
@@ -124,6 +137,7 @@ class DashboardWebSocketManager:
                     token_ok = True
             if not token_ok:
                 await websocket.close(code=4401)
+                self.metrics["auth_denied_total"] += 1
                 return None  # type: ignore
         await websocket.accept()
         
@@ -542,6 +556,7 @@ class DashboardWebSocketManager:
                 to_disconnect.append(connection_id)
         for cid in to_disconnect:
             await self.disconnect(cid)
+            self.metrics["idle_disconnects_total"] += 1
     
     async def _redis_listener_loop(self) -> None:
         """Listen for Redis events and broadcast to relevant clients."""
@@ -1093,6 +1108,10 @@ async def websocket_limits():
             "max_inbound_message_bytes": websocket_manager.max_inbound_message_bytes,
             "max_subscriptions_per_connection": websocket_manager.max_subscriptions_per_connection,
             "backpressure_disconnect_threshold": websocket_manager.backpressure_disconnect_threshold,
+            "idle_disconnect_seconds": websocket_manager.idle_disconnect_seconds,
+            # Auth/allowlist exposure for observability (do not expose tokens)
+            "ws_auth_required": websocket_manager.auth_required,
+            "ws_allowed_origins_configured": bool(websocket_manager.allowed_origins),
             "contract_version": WS_CONTRACT_VERSION,
             "timestamp": datetime.utcnow().isoformat(),
         }
