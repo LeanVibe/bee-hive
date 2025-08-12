@@ -166,7 +166,63 @@ Implementation notes:
 - Behavior: if allowlist set and `Origin` not in list, connection is closed with 4403
  - Env `WS_AUTH_TOKEN` used when `WS_AUTH_REQUIRED=true`; connections must include `Authorization: Bearer <token>` or receive 4401
 
-Acceptance criteria for next wave:
-- Backpressure disconnect logic in place and covered by tests
-- Version fields present where applicable without breaking schema
-- Chaos test validates Redis listener resilience
+## Next 4 Epics — Auth, Offline, SLOs, Governance (Sep 2025)
+
+### Epic 1: End-to-end AuthN/AuthZ and RBAC
+
+Objective: Introduce session-backed authentication and role-based authorization across REST and WebSocket layers with developer-friendly defaults.
+
+Acceptance criteria:
+- REST: `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/me` implemented; returns access + refresh tokens; short-lived access tokens.
+- RBAC utilities protect sensitive REST routes and WS subscriptions; denials are observable in metrics and logs.
+- WS accepts Authorization header or session cookie and denies with 4401 on invalid/expired token; counters increment.
+- PWA implements minimal login flow, token storage, refresh, and injects Authorization into REST and WS.
+
+Tasks:
+- Backend
+  - Implement auth routes with JWT + refresh; add pydantic models and tests.
+  - RBAC decorators/utilities and sample-protected endpoints.
+  - WS: validate Authorization bearer on connect and re-auth on refresh.
+  - Metrics: `auth_success_total`, `auth_denied_total` (exists for WS), route-level logs.
+- PWA
+  - `AuthService` login/logout + refresh (present) wired to backend routes; guard routes; show 401 banner.
+  - Inject Authorization into WS connect and REST calls.
+- Tests: unit + ws accept/deny + smoke login; docs: security guide and `.env.example`.
+
+### Epic 2: Offline-first sync and conflict resolution
+
+Objective: Deterministic offline caching and queued updates with reconciliation on reconnect.
+
+Acceptance criteria:
+- IndexedDB caches tasks/agents/metrics with versioned schema; queue supports idempotent envelopes with `correlation_id`.
+- Offline UI remains usable; upon reconnection, queued updates sync and UI reconciles; conflict policy documented.
+
+Tasks:
+- Storage schema + per-domain policies; background sync hook.
+- Queue envelope + retry/backoff; reconciliation handler.
+- PWA views: optimistic updates and pending/synced badges.
+- Tests: unit (cache/queue), Playwright offline scenarios; docs: offline guide.
+
+### Epic 3: WS scalability, performance SLOs, and dashboards
+
+Objective: Define and monitor SLOs, profile fanout, and provide tuning guidance.
+
+Acceptance criteria:
+- SLOs for p95 WS send latency and drop rates defined and visualized; load scenarios reproducible.
+
+Tasks:
+- Optional message compression toggle; export message sizes.
+- Export fanout and queue gauges; backpressure reason codes.
+- k6/locust scripts + Make targets; Grafana dashboards; alerting on error budgets.
+
+### Epic 4: Contract governance and CI safety rails
+
+Objective: Prevent unintentional breaking changes to WS contract and enforce migration hygiene.
+
+Acceptance criteria:
+- CI classifies schema diffs (patch/minor/major) and requires label/migration notes for major.
+- PWA warns when `current_version` not in `supported_versions` and sends telemetry.
+
+Tasks:
+- Add schema diff job and PR checks; maintain `/api/dashboard/websocket/contract` (done) with policy.
+- PWA version banner and optional “learn more” link to migration doc.

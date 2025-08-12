@@ -1,93 +1,70 @@
-# Cursor Agent Handover Prompt — HiveOps (Bee Hive)
+You are a senior Cursor agent stepping into the HiveOps repo to continue backend and PWA platform work. Read this fully, then execute without asking for confirmations unless blocked.
 
-You are a pragmatic senior engineer joining mid-stream to continue hardening the WebSocket-driven mobile dashboard experience. Your job is to ship reliable, observable, and contract-stable real-time functionality with tight feedback loops.
+Context:
+- Backend: FastAPI (`app/main.py`), WS endpoints at `/api/dashboard/ws/*`. Observability + limits + contract endpoints in place.
+- PWA: Lit + Vite app in `mobile-pwa/`; unit tests via Vitest; E2E via Playwright (smokes exist). Types generated from `schemas/ws_messages.schema.json`.
+- Tests are green (backend unit/ws/smoke; PWA unit). CI generates PWA types and gates on drift.
 
-## Context
-- Stack: FastAPI backend + Lit/Vite PWA (mobile-first)
-- Core WS endpoints (FastAPI): `/api/dashboard/ws/*`
-  - Single multi-subscription endpoint: `/api/dashboard/ws/dashboard`
-  - Management endpoints: `/api/dashboard/websocket/stats`, `/api/dashboard/websocket/health`, `/api/dashboard/websocket/broadcast`
-- Entry points:
-  - Backend app: `app/main.py` (exports `app`)
-  - WS implementation: `app/api/dashboard_websockets.py`
-  - WS error helpers: `app/api/ws_utils.py`
-- Tests:
-  - WS: `tests/ws/*`
-  - Unit: `tests/unit/*`
-  - Smoke: `tests/smoke/*`
-- Contracts:
-  - Schema: `schemas/ws_messages.schema.json`
-  - PWA types: `mobile-pwa/src/types/ws-messages.d.ts`
+Immediate objectives (Next 4 Epics — Auth, Offline, SLOs, Governance):
 
-## Ground rules
-- Do NOT reintroduce server-rendered dashboard routes; only API/WebSocket endpoints.
-- Brand: “HiveOps”.
-- Use TDD; aim to keep tests deterministic and fast.
-- Optimize for the core user journey: the PWA receiving reliable, well-structured WS updates.
+1) End-to-end AuthN/AuthZ and RBAC
+- Backend
+  - Implement `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/me` with JWT + refresh (short-lived access).
+  - Create RBAC decorators/utilities and protect at least one sample REST route and WS subscription path.
+  - WS: validate Authorization bearer on connect; denial returns 4401 and increments counters (counters already exist for WS).
+  - Add metrics for `auth_success_total` (REST/WS) and route-level structured logs.
+- PWA
+  - Wire existing `AuthService` to backend routes (currently mocks Auth0/dev); implement minimal login view + refresh to use backend.
+  - Inject Authorization into REST + WS; handle 401/4401 with banner and re-auth.
+- Tests
+  - Backend unit + ws accept/deny flow; smoke test for login and protected route access.
+  - Docs: brief security guide + `.env.example` entries.
 
-## Current state (what’s done)
-- All generic WS `error` frames include a `timestamp`.
-- All `data_error` frames include `timestamp` and `error` message.
-- Centralized WS error helpers in `app/api/ws_utils.py` and refactored usage in WS manager.
-- Redis listener supports `psubscribe("agent_events:*")` and handles `pmessage` and `message`.
-- Tests cover:
-  - WS health endpoint + `ping`/`pong` with timestamp.
-  - Error invariant timestamps (invalid JSON, unknown type).
-  - `request_data` happy-path for `agent_status`.
-  - Redis listener routing (system vs agents).
-- Docs updated with WS invariants and a detailed reliability plan in `docs/PLAN.md`.
+2) Offline-first sync and conflict resolution
+- Storage: define IndexedDB schema (tasks/agents/metrics) and per-domain caching policies; background sync hook.
+- Queue: idempotent envelope with `correlation_id`, retry/backoff; reconciliation logic on reconnect.
+- PWA views: optimistic updates + pending/synced badges.
+- Tests: unit for cache/queue; expand existing Playwright offline scenarios to assert data integrity and queued update processing.
+- Docs: offline capabilities and limits.
 
-## Immediate priorities (must-have)
-1) CI workflows
-   - PR: run `pytest tests/unit tests/ws tests/smoke` and schema/TS parity checks.
-   - Nightly: run full `make test` (or `pytest -q`, if Makefile env is strict).
-   - Prefer GitHub Actions; use a Python 3.12 matrix if helpful.
+3) WS scalability, performance SLOs, and dashboards
+- Backend: optional message compression toggle; export message sizes and fanout/queue gauges; include backpressure reason codes in disconnects.
+- Tooling: k6/locust scenarios for WS load; Make targets; Grafana dashboards for WS latency/counters/queues; alerts for error budget burn.
+- Tests: keep non-flaky perf checks tagged/skipped in PR lanes; add smoke for metric presence.
 
-2) Schema ↔ TypeScript parity enforcement
-   - Ensure a check that `mobile-pwa/src/types/ws-messages.d.ts` reflects `schemas/ws_messages.schema.json`.
-   - If a generation script exists, add a CI step that fails on diff.
+4) Contract governance and CI safety rails
+- CI job to diff `schemas/ws_messages.schema.json`, classify (patch/minor/major), require label + migration notes for major.
+- Maintain `/api/dashboard/websocket/contract` (exists) as source of truth; document deprecation policy.
+- PWA: add version mismatch banner on connect when `current_version` ∉ `supported_versions`.
 
-3) Consistent helper usage
-   - Scan `app/api/dashboard_websockets.py` (and any other WS endpoints) to ensure all error paths use `make_error`/`make_data_error`.
-   - Add/adjust unit tests if necessary.
+Key references
+- `docs/PLAN.md` updated with detailed acceptance criteria and tasks.
+- WS manager: `app/api/dashboard_websockets.py` (auth/allowlist flags, metrics, idle disconnect, limits/contract endpoints).
+- Metrics: `app/api/dashboard_prometheus.py` (WS counters exported).
+- PWA Auth: `mobile-pwa/src/services/auth.ts` (scaffold exists), WS client `mobile-pwa/src/services/websocket.ts`.
 
-## Optional next steps (nice-to-have, after must-haves)
-- Add additional `request_data` happy-path tests (e.g., `coordination_metrics`, `system_health`) with minimal shapes.
-- Telemetry: consider logging correlation IDs on broadcast/error frames (tests gated).
-- Expand PWA side type-generation to auto-regenerate ts types from schema during CI.
+Execution guidelines
+- Maintain green tests after each logical change.
+- Prefer vertical slices: implement minimal end-to-end path, add tests, then iterate.
+- Keep PR-size reasonable; ship backend auth + PWA minimal login as first branch.
+- Update docs: security guide, `.env.example`, and any new env flags.
 
-## Working agreements
-- Prioritization: Pareto principle (20% of work → 80% value) with laser focus on the WS contract and reliability.
-- Methodology: TDD (write failing test → minimal change → refactor), keep tests fast.
-- Engineering principles: YAGNI, separation of concerns, DI-friendly, clear interfaces and names.
-- Vertical slices: deliver complete, user-visible improvements in the WS journey.
+Initial work plan (branch: auth-foundation)
+- Backend
+  1) Add `app/api/auth.py` router with login/refresh/logout/me; JWT utilities in `app/core/auth.py`; tests in `tests/unit/test_auth_*.py` and smoke for login.
+  2) RBAC helper in `app/core/rbac.py`; decorate one sample route + a WS subscription guard; tests.
+  3) Wire metrics/logs for auth successes/denials.
+- PWA
+  4) Add minimal `login-view` and wire `AuthService.login` to backend endpoints; persist tokens; refresh.
+  5) Inject `Authorization` into WS connection (already sends auth message — switch to header on connect) and REST.
+  6) Add a banner on 401/4401 to prompt re-auth; unit tests.
+- CI/Docs
+  7) Docs for security setup and `.env.example`; optional CI job later for schema diff in governance epic.
 
-## How to run locally
-- Infra: `docker compose up -d postgres redis`
-- Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
-- PWA: `cd mobile-pwa && npm ci && npm run dev` (open dev URL)
-- Health: `GET http://localhost:8000/health`
-- WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
+When blocked
+- If backend login API shape is unclear, define minimal JSON contracts and proceed (update PLAN + tests). Avoid third-party IdP requirements for dev.
 
-## Tests
-- Fast lanes (preferred for PRs):
-  - `pytest tests/unit tests/ws tests/smoke -q`
-- Full: `make test` (if Makefile env is available) or `pytest -q`
-
-## Deliverables & acceptance criteria
-- CI workflow files under `.github/workflows/` executing the PR/nightly test matrices described above.
-- Schema↔TS parity check step that fails on drift.
-- All tests green; WS error and data_error frames remain timestamped; `pong` includes timestamp; listener routing tests pass.
-- Minimal, clear commit messages and small PRs with a practical, vertical slice.
-
-## Execution checklist (do in order)
-1) Create CI workflow for PR (Python 3.12):
-   - Setup Python, install deps, run `pytest tests/unit tests/ws tests/smoke -q`.
-   - Add schema↔TS parity check step.
-2) Create nightly CI workflow (cron):
-   - Run full `pytest -q` or `make test` depending on environment readiness.
-3) Confirm `app/api/dashboard_websockets.py` exclusively uses `ws_utils` for error frames.
-4) If any gaps, write failing tests first, then implement minimal fixes.
-5) Keep `docs/PLAN.md` updated if the approach shifts.
-
-Good luck—optimize for reliability, determinism, and developer speed. Ship value.
+Deliverables for first PR
+- Working login + token refresh + protected example route + WS connect with auth.
+- PWA minimal login UI; authenticated fetches; WS Authorization header set.
+- Unit + smoke tests; docs updated.
