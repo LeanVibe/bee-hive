@@ -8,8 +8,7 @@ This document provides a comprehensive map of all topics covered in the LeanVibe
 
 ### 🏗️ **1. SYSTEM ARCHITECTURE**
 **Primary Documents**: 
-- [ENTERPRISE_SYSTEM_ARCHITECTURE.md](ENTERPRISE_SYSTEM_ARCHITECTURE.md) - Complete system architecture
-- [system-architecture.md](system-architecture.md) - Core architecture documentation
+- [ARCHITECTURE.md](../../ARCHITECTURE.md) - Implementation-aligned architecture
 
 **Sub-Topics**:
 - Multi-Agent Coordination → [MULTI_AGENT_COORDINATION_GUIDE.md](MULTI_AGENT_COORDINATION_GUIDE.md)
@@ -50,7 +49,7 @@ Agent Systems
 
 ### 🔌 **3. INTEGRATION & APIs**
 **Primary Documents**:
-- [API_REFERENCE_COMPREHENSIVE.md](API_REFERENCE_COMPREHENSIVE.md) - Complete API reference
+- [API_REFERENCE_COMPREHENSIVE.md](../API_REFERENCE_COMPREHENSIVE.md) - Complete API reference
 - [GITHUB_INTEGRATION_API_COMPREHENSIVE.md](GITHUB_INTEGRATION_API_COMPREHENSIVE.md) - GitHub integration
 - [EXTERNAL_TOOLS_GUIDE.md](EXTERNAL_TOOLS_GUIDE.md) - External tools
 

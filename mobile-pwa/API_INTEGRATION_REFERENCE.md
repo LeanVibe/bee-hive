@@ -305,7 +305,7 @@ GET /api/v1/events?severity=warning&limit=20
 ### WebSocket Connection
 ```javascript
 // Connect to WebSocket for real-time updates
-const ws = new WebSocket('ws://localhost:8000/ws');
+const ws = new WebSocket('ws://localhost:8000/api/dashboard/ws/dashboard');
 
 ws.onmessage = (event) => {
   const update = JSON.parse(event.data);

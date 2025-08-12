@@ -4,7 +4,7 @@
 
 | Document | System Architecture | Agent Systems | Integration | Monitoring | Enterprise | User Experience |
 |----------|:------------------:|:-------------:|:-----------:|:----------:|:----------:|:--------------:|
-| **ENTERPRISE_SYSTEM_ARCHITECTURE.md** | ● | ● | ● | ● | ● | ○ |
+| **ARCHITECTURE.md** | ● | ● | ● | ● | ● | ○ |
 | **MULTI_AGENT_COORDINATION_GUIDE.md** | ● | ● | ● | ● | ○ | ● |
 | **API_REFERENCE_COMPREHENSIVE.md** | ● | ● | ● | ○ | ● | ● |
 | **PRODUCTION_DEPLOYMENT_RUNBOOK.md** | ● | ○ | ● | ● | ● | ○ |

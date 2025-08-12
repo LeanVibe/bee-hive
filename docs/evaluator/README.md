@@ -310,4 +310,4 @@ Overall Coverage: 93%
 For additional technical resources:
 - **[Developer Guide](../developer/)** - Implementation details and customization
 - **[Enterprise Assessment](../enterprise/)** - Security and compliance deep dive
-- **[API Documentation](../API_REFERENCE_COMPREHENSIVE.md)** - Complete technical reference
+- **[API Documentation](../reference/API_REFERENCE_COMPREHENSIVE.md)** - Complete technical reference

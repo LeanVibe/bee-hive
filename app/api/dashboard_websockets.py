@@ -523,6 +523,9 @@ class DashboardWebSocketManager:
 
                 # Subscribe to concrete and pattern channels correctly
                 pubsub = redis_client.pubsub()
+                # Handle async-returning pubsub for certain Redis clients in tests
+                if asyncio.iscoroutine(pubsub):
+                    pubsub = await pubsub  # type: ignore[assignment]
                 await pubsub.subscribe("system_events")
                 await pubsub.psubscribe("agent_events:*")
 
@@ -835,17 +838,7 @@ async def websocket_dashboard_all(
             subscriptions=subscription_list
         )
         
-        # Send initial dashboard data
-        await websocket_manager._send_to_connection(connection_id, {
-            "type": "dashboard_initialized",
-            "subscriptions": subscription_list,
-            "connection_info": {
-                "connection_id": connection_id,
-                "client_type": "full_dashboard",
-                "server_time": datetime.utcnow().isoformat(),
-                "contract_version": WS_CONTRACT_VERSION,
-            }
-        })
+        # Initial connection frame already sent by connect(); avoid duplicate init
         
         while True:
             try:

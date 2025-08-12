@@ -37,7 +37,7 @@ By completing this advanced path, developers will be able to:
 **Objective**: Master the complete system architecture and component interactions
 
 **Learning Materials**:
-- [ENTERPRISE_SYSTEM_ARCHITECTURE.md](ENTERPRISE_SYSTEM_ARCHITECTURE.md) - Complete architecture overview
+- [ARCHITECTURE.md](../ARCHITECTURE.md) - Implementation-aligned architecture
 - [MULTI_AGENT_COORDINATION_GUIDE.md](MULTI_AGENT_COORDINATION_GUIDE.md) - Agent coordination patterns
 - [TOPIC_KNOWLEDGE_MAP.md](TOPIC_KNOWLEDGE_MAP.md) - System relationships and dependencies
 

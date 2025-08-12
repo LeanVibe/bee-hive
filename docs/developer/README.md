@@ -39,8 +39,8 @@ python scripts/demos/autonomous_development_demo.py  # See autonomous developmen
 
 ### Core Development
 - **[Developer Guide](../DEVELOPER_GUIDE.md)** - Complete development guide
-- **[API Reference](../API_REFERENCE_COMPREHENSIVE.md)** - Full API documentation
-- **[Architecture Overview](../ENTERPRISE_SYSTEM_ARCHITECTURE.md)** - System architecture
+- **[API Reference](../reference/API_REFERENCE_COMPREHENSIVE.md)** - Full API documentation
+- **[Architecture Overview](../ARCHITECTURE.md)** - System architecture
 
 ### Multi-Agent Development
 - **[Multi-Agent Coordination](../MULTI_AGENT_COORDINATION_GUIDE.md)** - Agent orchestration

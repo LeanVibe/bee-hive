@@ -11,6 +11,7 @@
 	logs ps shell build clean docs health status verify-core \
 	frontend-install frontend-dev frontend-build frontend-test \
 	pwa-dev pwa-build pwa-generate-schemas \
+	docs-generate-nav docs-validate-links \
 	pre-commit ci release dev-container emergency-reset env-info
 
 # Default target
@@ -275,6 +276,17 @@ docs: ## Generate and serve documentation
 	@. $(VENV_DIR)/bin/activate && \
 		mkdocs serve --dev-addr 0.0.0.0:8080
 	@echo "$(GREEN)📖 Documentation available at http://localhost:8080$(NC)"
+
+# Docs helpers
+docs-generate-nav: ## Regenerate docs/NAV_INDEX.md
+	@echo "$(BLUE)📚 Generating navigation index...$(NC)"
+	@python3 scripts/docs/generate_nav_index.py
+	@echo "$(GREEN)✅ Navigation index updated$(NC)"
+
+docs-validate-links: ## Validate common doc links point to canonical targets
+	@echo "$(BLUE)🔗 Validating docs links...$(NC)"
+	@rg -n "SYSTEM_ARCHITECTURE.md|API_REFERENCE_COMPREHENSIVE.md|DOCS_INDEX.md" docs integrations mobile-pwa || true
+	@echo "$(YELLOW)Review the above for outdated links (expect ARCHITECTURE.md, reference/, NAV_INDEX.md).$(NC)"
 
 # Performance & Monitoring
 benchmark: ## Run performance benchmarks

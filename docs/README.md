@@ -9,8 +9,8 @@
 **New to Agent Hive?** Start here:
 
 1. **[Getting Started Guide](../GETTING_STARTED.md)** - Installation and first steps
-2. **[System Architecture](prd/system-architecture.md)** - Understanding the platform architecture
-3. **[Developer Guide](user/DEVELOPER_GUIDE.md)** - Development workflow and best practices
+2. **[System Architecture](../ARCHITECTURE.md)** - Implementation-aligned architecture
+3. **[Core Overview](../CORE.md)** - Product and scope overview
 4. **[API Reference](api/API_REFERENCE_COMPREHENSIVE.md)** - Complete API documentation
 
 **Common Tasks:**
