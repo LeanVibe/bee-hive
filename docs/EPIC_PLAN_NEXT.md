@@ -104,6 +104,18 @@ Tasks:
 - Week 2: Epic 3 finish; land schema parity local check.
 - Week 3: Epic 4 chaos tests + PWA reconnection docs.
 
+## Epic 5: Idle Timeout Hygiene (nice-to-have)
+
+Objective: Cleanly disconnect idle WS connections to free resources.
+
+Acceptance criteria:
+- Connections idle beyond threshold (default 10 minutes) receive a `disconnect_notice` then are closed.
+- Threshold is visible in code/config; future work can expose via `/websocket/limits` if needed.
+
+Tasks:
+- Manager periodically checks last activity and disconnects idle connections.
+- Test `tests/unit/test_idle_disconnect.py` validates notice and disconnect.
+
 ## Notes
 - Keep tests deterministic and avoid external dependencies (DB/Redis mocked where needed).
 - Prefer narrow, vertical changes and keep CI lanes fast.
