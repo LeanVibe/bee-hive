@@ -7,7 +7,8 @@ This report inventories overlapping docs and proposes a conservative consolidati
 - docs/GETTING_STARTED.md: one canonical getting started (merge any duplicates into this)
 - docs/CORE.md: concise architecture/core overview
 - docs/ARCHITECTURE.md: implementation-aligned architecture details
-- docs/DOCS_INDEX.md: navigational index to sections
+- docs/NAV_INDEX.md: generated repository navigation index (authoritative navigation)
+- docs/DOCS_INDEX.md: human landing that links to `docs/NAV_INDEX.md`
 
 ## Notable overlaps (Getting Started / Quick Start)
 - docs/DEVELOPER_GUIDE.md (Getting Started section)
@@ -21,13 +22,14 @@ Proposal:
 - Remove exact duplicates; keep archived versions under docs/archive/ for provenance.
 
 ## Deprecated/legacy dashboard notes
-- No server-rendered dashboard routes should remain (policy).
-- Ensure references focus on API/WebSocket and mobile PWA.
+- No server-rendered dashboard under `/dashboard` (policy enforced; tests exist).
+- Enterprise HTML templates under `/enterprise` are non-core; gate behind feature flag and document as optional. Prefer PWA equivalents.
 
 ## Action items (docs)
 - Merge README quick start with canonical docs/GETTING_STARTED.md and remove redundant quick start sections from docs that only duplicate the same steps.
 - Add cross-links from docs/DEVELOPER_GUIDE.md to canonical sections instead of duplicating content.
 
 ## Next steps
-- PR 1: Link hygiene + minimal deduplication edits.
+- PR 1: Link hygiene + minimal deduplication edits (done: generated nav, manifest merge).
 - PR 2: Larger merges (archive superseded files; update tables of contents).
+- PR 3: Gate enterprise HTML templates with env flag; add PWA route/docs alternative.

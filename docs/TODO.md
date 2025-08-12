@@ -7,6 +7,7 @@
 - [ ] Fix any failing tests and commit with descriptive messages
 - [ ] Polish PWA header and typography; add initial design tokens
 - [ ] Update `docs/DOCS_INDEX.md` and `docs/docs-manifest.json` if new docs are added
+- [ ] Keep `docs/NAV_INDEX.md` in sync after structural changes (regenerate)
 - [ ] Stabilize backend for e2e (from mobile dashboard validation): ensure server runs during tests; align component selectors; add test-mode SW config
 
 ## Next (high value)

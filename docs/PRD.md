@@ -42,6 +42,7 @@ A mobile-first dashboard and API/WS platform for autonomous multi-agent developm
 - Detailed PRDs: `docs/core/*`
 - Architecture: `docs/ARCHITECTURE.md`
 - Core overview: `docs/CORE.md`
+- Navigation index: `docs/NAV_INDEX.md`
 
 ## Current Validation Status (Aug 2025)
 

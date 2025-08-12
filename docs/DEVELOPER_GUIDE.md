@@ -1,4 +1,4 @@
-> NOTE: Archived in favor of `docs/ARCHITECTURE.md` (implementation) and `docs/CORE.md` (overview). See `docs/DOCS_INDEX.md` for the complete map.
+> NOTE: ARCHIVED. Use `docs/CORE.md` (overview) and `docs/ARCHITECTURE.md` (implementation). For navigation, see `docs/NAV_INDEX.md`.
 
 # Developer Guide
 

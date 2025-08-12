@@ -25,6 +25,11 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
   - Location: many Quick Start / Getting Started sections
   - Fix: Canonicalize to docs/GETTING_STARTED.md; replace duplicates with links.
 
+- Enterprise HTML templates (non-core)
+  - Location: `app/api/enterprise_sales.py`, `app/templates/*.html`
+  - Issue: Violates PWA-first policy if treated as core; okay as optional sales/demo.
+  - Fix: Gate behind env flag (e.g., `ENABLE_ENTERPRISE_TEMPLATES=false` default). Document as optional. Prefer PWA flows.
+
 ## Low
 - Security hardening checks
   - Location: bandit report follow-ups
@@ -37,6 +42,7 @@ Prioritized, actionable items gathered from static scans and repo policies. Seve
 ## Notes
 - Keep focused CI lanes green (tests/unit, tests/ws, tests/smoke).
 - No reintroduction of server-rendered dashboard.
+ - Use `docs/NAV_INDEX.md` + `docs/docs-manifest.json` as the navigation SoT.
 
 ---
 
