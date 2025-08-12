@@ -44,3 +44,10 @@ async def api_root():
 @router.get("/protected/ping")
 async def protected_ping(current_user=Depends(get_current_user)):
     return {"pong": True, "user_id": getattr(current_user, 'id', None)}
+
+
+@router.get("/protected/admin")
+async def protected_admin_route(
+    _=Depends(require_basic_permission(Permission.MANAGE_USERS))
+):
+    return {"ok": True, "route": "admin"}

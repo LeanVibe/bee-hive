@@ -114,6 +114,10 @@ export class WebSocketService extends EventEmitter {
       
       console.log('🔌 Connecting to WebSocket:', wsUrl)
       
+      // Close existing socket if token changed and we had a connection
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try { this.ws.close(1000, 'Reauth'); } catch {}
+      }
       this.ws = new WebSocket(wsUrl)
       
       this.ws.onopen = this.handleOpen.bind(this)

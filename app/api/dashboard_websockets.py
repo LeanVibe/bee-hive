@@ -93,6 +93,8 @@ class DashboardWebSocketManager:
         # Optional WS auth/allowlist (feature-flagged via env)
         import os
         self.auth_required: bool = os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
+        # auth_mode: 'token' (default, env shared token) or 'jwt' (verify access token)
+        self.auth_mode: str = os.environ.get("WS_AUTH_MODE", "token").lower()
         self.allowed_origins: Optional[Set[str]] = None
         allowlist = os.environ.get("WS_ALLOWED_ORIGINS")
         if allowlist:
@@ -111,6 +113,7 @@ class DashboardWebSocketManager:
         try:
             import os as _os
             self.auth_required = _os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
+            self.auth_mode = _os.environ.get("WS_AUTH_MODE", "token").lower()
             allowlist = _os.environ.get("WS_ALLOWED_ORIGINS")
             self.allowed_origins = {o.strip() for o in allowlist.split(",") if o.strip()} if allowlist else None
             self.expected_auth_token = _os.environ.get("WS_AUTH_TOKEN")
@@ -125,26 +128,41 @@ class DashboardWebSocketManager:
             await websocket.close(code=4403)
             self.metrics["origin_denied_total"] += 1
             return None  # type: ignore
-        # Optional auth token check (Bearer token in Authorization header or access_token query)
+        # Optional auth token check
         if self.auth_required:
+            token_ok = False
+            user_role = None
+            user_id = None
             try:
                 auth_header = websocket.headers.get("authorization") or websocket.headers.get("Authorization")
             except Exception:
                 auth_header = None
-            token_ok = False
+            # Extract token from header or query
+            provided_token: Optional[str] = None
             if auth_header and isinstance(auth_header, str) and auth_header.lower().startswith("bearer "):
-                provided = auth_header.split(" ", 1)[1].strip()
-                if self.expected_auth_token and provided == self.expected_auth_token:
-                    token_ok = True
-            # Fallback: allow JWT token passed via query param for dev/PWA, or accept any Bearer when configured
-            if not token_ok:
+                provided_token = auth_header.split(" ", 1)[1].strip()
+            if not provided_token:
                 try:
-                    # Access token query, e.g., /ws/dashboard?access_token=...
-                    query_token = websocket.query_params.get("access_token") if hasattr(websocket, "query_params") else None
+                    provided_token = websocket.query_params.get("access_token") if hasattr(websocket, "query_params") else None
                 except Exception:
-                    query_token = None
-                if query_token and self.expected_auth_token and query_token == self.expected_auth_token:
+                    provided_token = None
+
+            if self.auth_mode == "token":
+                if provided_token and self.expected_auth_token and provided_token == self.expected_auth_token:
                     token_ok = True
+            else:  # jwt mode
+                if provided_token:
+                    try:
+                        from ..core.auth import get_auth_service, UserRole
+                        auth_service = get_auth_service()
+                        token_data = auth_service.verify_token(provided_token)
+                        if token_data:
+                            token_ok = True
+                            user_role = token_data.role.value if hasattr(token_data, 'role') else None
+                            user_id = token_data.user_id
+                    except Exception:
+                        token_ok = False
+
             if not token_ok:
                 await websocket.close(code=4401)
                 self.metrics["auth_denied_total"] += 1
@@ -167,7 +185,7 @@ class DashboardWebSocketManager:
             subscriptions=set(subscriptions or ["agents", "coordination", "tasks", "system"]),
             connected_at=datetime.utcnow(),
             last_activity=datetime.utcnow(),
-            metadata={},
+            metadata={"user_id": user_id, "user_role": user_role, "auth_mode": self.auth_mode if self.auth_required else "none"},
             tokens=self.rate_limit_burst_capacity,
             last_refill=datetime.utcnow(),
             rate_limit_notified_at=None,
@@ -176,6 +194,10 @@ class DashboardWebSocketManager:
         self.connections[connection_id] = connection
         self.metrics["connections_total"] += 1
         
+        # Enforce RBAC for certain subscriptions (simple policy: alerts requires admin roles when auth in jwt mode)
+        if self.auth_required and self.auth_mode == "jwt" and user_role not in ("super_admin", "enterprise_admin"):
+            if "alerts" in connection.subscriptions:
+                connection.subscriptions.discard("alerts")
         # Add to subscription groups
         for subscription in connection.subscriptions:
             if subscription in self.subscription_groups:

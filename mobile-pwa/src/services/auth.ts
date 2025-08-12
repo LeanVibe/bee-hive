@@ -570,6 +570,7 @@ export class AuthService extends EventEmitter {
       })
       
       if (!response.ok) {
+        // If refresh failed, force logout to trigger re-auth banner
         throw new Error('Token refresh failed')
       }
       
@@ -587,7 +588,8 @@ export class AuthService extends EventEmitter {
       
     } catch (error) {
       console.error('Token refresh failed:', error)
-      await this.logout()
+      // Emit an event for UI to show re-auth banner instead of immediate logout
+      this.emit('auth-expired')
     }
   }
   
