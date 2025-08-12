@@ -233,7 +233,7 @@ npm run test:e2e:report
 ```bash
 # .env.local
 VITE_API_BASE_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000/ws
+VITE_WS_URL=ws://localhost:8000/api/dashboard/ws/dashboard
 VITE_ENABLE_NOTIFICATIONS=true
 VITE_OFFLINE_CACHE_DURATION=3600000
 ```
