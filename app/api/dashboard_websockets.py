@@ -84,6 +84,8 @@ class DashboardWebSocketManager:
         }
         # Backpressure configuration
         self.backpressure_disconnect_threshold: int = 5
+        # Idle disconnect configuration
+        self.idle_disconnect_seconds: int = 600  # 10 minutes default
         # Optional WS auth/allowlist (feature-flagged via env)
         import os
         self.auth_required: bool = os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
@@ -468,6 +470,9 @@ class DashboardWebSocketManager:
                 
                 # Send periodic updates based on subscriptions
                 current_time = datetime.utcnow()
+
+                # Idle disconnect hygiene: disconnect connections idle beyond threshold
+                await self._check_idle_disconnects(current_time)
                 
                 # Agent status updates (every 5 seconds)
                 if self.subscription_groups["agents"]:
@@ -513,6 +518,30 @@ class DashboardWebSocketManager:
             except Exception as e:
                 logger.error("Error in WebSocket broadcast loop", error=str(e))
                 await asyncio.sleep(5)
+    
+    async def _check_idle_disconnects(self, now: datetime | None = None) -> None:
+        """Disconnect connections idle longer than the configured threshold.
+        Sends a disconnect_notice before closing.
+        """
+        if not self.connections:
+            return
+        now = now or datetime.utcnow()
+        to_disconnect: list[str] = []
+        for connection_id, connection in list(self.connections.items()):
+            idle_seconds = (now - connection.last_activity).total_seconds()
+            if idle_seconds >= self.idle_disconnect_seconds:
+                # Best-effort notice; ignore failures
+                try:
+                    await self._send_to_connection(connection_id, {
+                        "type": "disconnect_notice",
+                        "reason": "idle_timeout",
+                        "timestamp": now.isoformat(),
+                    })
+                except Exception:
+                    pass
+                to_disconnect.append(connection_id)
+        for cid in to_disconnect:
+            await self.disconnect(cid)
     
     async def _redis_listener_loop(self) -> None:
         """Listen for Redis events and broadcast to relevant clients."""
