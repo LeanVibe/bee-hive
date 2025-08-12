@@ -45,5 +45,5 @@ WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
 - Getting started: `docs/GETTING_STARTED.md`
 - Core overview: `docs/CORE.md`
 - Architecture: `docs/ARCHITECTURE.md`
-- Index: `docs/DOCS_INDEX.md`
+ - Index: `docs/NAV_INDEX.md`
 - Agent prompt for consolidation/debt cleanup: `docs/AGENT_PROMPT_CONSOLIDATION.md`

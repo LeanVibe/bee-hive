@@ -140,5 +140,57 @@
   "archivedScratchpad": [
     "docs/archive/scratchpad/DIGEST.md",
     "docs/archive/scratchpad/"
-  ]
+  ],
+  "entryPoints": {
+    "backend": "app/main.py",
+    "websocket": "app/api/dashboard_websockets.py",
+    "restCompat": "app/api/dashboard_compat.py",
+    "health": "/health",
+    "pwa": "mobile-pwa/src/app.ts",
+    "pwaRouter": "mobile-pwa/src/router/router.ts"
+  },
+  "directories": [
+    {
+      "path": "app",
+      "description": "FastAPI backend",
+      "notable": [
+        "app/main.py",
+        "app/api/dashboard_websockets.py",
+        "app/api/dashboard_compat.py",
+        "app/api/ws_utils.py",
+        "app/api/routes.py"
+      ],
+      "subdirs": ["app/api", "app/core", "app/models", "app/observability", "app/dashboard/templates"]
+    },
+    {
+      "path": "mobile-pwa",
+      "description": "Lit + Vite PWA",
+      "notable": [
+        "mobile-pwa/src/app.ts",
+        "mobile-pwa/src/services/backend-adapter.ts",
+        "mobile-pwa/src/services/websocket.ts",
+        "mobile-pwa/src/components/layout/app-header.ts",
+        "mobile-pwa/playwright.config.ts"
+      ],
+      "subdirs": ["mobile-pwa/src", "mobile-pwa/tests", "mobile-pwa/tests/e2e", "mobile-pwa/src/components", "mobile-pwa/src/services", "mobile-pwa/src/types"]
+    },
+    { "path": "docs", "description": "Documentation tree" },
+    { "path": "tests", "description": "Python tests" },
+    { "path": "integrations", "description": "Kubernetes, Docker, VS Code, CI" },
+    { "path": "infrastructure", "description": "Monitoring, logging, DR" },
+    { "path": "schemas", "description": "JSON schemas" },
+    { "path": "resources", "description": "Schemas and API contracts" },
+    { "path": "scripts", "description": "Setup and validation scripts" }
+  ],
+  "schemas": {
+    "wsMessages": "schemas/ws_messages.schema.json",
+    "liveDashboard": "schemas/live_dashboard_data.schema.json"
+  },
+  "configs": {
+    "python": ["pyproject.toml", "requirements.txt", "requirements-agent.txt", "pytest.ini", "alembic.ini"],
+    "node": ["package.json", "mobile-pwa/package.json", "integrations/vscode-extension/package.json", "frontend/package.json"],
+    "docker": ["Dockerfile", "Dockerfile.*", "docker-compose.yml", "docker-compose.*.yml"],
+    "ci": [".github/workflows/*.yml"],
+    "env": [".env"]
+  }
 }

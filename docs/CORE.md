@@ -36,6 +36,6 @@ Key interfaces:
 - Later: Full agent orchestrator, GitHub integration, prompt optimization, self-mod engine
 
 ## Source of Truth
-This file and `docs/ARCHITECTURE.md` + `docs/PRD.md` form the authoritative core. Subsystem PRDs in `docs/core/` are reference material.
+This file and `docs/ARCHITECTURE.md` + `docs/PRD.md` form the authoritative core. Subsystem PRDs in `docs/core/` are reference material. The generated navigation index lives at `docs/NAV_INDEX.md`.
 
 

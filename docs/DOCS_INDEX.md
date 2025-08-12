@@ -1,3 +1,11 @@
+### Start here
+
+- Getting started: `docs/GETTING_STARTED.md`
+- Makefile help: run `make help`
+- Core overview: `docs/CORE.md`
+- Architecture: `docs/ARCHITECTURE.md`
+- Generated navigation index: `docs/NAV_INDEX.md`
+
 # Documentation Index
 
 ## Core
