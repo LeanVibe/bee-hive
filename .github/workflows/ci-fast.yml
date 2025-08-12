@@ -48,3 +48,25 @@ jobs:
         working-directory: mobile-pwa
         run: |
           npm test --silent || echo "No unit tests or failures; continue"
+
+  pwa-schema-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install PWA deps
+        working-directory: mobile-pwa
+        run: npm ci
+      - name: Generate WS schema types
+        working-directory: mobile-pwa
+        run: npm run -s generate:schemas
+      - name: Fail on type drift
+        run: |
+          git status --porcelain
+          if ! git diff --quiet -- mobile-pwa/src/types/ws-messages.d.ts; then
+            echo "Schema-to-types drift detected. Please run 'npm -w mobile-pwa run generate:schemas' and commit changes." >&2
+            exit 1
+          fi
