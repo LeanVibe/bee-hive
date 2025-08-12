@@ -176,6 +176,11 @@ test-core-fast: ## Fast lane: smoke + WS + prompt optimization core
 	@. $(VENV_DIR)/bin/activate && \
 		$(PYTEST) -q tests/smoke tests/ws tests/test_prompt_optimization_comprehensive.py
 
+test-ws-fast: ## Run only WebSocket test suite
+	@echo "$(BLUE)⚡ Running WebSocket tests...$(NC)"
+	@. $(VENV_DIR)/bin/activate && \
+		$(PYTEST) -q tests/ws
+
 test-backend-fast: ## Fast lane: backend core modules (contracts + core + smoke)
 	@echo "$(BLUE)⚡ Running backend fast lane...$(NC)"
 	@. $(VENV_DIR)/bin/activate && \

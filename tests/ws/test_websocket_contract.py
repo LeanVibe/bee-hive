@@ -21,4 +21,5 @@ async def test_dashboard_ws_basic_contract(test_app):
         # Subscribe to a specific stream and accept either confirmation or an update
         ws.send_text(json.dumps({"type": "subscribe", "subscriptions": ["agents"]}))
         msg = json.loads(ws.receive_text())
-        assert msg["type"] in {"subscription_updated", "agent_update", "dashboard_update"}
+        # Allow a pong in case the background loop hasn't broadcast yet
+        assert msg["type"] in {"subscription_updated", "agent_update", "dashboard_update", "pong"}
