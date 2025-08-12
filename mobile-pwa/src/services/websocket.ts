@@ -139,15 +139,7 @@ export class WebSocketService extends EventEmitter {
     this.reconnectAttempts = 0
     this.connectionQuality = 'good'
     
-    // Send authentication message
-    this.sendMessage({
-      type: 'authenticate',
-      data: {
-        token: this.authService.getToken(),
-        client_type: 'mobile_pwa',
-        features: ['real_time_streaming', 'high_frequency_updates', 'mobile_optimization']
-      }
-    })
+    // No-op: Auth is provided via URL/header on connect
     
     // Start ping/pong with quality monitoring
     this.startPing()

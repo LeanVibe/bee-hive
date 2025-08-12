@@ -247,6 +247,8 @@ export class AgentHiveApp extends LitElement {
       
       // Initialize authentication service first
       await this.authService.initialize()
+      // Initialize offline service
+      await this.offlineService.initialize()
       
       // Check authentication state
       this.isAuthenticated = this.authService.isAuthenticated()
@@ -310,6 +312,12 @@ export class AgentHiveApp extends LitElement {
       this.wsService.disconnect()
       this.router.navigate('/login')
     })
+    this.authService.on('auth-expired', () => {
+      this.isAuthenticated = false
+      this.wsService.disconnect()
+      this.showError('Session expired. Please sign in again.')
+      this.router.navigate('/login')
+    })
     
     // Network events
     window.addEventListener('online', this.handleOnline.bind(this))
@@ -328,6 +336,11 @@ export class AgentHiveApp extends LitElement {
     
     this.wsService.on('error', (error: Error) => {
       this.showError(`WebSocket error: ${error.message}`)
+    })
+
+    // WS contract governance
+    this.wsService.on('version-mismatch', (data: { current: string, supported: string[] }) => {
+      this.showError(`Version mismatch: server ${data.current} not in supported ${data.supported.join(', ')}`)
     })
     
     // Notification events

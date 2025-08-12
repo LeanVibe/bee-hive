@@ -1,4 +1,5 @@
 import { openDB, IDBPDatabase, IDBPTransaction } from 'idb'
+import { AuthService } from './auth'
 import { EventEmitter } from '../utils/event-emitter'
 
 export interface CachedData {
@@ -373,12 +374,12 @@ export class OfflineService extends EventEmitter {
   private async syncTask(type: 'create' | 'update' | 'delete', data: any): Promise<void> {
     const url = `/api/v1/tasks${type === 'create' ? '' : `/${data.id}`}`
     const method = type === 'create' ? 'POST' : type === 'update' ? 'PUT' : 'DELETE'
-    
+    const token = AuthService.getInstance().getToken()
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       body: type !== 'delete' ? JSON.stringify(data) : undefined
     })
