@@ -63,7 +63,7 @@ mobile-pwa/
 
 ## 🚀 Quick Start
 
-Ensure the backend is running per `docs/GETTING_STARTED.md`. Then:
+Ensure the backend is running per `../docs/GETTING_STARTED.md`. Then:
 
 ### Prerequisites
 - Node.js 18+
@@ -229,7 +229,7 @@ npm run test:e2e:report
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Environment Variables (dev defaults)
 ```bash
 # .env.local
 VITE_API_BASE_URL=http://localhost:8000
@@ -300,12 +300,11 @@ DEBUG=* npm run dev
 ## 🔗 Integration
 
 ### Backend API Integration
-The dashboard integrates with LeanVibe Agent Hive 2.0 backend APIs:
+The dashboard integrates with the backend API/WS:
 
-- **Agent Management**: `/api/agents/*` endpoints
-- **Task Management**: `/api/tasks/*` endpoints  
-- **System Health**: `/api/health/*` endpoints
-- **WebSocket**: Real-time updates via WebSocket connection
+- **Health**: `GET /health`
+- **Live data (compat)**: `GET /dashboard/api/live-data`
+- **WebSocket**: `GET /api/dashboard/ws/dashboard` (multi-subscription)
 
 ### Authentication (Postponed)
 Authentication features are implemented but currently disabled per project requirements. When enabled:
@@ -318,7 +317,7 @@ Authentication features are implemented but currently disabled per project requi
 ## 📚 Related Documentation
 
 - **[Main Project](../README.md)**: LeanVibe Agent Hive 2.0 overview
-- **[API Reference](../docs/API_REFERENCE_COMPREHENSIVE.md)**: Backend API documentation
+- **Navigation index](../docs/NAV_INDEX.md)**: Repo navigation
 - **[Testing Guide](README-TESTING.md)**: Complete testing documentation
 - **[CLAUDE.md](../CLAUDE.md)**: Development guidelines and instructions
 

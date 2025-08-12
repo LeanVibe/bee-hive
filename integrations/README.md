@@ -4,7 +4,7 @@ Welcome to the comprehensive integration ecosystem for LeanVibe Agent Hive - the
 
 ## 🚀 Quick Start Integration Guide
 
-Note: For core environment setup, follow the canonical `docs/GETTING_STARTED.md` first. This guide focuses on integration-specific steps.
+Note: For core environment setup, follow the canonical `../docs/GETTING_STARTED.md` first. This guide focuses on integration-specific steps.
 
 ### 1. VS Code Extension (Developer Priority)
 
@@ -356,10 +356,10 @@ integrations/
 - Training: Custom integration workshops available
 
 ### Resources
-- [API Documentation](../docs/API_REFERENCE_COMPREHENSIVE.md)
-- [Architecture Guide](../docs/SYSTEM_ARCHITECTURE.md)
-- [Performance Tuning](../docs/PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md)
-- [Security Guide](../docs/ENTERPRISE_SECURITY_COMPREHENSIVE_GUIDE.md)
+- [API Documentation](../docs/reference/API_REFERENCE_COMPREHENSIVE.md)
+- [Architecture Guide](../docs/ARCHITECTURE.md)
+- [Performance Tuning](../docs/guides/PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md)
+- [Security Guide](../docs/guides/ENTERPRISE_SECURITY_COMPREHENSIVE_GUIDE.md)
 
 ---
 

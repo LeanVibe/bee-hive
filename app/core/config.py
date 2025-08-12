@@ -208,6 +208,9 @@ class Settings(BaseSettings):
     # CI/CD Configuration  
     CI_CD_ENABLED: bool = Field(default=True, env="CI_CD_ENABLED")
     DEPLOYMENT_TIMEOUT: int = Field(default=1800, env="DEPLOYMENT_TIMEOUT")  # 30 minutes
+
+    # Optional enterprise HTML templates (non-core)
+    ENABLE_ENTERPRISE_TEMPLATES: bool = Field(default=False, env="ENABLE_ENTERPRISE_TEMPLATES")
     
     # Security for External Tools
     EXTERNAL_TOOLS_SECURITY_LEVEL: str = Field(default="moderate", env="EXTERNAL_TOOLS_SECURITY_LEVEL")

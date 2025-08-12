@@ -293,7 +293,9 @@ def create_app() -> FastAPI:
     app.include_router(intelligence_router, tags=["intelligence"])
     app.include_router(claude_integration_router, prefix="/api", tags=["claude-integration"])
     app.include_router(dx_debugging_router, tags=["dx-debugging"])
-    app.include_router(enterprise_sales_router, tags=["enterprise-sales"])
+    # Optional enterprise HTML templates (non-core)
+    if _settings.ENABLE_ENTERPRISE_TEMPLATES:
+        app.include_router(enterprise_sales_router, tags=["enterprise-sales"])
     app.include_router(enterprise_security_router, tags=["enterprise-security"])
     app.include_router(get_memory_router(), prefix="/api/v1", tags=["memory-operations"])
     

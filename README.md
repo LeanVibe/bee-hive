@@ -39,6 +39,7 @@ WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
 
 - No server-rendered dashboards; use API/WebSocket endpoints.
 - Brand as "HiveOps"; default title in `mobile-pwa/src/components/layout/app-header.ts`.
+ - Enterprise HTML templates are optional and gated by `ENABLE_ENTERPRISE_TEMPLATES` (default: disabled). Prefer PWA flows.
 
 ## Docs
 

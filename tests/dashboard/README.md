@@ -1,3 +1,5 @@
+> NOTE: ARCHIVED. The server-rendered dashboard is deprecated. Keep tests focused on API/WS and the mobile PWA. See `../../docs/NAV_INDEX.md`.
+
 # Comprehensive Dashboard Testing Suite
 
 ## Overview
