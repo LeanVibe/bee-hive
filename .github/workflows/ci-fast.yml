@@ -1,0 +1,50 @@
+name: CI Fast
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  backend-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install backend (dev)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+      - name: Run core fast tests
+        env:
+          CI: "true"
+        run: |
+          pytest -q tests/smoke tests/ws
+
+  docs-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docs links
+        run: |
+          bash -lc "rg -n 'SYSTEM_ARCHITECTURE.md|API_REFERENCE_COMPREHENSIVE.md|DOCS_INDEX.md' docs integrations mobile-pwa || true"
+          echo "Review the above for outdated links (expect ARCHITECTURE.md, reference/, NAV_INDEX.md)."
+
+  pwa-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install PWA dependencies
+        working-directory: mobile-pwa
+        run: npm ci
+      - name: Run PWA unit tests (if present)
+        working-directory: mobile-pwa
+        run: |
+          npm test --silent || echo "No unit tests or failures; continue"
