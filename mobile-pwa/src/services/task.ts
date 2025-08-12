@@ -26,6 +26,7 @@ import type {
   Subscription,
   EventListener
 } from '../types/api';
+import { OfflineService } from './offline';
 
 export interface KanbanBoard {
   columns: KanbanColumn[];
@@ -176,6 +177,22 @@ export class TaskService extends BaseService {
       return task;
 
     } catch (error) {
+      // Network/offline fallback: queue and optimistic update
+      try {
+        if (!navigator.onLine || (error as any)?.code === 'NETWORK_ERROR' || (error as any)?.code === 'TIMEOUT') {
+          const optimistic: Task = {
+            ...(taskData as any),
+            id: `tmp_${Date.now()}`,
+            status: taskData.status || 'pending',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as Task
+          this.tasks.set(optimistic.id, optimistic);
+          this.emit('taskCreated', optimistic);
+          await OfflineService.getInstance().queueSync('create', 'tasks', taskData);
+          return optimistic;
+        }
+      } catch {}
       this.emit('taskCreateFailed', { taskData, error });
       throw error;
     }
@@ -300,6 +317,17 @@ export class TaskService extends BaseService {
       return task;
 
     } catch (error) {
+      // Offline/optimistic path
+      try {
+        if (!navigator.onLine || (error as any)?.code === 'NETWORK_ERROR' || (error as any)?.code === 'TIMEOUT') {
+          const local = this.tasks.get(taskId) as Task | undefined;
+          const optimistic = { ...(local as any), ...updates, id: taskId } as Task;
+          this.tasks.set(taskId, optimistic);
+          this.emit('taskUpdated', optimistic);
+          await OfflineService.getInstance().queueSync('update', 'tasks', { id: taskId, ...updates });
+          return optimistic;
+        }
+      } catch {}
       this.emit('taskUpdateFailed', { taskId, updates, error });
       throw error;
     }
@@ -325,6 +353,14 @@ export class TaskService extends BaseService {
       this.emit('taskDeleted', taskId);
 
     } catch (error) {
+      try {
+        if (!navigator.onLine || (error as any)?.code === 'NETWORK_ERROR' || (error as any)?.code === 'TIMEOUT') {
+          await OfflineService.getInstance().queueSync('delete', 'tasks', { id: taskId });
+          this.tasks.delete(taskId);
+          this.emit('taskDeleted', taskId);
+          return;
+        }
+      } catch {}
       this.emit('taskDeleteFailed', { taskId, error });
       throw error;
     }
