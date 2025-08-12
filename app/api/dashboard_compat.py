@@ -11,7 +11,8 @@ from fastapi import APIRouter
 import structlog
 
 # Reuse the coordination dashboard's data aggregator without exposing its HTML routes
-from ..dashboard.coordination_dashboard import coordination_dashboard
+# Import only the data provider; legacy HTML routes remain unmounted
+from ..core.coordination_dashboard import coordination_dashboard
 
 logger = structlog.get_logger()
 

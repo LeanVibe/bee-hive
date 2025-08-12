@@ -162,7 +162,7 @@ async def test_app(mock_redis, mock_message_broker, mock_session_cache):
 
     # Stub coordination dashboard data source used by /dashboard/api/live-data
     try:
-        from app.dashboard.coordination_dashboard import coordination_dashboard
+        from app.core.coordination_dashboard import coordination_dashboard
 
         async def _fake_dashboard_data():
             return {
