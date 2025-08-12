@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: docs-validate-links
+        name: Validate docs links (canonical paths)
+        entry: bash -lc 'make docs-validate-links'
+        language: system
+        pass_filenames: false
+        stages: [commit]
