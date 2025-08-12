@@ -23,6 +23,7 @@ from sqlalchemy import select, and_
 from enum import Enum
 
 from .database import get_session
+from .auth_metrics import inc as inc_auth_metric
 
 logger = structlog.get_logger()
 
@@ -485,6 +486,10 @@ async def login_user(login_data: UserLogin) -> TokenResponse:
     
     user = auth_service.authenticate_user(login_data.email, login_data.password)
     if not user:
+        try:
+            inc_auth_metric("auth_failure_total_rest")
+        except Exception:
+            pass
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -496,6 +501,10 @@ async def login_user(login_data: UserLogin) -> TokenResponse:
     refresh_token = auth_service.create_refresh_token(user)
     
     logger.info("User logged in", user_id=user.id, email=user.email)
+    try:
+        inc_auth_metric("auth_success_total_rest")
+    except Exception:
+        pass
     
     return TokenResponse(
         access_token=access_token,
@@ -569,11 +578,19 @@ async def refresh_access_token(payload: RefreshRequest) -> Dict[str, Any]:
         }
         
     except jwt.ExpiredSignatureError:
+        try:
+            inc_auth_metric("auth_failure_total_rest")
+        except Exception:
+            pass
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token expired"
         )
     except jwt.InvalidTokenError:
+        try:
+            inc_auth_metric("auth_failure_total_rest")
+        except Exception:
+            pass
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"

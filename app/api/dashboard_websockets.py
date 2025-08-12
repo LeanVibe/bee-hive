@@ -26,6 +26,7 @@ from ..models.agent import Agent, AgentStatus
 from ..models.task import Task, TaskStatus
 from .dashboard_monitoring import get_coordination_metrics, get_agent_health_data, get_task_distribution_data
 from .ws_utils import make_error, make_data_error, WS_CONTRACT_VERSION
+from ..core.auth_metrics import inc as inc_auth_metric
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard-websockets"])
@@ -147,8 +148,17 @@ class DashboardWebSocketManager:
             if not token_ok:
                 await websocket.close(code=4401)
                 self.metrics["auth_denied_total"] += 1
+                try:
+                    inc_auth_metric("auth_failure_total_ws")
+                except Exception:
+                    pass
                 return None  # type: ignore
         await websocket.accept()
+        try:
+            if self.auth_required:
+                inc_auth_metric("auth_success_total_ws")
+        except Exception:
+            pass
         
         connection = WebSocketConnection(
             websocket=websocket,

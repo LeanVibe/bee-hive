@@ -21,6 +21,7 @@ from ..core.redis import get_redis
 from ..models.agent import Agent, AgentStatus
 from ..models.task import Task, TaskStatus, TaskPriority
 from .dashboard_websockets import websocket_manager
+from ..core.auth_metrics import get_all as get_auth_metrics
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard-prometheus"])
@@ -360,6 +361,17 @@ class PrometheusMetricsGenerator:
             "type": "gauge",
             "values": [{"labels": {}, "value": 3600}]  # Placeholder 1 hour
         }
+        # Auth metrics
+        try:
+            auth = get_auth_metrics()
+            for key, val in auth.items():
+                metrics[f"leanvibe_{key}"] = {
+                    "help": f"{key.replace('_', ' ')}",
+                    "type": "counter",
+                    "values": [{"labels": {}, "value": val}],
+                }
+        except Exception:
+            pass
         
         return metrics
     

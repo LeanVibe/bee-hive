@@ -6,7 +6,8 @@ Provides comprehensive REST API for agent management, task delegation,
 and system monitoring.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from ..core.auth import get_current_user, require_permission as require_basic_permission, Permission
 
 # Import working API endpoints
 from .enterprise_pilots import router as pilots_router
@@ -38,3 +39,8 @@ async def api_root():
         "docs": "/docs",
         "redoc": "/redoc"
     }
+
+
+@router.get("/protected/ping")
+async def protected_ping(current_user=Depends(get_current_user)):
+    return {"pong": True, "user_id": getattr(current_user, 'id', None)}
