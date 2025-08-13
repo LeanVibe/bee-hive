@@ -6,15 +6,20 @@ Provides comprehensive REST API for agent management, task delegation,
 and system monitoring.
 """
 
-from fastapi import APIRouter, Depends
-from ..core.auth import get_current_user, require_permission as require_basic_permission, Permission
+from fastapi import APIRouter
+from fastapi import Depends
+
+from ..core.auth import Permission
+from ..core.auth import get_current_user
+from ..core.auth import require_permission as require_basic_permission
+from .auth_endpoints import router as auth_router
 
 # Import working API endpoints
 from .enterprise_pilots import router as pilots_router
-from ..core.auth import auth_router
-from .v1.websocket import router as websocket_router
-from .v1.github_integration import router as github_router
 from .v1.coordination_monitoring import router as coordination_monitoring_router
+from .v1.github_integration import router as github_router
+from .v1.websocket import router as websocket_router
+
 # Temporarily disabled to avoid model conflicts
 # from .coordination_endpoints import router as coordination_router
 

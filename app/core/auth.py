@@ -16,7 +16,7 @@ import structlog
 import jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -37,7 +37,7 @@ JWT_REFRESH_TOKEN_EXPIRE_DAYS = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # HTTP Bearer token extraction
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 # Enums
@@ -383,10 +383,16 @@ def get_auth_service() -> AuthenticationService:
 
 # FastAPI Dependencies
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> User:
     """Get current authenticated user from JWT token."""
-    
+    if credentials is None or not getattr(credentials, "credentials", None):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     auth_service = get_auth_service()
     token_data = auth_service.verify_token(credentials.credentials)
     
@@ -396,7 +402,7 @@ async def get_current_user(
             detail="Invalid authentication token",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     user = auth_service.get_user_by_id(token_data.user_id)
     if not user or not user.is_active:
         raise HTTPException(
