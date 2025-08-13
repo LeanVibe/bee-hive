@@ -1,7 +1,8 @@
 import contextlib
 import json
-from app.main import create_app
 from starlette.testclient import TestClient
+
+from app.main import create_app
 
 
 def test_ws_outbound_injects_correlation_id_and_timestamp(monkeypatch):
