@@ -44,6 +44,7 @@ export class OfflineService extends EventEmitter {
   private readonly dbVersion = 1
   private readonly maxCacheAge = 24 * 60 * 60 * 1000 // 24 hours
   private readonly maxRetries = 3
+  private retryTimers: Map<string, any> = new Map()
   
   static getInstance(): OfflineService {
     if (!OfflineService.instance) {
@@ -344,7 +345,20 @@ export class OfflineService extends EventEmitter {
           } else {
             // Update retry count in database
             await this.db?.put('sync_queue', operation)
-            this.emit('sync_retry', operation)
+            // schedule retry with backoff
+            const ms = OfflineService.computeBackoffMs(operation.retryCount)
+            this.emit('sync_scheduled_retry', { id: operation.id, ms })
+            // Clear previous timer if any
+            const prev = this.retryTimers.get(operation.id)
+            if (prev) clearTimeout(prev)
+            const t = setTimeout(() => {
+              // Attempt sync again if still queued
+              const stillQueued = this.syncQueue.find(op => op.id === operation.id)
+              if (stillQueued && this.isOnline && !this.syncInProgress) {
+                this.startBackgroundSync()
+              }
+            }, ms)
+            this.retryTimers.set(operation.id, t)
           }
         }
       }
@@ -354,6 +368,11 @@ export class OfflineService extends EventEmitter {
     } finally {
       this.syncInProgress = false
     }
+  }
+
+  static computeBackoffMs(retryCount: number, baseMs = 1000, capMs = 30000): number {
+    const ms = baseMs * Math.pow(2, retryCount)
+    return Math.min(ms, capMs)
   }
   
   private async executeSync(operation: SyncOperation): Promise<void> {
