@@ -50,6 +50,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan management with proper startup/shutdown."""
     logger.info("🚀 Starting LeanVibe Agent Hive 2.0...")
     
+    # Skip heavy startup in CI or when explicitly requested
+    if os.environ.get("CI") == "true" or os.environ.get("SKIP_STARTUP_INIT") == "true":
+        yield
+        return
+
     try:
         # Import heavy dependencies lazily to avoid import-time side effects
         from .core.database import init_database
