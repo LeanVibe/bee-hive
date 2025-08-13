@@ -32,6 +32,7 @@ export interface OfflineTask {
   created_at: number
   updated_at: number
   synced: boolean
+  correlation_id?: string
 }
 
 export class OfflineService extends EventEmitter {
@@ -41,7 +42,7 @@ export class OfflineService extends EventEmitter {
   private isOnline: boolean = navigator.onLine
   private syncInProgress: boolean = false
   private readonly dbName = 'AgentHiveOfflineDB'
-  private readonly dbVersion = 1
+  private readonly dbVersion = 2
   private readonly maxCacheAge = 24 * 60 * 60 * 1000 // 24 hours
   private readonly maxRetries = 3
   private retryTimers: Map<string, any> = new Map()
@@ -120,6 +121,13 @@ export class OfflineService extends EventEmitter {
           eventsStore.createIndex('event_type', 'event_type')
           eventsStore.createIndex('agent_id', 'agent_id')
           eventsStore.createIndex('timestamp', 'timestamp')
+        }
+        // Reconciliation log (v2)
+        if (!db.objectStoreNames.contains('reconciliation_log')) {
+          const recStore = db.createObjectStore('reconciliation_log', { keyPath: 'id' })
+          recStore.createIndex('resource', 'resource')
+          recStore.createIndex('entity_id', 'entity_id')
+          recStore.createIndex('timestamp', 'timestamp')
         }
       },
     })
@@ -283,6 +291,13 @@ export class OfflineService extends EventEmitter {
   async queueSync(type: 'create' | 'update' | 'delete', resource: string, data: any): Promise<void> {
     if (!this.db) return
     
+    // Ensure correlation_id for idempotency on create/update flows
+    if (type !== 'delete') {
+      if (!data.correlation_id) {
+        data.correlation_id = crypto.randomUUID()
+      }
+    }
+
     const operation: SyncOperation = {
       id: crypto.randomUUID(),
       type,
@@ -409,6 +424,8 @@ export class OfflineService extends EventEmitter {
     if (type !== 'delete') {
       try {
         const serverTask = await response.json()
+        // Reconcile with local state and log
+        await this.reconcileTaskFromServer(serverTask)
         this.emit('task_synced', { type, task: serverTask })
       } catch {}
     } else {
@@ -423,6 +440,68 @@ export class OfflineService extends EventEmitter {
         await this.db.put('tasks', task)
       }
     }
+  }
+
+  private async logReconciliation(entry: {
+    id?: string,
+    resource: string,
+    entity_id: string,
+    decision: 'kept_local' | 'applied_server',
+    local_ts?: number,
+    server_ts?: number,
+    correlation_id?: string,
+  }): Promise<void> {
+    if (!this.db) return
+    const record = {
+      id: entry.id || crypto.randomUUID(),
+      resource: entry.resource,
+      entity_id: entry.entity_id,
+      decision: entry.decision,
+      local_ts: entry.local_ts,
+      server_ts: entry.server_ts,
+      correlation_id: entry.correlation_id,
+      timestamp: Date.now(),
+    }
+    await this.db.put('reconciliation_log', record)
+    this.emit('reconciled', record)
+  }
+
+  async reconcileTaskFromServer(serverTask: OfflineTask): Promise<void> {
+    if (!this.db) return
+    const local: OfflineTask | undefined = await this.db.get('tasks', serverTask.id)
+    if (!local) {
+      // No local copy; accept server
+      await this.db.put('tasks', { ...serverTask, synced: true })
+      await this.logReconciliation({
+        resource: 'tasks',
+        entity_id: serverTask.id,
+        decision: 'applied_server',
+        server_ts: serverTask.updated_at,
+        correlation_id: serverTask.correlation_id,
+      })
+      return
+    }
+    // If correlation_id matches, prefer server (server applied our change)
+    const sameCorrelation = local.correlation_id && serverTask.correlation_id && local.correlation_id === serverTask.correlation_id
+    let decision: 'kept_local' | 'applied_server' = 'applied_server'
+    if (!sameCorrelation) {
+      // Last write wins by updated_at
+      decision = (local.updated_at || 0) > (serverTask.updated_at || 0) ? 'kept_local' : 'applied_server'
+    }
+    if (decision === 'applied_server') {
+      await this.db.put('tasks', { ...serverTask, synced: true })
+    } else {
+      // Keep local; ensure it is flagged for next sync
+      await this.db.put('tasks', { ...local, synced: false })
+    }
+    await this.logReconciliation({
+      resource: 'tasks',
+      entity_id: serverTask.id,
+      decision,
+      local_ts: local.updated_at,
+      server_ts: serverTask.updated_at,
+      correlation_id: serverTask.correlation_id || local.correlation_id,
+    })
   }
   
   private async syncAgent(type: 'create' | 'update' | 'delete', data: any): Promise<void> {
