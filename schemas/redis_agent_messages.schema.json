@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leanvibe.ai/schemas/redis_agent_messages.schema.json",
+  "title": "Redis Agent Messages Contract v1.0.0",
+  "description": "Schema for agent-to-agent messages in Redis Streams",
+  "type": "object",
+  "required": ["message_id", "from_agent", "to_agent", "type", "payload", "timestamp"],
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique message identifier"
+    },
+    "from_agent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "description": "Source agent identifier"
+    },
+    "to_agent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "description": "Target agent identifier or 'broadcast'"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "task_assignment",
+        "heartbeat", 
+        "task_result",
+        "error",
+        "coordination",
+        "workflow_sync",
+        "resource_request",
+        "capability_announcement"
+      ],
+      "description": "Message type for routing and processing"
+    },
+    "payload": {
+      "type": "string",
+      "maxLength": 65536,
+      "description": "JSON-serialized message content"
+    },
+    "correlation_id": {
+      "type": "string", 
+      "format": "uuid",
+      "description": "Request correlation identifier for response tracking"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Message creation timestamp in ISO 8601 format"
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 604800,
+      "default": 3600,
+      "description": "Time-to-live in seconds (max 1 week)"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal",
+      "description": "Message processing priority"
+    },
+    "retry_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 0,
+      "description": "Number of retry attempts"
+    },
+    "workflow_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Optional workflow context identifier"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "message_id": "123e4567-e89b-12d3-a456-426614174000",
+      "from_agent": "orchestrator-001",
+      "to_agent": "dev-agent-python",
+      "type": "task_assignment",
+      "payload": "{\"task_id\": \"task-456\", \"requirements\": [\"python\", \"fastapi\"], \"priority\": \"high\"}",
+      "correlation_id": "789e0123-e45c-67d8-a901-234567890123",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "ttl": 7200,
+      "priority": "high",
+      "workflow_id": "workflow-789"
+    }
+  ]
+}

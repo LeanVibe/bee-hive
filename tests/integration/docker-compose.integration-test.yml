@@ -1,0 +1,332 @@
+version: '3.8'
+
+# Docker Compose configuration for integration testing environments
+# Provides lightweight, isolated environments for comprehensive testing
+
+services:
+  # PostgreSQL with Vector Extensions for Testing
+  postgres-test:
+    image: pgvector/pgvector:pg15
+    container_name: integration_postgres
+    environment:
+      POSTGRES_DB: integration_test_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST_AUTH_METHOD: md5
+      # Optimized for testing performance
+      POSTGRES_SHARED_BUFFERS: 128MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 256MB
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_integration_data:/var/lib/postgresql/data
+      - ./integration/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - integration_test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d integration_test_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Redis for Caching and Message Broker Testing
+  redis-test:
+    image: redis:7-alpine
+    container_name: integration_redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_integration_data:/data
+      - ./integration/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - integration_test_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
+
+  # FastAPI Backend for Integration Testing
+  api-test:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: development
+      args:
+        - BUILD_ENV=integration_test
+    container_name: integration_api
+    environment:
+      # Test-specific configuration
+      - DATABASE_URL=postgresql://test_user:test_password@postgres-test:5432/integration_test_db
+      - REDIS_URL=redis://redis-test:6379/0
+      - ANTHROPIC_API_KEY=test-key-integration-testing
+      - SECRET_KEY=integration-test-secret-key-not-for-production
+      - ENVIRONMENT=integration_test
+      - LOG_LEVEL=DEBUG
+      - TESTING=true
+      - SKIP_DATABASE_INIT=false
+      # Performance optimizations for testing
+      - UVICORN_WORKERS=1
+      - UVICORN_MAX_REQUESTS=1000
+      - UVICORN_TIMEOUT_KEEP_ALIVE=30
+      # Integration test specific settings
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+      - CORS_ORIGINS=http://localhost:3001,http://localhost:8081
+    ports:
+      - "8001:8000"
+    volumes:
+      - ../..:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # For tmux and container management
+      - integration_workspaces:/app/workspaces
+      - integration_logs:/app/logs
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - integration_test_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.8'
+
+  # Frontend Development Server for Integration Testing
+  frontend-test:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.dev
+      args:
+        - NODE_ENV=test
+    container_name: integration_frontend
+    environment:
+      - API_BASE_URL=http://api-test:8000
+      - NODE_ENV=test
+      - REACT_APP_API_URL=http://localhost:8001
+      - REACT_APP_WS_URL=ws://localhost:8001/ws
+      - GENERATE_SOURCEMAP=false  # Faster builds for testing
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+      - integration_frontend_cache:/app/.next
+    depends_on:
+      - api-test
+    networks:
+      - integration_test_network
+    command: npm run dev
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Prometheus for Integration Test Metrics
+  prometheus-test:
+    image: prom/prometheus:latest
+    container_name: integration_prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./integration/monitoring/prometheus-test.yml:/etc/prometheus/prometheus.yml
+      - prometheus_integration_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=1d'  # Short retention for testing
+      - '--storage.tsdb.retention.size=1GB'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - integration_test_network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
+
+  # Grafana for Integration Test Visualization
+  grafana-test:
+    image: grafana/grafana:latest
+    container_name: integration_grafana
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin_test
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+    volumes:
+      - grafana_integration_data:/var/lib/grafana
+      - ./integration/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./integration/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus-test
+    networks:
+      - integration_test_network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.3'
+
+  # Chaos Engineering Tool for Failure Injection
+  chaos-monkey:
+    image: netflix/chaosmonkey:latest
+    container_name: integration_chaos_monkey
+    environment:
+      - CHAOS_MONKEY_ENABLED=true
+      - CHAOS_MONKEY_SCHEDULE_ENABLED=false  # Manual triggering for tests
+      - CHAOS_MONKEY_EXCEPTIONS_ENABLED=true
+    volumes:
+      - ./integration/chaos/config.properties:/opt/chaosmonkey/config.properties
+    networks:
+      - integration_test_network
+    profiles:
+      - chaos
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.2'
+
+  # Network simulation tool for network failure testing
+  network-simulator:
+    image: nicolaka/netshoot
+    container_name: integration_network_simulator
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./integration/network/scripts:/scripts
+    networks:
+      - integration_test_network
+    profiles:
+      - chaos
+    command: tail -f /dev/null  # Keep container running
+    restart: unless-stopped
+
+  # Load testing tool using Artillery
+  load-tester:
+    image: artilleryio/artillery:latest
+    container_name: integration_load_tester
+    volumes:
+      - ./integration/load-tests:/tests
+      - integration_load_results:/results
+    networks:
+      - integration_test_network
+    profiles:
+      - load-testing
+    command: tail -f /dev/null  # Keep container running for manual test execution
+
+  # Test runner container for executing integration tests
+  test-runner:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.test
+    container_name: integration_test_runner
+    environment:
+      - DATABASE_URL=postgresql://test_user:test_password@postgres-test:5432/integration_test_db
+      - REDIS_URL=redis://redis-test:6379/0
+      - API_BASE_URL=http://api-test:8000
+      - FRONTEND_BASE_URL=http://frontend-test:3000
+      - PROMETHEUS_URL=http://prometheus-test:9090
+      - ENVIRONMENT=integration_test
+      - PYTHONPATH=/app
+    volumes:
+      - ../..:/app
+      - integration_test_results:/app/test-results
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      api-test:
+        condition: service_healthy
+    networks:
+      - integration_test_network
+    profiles:
+      - testing
+    command: tail -f /dev/null  # Keep container running for manual test execution
+
+networks:
+  integration_test_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: integration-test-br
+
+volumes:
+  postgres_integration_data:
+    driver: local
+  redis_integration_data:
+    driver: local
+  prometheus_integration_data:
+    driver: local
+  grafana_integration_data:
+    driver: local
+  integration_workspaces:
+    driver: local
+  integration_logs:
+    driver: local
+  integration_frontend_cache:
+    driver: local
+  integration_load_results:
+    driver: local
+  integration_test_results:
+    driver: local
+
+# Health check for the entire integration test stack
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 60s
+
+# Resource limits template for consistent resource allocation
+x-resource-limits: &resource-limits
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: '0.5'
+      reservations:
+        memory: 256M
+        cpus: '0.25'

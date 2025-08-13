@@ -1275,8 +1275,15 @@ class AgentOrchestrator:
             persona_assignment = None
             if self.persona_system:
                 try:
+                    # Convert agent_id to UUID if it's not already one
+                    try:
+                        agent_uuid = uuid.UUID(agent_id)
+                    except ValueError:
+                        # Generate a UUID from the string agent_id for consistency
+                        agent_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, agent_id)
+                    
                     persona_assignment = await self.persona_system.assign_persona_to_agent(
-                        agent_id=uuid.UUID(agent_id),
+                        agent_id=agent_uuid,
                         task=task,
                         context=context or {},
                         preferred_persona_id=preferred_persona_id
@@ -1306,15 +1313,15 @@ class AgentOrchestrator:
                     'updated_at': datetime.utcnow()
                 }
                 
-                # Add persona information to task metadata
+                # Add persona information to task context
                 if persona_assignment:
-                    task_metadata = task.metadata or {}
-                    task_metadata.update({
+                    task_context = task.context or {}
+                    task_context.update({
                         'assigned_persona_id': persona_assignment.persona_id,
                         'persona_confidence': persona_assignment.confidence_score,
                         'persona_adaptations': persona_assignment.active_adaptations
                     })
-                    update_values['metadata'] = task_metadata
+                    update_values['context'] = task_context
                 
                 await db_session.execute(
                     update(Task)
@@ -1407,6 +1414,51 @@ class AgentOrchestrator:
         
         except Exception as e:
             logger.error("Error processing task queue", error=str(e))
+        
+        return assigned_count
+
+    async def _process_task_queue_batch(self) -> int:
+        """Process tasks in batches with concurrency for performance optimization."""
+        assigned_count = 0
+        
+        try:
+            # Get pending tasks in batch
+            async with get_session() as db_session:
+                result = await db_session.execute(
+                    select(Task)
+                    .where(Task.status == TaskStatus.PENDING.value)
+                    .where(Task.assigned_agent_id.is_(None))
+                    .order_by(Task.priority.desc(), Task.created_at.asc())
+                    .limit(20)  # Process up to 20 tasks in batch
+                )
+                pending_tasks = result.scalars().all()
+            
+            # Process tasks concurrently in smaller batches
+            batch_size = 5
+            for i in range(0, len(pending_tasks), batch_size):
+                batch = pending_tasks[i:i + batch_size]
+                batch_assignments = await asyncio.gather(
+                    *[self._schedule_task(
+                        str(task.id),
+                        task.task_type.value if task.task_type else "general",
+                        task.priority,
+                        None,
+                        task.required_capabilities
+                    ) for task in batch],
+                    return_exceptions=True
+                )
+                
+                for task, assigned_agent_id in zip(batch, batch_assignments):
+                    if assigned_agent_id and not isinstance(assigned_agent_id, Exception):
+                        assigned_count += 1
+                        logger.info(
+                            "📋 Batch task assigned",
+                            task_id=str(task.id),
+                            agent_id=assigned_agent_id
+                        )
+        
+        except Exception as e:
+            logger.error("Error processing task queue batch", error=str(e))
         
         return assigned_count
     
@@ -3463,6 +3515,260 @@ class AgentOrchestrator:
                 'execution_time': 0,
                 'coordination_events': {}
             }
+
+    async def delegate_task(
+        self,
+        task_description: str,
+        task_type: str,
+        priority: TaskPriority = TaskPriority.MEDIUM,
+        preferred_agent_role: Optional[AgentRole] = None,
+        context: Optional[Dict[str, Any]] = None,
+        required_capabilities: Optional[List[str]] = None,
+        estimated_effort: Optional[float] = None,
+        due_date: Optional[datetime] = None,
+        dependencies: Optional[List[str]] = None,
+        routing_strategy: RoutingStrategy = RoutingStrategy.ADAPTIVE,
+        preferred_persona_id: Optional[str] = None,
+        workflow_id: Optional[str] = None
+    ) -> str:
+        """Delegate a task to the most suitable agent using intelligent routing."""
+        
+        # Create task in database first
+        task_id = str(uuid.uuid4())
+        async with get_session() as db_session:
+            task = Task(
+                id=task_id,
+                title=task_description,
+                description=task_description,
+                task_type=task_type,
+                status=TaskStatus.PENDING,
+                priority=priority,
+                context=context or {},
+                required_capabilities=required_capabilities or [],
+                estimated_effort=int(estimated_effort * 60) if estimated_effort else None,  # Convert hours to minutes
+                due_date=due_date,
+                dependencies=dependencies or [],
+                workflow_id=workflow_id
+            )
+            db_session.add(task)
+            await db_session.commit()
+        
+        # Schedule task with enhanced routing
+        assigned_agent_id = await self._schedule_task_with_routing(
+            task_id=task_id,
+            routing_strategy=routing_strategy,
+            preferred_persona_id=preferred_persona_id,
+            context=context
+        )
+        
+        if assigned_agent_id:
+            logger.info(
+                "📋 Task delegated successfully",
+                task_id=task_id,
+                assigned_agent_id=assigned_agent_id,
+                routing_strategy=routing_strategy.value
+            )
+        else:
+            logger.warning(
+                "⚠️ Task delegation failed - no suitable agent found",
+                task_id=task_id,
+                routing_strategy=routing_strategy.value
+            )
+        
+        return task_id
+
+    async def _schedule_task_with_routing(
+        self,
+        task_id: str,
+        routing_strategy: RoutingStrategy = RoutingStrategy.ADAPTIVE,
+        preferred_persona_id: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """Schedule a task with enhanced routing strategy."""
+        
+        try:
+            # Get task from database
+            async with get_session() as db_session:
+                task = await db_session.get(Task, task_id)
+                if not task:
+                    logger.error("Task not found for scheduling", task_id=task_id)
+                    return None
+            
+            # Use intelligent router if available
+            if self.intelligent_router and routing_strategy != RoutingStrategy.ADAPTIVE:
+                routing_context = TaskRoutingContext(
+                    task_id=task_id,
+                    task_type=task.task_type.value if task.task_type else "general",
+                    priority=task.priority,
+                    required_capabilities=task.required_capabilities or [],
+                    estimated_effort=task.estimated_effort,
+                    due_date=task.due_date,
+                    dependencies=task.dependencies or [],
+                    workflow_id=str(task.workflow_id) if task.workflow_id else None,
+                    context=context or {}
+                )
+                
+                selected_agent_id = await self.intelligent_router.route_task(
+                    routing_context, routing_strategy
+                )
+                
+                if selected_agent_id:
+                    # Assign task with persona integration
+                    success = await self._assign_task_to_agent_with_persona(
+                        task_id=task_id,
+                        agent_id=selected_agent_id,
+                        task=task,
+                        preferred_persona_id=preferred_persona_id,
+                        context=context
+                    )
+                    return selected_agent_id if success else None
+            
+            # Fallback to basic scheduling
+            return await self._schedule_task(
+                task_id=task_id,
+                task_type=task.task_type.value if task.task_type else "general",
+                priority=task.priority,
+                required_capabilities=task.required_capabilities or []
+            )
+            
+        except Exception as e:
+            logger.error("Failed to schedule task with routing", task_id=task_id, error=str(e))
+            return None
+    
+    # Circuit Breaker Implementation
+    
+    async def _update_circuit_breaker(self, agent_id: str, success: bool) -> None:
+        """Update circuit breaker state for an agent."""
+        if agent_id not in self.circuit_breakers:
+            self.circuit_breakers[agent_id] = {
+                'state': 'closed',
+                'failure_count': 0,
+                'consecutive_failures': 0,
+                'successful_requests': 0,
+                'total_requests': 0,
+                'last_error_type': None,
+                'trip_time': None
+            }
+        
+        breaker = self.circuit_breakers[agent_id]
+        breaker['total_requests'] += 1
+        
+        if success:
+            breaker['successful_requests'] += 1
+            breaker['consecutive_failures'] = 0
+            if breaker['state'] == 'half_open':
+                breaker['state'] = 'closed'
+                breaker['failure_count'] = 0
+        else:
+            breaker['failure_count'] += 1
+            breaker['consecutive_failures'] += 1
+            
+            # Check if should trip
+            if await self._should_trip_circuit_breaker(agent_id):
+                await self._trip_circuit_breaker(agent_id, "failure_threshold_exceeded")
+    
+    async def _should_trip_circuit_breaker(self, agent_id: str) -> bool:
+        """Check if circuit breaker should trip for an agent."""
+        if agent_id not in self.circuit_breakers:
+            return False
+            
+        breaker = self.circuit_breakers[agent_id]
+        
+        # Check consecutive failures threshold
+        if breaker['consecutive_failures'] >= self.error_thresholds['consecutive_failures']:
+            return True
+            
+        # Check failure rate threshold (if enough requests)
+        if breaker['total_requests'] >= 10:
+            failure_rate = breaker['failure_count'] / breaker['total_requests']
+            if failure_rate >= self.error_thresholds['agent_failure_rate']:
+                return True
+                
+        return False
+    
+    async def _trip_circuit_breaker(self, agent_id: str, reason: str) -> None:
+        """Trip the circuit breaker for an agent."""
+        if agent_id not in self.circuit_breakers:
+            await self._update_circuit_breaker(agent_id, success=False)
+            
+        breaker = self.circuit_breakers[agent_id]
+        breaker['state'] = 'open'
+        breaker['trip_time'] = time.time()
+        
+        # Update metrics
+        self.metrics['circuit_breaker_trips'] += 1
+        
+        # Mark agent as in error state
+        if agent_id in self.agents:
+            self.agents[agent_id].status = AgentStatus.ERROR
+            
+        logger.warning(
+            "Circuit breaker tripped for agent",
+            agent_id=agent_id,
+            reason=reason,
+            failure_count=breaker['failure_count'],
+            consecutive_failures=breaker['consecutive_failures']
+        )
+        
+        # Schedule recovery attempt
+        asyncio.create_task(self._schedule_circuit_breaker_recovery(agent_id))
+    
+    async def _schedule_circuit_breaker_recovery(self, agent_id: str) -> None:
+        """Schedule circuit breaker recovery for an agent."""
+        recovery_time = self.error_thresholds['recovery_time_seconds']
+        
+        try:
+            await asyncio.sleep(recovery_time)
+            
+            if agent_id in self.circuit_breakers:
+                breaker = self.circuit_breakers[agent_id]
+                if breaker['state'] == 'open':
+                    breaker['state'] = 'half_open'
+                    logger.info(
+                        "Circuit breaker moved to half-open state",
+                        agent_id=agent_id,
+                        recovery_time=recovery_time
+                    )
+                    
+        except Exception as e:
+            logger.error("Failed to schedule circuit breaker recovery", agent_id=agent_id, error=str(e))
+    
+    async def _attempt_agent_restart_with_protection(self, agent_id: str, agent_instance: AgentInstance) -> bool:
+        """Attempt to restart an agent with circuit breaker protection."""
+        if agent_id in self.circuit_breakers:
+            breaker = self.circuit_breakers[agent_id]
+            if breaker['state'] == 'open':
+                logger.info("Agent restart blocked by circuit breaker", agent_id=agent_id)
+                return False
+                
+        # Attempt restart (simplified for testing)
+        try:
+            # In real implementation, would restart the agent
+            agent_instance.status = AgentStatus.ACTIVE
+            await self._update_circuit_breaker(agent_id, success=True)
+            return True
+        except Exception as e:
+            await self._update_circuit_breaker(agent_id, success=False)
+            return False
+    
+    def get_circuit_breaker_status(self) -> Dict[str, Dict[str, Any]]:
+        """Get current circuit breaker status for all agents."""
+        status = {}
+        
+        for agent_id, breaker in self.circuit_breakers.items():
+            status[agent_id] = {
+                'state': breaker['state'],
+                'failure_count': breaker['failure_count'],
+                'consecutive_failures': breaker['consecutive_failures'],
+                'success_rate': (
+                    breaker['successful_requests'] / breaker['total_requests'] 
+                    if breaker['total_requests'] > 0 else 0.0
+                ),
+                'last_error_type': breaker['last_error_type'],
+                'is_tripped': breaker['state'] in ['open', 'half_open']
+            }
+            
+        return status
 
 
 # Global orchestrator instance

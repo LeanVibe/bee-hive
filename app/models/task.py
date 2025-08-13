@@ -79,6 +79,7 @@ class Task(Base):
     # Assignment and ownership
     assigned_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True, index=True)
     created_by_agent_id = Column(DatabaseAgnosticUUID(), ForeignKey("agents.id"), nullable=True)
+    workflow_id = Column(DatabaseAgnosticUUID(), ForeignKey("workflows.id"), nullable=True, index=True)
     
     # Task relationships
     dependencies = Column(UUIDArray(), nullable=True, default=list)
@@ -107,6 +108,7 @@ class Task(Base):
     # Relationships
     assigned_agent = relationship("Agent", foreign_keys=[assigned_agent_id])
     created_by = relationship("Agent", foreign_keys=[created_by_agent_id])
+    workflow = relationship("Workflow", foreign_keys=[workflow_id])
     # Note: persona_performance relationship removed during stabilization
     # TODO: Implement PersonaPerformanceModel if required
     

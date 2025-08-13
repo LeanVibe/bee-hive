@@ -1,0 +1,749 @@
+name: Comprehensive Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run comprehensive integration tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'critical_journeys'
+          - 'failure_scenarios'
+          - 'performance_load'
+          - 'chaos_engineering'
+      environment:
+        description: 'Test environment'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - 'standard'
+          - 'performance'
+          - 'chaos'
+          - 'minimal'
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  PYTHONPATH: ${{ github.workspace }}
+  INTEGRATION_TEST_TIMEOUT: 1800  # 30 minutes
+
+jobs:
+  # Environment Setup and Validation
+  setup-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      test-suite: ${{ steps.config.outputs.test-suite }}
+      environment: ${{ steps.config.outputs.environment }}
+      skip-performance: ${{ steps.config.outputs.skip-performance }}
+      skip-chaos: ${{ steps.config.outputs.skip-chaos }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure test execution
+        id: config
+        run: |
+          # Default values
+          TEST_SUITE="${{ github.event.inputs.test_suite || 'all' }}"
+          ENVIRONMENT="${{ github.event.inputs.environment || 'standard' }}"
+          
+          # Skip expensive tests on PR builds (unless explicitly requested)
+          if [[ "${{ github.event_name }}" == "pull_request" && "$TEST_SUITE" == "all" ]]; then
+            SKIP_PERFORMANCE="true"
+            SKIP_CHAOS="true"
+            TEST_SUITE="critical_journeys,failure_scenarios"
+          else
+            SKIP_PERFORMANCE="false"
+            SKIP_CHAOS="false"
+          fi
+          
+          # Override for manual dispatch
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SKIP_PERFORMANCE="false"
+            SKIP_CHAOS="false"
+          fi
+          
+          echo "test-suite=$TEST_SUITE" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "skip-performance=$SKIP_PERFORMANCE" >> $GITHUB_OUTPUT
+          echo "skip-chaos=$SKIP_CHAOS" >> $GITHUB_OUTPUT
+          
+          echo "Configuration:"
+          echo "- Test Suite: $TEST_SUITE"
+          echo "- Environment: $ENVIRONMENT"
+          echo "- Skip Performance: $SKIP_PERFORMANCE"
+          echo "- Skip Chaos: $SKIP_CHAOS"
+      
+      - name: Validate test environment
+        run: |
+          echo "Validating integration test environment..."
+          
+          # Check required files exist
+          required_files=(
+            "tests/integration/comprehensive_integration_testing_strategy.py"
+            "tests/integration/docker-compose.integration-test.yml"
+            "tests/integration/critical_user_journeys.py"
+            "tests/integration/cross_component_failure_scenarios.py"
+            "tests/integration/performance_load_validation.py"
+            "tests/integration/chaos_engineering_framework.py"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "❌ Required file missing: $file"
+              exit 1
+            fi
+            echo "✅ Found: $file"
+          done
+          
+          echo "Environment validation completed successfully"
+
+  # Critical User Journey Tests
+  critical-user-journeys:
+    runs-on: ubuntu-latest
+    needs: setup-validation
+    if: contains(needs.setup-validation.outputs.test-suite, 'critical_journeys') || needs.setup-validation.outputs.test-suite == 'all'
+    timeout-minutes: 45
+    
+    strategy:
+      matrix:
+        journey: [
+          "developer_task_assignment",
+          "multi_agent_collaboration", 
+          "realtime_dashboard_monitoring",
+          "github_integration_workflow"
+        ]
+      fail-fast: false
+      max-parallel: 2
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+      
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Start integration test environment
+        run: |
+          echo "Starting integration test environment for critical journeys..."
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml up -d --build
+          
+          # Wait for services to be healthy
+          echo "Waiting for services to be healthy..."
+          timeout 300 bash -c '
+            while ! docker-compose -f docker-compose.integration-test.yml ps | grep -E "(healthy|Up)"; do
+              echo "Waiting for services..."
+              sleep 10
+            done
+          '
+      
+      - name: Run critical user journey test
+        run: |
+          echo "Running critical user journey: ${{ matrix.journey }}"
+          
+          cd tests/integration
+          python -m pytest critical_user_journeys.py::TestCriticalUserJourneys::test_${{ matrix.journey }} \
+            -v \
+            --tb=short \
+            --timeout=1200 \
+            --asyncio-mode=auto \
+            --junitxml=../../test-results/journey-${{ matrix.journey }}.xml \
+            --html=../../test-results/journey-${{ matrix.journey }}.html \
+            --self-contained-html
+        
+        env:
+          INTEGRATION_TEST_ENV: github_actions
+          LOG_LEVEL: INFO
+      
+      - name: Collect journey metrics
+        if: always()
+        run: |
+          echo "Collecting journey metrics..."
+          
+          # Create metrics directory
+          mkdir -p test-results/metrics
+          
+          # Collect Docker logs
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml logs > ../../test-results/metrics/docker-logs-${{ matrix.journey }}.txt
+          
+          # Collect system metrics
+          df -h > ../../test-results/metrics/disk-usage-${{ matrix.journey }}.txt
+          free -h > ../../test-results/metrics/memory-usage-${{ matrix.journey }}.txt
+          docker stats --no-stream > ../../test-results/metrics/container-stats-${{ matrix.journey }}.txt
+      
+      - name: Cleanup test environment
+        if: always()
+        run: |
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml down -v --remove-orphans
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: critical-journey-results-${{ matrix.journey }}
+          path: test-results/
+          retention-days: 7
+
+  # Cross-Component Failure Scenario Tests
+  failure-scenario-tests:
+    runs-on: ubuntu-latest
+    needs: setup-validation
+    if: contains(needs.setup-validation.outputs.test-suite, 'failure_scenarios') || needs.setup-validation.outputs.test-suite == 'all'
+    timeout-minutes: 60
+    
+    strategy:
+      matrix:
+        scenario: [
+          "database_connection_loss_recovery",
+          "redis_message_broker_failure",
+          "cascading_failure_scenario",
+          "network_partition_recovery"
+        ]
+      fail-fast: false
+      max-parallel: 1  # Run failure tests sequentially to avoid interference
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          # Install additional tools for failure injection
+          sudo apt-get update
+          sudo apt-get install -y iproute2 stress-ng
+      
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Start failure testing environment
+        run: |
+          echo "Starting failure testing environment..."
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml --profile chaos up -d --build
+          
+          # Wait for services with extended timeout for failure tests
+          echo "Waiting for services to be healthy..."
+          timeout 420 bash -c '
+            while ! docker-compose -f docker-compose.integration-test.yml ps | grep -E "(healthy|Up)"; do
+              echo "Waiting for services..."
+              sleep 15
+            done
+          '
+      
+      - name: Run failure scenario test
+        run: |
+          echo "Running failure scenario: ${{ matrix.scenario }}"
+          
+          cd tests/integration
+          python -m pytest cross_component_failure_scenarios.py::TestCrossComponentFailureScenarios::test_${{ matrix.scenario }} \
+            -v \
+            --tb=long \
+            --timeout=1800 \
+            --asyncio-mode=auto \
+            --junitxml=../../test-results/failure-${{ matrix.scenario }}.xml \
+            --html=../../test-results/failure-${{ matrix.scenario }}.html \
+            --self-contained-html
+        
+        env:
+          INTEGRATION_TEST_ENV: github_actions
+          LOG_LEVEL: DEBUG
+          CHAOS_TESTING_ENABLED: true
+      
+      - name: Collect failure test diagnostics
+        if: always()
+        run: |
+          echo "Collecting failure test diagnostics..."
+          
+          mkdir -p test-results/diagnostics
+          
+          # Collect detailed container information
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml ps -a > ../../test-results/diagnostics/containers-${{ matrix.scenario }}.txt
+          docker-compose -f docker-compose.integration-test.yml logs > ../../test-results/diagnostics/all-logs-${{ matrix.scenario }}.txt
+          
+          # Collect individual service logs
+          for service in postgres-test redis-test api-test frontend-test; do
+            docker-compose -f docker-compose.integration-test.yml logs $service > ../../test-results/diagnostics/$service-logs-${{ matrix.scenario }}.txt 2>/dev/null || true
+          done
+          
+          # System state
+          docker network ls > ../../test-results/diagnostics/networks-${{ matrix.scenario }}.txt
+          docker volume ls > ../../test-results/diagnostics/volumes-${{ matrix.scenario }}.txt
+      
+      - name: Cleanup failure test environment
+        if: always()
+        run: |
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml down -v --remove-orphans
+          # Clean up any lingering chaos configurations
+          sudo tc qdisc del dev docker0 root 2>/dev/null || true
+      
+      - name: Upload failure test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: failure-scenario-results-${{ matrix.scenario }}
+          path: test-results/
+          retention-days: 7
+
+  # Performance and Load Validation Tests
+  performance-load-tests:
+    runs-on: ubuntu-latest
+    needs: setup-validation
+    if: needs.setup-validation.outputs.skip-performance == 'false' && (contains(needs.setup-validation.outputs.test-suite, 'performance_load') || needs.setup-validation.outputs.test-suite == 'all')
+    timeout-minutes: 90
+    
+    strategy:
+      matrix:
+        test_type: [
+          "concurrent_agent_operations_performance",
+          "high_frequency_message_processing",
+          "dashboard_concurrent_users_load",
+          "memory_leak_detection",
+          "system_stability_under_load"
+        ]
+      fail-fast: false
+      max-parallel: 1  # Run performance tests sequentially
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          # Install performance monitoring tools
+          pip install psutil memory-profiler
+      
+      - name: Optimize system for performance testing
+        run: |
+          echo "Optimizing system for performance testing..."
+          
+          # Increase system limits for performance tests
+          echo "* soft nofile 65536" | sudo tee -a /etc/security/limits.conf
+          echo "* hard nofile 65536" | sudo tee -a /etc/security/limits.conf
+          
+          # Configure Docker for performance
+          echo '{"max-concurrent-downloads": 10, "max-concurrent-uploads": 10}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl reload docker
+      
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Start performance testing environment
+        run: |
+          echo "Starting performance testing environment..."
+          cd tests/integration
+          
+          # Use performance profile with higher resource limits
+          docker-compose -f docker-compose.integration-test.yml --profile monitoring up -d --build
+          
+          # Wait for services to be ready for performance testing
+          echo "Waiting for services to be optimized and ready..."
+          timeout 600 bash -c '
+            while ! docker-compose -f docker-compose.integration-test.yml ps | grep -E "(healthy|Up)"; do
+              echo "Waiting for services to be ready for performance testing..."
+              sleep 20
+            done
+          '
+          
+          # Allow services to warm up
+          sleep 30
+      
+      - name: Run performance test
+        run: |
+          echo "Running performance test: ${{ matrix.test_type }}"
+          
+          cd tests/integration
+          python -m pytest performance_load_validation.py::TestPerformanceLoadValidation::test_${{ matrix.test_type }} \
+            -v \
+            --tb=short \
+            --timeout=3600 \
+            --asyncio-mode=auto \
+            --junitxml=../../test-results/performance-${{ matrix.test_type }}.xml \
+            --html=../../test-results/performance-${{ matrix.test_type }}.html \
+            --self-contained-html
+        
+        env:
+          INTEGRATION_TEST_ENV: github_actions
+          LOG_LEVEL: INFO
+          PERFORMANCE_TESTING_ENABLED: true
+          PERFORMANCE_TARGET_AGGRESSIVE: true
+      
+      - name: Collect performance metrics
+        if: always()
+        run: |
+          echo "Collecting detailed performance metrics..."
+          
+          mkdir -p test-results/performance-metrics
+          
+          # System performance metrics
+          top -b -n 1 > test-results/performance-metrics/system-top-${{ matrix.test_type }}.txt
+          iostat -x 1 1 > test-results/performance-metrics/iostat-${{ matrix.test_type }}.txt
+          vmstat 1 1 > test-results/performance-metrics/vmstat-${{ matrix.test_type }}.txt
+          
+          # Docker performance metrics
+          cd tests/integration
+          docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > ../../test-results/performance-metrics/docker-stats-${{ matrix.test_type }}.txt
+          
+          # Application-specific metrics
+          docker-compose -f docker-compose.integration-test.yml exec -T prometheus-test curl -s http://localhost:9090/api/v1/query?query=up > ../../test-results/performance-metrics/prometheus-metrics-${{ matrix.test_type }}.txt 2>/dev/null || true
+      
+      - name: Cleanup performance test environment
+        if: always()
+        run: |
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml down -v --remove-orphans
+      
+      - name: Upload performance test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results-${{ matrix.test_type }}
+          path: test-results/
+          retention-days: 14  # Keep performance results longer
+
+  # Chaos Engineering Tests
+  chaos-engineering-tests:
+    runs-on: ubuntu-latest
+    needs: setup-validation
+    if: needs.setup-validation.outputs.skip-chaos == 'false' && (contains(needs.setup-validation.outputs.test-suite, 'chaos_engineering') || needs.setup-validation.outputs.test-suite == 'all')
+    timeout-minutes: 75
+    
+    strategy:
+      matrix:
+        experiment: [
+          "network_latency_resilience",
+          "resource_exhaustion_handling",
+          "service_restart_resilience",
+          "cascading_failure_prevention"
+        ]
+      fail-fast: false
+      max-parallel: 1  # Run chaos tests sequentially
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          # Install chaos engineering tools
+          sudo apt-get update
+          sudo apt-get install -y iproute2 stress-ng iptables
+      
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+      
+      - name: Start chaos testing environment
+        run: |
+          echo "Starting chaos testing environment..."
+          cd tests/integration
+          
+          # Start with chaos profile enabled
+          docker-compose -f docker-compose.integration-test.yml --profile chaos --profile monitoring up -d --build
+          
+          # Extended wait for chaos environment
+          echo "Waiting for chaos testing environment to be ready..."
+          timeout 720 bash -c '
+            while ! docker-compose -f docker-compose.integration-test.yml ps | grep -E "(healthy|Up)"; do
+              echo "Waiting for chaos environment..."
+              sleep 30
+            done
+          '
+          
+          # Ensure all containers have necessary chaos tools
+          for container in api-test postgres-test redis-test; do
+            echo "Installing chaos tools in $container..."
+            docker-compose -f docker-compose.integration-test.yml exec -T $container bash -c "
+              apt-get update >/dev/null 2>&1 || true
+              apt-get install -y iproute2 stress-ng >/dev/null 2>&1 || true
+            " || echo "Warning: Could not install tools in $container"
+          done
+      
+      - name: Run chaos engineering experiment
+        run: |
+          echo "Running chaos engineering experiment: ${{ matrix.experiment }}"
+          
+          cd tests/integration
+          python -m pytest chaos_engineering_framework.py::TestChaosEngineeringFramework::test_${{ matrix.experiment }} \
+            -v \
+            --tb=long \
+            --timeout=2400 \
+            --asyncio-mode=auto \
+            --junitxml=../../test-results/chaos-${{ matrix.experiment }}.xml \
+            --html=../../test-results/chaos-${{ matrix.experiment }}.html \
+            --self-contained-html
+        
+        env:
+          INTEGRATION_TEST_ENV: github_actions
+          LOG_LEVEL: DEBUG
+          CHAOS_ENGINEERING_ENABLED: true
+          CHAOS_AGGRESSIVE_MODE: false  # Conservative mode for CI
+      
+      - name: Collect chaos experiment results
+        if: always()
+        run: |
+          echo "Collecting chaos experiment results..."
+          
+          mkdir -p test-results/chaos-results
+          
+          # Collect comprehensive logs
+          cd tests/integration
+          docker-compose -f docker-compose.integration-test.yml logs > ../../test-results/chaos-results/full-logs-${{ matrix.experiment }}.txt
+          
+          # Collect metrics from monitoring
+          docker-compose -f docker-compose.integration-test.yml exec -T prometheus-test curl -s "http://localhost:9090/api/v1/query_range?query=up&start=$(date -d '10 minutes ago' -u +%s)&end=$(date -u +%s)&step=15" > ../../test-results/chaos-results/prometheus-availability-${{ matrix.experiment }}.json 2>/dev/null || true
+          
+          # System state after chaos
+          docker-compose -f docker-compose.integration-test.yml ps -a > ../../test-results/chaos-results/final-state-${{ matrix.experiment }}.txt
+          
+          # Network configuration
+          docker network inspect $(docker-compose -f docker-compose.integration-test.yml config | grep 'networks:' -A 5 | grep -v 'networks:' | head -1 | awk '{print $1}' | tr -d ':') > ../../test-results/chaos-results/network-config-${{ matrix.experiment }}.txt 2>/dev/null || true
+      
+      - name: Cleanup chaos test environment
+        if: always()
+        run: |
+          echo "Cleaning up chaos test environment..."
+          cd tests/integration
+          
+          # Stop all chaos processes
+          for container in api-test postgres-test redis-test; do
+            docker-compose -f docker-compose.integration-test.yml exec -T $container pkill -f stress-ng 2>/dev/null || true
+            docker-compose -f docker-compose.integration-test.yml exec -T $container tc qdisc del dev eth0 root 2>/dev/null || true
+            docker-compose -f docker-compose.integration-test.yml exec -T $container iptables -F 2>/dev/null || true
+          done
+          
+          # Full environment cleanup
+          docker-compose -f docker-compose.integration-test.yml down -v --remove-orphans
+          
+          # Clean up any lingering network configurations
+          sudo iptables -F 2>/dev/null || true
+          sudo tc qdisc del dev docker0 root 2>/dev/null || true
+      
+      - name: Upload chaos test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: chaos-engineering-results-${{ matrix.experiment }}
+          path: test-results/
+          retention-days: 14
+
+  # Integration Test Summary and Reporting
+  integration-test-summary:
+    runs-on: ubuntu-latest
+    needs: [critical-user-journeys, failure-scenario-tests, performance-load-tests, chaos-engineering-tests]
+    if: always()
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all test results
+        uses: actions/download-artifact@v3
+        with:
+          path: all-test-results
+      
+      - name: Generate integration test report
+        run: |
+          echo "Generating comprehensive integration test report..."
+          
+          cat > integration-test-report.md << 'EOF'
+          # Comprehensive Integration Test Report
+          
+          **Test Execution Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Repository:** ${{ github.repository }}
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+          **Trigger:** ${{ github.event_name }}
+          
+          ## Test Suite Summary
+          
+          EOF
+          
+          # Analyze test results
+          total_tests=0
+          passed_tests=0
+          failed_tests=0
+          
+          echo "## Test Results by Category" >> integration-test-report.md
+          echo "" >> integration-test-report.md
+          
+          # Process each category
+          for category in critical-journey failure-scenario performance chaos-engineering; do
+            echo "### ${category^} Tests" >> integration-test-report.md
+            echo "" >> integration-test-report.md
+            
+            category_passed=0
+            category_total=0
+            
+            for result_dir in all-test-results/${category}*; do
+              if [[ -d "$result_dir" ]]; then
+                category_total=$((category_total + 1))
+                
+                # Check if XML result exists and indicates success
+                if find "$result_dir" -name "*.xml" -exec grep -l 'failures="0"' {} \; | head -1 >/dev/null 2>&1; then
+                  category_passed=$((category_passed + 1))
+                  echo "- ✅ $(basename "$result_dir")" >> integration-test-report.md
+                else
+                  echo "- ❌ $(basename "$result_dir")" >> integration-test-report.md
+                fi
+              fi
+            done
+            
+            if [[ $category_total -gt 0 ]]; then
+              echo "- **Total:** $category_total tests" >> integration-test-report.md
+              echo "- **Passed:** $category_passed tests" >> integration-test-report.md
+              echo "- **Success Rate:** $(( (category_passed * 100) / category_total ))%" >> integration-test-report.md
+            else
+              echo "- **Status:** Skipped or not run" >> integration-test-report.md
+            fi
+            
+            echo "" >> integration-test-report.md
+            
+            total_tests=$((total_tests + category_total))
+            passed_tests=$((passed_tests + category_passed))
+          done
+          
+          failed_tests=$((total_tests - passed_tests))
+          
+          # Overall summary
+          cat >> integration-test-report.md << EOF
+          ## Overall Summary
+          
+          - **Total Integration Tests:** $total_tests
+          - **Passed:** $passed_tests
+          - **Failed:** $failed_tests
+          - **Overall Success Rate:** $(if [[ $total_tests -gt 0 ]]; then echo "$(( (passed_tests * 100) / total_tests ))%"; else echo "N/A"; fi)
+          
+          ## Quality Gate Assessment
+          
+          EOF
+          
+          # Quality gate assessment
+          if [[ $total_tests -eq 0 ]]; then
+            echo "⚠️ **WARNING:** No integration tests were executed." >> integration-test-report.md
+            quality_gate="UNKNOWN"
+          elif [[ $total_tests -gt 0 && $passed_tests -eq $total_tests ]]; then
+            echo "✅ **PASSED:** All integration tests passed successfully." >> integration-test-report.md
+            quality_gate="PASSED"
+          elif [[ $total_tests -gt 0 && $((passed_tests * 100 / total_tests)) -ge 80 ]]; then
+            echo "⚠️ **WARNING:** Integration test success rate is $(( (passed_tests * 100) / total_tests ))% (≥80% required for warning threshold)." >> integration-test-report.md
+            quality_gate="WARNING"
+          else
+            echo "❌ **FAILED:** Integration test success rate is $(( (passed_tests * 100) / total_tests ))% (below 80% threshold)." >> integration-test-report.md
+            quality_gate="FAILED"
+          fi
+          
+          echo "" >> integration-test-report.md
+          echo "**Quality Gate Status:** $quality_gate" >> integration-test-report.md
+          
+          # Set outputs for other steps
+          echo "quality-gate=$quality_gate" >> $GITHUB_OUTPUT
+          echo "total-tests=$total_tests" >> $GITHUB_OUTPUT
+          echo "passed-tests=$passed_tests" >> $GITHUB_OUTPUT
+          echo "failed-tests=$failed_tests" >> $GITHUB_OUTPUT
+        
+        id: report
+      
+      - name: Upload integration test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-report
+          path: integration-test-report.md
+          retention-days: 30
+      
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('integration-test-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Integration Test Results\n\n${report}`
+            });
+      
+      - name: Set quality gate status
+        run: |
+          quality_gate="${{ steps.report.outputs.quality-gate }}"
+          
+          case $quality_gate in
+            "PASSED")
+              echo "✅ Integration tests quality gate: PASSED"
+              exit 0
+              ;;
+            "WARNING")
+              echo "⚠️ Integration tests quality gate: WARNING"
+              exit 0
+              ;;
+            "FAILED")
+              echo "❌ Integration tests quality gate: FAILED"
+              exit 1
+              ;;
+            *)
+              echo "❓ Integration tests quality gate: UNKNOWN"
+              exit 1
+              ;;
+          esac

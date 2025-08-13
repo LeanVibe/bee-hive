@@ -33,6 +33,7 @@ class RoutingStrategy(Enum):
     LOAD_BALANCED = "load_balanced"
     PRIORITY_AWARE = "priority_aware"
     ADAPTIVE = "adaptive"
+    PERSONA_OPTIMIZED = "persona_optimized"
 
 
 class LoadBalancingAlgorithm(Enum):
