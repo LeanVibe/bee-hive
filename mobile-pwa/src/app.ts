@@ -28,6 +28,8 @@ export class AgentHiveApp extends LitElement {
   @state() declare private isOnline: boolean
   @state() declare private hasError: boolean
   @state() declare private errorMessage: string
+  @state() declare private versionMismatchActive: boolean
+  @state() declare private versionMismatchMessage: string
   @state() declare private isMobile: boolean
   @state() declare private sidebarCollapsed: boolean
   @state() declare private mobileMenuOpen: boolean
@@ -212,6 +214,8 @@ export class AgentHiveApp extends LitElement {
     this.isOnline = navigator.onLine
     this.hasError = false
     this.errorMessage = ''
+    this.versionMismatchActive = false
+    this.versionMismatchMessage = ''
     this.isMobile = window.innerWidth < 768
     this.sidebarCollapsed = false
     this.mobileMenuOpen = false
@@ -338,9 +342,11 @@ export class AgentHiveApp extends LitElement {
       this.showError(`WebSocket error: ${error.message}`)
     })
 
-    // WS contract governance
+    // WS contract governance - persistent actionable banner
     this.wsService.on('version-mismatch', (data: { current: string, supported: string[] }) => {
-      this.showError(`Version mismatch: server ${data.current} not in supported ${data.supported.join(', ')}`)
+      this.versionMismatchActive = true
+      this.versionMismatchMessage = `Version mismatch: server ${data.current} · supported: ${data.supported.join(', ')}`
+      this.requestUpdate()
     })
     
     // Notification events
@@ -476,6 +482,26 @@ export class AgentHiveApp extends LitElement {
               @click="${() => this.hasError = false}"
               class="ml-2 text-white hover:text-gray-200"
               aria-label="Dismiss error"
+            >
+              ×
+            </button>
+          </div>
+        ` : ''}
+
+        <!-- Version mismatch banner (persistent, actionable) -->
+        ${this.versionMismatchActive ? html`
+          <div class="error-banner" role="alert" aria-live="assertive">
+            <span>${this.versionMismatchMessage}</span>
+            <a 
+              href="https://docs.hiveops.app/ws-contract-versioning" 
+              target="_blank" 
+              rel="noopener" 
+              style="margin-left: 0.75rem; text-decoration: underline; color: #fff;"
+            >Learn more</a>
+            <button 
+              @click="${() => this.versionMismatchActive = false}"
+              class="ml-2 text-white hover:text-gray-200"
+              aria-label="Dismiss version mismatch"
             >
               ×
             </button>
