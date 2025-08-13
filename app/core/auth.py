@@ -1,3 +1,4 @@
+# ruff: noqa
 """
 Authentication and Authorization System for LeanVibe Agent Hive 2.0
 

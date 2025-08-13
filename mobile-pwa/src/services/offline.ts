@@ -81,6 +81,11 @@ export class OfflineService extends EventEmitter {
   async initialize(): Promise<void> {
     try {
       console.log('💾 Initializing offline service...')
+      // Skip when IndexedDB is not available (e.g., jsdom/test environments)
+      if (typeof indexedDB === 'undefined') {
+        console.warn('IndexedDB not available; skipping offline initialization')
+        return
+      }
       
       await this.initializeDB()
       await this.loadSyncQueue()

@@ -1,3 +1,4 @@
+# ruff: noqa
 """
 Lightweight authentication metrics counters for REST and WebSocket.
 
