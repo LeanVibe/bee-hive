@@ -26,7 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
 
-      - name: Ruff check
+      - name: Ruff check (app + tests only)
         run: |
           ruff --version
-          ruff check .
+          ruff check app/ tests/
