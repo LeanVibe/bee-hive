@@ -406,6 +406,26 @@ class PrometheusMetricsGenerator:
             "type": "gauge",
             "values": subscription_metrics
         }
+        # SLO metrics
+        try:
+            counters = websocket_manager.metrics
+            metrics["leanvibe_ws_bytes_sent_total"] = {
+                "help": "Total bytes sent over WS",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("bytes_sent_total", 0)}],
+            }
+            metrics["leanvibe_ws_bytes_received_total"] = {
+                "help": "Total bytes received over WS",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("bytes_received_total", 0)}],
+            }
+            metrics["leanvibe_ws_last_broadcast_fanout"] = {
+                "help": "Last broadcast fanout size",
+                "type": "gauge",
+                "values": [{"labels": {}, "value": getattr(websocket_manager, 'last_broadcast_fanout', 0)}],
+            }
+        except Exception:
+            pass
         
         return metrics
     

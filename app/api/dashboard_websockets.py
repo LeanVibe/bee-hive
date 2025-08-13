@@ -66,8 +66,8 @@ class DashboardWebSocketManager:
         self.redis_listener_task: Optional[asyncio.Task] = None
         self.health_monitor_task: Optional[asyncio.Task] = None
         # Rate limit configuration
-        self.rate_limit_tokens_per_second: float = 20.0
-        self.rate_limit_burst_capacity: float = 40.0
+        self.rate_limit_tokens_per_second: float = float(os.environ.get("WS_RATE_TOKENS_PER_SEC", "20"))
+        self.rate_limit_burst_capacity: float = float(os.environ.get("WS_RATE_BURST", "40"))
         self.rate_limit_notify_cooldown_seconds: int = 5
         # Input hardening
         self.max_inbound_message_bytes: int = 64 * 1024
@@ -85,7 +85,12 @@ class DashboardWebSocketManager:
             "auth_denied_total": 0,
             "origin_denied_total": 0,
             "idle_disconnects_total": 0,
+            # SLO metrics
+            "bytes_sent_total": 0,
+            "bytes_received_total": 0,
         }
+        # Fanout last values (gauges)
+        self.last_broadcast_fanout: int = 0
         # Backpressure configuration
         self.backpressure_disconnect_threshold: int = 5
         # Idle disconnect configuration
@@ -114,6 +119,8 @@ class DashboardWebSocketManager:
             import os as _os
             self.auth_required = _os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
             self.auth_mode = _os.environ.get("WS_AUTH_MODE", "token").lower()
+            self.rate_limit_tokens_per_second = float(_os.environ.get("WS_RATE_TOKENS_PER_SEC", str(self.rate_limit_tokens_per_second)))
+            self.rate_limit_burst_capacity = float(_os.environ.get("WS_RATE_BURST", str(self.rate_limit_burst_capacity)))
             allowlist = _os.environ.get("WS_ALLOWED_ORIGINS")
             self.allowed_origins = {o.strip() for o in allowlist.split(",") if o.strip()} if allowlist else None
             self.expected_auth_token = _os.environ.get("WS_AUTH_TOKEN")
@@ -264,8 +271,12 @@ class DashboardWebSocketManager:
             # If serialization fails, proceed; downstream will handle
             pass
 
-        # Count received messages
+        # Count received messages and bytes
         self.metrics["messages_received_total"] += 1
+        try:
+            self.metrics["bytes_received_total"] += len(json.dumps(message).encode("utf-8"))
+        except Exception:
+            pass
 
         # Rate limiting guard: drop or notify when exceeded
         if not self._consume_token_allow(connection):
@@ -363,10 +374,13 @@ class DashboardWebSocketManager:
         
         sent_count = 0
         
-        for connection_id in list(self.subscription_groups[subscription]):
+        targets = list(self.subscription_groups[subscription])
+        for connection_id in targets:
             if await self._send_to_connection(connection_id, message):
                 sent_count += 1
         
+        # Update last fanout
+        self.last_broadcast_fanout = len(targets)
         return sent_count
     
     async def broadcast_to_all(self, message_type: str, data: Dict[str, Any]) -> int:
@@ -380,10 +394,12 @@ class DashboardWebSocketManager:
         
         sent_count = 0
         
-        for connection_id in list(self.connections.keys()):
+        targets = list(self.connections.keys())
+        for connection_id in targets:
             if await self._send_to_connection(connection_id, message):
                 sent_count += 1
         
+        self.last_broadcast_fanout = len(targets)
         return sent_count
     
     async def _send_to_connection(self, connection_id: str, message: Dict[str, Any]) -> bool:
@@ -397,8 +413,16 @@ class DashboardWebSocketManager:
             # Ensure correlation_id is present
             if "correlation_id" not in message:
                 message["correlation_id"] = str(uuid.uuid4())
-            await connection.websocket.send_text(json.dumps(message))
+            # Ensure timestamp is present
+            if "timestamp" not in message:
+                message["timestamp"] = datetime.utcnow().isoformat()
+            encoded = json.dumps(message)
+            await connection.websocket.send_text(encoded)
             self.metrics["messages_sent_total"] += 1
+            try:
+                self.metrics["bytes_sent_total"] += len(encoded.encode("utf-8"))
+            except Exception:
+                pass
             if message.get("type") in {"error", "data_error"}:
                 self.metrics["errors_sent_total"] += 1
             # Reset failure streak on success
