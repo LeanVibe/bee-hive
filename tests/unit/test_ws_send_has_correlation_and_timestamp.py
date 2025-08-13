@@ -1,4 +1,3 @@
-import contextlib
 import json
 from starlette.testclient import TestClient
 
@@ -19,10 +18,12 @@ def test_ws_outbound_injects_correlation_id_and_timestamp(monkeypatch):
         # Ask for a data request that triggers a server response
         ws.send_text(json.dumps({"type": "request_data", "data_type": "agent_status"}))
         for _ in range(5):
-            # tolerate non-JSON frames if any using suppress
-            with contextlib.suppress(json.JSONDecodeError):
+            # tolerate non-JSON frames if any
+            try:
                 msg = json.loads(ws.receive_text())
-                if msg.get("type") in {"data_response", "error", "data_error"}:
-                    assert "correlation_id" in msg
-                    assert "timestamp" in msg
-                    break
+            except json.JSONDecodeError:
+                continue
+            if msg.get("type") in {"data_response", "error", "data_error"}:
+                assert "correlation_id" in msg
+                assert "timestamp" in msg
+                break
