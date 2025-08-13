@@ -1,4 +1,5 @@
 import { openDB, IDBPDatabase, IDBPTransaction } from 'idb'
+import { AuthService } from './auth'
 import { EventEmitter } from '../utils/event-emitter'
 
 export interface CachedData {
@@ -31,6 +32,7 @@ export interface OfflineTask {
   created_at: number
   updated_at: number
   synced: boolean
+  correlation_id?: string
 }
 
 export class OfflineService extends EventEmitter {
@@ -40,9 +42,11 @@ export class OfflineService extends EventEmitter {
   private isOnline: boolean = navigator.onLine
   private syncInProgress: boolean = false
   private readonly dbName = 'AgentHiveOfflineDB'
-  private readonly dbVersion = 1
+  private readonly dbVersion = 2
   private readonly maxCacheAge = 24 * 60 * 60 * 1000 // 24 hours
   private readonly maxRetries = 3
+  private retryTimers: Map<string, any> = new Map()
+  private authService: AuthService | null = null
   
   static getInstance(): OfflineService {
     if (!OfflineService.instance) {
@@ -57,6 +61,21 @@ export class OfflineService extends EventEmitter {
     // Listen for online/offline events
     window.addEventListener('online', this.handleOnline.bind(this))
     window.addEventListener('offline', this.handleOffline.bind(this))
+
+    // Listen for auth lifecycle to resume sync when possible
+    try {
+      this.authService = AuthService.getInstance()
+      this.authService.on('authenticated', () => {
+        if (this.isOnline && !this.syncInProgress) {
+          this.startBackgroundSync()
+        }
+      })
+      this.authService.on('token-refreshed', () => {
+        if (this.isOnline && !this.syncInProgress) {
+          this.startBackgroundSync()
+        }
+      })
+    } catch {}
   }
   
   async initialize(): Promise<void> {
@@ -118,6 +137,13 @@ export class OfflineService extends EventEmitter {
           eventsStore.createIndex('event_type', 'event_type')
           eventsStore.createIndex('agent_id', 'agent_id')
           eventsStore.createIndex('timestamp', 'timestamp')
+        }
+        // Reconciliation log (v2)
+        if (!db.objectStoreNames.contains('reconciliation_log')) {
+          const recStore = db.createObjectStore('reconciliation_log', { keyPath: 'id' })
+          recStore.createIndex('resource', 'resource')
+          recStore.createIndex('entity_id', 'entity_id')
+          recStore.createIndex('timestamp', 'timestamp')
         }
       },
     })
@@ -281,6 +307,13 @@ export class OfflineService extends EventEmitter {
   async queueSync(type: 'create' | 'update' | 'delete', resource: string, data: any): Promise<void> {
     if (!this.db) return
     
+    // Ensure correlation_id for idempotency on create/update flows
+    if (type !== 'delete') {
+      if (!data.correlation_id) {
+        data.correlation_id = crypto.randomUUID()
+      }
+    }
+
     const operation: SyncOperation = {
       id: crypto.randomUUID(),
       type,
@@ -343,7 +376,20 @@ export class OfflineService extends EventEmitter {
           } else {
             // Update retry count in database
             await this.db?.put('sync_queue', operation)
-            this.emit('sync_retry', operation)
+            // schedule retry with backoff
+            const ms = OfflineService.computeBackoffMs(operation.retryCount)
+            this.emit('sync_scheduled_retry', { id: operation.id, ms })
+            // Clear previous timer if any
+            const prev = this.retryTimers.get(operation.id)
+            if (prev) clearTimeout(prev)
+            const t = setTimeout(() => {
+              // Attempt sync again if still queued
+              const stillQueued = this.syncQueue.find(op => op.id === operation.id)
+              if (stillQueued && this.isOnline && !this.syncInProgress) {
+                this.startBackgroundSync()
+              }
+            }, ms)
+            this.retryTimers.set(operation.id, t)
           }
         }
       }
@@ -353,6 +399,11 @@ export class OfflineService extends EventEmitter {
     } finally {
       this.syncInProgress = false
     }
+  }
+
+  static computeBackoffMs(retryCount: number, baseMs = 1000, capMs = 30000): number {
+    const ms = baseMs * Math.pow(2, retryCount)
+    return Math.min(ms, capMs)
   }
   
   private async executeSync(operation: SyncOperation): Promise<void> {
@@ -373,18 +424,28 @@ export class OfflineService extends EventEmitter {
   private async syncTask(type: 'create' | 'update' | 'delete', data: any): Promise<void> {
     const url = `/api/v1/tasks${type === 'create' ? '' : `/${data.id}`}`
     const method = type === 'create' ? 'POST' : type === 'update' ? 'PUT' : 'DELETE'
-    
+    const token = AuthService.getInstance().getToken()
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       body: type !== 'delete' ? JSON.stringify(data) : undefined
     })
     
     if (!response.ok) {
       throw new Error(`Task sync failed: ${response.status} ${response.statusText}`)
+    }
+    if (type !== 'delete') {
+      try {
+        const serverTask = await response.json()
+        // Reconcile with local state and log
+        await this.reconcileTaskFromServer(serverTask)
+        this.emit('task_synced', { type, task: serverTask })
+      } catch {}
+    } else {
+      this.emit('task_deleted_synced', { id: data.id })
     }
     
     // Mark as synced in local database
@@ -395,6 +456,68 @@ export class OfflineService extends EventEmitter {
         await this.db.put('tasks', task)
       }
     }
+  }
+
+  private async logReconciliation(entry: {
+    id?: string,
+    resource: string,
+    entity_id: string,
+    decision: 'kept_local' | 'applied_server',
+    local_ts?: number,
+    server_ts?: number,
+    correlation_id?: string,
+  }): Promise<void> {
+    if (!this.db) return
+    const record = {
+      id: entry.id || crypto.randomUUID(),
+      resource: entry.resource,
+      entity_id: entry.entity_id,
+      decision: entry.decision,
+      local_ts: entry.local_ts,
+      server_ts: entry.server_ts,
+      correlation_id: entry.correlation_id,
+      timestamp: Date.now(),
+    }
+    await this.db.put('reconciliation_log', record)
+    this.emit('reconciled', record)
+  }
+
+  async reconcileTaskFromServer(serverTask: OfflineTask): Promise<void> {
+    if (!this.db) return
+    const local: OfflineTask | undefined = await this.db.get('tasks', serverTask.id)
+    if (!local) {
+      // No local copy; accept server
+      await this.db.put('tasks', { ...serverTask, synced: true })
+      await this.logReconciliation({
+        resource: 'tasks',
+        entity_id: serverTask.id,
+        decision: 'applied_server',
+        server_ts: serverTask.updated_at,
+        correlation_id: serverTask.correlation_id,
+      })
+      return
+    }
+    // If correlation_id matches, prefer server (server applied our change)
+    const sameCorrelation = local.correlation_id && serverTask.correlation_id && local.correlation_id === serverTask.correlation_id
+    let decision: 'kept_local' | 'applied_server' = 'applied_server'
+    if (!sameCorrelation) {
+      // Last write wins by updated_at
+      decision = (local.updated_at || 0) > (serverTask.updated_at || 0) ? 'kept_local' : 'applied_server'
+    }
+    if (decision === 'applied_server') {
+      await this.db.put('tasks', { ...serverTask, synced: true })
+    } else {
+      // Keep local; ensure it is flagged for next sync
+      await this.db.put('tasks', { ...local, synced: false })
+    }
+    await this.logReconciliation({
+      resource: 'tasks',
+      entity_id: serverTask.id,
+      decision,
+      local_ts: local.updated_at,
+      server_ts: serverTask.updated_at,
+      correlation_id: serverTask.correlation_id || local.correlation_id,
+    })
   }
   
   private async syncAgent(type: 'create' | 'update' | 'delete', data: any): Promise<void> {

@@ -52,6 +52,7 @@ export class WebSocketService extends EventEmitter {
   private streamingConfig: Map<string, number> = new Map()
   
   private authService: AuthService
+  private static readonly CLIENT_WS_CONTRACT_VERSION = '1.0.0'
   
   static getInstance(): WebSocketService {
     if (!WebSocketService.instance) {
@@ -67,6 +68,7 @@ export class WebSocketService extends EventEmitter {
     // Listen for auth state changes
     this.authService.on('authenticated', () => this.ensureConnection())
     this.authService.on('unauthenticated', () => this.disconnect())
+    this.authService.on('token-refreshed', () => this.reconnect())
     
     // Handle page visibility changes
     document.addEventListener('visibilitychange', () => {
@@ -108,10 +110,16 @@ export class WebSocketService extends EventEmitter {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       const host = window.location.hostname
       const port = process.env.NODE_ENV === 'development' ? ':8000' : ''
-      const wsUrl = `${protocol}//${host}${port}/api/dashboard/ws/dashboard`
+      const token = this.authService.getToken()
+      const tokenQuery = token ? `?access_token=${encodeURIComponent(token)}` : ''
+      const wsUrl = `${protocol}//${host}${port}/api/dashboard/ws/dashboard${tokenQuery}`
       
       console.log('🔌 Connecting to WebSocket:', wsUrl)
       
+      // Close existing socket if token changed and we had a connection
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try { this.ws.close(1000, 'Reauth'); } catch {}
+      }
       this.ws = new WebSocket(wsUrl)
       
       this.ws.onopen = this.handleOpen.bind(this)
@@ -133,15 +141,7 @@ export class WebSocketService extends EventEmitter {
     this.reconnectAttempts = 0
     this.connectionQuality = 'good'
     
-    // Send authentication message
-    this.sendMessage({
-      type: 'authenticate',
-      data: {
-        token: this.authService.getToken(),
-        client_type: 'mobile_pwa',
-        features: ['real_time_streaming', 'high_frequency_updates', 'mobile_optimization']
-      }
-    })
+    // No-op: Auth is provided via URL/header on connect
     
     // Start ping/pong with quality monitoring
     this.startPing()
@@ -152,6 +152,9 @@ export class WebSocketService extends EventEmitter {
     
     this.emit('connected')
     this.emit('connection-quality', { quality: this.connectionQuality, timestamp: new Date().toISOString() })
+
+    // Contract governance: check server contract support
+    this.verifyContractVersion().catch(() => {})
   }
   
   private handleMessage(event: MessageEvent): void {
@@ -234,6 +237,22 @@ export class WebSocketService extends EventEmitter {
       console.error('Failed to parse WebSocket message:', error)
       this.emit('parse-error', { error, rawData: event.data })
     }
+  }
+
+  private async verifyContractVersion(): Promise<void> {
+    try {
+      const res = await fetch('/api/dashboard/websocket/contract', {
+        headers: this.authService.getAuthHeaders()
+      })
+      if (!res.ok) return
+      const body = await res.json()
+      const serverCurrent = body.current_version as string
+      const supported = (body.supported_versions as string[]) || []
+      const client = WebSocketService.CLIENT_WS_CONTRACT_VERSION
+      if (!supported.includes(client)) {
+        this.emit('version-mismatch', { current: serverCurrent, supported })
+      }
+    } catch {}
   }
 
   private handleTaskEventMessage(message: WebSocketMessage): void {
@@ -493,6 +512,7 @@ export class WebSocketService extends EventEmitter {
   disconnect(): void {
     console.log('🔌 Disconnecting WebSocket')
     this.reconnectAttempts = this.maxReconnectAttempts // Prevent reconnection
+    this.isConnecting = false
     this.cleanup()
   }
   
@@ -502,7 +522,8 @@ export class WebSocketService extends EventEmitter {
     this.disconnect()
     
     if (this.authService.isAuthenticated()) {
-      setTimeout(() => this.connect(), 1000)
+      // Attempt immediate reconnect; production backoff is handled elsewhere
+      void this.connect()
     }
   }
   

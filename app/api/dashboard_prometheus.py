@@ -21,6 +21,7 @@ from ..core.redis import get_redis
 from ..models.agent import Agent, AgentStatus
 from ..models.task import Task, TaskStatus, TaskPriority
 from .dashboard_websockets import websocket_manager
+from ..core.auth_metrics import get_all as get_auth_metrics
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard-prometheus"])
@@ -360,6 +361,17 @@ class PrometheusMetricsGenerator:
             "type": "gauge",
             "values": [{"labels": {}, "value": 3600}]  # Placeholder 1 hour
         }
+        # Auth metrics
+        try:
+            auth = get_auth_metrics()
+            for key, val in auth.items():
+                metrics[f"leanvibe_{key}"] = {
+                    "help": f"{key.replace('_', ' ')}",
+                    "type": "counter",
+                    "values": [{"labels": {}, "value": val}],
+                }
+        except Exception:
+            pass
         
         return metrics
     
@@ -394,6 +406,26 @@ class PrometheusMetricsGenerator:
             "type": "gauge",
             "values": subscription_metrics
         }
+        # SLO metrics
+        try:
+            counters = websocket_manager.metrics
+            metrics["leanvibe_ws_bytes_sent_total"] = {
+                "help": "Total bytes sent over WS",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("bytes_sent_total", 0)}],
+            }
+            metrics["leanvibe_ws_bytes_received_total"] = {
+                "help": "Total bytes received over WS",
+                "type": "counter",
+                "values": [{"labels": {}, "value": counters.get("bytes_received_total", 0)}],
+            }
+            metrics["leanvibe_ws_last_broadcast_fanout"] = {
+                "help": "Last broadcast fanout size",
+                "type": "gauge",
+                "values": [{"labels": {}, "value": getattr(websocket_manager, 'last_broadcast_fanout', 0)}],
+            }
+        except Exception:
+            pass
         
         return metrics
     

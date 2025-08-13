@@ -108,6 +108,10 @@ export type {
   PushSubscriptionData 
 } from './notification';
 
+// Offline services
+export { OfflineService } from './offline';
+export { OfflineStorageService } from './offline-storage';
+
 // API Types (re-export for convenience)
 export type {
   // Base API types

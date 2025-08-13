@@ -173,7 +173,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: Number(process.env.VITE_DEV_PORT || 51735),
     strictPort: true,
     open: false,
     cors: true,
@@ -191,33 +191,33 @@ export default defineConfig({
     },
     proxy: {
       '/dashboard/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:18080',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': 'localhost:8000'
+          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:18080')
         }
       },
       '/dashboard/simple-ws': {
-        target: 'ws://localhost:8000',
+        target: process.env.VITE_BACKEND_WS_URL || 'ws://localhost:18080',
         ws: true,
         changeOrigin: true,
       },
       // Proxy API calls to backend for Tailscale access
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:18080',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': 'localhost:8000'
+          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:18080')
         }
       },
       '/health': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:18080',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': 'localhost:8000'
+          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:18080')
         }
       }
     },

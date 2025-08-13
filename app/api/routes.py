@@ -7,13 +7,19 @@ and system monitoring.
 """
 
 from fastapi import APIRouter
+from fastapi import Depends
+
+from ..core.auth import Permission
+from ..core.auth import get_current_user
+from ..core.auth import require_permission as require_basic_permission
+from .auth_endpoints import router as auth_router
 
 # Import working API endpoints
 from .enterprise_pilots import router as pilots_router
-from ..core.auth import auth_router
-from .v1.websocket import router as websocket_router
-from .v1.github_integration import router as github_router
 from .v1.coordination_monitoring import router as coordination_monitoring_router
+from .v1.github_integration import router as github_router
+from .v1.websocket import router as websocket_router
+
 # Temporarily disabled to avoid model conflicts
 # from .coordination_endpoints import router as coordination_router
 
@@ -38,3 +44,15 @@ async def api_root():
         "docs": "/docs",
         "redoc": "/redoc"
     }
+
+
+@router.get("/protected/ping")
+async def protected_ping(current_user=Depends(get_current_user)):
+    return {"pong": True, "user_id": getattr(current_user, 'id', None)}
+
+
+@router.get("/protected/admin")
+async def protected_admin_route(
+    _=Depends(require_basic_permission(Permission.MANAGE_USERS))
+):
+    return {"ok": True, "route": "admin"}

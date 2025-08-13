@@ -1,0 +1,36 @@
+name: Schema governance
+
+on:
+  pull_request:
+    paths:
+      - 'schemas/ws_messages.schema.json'
+
+jobs:
+  schema-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect schema diff
+        id: diff
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          BASE_FILE=$(mktemp)
+          git show origin/${{ github.base_ref }}:schemas/ws_messages.schema.json > "$BASE_FILE" || echo '{}' > "$BASE_FILE"
+          DIFF=$(diff -u "$BASE_FILE" schemas/ws_messages.schema.json || true)
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Classify change
+        id: classify
+        run: |
+          set -e
+          jq -r '.version // "0.0.0"' schemas/ws_messages.schema.json > new_version
+          jq -r '.version // "0.0.0"' <(git show origin/${{ github.base_ref }}:schemas/ws_messages.schema.json || echo '{"version":"0.0.0"}') > old_version
+          echo "old=$(cat old_version)" >> $GITHUB_OUTPUT
+          echo "new=$(cat new_version)" >> $GITHUB_OUTPUT
+      - name: Require label for review on version change
+        if: steps.classify.outputs.old != steps.classify.outputs.new
+        run: |
+          echo "Schema version changed from ${{ steps.classify.outputs.old }} to ${{ steps.classify.outputs.new }}"
+          echo "Please add 'schema:review' label and include migration notes."
+          exit 0

@@ -109,12 +109,42 @@ export class BaseService extends EventEmitter {
         signal: AbortSignal.timeout(this.config.timeout),
         ...options
       };
+      try {
+        // Inject Authorization header if AuthService is available
+        const { AuthService } = await import('./auth')
+        const auth = AuthService.getInstance()
+        const token = auth.getToken()
+        if (token) {
+          (requestOptions.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+        }
+      } catch (_) {
+        // no-op if auth not available
+      }
 
       if (data) {
         requestOptions.body = JSON.stringify(data);
       }
 
-      const response = await this.retryRequest(() => fetch(url, requestOptions));
+      let response = await this.retryRequest(() => fetch(url, requestOptions));
+      if (response.status === 401) {
+        try {
+          const { AuthService } = await import('./auth')
+          const auth = AuthService.getInstance()
+          await auth.refreshToken()
+          // If refresh succeeded, attach new token and retry once
+          const newToken = auth.getToken()
+          if (newToken) {
+            (requestOptions.headers as Record<string, string>)['Authorization'] = `Bearer ${newToken}`
+          }
+          response = await fetch(url, requestOptions)
+        } catch (_) {
+          // notify app about auth expiration
+          try {
+            const { AuthService } = await import('./auth')
+            AuthService.getInstance().emit('auth-expired')
+          } catch {}
+        }
+      }
       
       if (!response.ok) {
         throw await this.createApiError(response);

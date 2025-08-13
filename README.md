@@ -1,3 +1,17 @@
+## Performance (WS SLOs)
+
+Scripts under `scripts/performance` provide k6 scenarios for WebSocket load testing. Configure non-standard ports via env.
+
+Example:
+
+```
+cd scripts/performance
+make smoke BACKEND_WS_URL=ws://localhost:18080/api/dashboard/ws/dashboard ACCESS_TOKEN=dev-token
+```
+
+Environment knobs:
+- `WS_RATE_TOKENS_PER_SEC`, `WS_RATE_BURST` to tune rate limit
+- `WS_COMPRESSION_ENABLED` (reserved)
 # HiveOps (Bee Hive)
 
 Modern FastAPI backend with a Lit + Vite PWA for real‑time operational dashboards.
