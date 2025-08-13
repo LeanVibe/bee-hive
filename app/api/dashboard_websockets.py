@@ -100,6 +100,7 @@ class DashboardWebSocketManager:
         self.auth_required: bool = os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
         # auth_mode: 'token' (default, env shared token) or 'jwt' (verify access token)
         self.auth_mode: str = os.environ.get("WS_AUTH_MODE", "token").lower()
+        self.compression_enabled: bool = os.environ.get("WS_COMPRESSION_ENABLED", "false").lower() in ("1", "true", "yes")
         self.allowed_origins: Optional[Set[str]] = None
         allowlist = os.environ.get("WS_ALLOWED_ORIGINS")
         if allowlist:
@@ -119,6 +120,7 @@ class DashboardWebSocketManager:
             import os as _os
             self.auth_required = _os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
             self.auth_mode = _os.environ.get("WS_AUTH_MODE", "token").lower()
+            self.compression_enabled = _os.environ.get("WS_COMPRESSION_ENABLED", "false").lower() in ("1", "true", "yes")
             self.rate_limit_tokens_per_second = float(_os.environ.get("WS_RATE_TOKENS_PER_SEC", str(self.rate_limit_tokens_per_second)))
             self.rate_limit_burst_capacity = float(_os.environ.get("WS_RATE_BURST", str(self.rate_limit_burst_capacity)))
             allowlist = _os.environ.get("WS_ALLOWED_ORIGINS")
@@ -441,6 +443,16 @@ class DashboardWebSocketManager:
             # Increment failure streak and consider disconnect on threshold
             connection.send_failure_streak += 1
             if connection.send_failure_streak >= self.backpressure_disconnect_threshold:
+                # Best-effort notify before disconnect
+                try:
+                    await connection.websocket.send_text(json.dumps({
+                        "type": "disconnect_notice",
+                        "reason": "backpressure",
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "correlation_id": str(uuid.uuid4()),
+                    }))
+                except Exception:
+                    pass
                 await self.disconnect(connection_id)
                 self.metrics["backpressure_disconnects_total"] += 1
             return False
