@@ -52,6 +52,7 @@ export class WebSocketService extends EventEmitter {
   private streamingConfig: Map<string, number> = new Map()
   
   private authService: AuthService
+  private static readonly CLIENT_WS_CONTRACT_VERSION = '1.0.0'
   
   static getInstance(): WebSocketService {
     if (!WebSocketService.instance) {
@@ -150,6 +151,9 @@ export class WebSocketService extends EventEmitter {
     
     this.emit('connected')
     this.emit('connection-quality', { quality: this.connectionQuality, timestamp: new Date().toISOString() })
+
+    // Contract governance: check server contract support
+    this.verifyContractVersion().catch(() => {})
   }
   
   private handleMessage(event: MessageEvent): void {
@@ -232,6 +236,22 @@ export class WebSocketService extends EventEmitter {
       console.error('Failed to parse WebSocket message:', error)
       this.emit('parse-error', { error, rawData: event.data })
     }
+  }
+
+  private async verifyContractVersion(): Promise<void> {
+    try {
+      const res = await fetch('/api/dashboard/websocket/contract', {
+        headers: this.authService.getAuthHeaders()
+      })
+      if (!res.ok) return
+      const body = await res.json()
+      const serverCurrent = body.current_version as string
+      const supported = (body.supported_versions as string[]) || []
+      const client = WebSocketService.CLIENT_WS_CONTRACT_VERSION
+      if (!supported.includes(client)) {
+        this.emit('version-mismatch', { current: serverCurrent, supported })
+      }
+    } catch {}
   }
 
   private handleTaskEventMessage(message: WebSocketMessage): void {
