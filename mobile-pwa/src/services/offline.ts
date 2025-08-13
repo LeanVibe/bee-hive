@@ -387,6 +387,14 @@ export class OfflineService extends EventEmitter {
     if (!response.ok) {
       throw new Error(`Task sync failed: ${response.status} ${response.statusText}`)
     }
+    if (type !== 'delete') {
+      try {
+        const serverTask = await response.json()
+        this.emit('task_synced', { type, task: serverTask })
+      } catch {}
+    } else {
+      this.emit('task_deleted_synced', { id: data.id })
+    }
     
     // Mark as synced in local database
     if (type !== 'delete' && this.db) {

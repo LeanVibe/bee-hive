@@ -678,6 +678,11 @@ export class TasksView extends LitElement {
       this.taskService.addEventListener('taskCreated', this.handleTaskCreated.bind(this))
       this.taskService.addEventListener('taskUpdated', this.handleTaskUpdated.bind(this))
       this.taskService.addEventListener('taskDeleted', this.handleTaskDeleted.bind(this))
+      // Offline sync reconciliation indicators
+      this.taskService.addEventListener('sync_queued', () => this.requestUpdate())
+      this.taskService.addEventListener('task_synced', () => this.requestUpdate())
+      this.taskService.addEventListener('sync_retry', () => this.requestUpdate())
+      this.taskService.addEventListener('sync_failed', () => this.requestUpdate())
       
       // Start monitoring for real-time updates
       this.startMonitoring()
@@ -1271,6 +1276,9 @@ export class TasksView extends LitElement {
                   ${task.assignee || 'Unassigned'}
                 </div>
                 <div class="task-date">Updated ${this.formatDate(task.updatedAt)}</div>
+                ${task.syncStatus === 'pending' ? html`
+                  <span class="task-status-badge" style="background:#fef3c7;color:#92400e;">Pending Sync</span>
+                ` : ''}
               </div>
 
               ${!this.bulkActionMode ? html`

@@ -394,6 +394,7 @@ export class AgentHiveApp extends LitElement {
   
   private handleOffline() {
     this.isOnline = false
+    this.showError('You are offline. Changes will sync when you are back online.')
   }
   
   private showError(message: string) {
