@@ -1,63 +1,60 @@
-You are a senior Cursor agent stepping into the HiveOps repo to continue backend and PWA platform work. Read this fully, then execute without asking for confirmations unless blocked.
+You are taking over as the Cursor Agent on the `auth-foundation` branch of LeanVibe Bee Hive (HiveOps). Your mission: finish CI stabilization and complete must-have scope for Epic 2 (Offline-first) and Epic 3 (WS SLOs), adhering to our governance rails (Epic 4) and engineering protocol.
 
-High-level context
-- Backend: FastAPI (`app/main.py`), WebSockets under `/api/dashboard/ws/*`. Limits, contract, and health/stats endpoints exist. WS manager lives in `app/api/dashboard_websockets.py`.
-- PWA: Lit + Vite in `mobile-pwa/`. Types generated from `schemas/ws_messages.schema.json` and enforced in CI. WebSocket client in `mobile-pwa/src/services/websocket.ts`.
-- CI: PR lanes run Ruff and a focused pytest subset; PWA type drift gates build. Coverage gate is 45% (backend).
+Context you should know:
+- FastAPI backend entry: `app/main.py` (exports `app`); CI startup now skips heavy init when `CI` or `SKIP_STARTUP_INIT` is set.
+- Mobile PWA (Lit + Vite): `mobile-pwa/`. Backend adapter/WS wiring: `mobile-pwa/src/services/backend-adapter.ts`. System health: `mobile-pwa/src/services/system-health.ts`.
+- WS endpoint: `/api/dashboard/ws/dashboard`. Contract governance: `/api/dashboard/websocket/contract`. PWA emits a version-mismatch banner when client contract unsupported.
+- Tests mock Redis/DB in `tests/conftest.py`. Avoid real services in fast lanes. Use provided fixtures (`test_app`, `test_client`, etc.).
+- CI Workflows: 
+  - `.github/workflows/ci.yml` (backend, pwa) 
+  - `.github/workflows/ci-fast.yml` (backend-fast, pwa lanes, schema drift)
+  - `.github/workflows/fast-type-test.yml` (ruff + mypy + smoke)
+  - `ruff check` is used. Fast lanes export `SKIP_STARTUP_INIT`.
 
-Current branch/status (auth-foundation, 2025-08-13)
-- Fixed Ruff issues and an `UnboundLocalError` in `dashboard_websockets.py`; pushed.
-- CI is running. Previous failures were lint and backend-fast due to the error; those should now be resolved.
-- Smoke auth tests in this branch target `/api/v1/auth/login` and `/api/v1/auth/refresh`; they currently 404 locally/CI. Coverage gate also fails. Epic 4 is complete; Epics 2 and 3 partially complete; Epic 1 mostly complete except for mounting/implementing auth endpoints.
+Immediate priorities (must-haves, Pareto):
+1) Ensure PR #3 (auth-foundation) goes green end-to-end.
+   - If Ruff still flags files, fix import ordering and unused imports in changed files. Prefer code fixes over disables. See `.ruff` config in `pyproject.toml`.
+   - Confirm backend-fast no longer hangs; it should run `pytest -q tests/smoke tests/ws` without DB/Redis. If any test assumes real Redis, adapt to fixtures or add light mocks.
+2) Epic 2 — Offline-first resiliency:
+   - Add durable retry with jitter and max attempts per queued op in `mobile-pwa` sync queue.
+   - Surface conflicts: prefer last-write-wins but show a badge/tooltip on reconciled items when server overwrote client.
+   - UI: persistent mini-banner or badge when `queuedCount > 0` with “Sync now” action.
+   - Tests:
+     - Unit tests for queue state machine and conflict surfacing (Vitest).
+     - E2E Playwright: offline CRUD while offline, then online reconciliation with visible cues.
+3) Epic 3 — WS SLOs enforcement:
+   - Implement per-connection send rate limiter (bytes/sec) in server WS manager; drop/backoff and increment counters.
+   - Track latency distribution (p50/p95/p99) across sends; expose via Prometheus in `app/api/dashboard_prometheus.py` and/or `app/core/prometheus_exporter.py`.
+   - Tests: unit/integration for limiter and metrics; expand k6 WS scenarios to assert bps ceilings and latency SLOs.
 
-Immediate priorities (do these now)
-1) Implement and mount backend auth routes to satisfy smoke tests and coverage gate.
-   - Add `app/api/auth.py`:
-     - `POST /login` (expects `{email, password}`) -> `{access_token, refresh_token}`
-     - `POST /refresh` (expects `{refresh_token}`) -> `{success: true, access_token}`
-     - `POST /logout` (optional no-op for now) -> `{success: true}`
-     - `GET /me` (requires `Authorization: Bearer <access_token>`) -> user JSON with `email`
-   - Use local JWT in `app/core/auth.py` if not present; keep deterministic and keyless in dev (e.g., HMAC with a default secret if env missing). Ensure verify path matches test expectations.
-   - Mount router in `app/main.py`: `app.include_router(auth_router, prefix="/api/v1/auth")`.
-   - Keep payloads and shapes as smoke tests expect.
-   - Add minimal unit tests in `tests/unit/test_auth_*.py` to raise coverage above 45%.
+Guidelines and guardrails:
+- TDD: write failing tests first, minimal code to pass, refactor clean.
+- YAGNI: implement only what the tests and user journey require.
+- Vertical slices: complete feature behavior across backend, PWA, and tests before moving on.
+- No server-rendered dashboard; PWA + API/WS only.
+- Keep governance:
+  - Schema changes to `schemas/ws_messages.schema.json` require versioning, migration notes, and labels.
+  - PWA types must be generated from schema; CI fails on drift.
 
-2) WS metrics endpoint for Epic 3 completion
-   - Expose Prometheus metrics for WS manager (counters/gauges already tracked). Add endpoint `/api/dashboard/metrics/websockets` that emits standard Prometheus text format.
-   - Add a lightweight test asserting metric names (no strict values) to avoid flakes in PR lanes.
+Helpful entry points:
+- WS manager: `app/api/dashboard_websockets.py`. Add rate limiter there and counters (bytes sent/recv totals already exist; add bps limiter and latency histograms).
+- Prometheus surfacing: `app/api/dashboard_prometheus.py` and `app/core/prometheus_exporter.py`.
+- PWA offline queue: `mobile-pwa/src/services/` (search queue/sync logic) and UI badges/banners under `mobile-pwa/src/components/`.
+- k6 scenarios live under performance/devops docs or scripts (search `k6`); extend to include bps/latency constraints.
 
-3) Rate limit tests (Epic 3)
-   - Unit test token-bucket behavior in the manager. Avoid long sleeps; simulate time where possible.
-   - WS integration test: send >N messages quickly and assert at least one `error` for rate limit and that not all messages are processed.
+Definition of done for you:
+- All CI lanes green on PR #3.
+- Offline-first queue retry+jitter+max-attempts implemented with tests; visible UI hint and “Sync now”.
+- WS SLOs limiter + latency metrics implemented with tests and updated k6.
+- Commit in vertical slices, with concise messages like:
+  - `feat(offline): retry+jitter+max-attempts for sync queue + tests`
+  - `feat(ws-slo): per-conn send rate limiter + latency metrics + tests`
+  - `test(e2e): offline CRUD reconciliation with UI cues`
+  - `chore(ci): minor ruff fixes in changed files`
 
-4) Offline reconciliation (Epic 2 follow-ups)
-   - Define conflict policy (last-write-wins with `correlation_id` tie-breaker).
-   - Implement reconciliation logging and backoff in PWA; add unit tests. Keep E2E minimal.
+Local dev quickstart:
+- Backend: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
+- PWA: `cd mobile-pwa && npm ci && npm run dev`
+- E2E: `cd mobile-pwa && npx playwright test`
 
-How to work (guardrails)
-- Vertical slices only. For each slice: add failing test → implement minimal passing code → keep Ruff/tests green.
-- Don’t introduce external service dependencies; keep dev/test deterministic (no external IdP).
-- Update `docs/PLAN.md` as you make meaningful progress; keep it the living source of truth.
-- Keep changes scoped; when an epic’s remaining items are complete, commit and push with a clear message.
-
-Concrete action plan to start
-- Backend auth
-  - Create `app/api/auth.py` and (if needed) `app/core/auth.py` helpers (issue/verify tokens, password check stub that accepts the default admin from env).
-  - Mount router in `app/main.py` under `/api/v1/auth`.
-  - Ensure WS auth (already present in `dashboard_websockets.py`) continues to verify tokens in JWT mode.
-  - Tests: add unit tests for token issue/verify and refresh; re-run `tests/smoke/test_auth_login_and_protected.py`.
-- Coverage
-  - If coverage <45%, add unit tests for `app/api/ws_utils.py` and auth utilities.
-- WS metrics endpoint
-  - Add endpoint and a test asserting metric keys exist.
-
-References
-- Plan: `docs/PLAN.md` (updated with status, missing work, and acceptance).
-- WS manager: `app/api/dashboard_websockets.py`.
-- WS utils: `app/api/ws_utils.py`.
-- PWA websocket: `mobile-pwa/src/services/websocket.ts`.
-
-Deliverable for this handoff
-- Implement auth router and mount to pass auth smoke tests and lift coverage past 45%.
-- Add WS metrics endpoint and basic test.
-- Update docs as you go; keep CI green.
+Remember: prioritize must-have behavior and keep tests fast and deterministic. If blocked by uncertainty, prefer minimal mocks and move forward.
