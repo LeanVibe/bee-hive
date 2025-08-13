@@ -1,5 +1,8 @@
 import pytest
+from fastapi import APIRouter
+from httpx import ASGITransport as _ASGITransport
 from httpx import AsyncClient
+from httpx import AsyncClient as _AsyncClient
 
 pytestmark = pytest.mark.asyncio
 
@@ -23,9 +26,6 @@ async def test_metrics_endpoint_returns_prometheus_text(async_test_client: Async
 
 
 async def test_global_exception_handler_returns_500(async_test_client: AsyncClient, test_app):
-    from fastapi import APIRouter
-    from httpx import AsyncClient as _AsyncClient
-    from httpx import ASGITransport as _ASGITransport
 
     router = APIRouter()
 
