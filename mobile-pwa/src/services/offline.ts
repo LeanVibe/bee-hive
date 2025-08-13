@@ -46,6 +46,7 @@ export class OfflineService extends EventEmitter {
   private readonly maxCacheAge = 24 * 60 * 60 * 1000 // 24 hours
   private readonly maxRetries = 3
   private retryTimers: Map<string, any> = new Map()
+  private authService: AuthService | null = null
   
   static getInstance(): OfflineService {
     if (!OfflineService.instance) {
@@ -60,6 +61,21 @@ export class OfflineService extends EventEmitter {
     // Listen for online/offline events
     window.addEventListener('online', this.handleOnline.bind(this))
     window.addEventListener('offline', this.handleOffline.bind(this))
+
+    // Listen for auth lifecycle to resume sync when possible
+    try {
+      this.authService = AuthService.getInstance()
+      this.authService.on('authenticated', () => {
+        if (this.isOnline && !this.syncInProgress) {
+          this.startBackgroundSync()
+        }
+      })
+      this.authService.on('token-refreshed', () => {
+        if (this.isOnline && !this.syncInProgress) {
+          this.startBackgroundSync()
+        }
+      })
+    } catch {}
   }
   
   async initialize(): Promise<void> {

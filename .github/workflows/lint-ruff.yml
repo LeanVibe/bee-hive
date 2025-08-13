@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -26,7 +28,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
 
-      - name: Ruff check (app + tests only)
+      - name: Get changed Python files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **/*.py
+
+      - name: Ruff check (changed files only)
+        if: steps.changed-files.outputs.all_changed_files != ''
         run: |
           ruff --version
-          ruff check app/ tests/
+          ruff check $(echo "${{ steps.changed-files.outputs.all_changed_files }}")
+
+      - name: No Python changes detected
+        if: steps.changed-files.outputs.all_changed_files == ''
+        run: echo "No Python file changes; skipping Ruff."

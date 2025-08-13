@@ -584,6 +584,12 @@ export class AuthService extends EventEmitter {
       // Save updated session
       await this.saveSession()
       
+      // Reset refresh timer to extend session cadence
+      this.setupTokenRefresh()
+      
+      // Notify listeners (e.g., WS, services) about new tokens
+      this.emit('token-refreshed', { accessToken: this.state.token, refreshToken: this.state.refreshToken })
+      
       console.log('🔄 Token refreshed successfully')
       
     } catch (error) {

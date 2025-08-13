@@ -68,6 +68,7 @@ export class WebSocketService extends EventEmitter {
     // Listen for auth state changes
     this.authService.on('authenticated', () => this.ensureConnection())
     this.authService.on('unauthenticated', () => this.disconnect())
+    this.authService.on('token-refreshed', () => this.reconnect())
     
     // Handle page visibility changes
     document.addEventListener('visibilitychange', () => {
@@ -511,6 +512,7 @@ export class WebSocketService extends EventEmitter {
   disconnect(): void {
     console.log('🔌 Disconnecting WebSocket')
     this.reconnectAttempts = this.maxReconnectAttempts // Prevent reconnection
+    this.isConnecting = false
     this.cleanup()
   }
   
@@ -520,7 +522,8 @@ export class WebSocketService extends EventEmitter {
     this.disconnect()
     
     if (this.authService.isAuthenticated()) {
-      setTimeout(() => this.connect(), 1000)
+      // Attempt immediate reconnect; production backoff is handled elsewhere
+      void this.connect()
     }
   }
   
