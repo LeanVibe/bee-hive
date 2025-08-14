@@ -1198,7 +1198,7 @@ class TestComprehensiveSystemIntegration:
             {
                 "name": "github_api_rate_limit",
                 "description": "GitHub API rate limit exceeded",
-                "simulate": lambda: env["github_client"].get_repository.side_effect = GitHubAPIError("Rate limit exceeded", 403),
+                "simulate": lambda: setattr(env["github_client"].get_repository, 'side_effect', GitHubAPIError("Rate limit exceeded", 403)),
                 "expected_behavior": "graceful_degradation"
             },
             {
@@ -1210,13 +1210,13 @@ class TestComprehensiveSystemIntegration:
             {
                 "name": "tmux_session_failure",
                 "description": "Tmux session creation failure",
-                "simulate": lambda: env["tmux_manager"].tmux_server.new_session.side_effect = Exception("Tmux server unavailable"),
+                "simulate": lambda: setattr(env["tmux_manager"].tmux_server.new_session, 'side_effect', Exception("Tmux server unavailable")),
                 "expected_behavior": "fallback_mechanism"
             },
             {
                 "name": "security_validation_timeout",
                 "description": "Security validation exceeds timeout",
-                "simulate": lambda: env["integrated_security"].process_security_validation.side_effect = asyncio.TimeoutError("Security validation timeout"),
+                "simulate": lambda: setattr(env["integrated_security"].process_security_validation, 'side_effect', asyncio.TimeoutError("Security validation timeout")),
                 "expected_behavior": "safe_default"
             },
             {

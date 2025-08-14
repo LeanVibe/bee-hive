@@ -483,13 +483,13 @@ class ConcurrentErrorHandlingTests:
             asyncio.set_event_loop(loop)
             
             async def do_work():
+                nonlocal connection_count
                 try:
                     await broker.send_message("sender", "receiver", "cycle_test", {"conn": connection_count})
                     return True
                 except Exception:
                     return False
                 finally:
-                    nonlocal connection_count
                     connection_count -= 1
             
             result = loop.run_until_complete(do_work())
