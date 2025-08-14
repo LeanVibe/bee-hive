@@ -1,0 +1,114 @@
+# Test Fix Priority Matrix - LeanVibe Agent Hive 2.0
+# Generated: August 14, 2025
+
+epic_context:
+  current_status: "30 collection errors blocking 2463 tests"
+  fix_strategy: "Quick wins first, then systematic import resolution"
+  success_criteria: "Enable test collection for >80% of test suite"
+
+# Priority 1: Immediate Fixes (Next 60 minutes)
+immediate_fixes:
+  - name: "Fix Critical Syntax Errors"
+    impact: "HIGH"
+    effort: "LOW" 
+    estimated_time: "45min"
+    files:
+      - file: "tests/test_comprehensive_system_integration.py"
+        line: 1201
+        error: "invalid syntax in lambda expression"
+        fix: "Remove malformed lambda, fix dict syntax"
+        
+      - file: "tests/test_error_resilience.py" 
+        line: 492
+        error: "nonlocal declaration after variable use"
+        fix: "Move nonlocal declaration before first use"
+        
+      - file: "tests/test_observability_hooks_comprehensive.py"
+        line: 437
+        error: "unexpected character after line continuation"
+        fix: "Fix string concatenation syntax"
+
+  - name: "Fix PyTest Configuration" 
+    impact: "MEDIUM"
+    effort: "LOW"
+    estimated_time: "15min"
+    files:
+      - file: "pytest.ini"
+        fix: "Add missing markers (chaos, contract), set asyncio_default_fixture_loop_scope=function"
+
+# Priority 2: Quick Dependency Wins (Next 30 minutes)
+dependency_fixes:
+  - name: "Install Missing Test Dependencies"
+    impact: "MEDIUM"
+    effort: "LOW"
+    estimated_time: "10min"
+    packages:
+      - "playwright"
+      - "pytest-playwright" 
+      
+  - name: "Create Missing Base Schema"
+    impact: "MEDIUM"
+    effort: "MEDIUM"
+    estimated_time: "20min"
+    files:
+      - file: "app/schemas/base.py"
+        content: "Create BaseResponse and common schema classes"
+
+# Priority 3: Import Resolution (Batch 2 focus)
+import_fixes:
+  systematic_approach:
+    - step: "Audit all import statements in failing tests"
+    - step: "Create missing model/schema stubs"
+    - step: "Fix circular import dependencies"
+    - step: "Update factories.py with missing mock functions"
+    
+  categories:
+    missing_model_imports:
+      files:
+        - "app/core/database.py" 
+        - "app/models/workflow.py"
+        - "app/core/authorization_engine.py"
+      fix_strategy: "Add missing exports, fix model definitions"
+      
+    missing_schemas:
+      files:
+        - "app/schemas/base.py" 
+        - "app/schemas/__init__.py"
+      fix_strategy: "Create comprehensive schema module structure"
+      
+    factory_methods:
+      files:
+        - "tests/factories.py"
+      fix_strategy: "Add all missing mock factory functions"
+
+# Batch Execution Plan
+batch_execution:
+  current_batch: 1
+  remaining_tasks:
+    - name: "Complete failure analysis documentation"
+      status: "in_progress"
+      time_remaining: "10min"
+      
+    - name: "Create test baseline metrics"
+      status: "pending" 
+      estimated_time: "5min"
+
+  next_batch: 2
+  approach: "Start with Priority 1 fixes to unblock test collection"
+  
+# Success Metrics
+success_tracking:
+  current_metrics:
+    tests_collected: 2463
+    collection_errors: 30
+    collection_success_rate: "98.8%"  # Most tests collected despite errors
+    
+  target_metrics:
+    collection_errors: "<5"
+    tests_passing: ">2000" 
+    test_execution_time: "<2min"
+    
+  validation_commands:
+    - "python -m pytest tests/ --collect-only -q"
+    - "python -m pytest tests/test_system.py -v"
+    - "python -m pytest tests/ --tb=no -q --durations=5"

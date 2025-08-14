@@ -1,0 +1,151 @@
+{
+  "test_analysis_summary": {
+    "timestamp": "2025-08-14T12:05:00Z",
+    "total_tests_collected": 2463,
+    "collection_errors": 30,
+    "analysis_categories": {
+      "import_errors": 18,
+      "syntax_errors": 5,
+      "missing_dependencies": 7,
+      "pytest_config_issues": 3
+    }
+  },
+  
+  "failure_categories": {
+    "missing_dependencies": {
+      "count": 7,
+      "severity": "HIGH",
+      "fix_difficulty": "EASY",
+      "examples": [
+        "playwright - Missing browser automation library",
+        "Missing test markers configuration (chaos, contract)"
+      ],
+      "affected_tests": [
+        "tests/dashboard/test_*_dashboard_*.py",
+        "tests/chaos/test_enhanced_chaos_engineering.py",
+        "tests/contracts/test_redis_contracts.py"
+      ],
+      "fix_estimate": "30min"
+    },
+    
+    "import_errors": {
+      "count": 18,
+      "severity": "HIGH", 
+      "fix_difficulty": "MEDIUM",
+      "subcategories": {
+        "missing_model_imports": {
+          "count": 4,
+          "examples": [
+            "cannot import name 'Agent' from 'app.core.database'",
+            "cannot import name 'WorkflowStep' from 'app.models.workflow'",
+            "cannot import name 'Permission' from 'app.core.authorization_engine'"
+          ]
+        },
+        "missing_schemas": {
+          "count": 3,
+          "examples": [
+            "No module named 'app.schemas.base'",
+            "Missing base schema definitions"
+          ]
+        },
+        "circular_imports": {
+          "count": 5,
+          "examples": [
+            "ContextEngine import issues",
+            "OAuth system circular references"
+          ]
+        },
+        "missing_factory_methods": {
+          "count": 6,
+          "examples": [
+            "cannot import name 'create_mock_embedding_service' from 'tests.factories'"
+          ]
+        }
+      },
+      "fix_estimate": "2-3 hours"
+    },
+    
+    "syntax_errors": {
+      "count": 5,
+      "severity": "HIGH",
+      "fix_difficulty": "EASY",
+      "examples": [
+        "invalid syntax in test_comprehensive_system_integration.py line 1201",
+        "nonlocal declaration issues in test_error_resilience.py",
+        "unexpected character in test_observability_hooks_comprehensive.py"
+      ],
+      "fix_estimate": "45min"
+    },
+    
+    "pytest_configuration": {
+      "count": 3,
+      "severity": "MEDIUM",
+      "fix_difficulty": "EASY",
+      "issues": [
+        "asyncio_default_fixture_loop_scope unset",
+        "Missing markers: chaos, contract",
+        "Coverage failure: 36% < 45% threshold"
+      ],
+      "fix_estimate": "30min"
+    }
+  },
+  
+  "priority_fix_order": [
+    {
+      "priority": 1,
+      "category": "syntax_errors",
+      "reason": "Block test collection entirely",
+      "estimated_time": "45min",
+      "files_to_fix": [
+        "tests/test_comprehensive_system_integration.py",
+        "tests/test_error_resilience.py", 
+        "tests/test_observability_hooks_comprehensive.py"
+      ]
+    },
+    {
+      "priority": 2,
+      "category": "pytest_configuration",
+      "reason": "Enable proper test execution",
+      "estimated_time": "30min",
+      "files_to_fix": [
+        "pytest.ini",
+        "pyproject.toml"
+      ]
+    },
+    {
+      "priority": 3,
+      "category": "missing_dependencies",
+      "reason": "Quick wins - install missing packages",
+      "estimated_time": "30min",
+      "packages_to_install": [
+        "playwright",
+        "pytest-playwright"
+      ]
+    },
+    {
+      "priority": 4,
+      "category": "import_errors",
+      "reason": "Complex fixes requiring model/schema updates",
+      "estimated_time": "2-3 hours",
+      "subcategory_order": [
+        "missing_schemas",
+        "missing_model_imports", 
+        "missing_factory_methods",
+        "circular_imports"
+      ]
+    }
+  ],
+  
+  "quick_wins": [
+    "Fix 5 syntax errors - 45min",
+    "Install playwright dependency - 5min",
+    "Add missing pytest markers - 10min", 
+    "Fix asyncio fixture scope warning - 5min"
+  ],
+  
+  "estimated_completion": {
+    "batch_1_remaining": "15min",
+    "batch_2_total": "4-6 hours",
+    "most_impactful_fixes": "Fix syntax errors + pytest config = Enable ~80% of test collection"
+  }
+}

@@ -1,0 +1,152 @@
+# LeanVibe Agent Hive 2.0 - EPIC 1: Test Suite Stabilization & CI/CD
+# Generated: August 14, 2025
+
+epic_id: "test_suite_stabilization_cicd"
+title: "Test Suite Stabilization & CI/CD Implementation"
+status: "executing"  # planning | executing | verifying | complete
+priority: "HIGH"
+estimated_duration: "1-2 weeks"
+current_batch: 1
+total_batches: 4
+
+# Success Criteria
+success_metrics:
+  - All 47 failing tests pass
+  - Test suite runs in <2 minutes
+  - Pre-commit hooks prevent regressions
+  - CI/CD pipeline operational
+  - Test coverage maintained >80%
+
+# Epic Context
+context:
+  problem: "47 failing tests block confident development and deployment"
+  impact: "Enables fast iteration on all other epics"
+  risk_level: "LOW"
+  dependencies: []
+  
+# Batch Execution Plan
+batches:
+  - id: 1
+    name: "Analyze Test Failures & Create Baseline"
+    status: "executing"
+    duration: "2-3 hours"
+    description: "Comprehensive analysis of all failing tests to understand root causes"
+    tasks:
+      - name: "Run full test suite and capture failure patterns"
+        test_file: "tests/test_system.py"
+        target_files: []
+        verification: "Complete failure analysis report generated"
+        estimated_time: "30min"
+        
+      - name: "Categorize failures by type (db, integration, unit, performance)"
+        test_file: "tests/test_comprehensive_coverage.py"  
+        target_files: []
+        verification: "Failure categories documented with counts"
+        estimated_time: "45min"
+        
+      - name: "Create test execution baseline and performance metrics"
+        test_file: []
+        target_files: [".agent_state/test_baseline.json"]
+        verification: "Baseline metrics captured for comparison"
+        estimated_time: "30min"
+        
+      - name: "Identify quick wins vs complex fixes"
+        test_file: []
+        target_files: [".agent_state/test_fix_priority.yml"]
+        verification: "Priority matrix created for systematic fixes"
+        estimated_time: "45min"
+
+  - id: 2  
+    name: "Fix Database & Schema Related Test Failures"
+    status: "pending"
+    dependencies: [1]
+    duration: "4-6 hours"
+    description: "Address enum casting, schema mismatches, and database connection issues"
+    tasks:
+      - name: "Fix remaining TaskStatus/AgentStatus enum casting in tests"
+        test_file: "tests/test_tasks_api.py"
+        target_files: ["tests/test_*.py", "app/models/*.py"]
+        verification: "All enum-related test failures resolved"
+        
+      - name: "Resolve database schema inconsistencies"
+        test_file: "tests/test_agents.py"
+        target_files: ["app/models/*.py", "migrations/versions/*.py"]
+        verification: "Database schema tests pass consistently"
+        
+      - name: "Fix async database session handling in tests"
+        test_file: "tests/conftest.py"
+        target_files: ["tests/conftest.py", "tests/test_*.py"]
+        verification: "No more database session timeout errors"
+
+  - id: 3
+    name: "Fix Integration & Coordination Test Failures"  
+    status: "pending"
+    dependencies: [2]
+    duration: "6-8 hours"
+    description: "Address agent coordination, API integration, and WebSocket test issues"
+    tasks:
+      - name: "Fix agent orchestrator integration tests"
+        test_file: "tests/test_orchestrator.py"
+        target_files: ["app/core/orchestrator.py", "tests/test_orchestrator*.py"]
+        verification: "Agent lifecycle tests pass end-to-end"
+        
+      - name: "Resolve dashboard API integration test failures"  
+        test_file: "tests/test_coordination_dashboard.py"
+        target_files: ["app/api/dashboard*.py", "tests/test_*dashboard*.py"]
+        verification: "Dashboard API tests return expected data"
+        
+      - name: "Fix WebSocket and real-time communication tests"
+        test_file: "tests/test_websocket_integration.py"
+        target_files: ["app/core/communication.py", "tests/test_websocket*.py"]
+        verification: "WebSocket tests stable and reliable"
+
+  - id: 4
+    name: "CI/CD Pipeline Implementation"
+    status: "pending" 
+    dependencies: [3]
+    duration: "3-4 hours"
+    description: "Set up automated testing, pre-commit hooks, and deployment validation"
+    tasks:
+      - name: "Implement pre-commit test hooks"
+        test_file: []
+        target_files: [".pre-commit-config.yaml", ".git/hooks/pre-commit"]
+        verification: "Commits blocked when tests fail"
+        
+      - name: "Create GitHub Actions CI/CD workflow"
+        test_file: []
+        target_files: [".github/workflows/ci.yml", ".github/workflows/cd.yml"] 
+        verification: "Automated testing on PR and merge"
+        
+      - name: "Set up test performance monitoring"
+        test_file: []
+        target_files: [".agent_state/test_monitor.py"]
+        verification: "Test execution time tracking operational"
+        
+      - name: "Configure deployment health checks"
+        test_file: "tests/test_system.py"
+        target_files: ["scripts/health_check.py"]
+        verification: "Deployment validation prevents broken releases"
+
+# Current Progress Tracking
+progress:
+  batch_1:
+    started_at: "2025-08-14T12:04:00Z"
+    tasks_completed: 0
+    tasks_total: 4
+    current_task: "Run full test suite and capture failure patterns"
+    
+# Test Results Tracking  
+test_results:
+  baseline:
+    total_tests: null
+    passing_tests: null
+    failing_tests: 47  # From previous analysis
+    execution_time: null
+    last_run: null
+    
+# Notes and Observations
+notes:
+  - Previous session fixed 3 critical background errors (enum casting, circuit breaker, coordination bridge)
+  - System operational at ~80% but test failures prevent confident development
+  - XP principle: Fix tests first to enable rapid iteration
+  - Using 25-minute focused batches for sustainable progress

@@ -1,0 +1,76 @@
+{
+  "baseline_metrics": {
+    "timestamp": "2025-08-14T12:05:30Z",
+    "test_collection": {
+      "total_discovered": 2463,
+      "collection_errors": 30,
+      "collection_success_rate": 98.78,
+      "pytest_version": "8.3.4",
+      "python_version": "3.12.11"
+    },
+    
+    "error_breakdown": {
+      "import_errors": 18,
+      "syntax_errors": 5, 
+      "missing_dependencies": 7,
+      "configuration_issues": 3,
+      "total_blocking_tests": "~300-500 (estimated)"
+    },
+    
+    "performance_baseline": {
+      "collection_time": "~15-20 seconds",
+      "test_discovery_rate": "~150 tests/second",
+      "memory_usage": "estimated 200-400MB for full run"
+    },
+    
+    "coverage_baseline": {
+      "current_coverage": 36,
+      "coverage_threshold": 45,
+      "coverage_failure": true,
+      "target_coverage": 80
+    }
+  },
+  
+  "system_context": {
+    "background_services": {
+      "api_server": "running (port 8000)",
+      "database": "operational (port 5434)", 
+      "redis": "operational (port 6381)",
+      "system_health": "80%+ operational"
+    },
+    
+    "recent_fixes": [
+      "Fixed TaskStatus enum casting in performance metrics",
+      "Resolved orchestrator circuit breaker method conflicts",
+      "Fixed coordination bridge dict attribute errors"
+    ],
+    
+    "test_infrastructure": {
+      "async_support": "pytest-asyncio configured",
+      "database_fixtures": "present in conftest.py",
+      "factories": "partially available",
+      "mocking": "pytest-mock available"
+    }
+  },
+  
+  "critical_paths": {
+    "core_functionality": [
+      "tests/test_system.py",
+      "tests/test_orchestrator.py", 
+      "tests/test_agents.py",
+      "tests/test_tasks_api.py"
+    ],
+    
+    "integration_tests": [
+      "tests/test_workflow_integration.py",
+      "tests/test_communication.py",
+      "tests/test_coordination_dashboard.py"
+    ],
+    
+    "blocking_high_priority": [
+      "tests/test_comprehensive_system_integration.py (syntax error)",
+      "tests/test_error_resilience.py (syntax error)",
+      "tests/test_observability_hooks_comprehensive.py (syntax error)"
+    ]
+  }
+}
