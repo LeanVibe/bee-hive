@@ -1,0 +1,321 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      push_to_registry:
+        description: 'Push to container registry'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Detect changes to optimize builds
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.changes.outputs.docker }}
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile*'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+            backend:
+              - 'app/**'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+            frontend:
+              - 'mobile-pwa/**'
+              - 'frontend/**'
+
+  # Build and test Docker images
+  build:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true' || github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    
+    strategy:
+      matrix:
+        target: [development, production]
+        platform: [linux/amd64, linux/arm64]
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+            image=moby/buildkit:v0.12.0
+      
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-${{ matrix.target }}
+            type=ref,event=pr,suffix=-${{ matrix.target }}
+            type=semver,pattern={{version}},suffix=-${{ matrix.target }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.target }}
+            type=semver,pattern={{major}},suffix=-${{ matrix.target }}
+            type=sha,prefix={{branch}}-,suffix=-${{ matrix.target }}
+            type=raw,value=latest-${{ matrix.target }},enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=LeanVibe Agent Hive 2.0
+            org.opencontainers.image.description=Multi-Agent Orchestration System for Autonomous Software Development
+            org.opencontainers.image.vendor=LeanVibe
+            org.opencontainers.image.licenses=MIT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: ${{ matrix.target }}
+          platforms: ${{ matrix.platform }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_type == 'tag' || inputs.push_to_registry) }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+      
+      - name: Test Docker image
+        run: |
+          # Test image can be instantiated
+          docker run --rm -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }} python -c "import app; print('✅ Image works')"
+      
+      - name: Run Trivy vulnerability scanner
+        if: matrix.target == 'production' && matrix.platform == 'linux/amd64'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.target }}.sarif'
+      
+      - name: Upload Trivy scan results
+        if: matrix.target == 'production' && matrix.platform == 'linux/amd64'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-${{ matrix.target }}.sarif'
+
+  # Multi-architecture manifest
+  manifest:
+    needs: build
+    if: github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_type == 'tag')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        target: [development, production]
+    
+    steps:
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create and push manifest
+        run: |
+          # Create manifest for multi-arch support
+          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}-linux-arm64
+          
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}
+          
+          # Create latest manifest if on main branch
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.target }} \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}-linux-amd64 \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}-linux-arm64
+            
+            docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.target }}
+          fi
+
+  # Agent-specific Docker images
+  agent-images:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        agent: [agent-base, agent-developer, agent-qa, agent-architect, agent-meta]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.agent }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push agent image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.${{ matrix.agent }}
+          push: ${{ github.event_name != 'pull_request' && github.ref_name == 'main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.agent }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.agent }}
+
+  # Performance benchmarks for Docker images
+  performance:
+    needs: build
+    if: github.event_name == 'pull_request' || github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        target: [development, production]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run performance benchmarks
+        run: |
+          echo "🚀 Running Docker image performance tests for ${{ matrix.target }}"
+          
+          # Test startup time
+          start_time=$(date +%s.%3N)
+          docker run --rm -d --name test-container ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }}
+          
+          # Wait for container to be ready
+          timeout 60 bash -c 'until docker exec test-container curl -f http://localhost:8000/health; do sleep 1; done'
+          end_time=$(date +%s.%3N)
+          
+          startup_time=$(echo "$end_time - $start_time" | bc)
+          echo "✅ Container startup time: ${startup_time}s"
+          
+          # Test image size
+          image_size=$(docker images ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.target }} --format "table {{.Size}}" | tail -n1)
+          echo "📦 Image size: $image_size"
+          
+          # Test memory usage
+          memory_usage=$(docker stats test-container --no-stream --format "table {{.MemUsage}}" | tail -n1)
+          echo "🧠 Memory usage: $memory_usage"
+          
+          # Cleanup
+          docker stop test-container
+          
+          # Store results
+          cat > performance-${{ matrix.target }}.json << EOF
+          {
+            "target": "${{ matrix.target }}",
+            "startup_time": "$startup_time",
+            "image_size": "$image_size",
+            "memory_usage": "$memory_usage"
+          }
+          EOF
+      
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-performance-${{ matrix.target }}
+          path: performance-${{ matrix.target }}.json
+          retention-days: 30
+
+  # Build summary and reporting
+  summary:
+    needs: [build, manifest, agent-images, performance]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate build summary
+        run: |
+          echo "# Docker Build Summary" > docker-summary.md
+          echo "Generated on: $(date)" >> docker-summary.md
+          echo "" >> docker-summary.md
+          
+          echo "## Build Results" >> docker-summary.md
+          echo "- Main Build: ${{ needs.build.result }}" >> docker-summary.md
+          echo "- Manifest Creation: ${{ needs.manifest.result }}" >> docker-summary.md
+          echo "- Agent Images: ${{ needs.agent-images.result }}" >> docker-summary.md
+          echo "- Performance Tests: ${{ needs.performance.result }}" >> docker-summary.md
+          
+          echo "" >> docker-summary.md
+          echo "## Image Information" >> docker-summary.md
+          echo "- Registry: ${{ env.REGISTRY }}" >> docker-summary.md
+          echo "- Repository: ${{ env.IMAGE_NAME }}" >> docker-summary.md
+          echo "- SHA: ${{ github.sha }}" >> docker-summary.md
+          
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "- Tag: ${{ github.ref_name }}" >> docker-summary.md
+          fi
+      
+      - name: Upload build summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-build-summary
+          path: docker-summary.md
+          retention-days: 30

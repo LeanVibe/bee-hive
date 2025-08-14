@@ -1,0 +1,193 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: leanvibe-agent-hive-staging
+
+# Base configuration
+bases:
+- ../../base
+
+# Staging-specific namespace
+namespace: leanvibe-agent-hive-staging
+
+# Staging labels
+commonLabels:
+  environment: staging
+  tier: staging
+
+# Staging annotations
+commonAnnotations:
+  deployment.kubernetes.io/environment: staging
+  ops.team/contact: "devops@leanvibe.com"
+  security.policy/level: "medium"
+
+# Staging image tags
+images:
+- name: ghcr.io/leanvibe/agent-hive
+  newTag: "latest-staging"
+
+# Staging-specific resource scaling
+replicas:
+- name: leanvibe-api
+  count: 2
+- name: nginx
+  count: 2
+- name: postgres
+  count: 1
+- name: redis
+  count: 1
+
+# Staging ConfigMap overrides
+configMapGenerator:
+- name: leanvibe-config
+  behavior: merge
+  literals:
+  - ENVIRONMENT=staging
+  - LOG_LEVEL=DEBUG
+  - DEBUG=true
+  - WORKERS=4
+  - MAX_CONCURRENT_AGENTS=25
+  - CORS_ORIGINS=https://staging.leanvibe.com,https://staging-dashboard.leanvibe.com
+  - METRICS_ENABLED=true
+  - MONITORING_ENABLED=true
+
+# Staging patches
+patches:
+# API deployment staging configuration
+- target:
+    kind: Deployment
+    name: leanvibe-api
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: "1Gi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/cpu
+      value: "500m"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/memory
+      value: "4Gi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/cpu
+      value: "2000m"
+    - op: add
+      path: /spec/template/spec/containers/0/env/-
+      value:
+        name: ENVIRONMENT
+        value: staging
+    - op: add
+      path: /spec/template/spec/containers/0/env/-
+      value:
+        name: DEBUG_MODE
+        value: "true"
+
+# HPA scaling for staging load
+- target:
+    kind: HorizontalPodAutoscaler
+    name: leanvibe-api-hpa
+  patch: |-
+    - op: replace
+      path: /spec/minReplicas
+      value: 2
+    - op: replace
+      path: /spec/maxReplicas
+      value: 10
+    - op: replace
+      path: /spec/metrics/0/resource/target/averageUtilization
+      value: 70
+    - op: replace
+      path: /spec/metrics/1/resource/target/averageUtilization
+      value: 80
+
+# PostgreSQL staging configuration
+- target:
+    kind: Deployment
+    name: postgres
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: "1Gi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/cpu
+      value: "500m"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/memory
+      value: "4Gi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/cpu
+      value: "2000m"
+
+# Redis staging configuration
+- target:
+    kind: Deployment
+    name: redis
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: "512Mi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/requests/cpu
+      value: "250m"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/memory
+      value: "2Gi"
+    - op: replace
+      path: /spec/template/spec/containers/0/resources/limits/cpu
+      value: "1000m"
+
+# Staging PVC sizes
+- target:
+    kind: PersistentVolumeClaim
+    name: postgres-pvc
+  patch: |-
+    - op: replace
+      path: /spec/resources/requests/storage
+      value: "100Gi"
+    - op: replace
+      path: /spec/storageClassName
+      value: "standard-ssd"
+
+- target:
+    kind: PersistentVolumeClaim
+    name: redis-pvc
+  patch: |-
+    - op: replace
+      path: /spec/resources/requests/storage
+      value: "20Gi"
+    - op: replace
+      path: /spec/storageClassName
+      value: "standard-ssd"
+
+# Staging ingress configuration
+- target:
+    kind: Ingress
+    name: leanvibe-ingress
+  patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: staging.leanvibe.com
+    - op: replace
+      path: /spec/rules/1/host
+      value: staging-api.leanvibe.com
+    - op: replace
+      path: /spec/rules/2/host
+      value: staging-dashboard.leanvibe.com
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: staging.leanvibe.com
+    - op: replace
+      path: /spec/tls/0/hosts/1
+      value: staging-api.leanvibe.com
+    - op: replace
+      path: /spec/tls/0/hosts/2
+      value: staging-dashboard.leanvibe.com
+
+# Staging secrets
+secretGenerator:
+- name: leanvibe-secrets
+  behavior: replace
+  files:
+  - secrets/staging.env
+  options:
+    disableNameSuffixHash: true

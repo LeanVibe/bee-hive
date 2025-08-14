@@ -326,9 +326,9 @@ export class InstallPrompt extends LitElement {
         <div class="install-icon">📱</div>
         
         <div class="prompt-content">
-          <h3 class="prompt-title">Install Agent Hive</h3>
+          <h3 class="prompt-title">Install HiveOps</h3>
           <p class="prompt-text">
-            Install the app for the best mobile experience with offline support and push notifications.
+            Install the app for the best mobile experience with offline support, faster loading, and push notifications.
           </p>
         </div>
         

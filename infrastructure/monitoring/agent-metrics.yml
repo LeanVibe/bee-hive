@@ -1,0 +1,341 @@
+# LeanVibe Agent Hive 2.0 - Custom Agent Orchestration Metrics
+# Prometheus recording rules and alerts for agent-specific monitoring
+
+groups:
+  - name: leanvibe.agent_orchestration.recording_rules
+    interval: 30s
+    rules:
+      # Agent Health Metrics
+      - record: leanvibe:active_agents_total
+        expr: sum(agent_status{status="active"}) by (environment, cluster)
+      
+      - record: leanvibe:agent_capacity_utilization
+        expr: |
+          (
+            sum(agent_status{status="active"}) by (environment, cluster) /
+            sum(agent_capacity_total) by (environment, cluster)
+          ) * 100
+      
+      - record: leanvibe:agent_task_queue_size
+        expr: sum(agent_task_queue_length) by (environment, cluster, agent_type)
+      
+      - record: leanvibe:agent_task_completion_rate
+        expr: |
+          rate(agent_tasks_completed_total[5m]) by (environment, cluster, agent_type)
+      
+      - record: leanvibe:agent_task_failure_rate
+        expr: |
+          rate(agent_tasks_failed_total[5m]) / 
+          rate(agent_tasks_total[5m]) by (environment, cluster, agent_type)
+      
+      # Agent Performance Metrics
+      - record: leanvibe:agent_response_time_p95
+        expr: |
+          histogram_quantile(0.95, 
+            rate(agent_response_time_seconds_bucket[5m])
+          ) by (environment, cluster, agent_type)
+      
+      - record: leanvibe:agent_response_time_p50
+        expr: |
+          histogram_quantile(0.50, 
+            rate(agent_response_time_seconds_bucket[5m])
+          ) by (environment, cluster, agent_type)
+      
+      - record: leanvibe:agent_context_usage_ratio
+        expr: |
+          (
+            agent_context_tokens_used / 
+            agent_context_tokens_limit
+          ) by (environment, cluster, agent_id)
+      
+      # Resource Utilization
+      - record: leanvibe:agent_memory_usage_ratio
+        expr: |
+          (
+            agent_memory_usage_bytes / 
+            agent_memory_limit_bytes
+          ) by (environment, cluster, agent_id)
+      
+      - record: leanvibe:agent_cpu_usage_ratio
+        expr: |
+          rate(agent_cpu_usage_seconds_total[5m]) by (environment, cluster, agent_id)
+      
+      # Coordination Metrics
+      - record: leanvibe:coordination_events_rate
+        expr: |
+          rate(coordination_events_total[5m]) by (environment, cluster, event_type)
+      
+      - record: leanvibe:workflow_execution_time_p95
+        expr: |
+          histogram_quantile(0.95,
+            rate(workflow_execution_time_seconds_bucket[5m])
+          ) by (environment, cluster, workflow_type)
+      
+      # External API Metrics
+      - record: leanvibe:anthropic_api_request_rate
+        expr: |
+          rate(anthropic_api_requests_total[5m]) by (environment, cluster)
+      
+      - record: leanvibe:anthropic_api_error_rate
+        expr: |
+          rate(anthropic_api_requests_total{status=~"4..|5.."}[5m]) / 
+          rate(anthropic_api_requests_total[5m]) by (environment, cluster)
+      
+      - record: leanvibe:anthropic_token_usage_rate
+        expr: |
+          rate(anthropic_tokens_used_total[5m]) by (environment, cluster, model)
+
+  - name: leanvibe.agent_orchestration.alerts
+    rules:
+      # Critical Agent Alerts
+      - alert: AgentOrchestrationDown
+        expr: leanvibe:active_agents_total == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: agent-orchestration
+        annotations:
+          summary: "No active agents in {{ $labels.environment }}"
+          description: "Agent orchestration system has no active agents for more than 1 minute"
+          runbook_url: "https://docs.leanvibe.com/runbooks/agent-orchestration-down"
+      
+      - alert: HighAgentFailureRate
+        expr: leanvibe:agent_task_failure_rate > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: agent-orchestration
+        annotations:
+          summary: "High agent task failure rate in {{ $labels.environment }}"
+          description: "Agent task failure rate is {{ $value | humanizePercentage }} for {{ $labels.agent_type }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-agent-failure-rate"
+      
+      - alert: AgentCapacityExhausted
+        expr: leanvibe:agent_capacity_utilization > 95
+        for: 2m
+        labels:
+          severity: warning
+          component: agent-orchestration
+        annotations:
+          summary: "Agent capacity nearly exhausted in {{ $labels.environment }}"
+          description: "Agent capacity utilization is {{ $value }}% - consider scaling up"
+          runbook_url: "https://docs.leanvibe.com/runbooks/agent-capacity-exhausted"
+      
+      # Performance Alerts
+      - alert: SlowAgentResponseTime
+        expr: leanvibe:agent_response_time_p95 > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: agent-performance
+        annotations:
+          summary: "Slow agent response time in {{ $labels.environment }}"
+          description: "95th percentile agent response time is {{ $value }}s for {{ $labels.agent_type }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/slow-agent-response"
+      
+      - alert: HighAgentMemoryUsage
+        expr: leanvibe:agent_memory_usage_ratio > 0.9
+        for: 3m
+        labels:
+          severity: warning
+          component: agent-performance
+        annotations:
+          summary: "High agent memory usage"
+          description: "Agent {{ $labels.agent_id }} memory usage is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-agent-memory"
+      
+      - alert: HighContextUsage
+        expr: leanvibe:agent_context_usage_ratio > 0.9
+        for: 1m
+        labels:
+          severity: warning
+          component: agent-performance
+        annotations:
+          summary: "High context usage for agent"
+          description: "Agent {{ $labels.agent_id }} context usage is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-context-usage"
+      
+      # Queue Management Alerts
+      - alert: LargeAgentTaskQueue
+        expr: leanvibe:agent_task_queue_size > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: task-management
+        annotations:
+          summary: "Large agent task queue"
+          description: "Agent task queue size is {{ $value }} for {{ $labels.agent_type }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/large-task-queue"
+      
+      - alert: StagnantTaskQueue
+        expr: |
+          (
+            leanvibe:agent_task_queue_size > 10 and
+            rate(agent_tasks_completed_total[10m]) == 0
+          )
+        for: 5m
+        labels:
+          severity: critical
+          component: task-management
+        annotations:
+          summary: "Stagnant agent task queue"
+          description: "Task queue has {{ $value }} tasks but no completion rate for 10 minutes"
+          runbook_url: "https://docs.leanvibe.com/runbooks/stagnant-task-queue"
+      
+      # External API Alerts
+      - alert: HighAnthropicAPIErrorRate
+        expr: leanvibe:anthropic_api_error_rate > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          component: external-api
+        annotations:
+          summary: "High Anthropic API error rate"
+          description: "Anthropic API error rate is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/anthropic-api-errors"
+      
+      - alert: AnthropicAPIRateLimitApproaching
+        expr: |
+          (
+            rate(anthropic_tokens_used_total[1h]) * 24 > 
+            anthropic_daily_token_limit * 0.8
+          )
+        for: 1m
+        labels:
+          severity: warning
+          component: external-api
+        annotations:
+          summary: "Approaching Anthropic API rate limit"
+          description: "Daily token usage is approaching 80% of limit"
+          runbook_url: "https://docs.leanvibe.com/runbooks/api-rate-limit"
+      
+      # Coordination Alerts
+      - alert: HighCoordinationEventRate
+        expr: leanvibe:coordination_events_rate > 100
+        for: 2m
+        labels:
+          severity: warning
+          component: coordination
+        annotations:
+          summary: "High coordination event rate"
+          description: "Coordination event rate is {{ $value }} events/sec"
+          runbook_url: "https://docs.leanvibe.com/runbooks/high-coordination-events"
+      
+      - alert: SlowWorkflowExecution
+        expr: leanvibe:workflow_execution_time_p95 > 300
+        for: 5m
+        labels:
+          severity: warning
+          component: workflow
+        annotations:
+          summary: "Slow workflow execution"
+          description: "95th percentile workflow execution time is {{ $value }}s for {{ $labels.workflow_type }}"
+          runbook_url: "https://docs.leanvibe.com/runbooks/slow-workflow-execution"
+
+  - name: leanvibe.business_metrics.recording_rules
+    interval: 60s
+    rules:
+      # Business KPIs
+      - record: leanvibe:daily_active_agents
+        expr: |
+          count(
+            count by (agent_id) (
+              agent_status{status="active"}[24h]
+            )
+          )
+      
+      - record: leanvibe:daily_tasks_completed
+        expr: |
+          increase(agent_tasks_completed_total[24h])
+      
+      - record: leanvibe:daily_code_generated_lines
+        expr: |
+          increase(code_lines_generated_total[24h])
+      
+      - record: leanvibe:agent_productivity_score
+        expr: |
+          (
+            rate(agent_tasks_completed_total[1h]) * 0.6 +
+            rate(code_lines_generated_total[1h]) / 100 * 0.3 +
+            (1 - leanvibe:agent_task_failure_rate) * 0.1
+          ) by (agent_type)
+      
+      # Cost Metrics
+      - record: leanvibe:hourly_anthropic_cost_estimate
+        expr: |
+          (
+            rate(anthropic_tokens_used_total[1h]) * 
+            anthropic_cost_per_token
+          ) by (model)
+      
+      - record: leanvibe:daily_infrastructure_cost_estimate
+        expr: |
+          (
+            leanvibe:hourly_anthropic_cost_estimate * 24 +
+            kubernetes_node_cost_per_hour * 24 +
+            database_cost_per_hour * 24
+          )
+
+  - name: leanvibe.capacity_planning.recording_rules
+    interval: 300s  # 5 minutes
+    rules:
+      # Capacity Planning Metrics
+      - record: leanvibe:agent_demand_trend_1h
+        expr: |
+          predict_linear(
+            leanvibe:agent_task_queue_size[1h], 3600
+          )
+      
+      - record: leanvibe:agent_demand_trend_24h
+        expr: |
+          predict_linear(
+            avg_over_time(leanvibe:agent_task_queue_size[24h]), 86400
+          )
+      
+      - record: leanvibe:resource_utilization_trend
+        expr: |
+          (
+            avg_over_time(leanvibe:agent_memory_usage_ratio[24h]) * 0.4 +
+            avg_over_time(leanvibe:agent_cpu_usage_ratio[24h]) * 0.3 +
+            avg_over_time(leanvibe:agent_capacity_utilization[24h]) / 100 * 0.3
+          )
+      
+      - record: leanvibe:scaling_recommendation
+        expr: |
+          clamp_min(
+            ceil(
+              leanvibe:agent_demand_trend_1h / 
+              avg(agent_throughput_per_instance)
+            ), 1
+          )
+
+  - name: leanvibe.sla_metrics.recording_rules
+    interval: 60s
+    rules:
+      # SLA Metrics
+      - record: leanvibe:availability_5m
+        expr: |
+          avg_over_time(up{job="leanvibe-api"}[5m])
+      
+      - record: leanvibe:availability_1h
+        expr: |
+          avg_over_time(up{job="leanvibe-api"}[1h])
+      
+      - record: leanvibe:availability_24h
+        expr: |
+          avg_over_time(up{job="leanvibe-api"}[24h])
+      
+      - record: leanvibe:error_budget_burn_rate_1h
+        expr: |
+          (
+            1 - leanvibe:availability_1h
+          ) / (1 - 0.999)  # Assuming 99.9% SLA
+      
+      - record: leanvibe:error_budget_remaining_30d
+        expr: |
+          clamp_min(
+            1 - (
+              increase(http_requests_total{status=~"5.."}[30d]) /
+              increase(http_requests_total[30d])
+            ) / (1 - 0.999), 0
+          )

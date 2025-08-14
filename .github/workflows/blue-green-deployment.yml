@@ -1,0 +1,561 @@
+name: Blue-Green Deployment
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      deployment_strategy:
+        description: 'Deployment strategy'
+        required: true
+        default: 'blue-green'
+        type: choice
+        options:
+        - blue-green
+        - rolling
+        - canary
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+        type: string
+      rollback_on_failure:
+        description: 'Automatically rollback on failure'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  KUBECTL_VERSION: '1.28.0'
+
+jobs:
+  # Validate deployment prerequisites
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      current_version: ${{ steps.current.outputs.version }}
+      target_version: ${{ steps.target.outputs.version }}
+      environment: ${{ steps.env.outputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Validate image exists
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image_tag || github.ref_name }}"
+          echo "Validating image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG}"
+          
+          # Check if image exists in registry
+          docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG} > /dev/null
+          echo "✅ Image validation successful"
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      
+      - name: Setup kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/v${{ env.KUBECTL_VERSION }}/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          
+          # Configure kubectl for target environment
+          ENV_NAME="${{ steps.env.outputs.environment }}"
+          aws eks update-kubeconfig --region us-west-2 --name leanvibe-agent-hive-${ENV_NAME}
+      
+      - name: Get current deployment version
+        id: current
+        run: |
+          NAMESPACE="leanvibe-agent-hive-${{ steps.env.outputs.environment }}"
+          
+          # Get current image tag from deployment
+          CURRENT_IMAGE=$(kubectl get deployment leanvibe-api -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || echo "none")
+          CURRENT_VERSION=$(echo $CURRENT_IMAGE | cut -d':' -f2)
+          
+          echo "current_image=$CURRENT_IMAGE" >> $GITHUB_OUTPUT
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+      
+      - name: Set target version
+        id: target
+        run: |
+          TARGET_VERSION="${{ github.event.inputs.image_tag || github.ref_name }}"
+          echo "version=$TARGET_VERSION" >> $GITHUB_OUTPUT
+          echo "Target version: $TARGET_VERSION"
+      
+      - name: Validate deployment readiness
+        run: |
+          NAMESPACE="leanvibe-agent-hive-${{ steps.env.outputs.environment }}"
+          
+          # Check if namespace exists
+          kubectl get namespace $NAMESPACE || {
+            echo "❌ Namespace $NAMESPACE does not exist"
+            exit 1
+          }
+          
+          # Check database connectivity
+          kubectl run db-check --rm -i --restart=Never --image=postgres:15 -n $NAMESPACE -- \
+            psql $DATABASE_URL -c "SELECT version();" || {
+            echo "❌ Database connectivity check failed"
+            exit 1
+          }
+          
+          echo "✅ Deployment prerequisites validated"
+
+  # Blue-Green Deployment
+  blue-green-deploy:
+    needs: validate
+    if: github.event.inputs.deployment_strategy == 'blue-green' || github.event.inputs.deployment_strategy == ''
+    runs-on: ubuntu-latest
+    environment: ${{ needs.validate.outputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      
+      - name: Setup kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/v${{ env.KUBECTL_VERSION }}/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          aws eks update-kubeconfig --region us-west-2 --name leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+      
+      - name: Determine active environment
+        id: active
+        run: |
+          NAMESPACE="leanvibe-agent-hive-${{ needs.validate.outputs.environment }}"
+          
+          # Check current service selector to determine active environment
+          ACTIVE_SELECTOR=$(kubectl get service leanvibe-api -n $NAMESPACE -o jsonpath='{.spec.selector.version}' 2>/dev/null || echo "blue")
+          
+          if [ "$ACTIVE_SELECTOR" == "blue" ]; then
+            echo "active=blue" >> $GITHUB_OUTPUT
+            echo "inactive=green" >> $GITHUB_OUTPUT
+          else
+            echo "active=green" >> $GITHUB_OUTPUT
+            echo "inactive=blue" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Current active environment: $ACTIVE_SELECTOR"
+          echo "Deploying to inactive environment: $([ "$ACTIVE_SELECTOR" == "blue" ] && echo "green" || echo "blue")"
+      
+      - name: Deploy to inactive environment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+          TARGET_VERSION: ${{ needs.validate.outputs.target_version }}
+        run: |
+          echo "🚀 Deploying to $INACTIVE_ENV environment..."
+          
+          # Create inactive deployment
+          cat << EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: leanvibe-api-$INACTIVE_ENV
+            namespace: $NAMESPACE
+            labels:
+              app.kubernetes.io/name: leanvibe-agent-hive
+              app.kubernetes.io/component: api
+              version: $INACTIVE_ENV
+          spec:
+            replicas: 3
+            strategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxSurge: 1
+                maxUnavailable: 0
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: leanvibe-agent-hive
+                app.kubernetes.io/component: api
+                version: $INACTIVE_ENV
+            template:
+              metadata:
+                labels:
+                  app.kubernetes.io/name: leanvibe-agent-hive
+                  app.kubernetes.io/component: api
+                  version: $INACTIVE_ENV
+                annotations:
+                  prometheus.io/scrape: "true"
+                  prometheus.io/port: "9090"
+                  prometheus.io/path: "/metrics"
+              spec:
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 1000
+                containers:
+                - name: api
+                  image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TARGET_VERSION
+                  ports:
+                  - containerPort: 8000
+                    name: http
+                  - containerPort: 9090
+                    name: metrics
+                  env:
+                  - name: DATABASE_URL
+                    valueFrom:
+                      secretKeyRef:
+                        name: leanvibe-secrets
+                        key: DATABASE_URL
+                  - name: REDIS_URL
+                    valueFrom:
+                      secretKeyRef:
+                        name: leanvibe-secrets
+                        key: REDIS_URL
+                  - name: SECRET_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: leanvibe-secrets
+                        key: SECRET_KEY
+                  - name: ANTHROPIC_API_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: leanvibe-secrets
+                        key: ANTHROPIC_API_KEY
+                  - name: ENVIRONMENT
+                    value: ${{ needs.validate.outputs.environment }}
+                  - name: VERSION
+                    value: $TARGET_VERSION
+                  - name: COLOR
+                    value: $INACTIVE_ENV
+                  envFrom:
+                  - configMapRef:
+                      name: leanvibe-config
+                  volumeMounts:
+                  - name: temp-storage
+                    mountPath: /app/temp
+                  - name: logs-storage
+                    mountPath: /app/logs
+                  livenessProbe:
+                    httpGet:
+                      path: /health
+                      port: 8000
+                    initialDelaySeconds: 30
+                    periodSeconds: 30
+                    timeoutSeconds: 10
+                    failureThreshold: 3
+                  readinessProbe:
+                    httpGet:
+                      path: /health/ready
+                      port: 8000
+                    initialDelaySeconds: 15
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 3
+                  resources:
+                    requests:
+                      memory: "1Gi"
+                      cpu: "500m"
+                    limits:
+                      memory: "4Gi"
+                      cpu: "2000m"
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop:
+                      - ALL
+                volumes:
+                - name: temp-storage
+                  emptyDir:
+                    sizeLimit: 1Gi
+                - name: logs-storage
+                  emptyDir:
+                    sizeLimit: 2Gi
+          EOF
+          
+          echo "✅ Deployment created for $INACTIVE_ENV environment"
+      
+      - name: Wait for inactive deployment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+        run: |
+          echo "⏳ Waiting for $INACTIVE_ENV deployment to be ready..."
+          
+          kubectl rollout status deployment/leanvibe-api-$INACTIVE_ENV -n $NAMESPACE --timeout=600s
+          
+          echo "✅ $INACTIVE_ENV deployment is ready"
+      
+      - name: Run health checks on inactive environment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+        run: |
+          echo "🔍 Running health checks on $INACTIVE_ENV environment..."
+          
+          # Get pod IP for direct testing
+          POD_IP=$(kubectl get pod -l version=$INACTIVE_ENV -n $NAMESPACE -o jsonpath='{.items[0].status.podIP}')
+          
+          # Create health check job
+          kubectl run health-check-$INACTIVE_ENV --rm -i --restart=Never --image=curlimages/curl -n $NAMESPACE -- \
+            sh -c "
+              echo 'Testing health endpoint...'
+              curl -f http://$POD_IP:8000/health || exit 1
+              
+              echo 'Testing readiness endpoint...'
+              curl -f http://$POD_IP:8000/health/ready || exit 1
+              
+              echo 'Testing metrics endpoint...'
+              curl -f http://$POD_IP:9090/metrics || exit 1
+              
+              echo '✅ All health checks passed'
+            "
+      
+      - name: Run smoke tests on inactive environment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+        run: |
+          echo "🧪 Running smoke tests on $INACTIVE_ENV environment..."
+          
+          # Port forward for testing
+          kubectl port-forward deployment/leanvibe-api-$INACTIVE_ENV 8080:8000 -n $NAMESPACE &
+          PF_PID=$!
+          
+          # Wait for port forward to be ready
+          sleep 10
+          
+          # Run smoke tests
+          curl -f http://localhost:8080/health || { kill $PF_PID; exit 1; }
+          curl -f http://localhost:8080/api/v1/agents || { kill $PF_PID; exit 1; }
+          
+          # Cleanup
+          kill $PF_PID
+          
+          echo "✅ Smoke tests passed"
+      
+      - name: Switch traffic to new environment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+          ACTIVE_ENV: ${{ steps.active.outputs.active }}
+        run: |
+          echo "🔄 Switching traffic from $ACTIVE_ENV to $INACTIVE_ENV..."
+          
+          # Update service to point to new environment
+          kubectl patch service leanvibe-api -n $NAMESPACE -p '{"spec":{"selector":{"version":"'$INACTIVE_ENV'"}}}'
+          
+          # Wait for service endpoints to update
+          sleep 30
+          
+          echo "✅ Traffic switched to $INACTIVE_ENV environment"
+      
+      - name: Verify traffic switch
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+        run: |
+          echo "🔍 Verifying traffic switch..."
+          
+          # Test through service
+          kubectl run traffic-test --rm -i --restart=Never --image=curlimages/curl -n $NAMESPACE -- \
+            sh -c "
+              for i in \$(seq 1 10); do
+                curl -f http://leanvibe-api:8000/health || exit 1
+                sleep 1
+              done
+              echo '✅ Traffic verification successful'
+            "
+      
+      - name: Monitor new environment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+        run: |
+          echo "📊 Monitoring new environment for 5 minutes..."
+          
+          # Monitor for 5 minutes
+          for i in $(seq 1 30); do
+            # Check deployment health
+            READY_REPLICAS=$(kubectl get deployment leanvibe-api-$INACTIVE_ENV -n $NAMESPACE -o jsonpath='{.status.readyReplicas}')
+            DESIRED_REPLICAS=$(kubectl get deployment leanvibe-api-$INACTIVE_ENV -n $NAMESPACE -o jsonpath='{.spec.replicas}')
+            
+            if [ "$READY_REPLICAS" != "$DESIRED_REPLICAS" ]; then
+              echo "❌ Deployment health check failed: $READY_REPLICAS/$DESIRED_REPLICAS ready"
+              exit 1
+            fi
+            
+            echo "✅ Health check $i/30 passed ($READY_REPLICAS/$DESIRED_REPLICAS ready)"
+            sleep 10
+          done
+          
+          echo "✅ Monitoring completed successfully"
+      
+      - name: Cleanup old environment
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          ACTIVE_ENV: ${{ steps.active.outputs.active }}
+        run: |
+          echo "🧹 Cleaning up old $ACTIVE_ENV environment..."
+          
+          # Scale down old deployment
+          kubectl scale deployment leanvibe-api-$ACTIVE_ENV --replicas=0 -n $NAMESPACE
+          
+          # Wait for scale down
+          kubectl rollout status deployment/leanvibe-api-$ACTIVE_ENV -n $NAMESPACE --timeout=300s
+          
+          # Delete old deployment
+          kubectl delete deployment leanvibe-api-$ACTIVE_ENV -n $NAMESPACE
+          
+          echo "✅ Old environment cleaned up"
+      
+      - name: Update deployment labels
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+          TARGET_VERSION: ${{ needs.validate.outputs.target_version }}
+        run: |
+          echo "🏷️  Updating deployment labels..."
+          
+          # Rename deployment to standard name
+          kubectl get deployment leanvibe-api-$INACTIVE_ENV -n $NAMESPACE -o yaml | \
+            sed 's/leanvibe-api-'$INACTIVE_ENV'/leanvibe-api/g' | \
+            kubectl apply -f -
+          
+          # Delete the old named deployment
+          kubectl delete deployment leanvibe-api-$INACTIVE_ENV -n $NAMESPACE
+          
+          echo "✅ Deployment labels updated"
+
+  # Rollback capability
+  rollback:
+    if: failure() && github.event.inputs.rollback_on_failure != 'false'
+    needs: [validate, blue-green-deploy]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.validate.outputs.environment }}
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+      
+      - name: Setup kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/v${{ env.KUBECTL_VERSION }}/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          aws eks update-kubeconfig --region us-west-2 --name leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+      
+      - name: Emergency rollback
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          CURRENT_VERSION: ${{ needs.validate.outputs.current_version }}
+        run: |
+          echo "🚨 Performing emergency rollback..."
+          
+          # Rollback to previous version
+          kubectl set image deployment/leanvibe-api api=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$CURRENT_VERSION -n $NAMESPACE
+          
+          # Wait for rollback
+          kubectl rollout status deployment/leanvibe-api -n $NAMESPACE --timeout=300s
+          
+          echo "✅ Emergency rollback completed"
+          
+          # Send notification
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"🚨 Emergency rollback performed for LeanVibe Agent Hive deployment"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Deployment summary
+  summary:
+    needs: [validate, blue-green-deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate deployment summary
+        run: |
+          cat > deployment-summary.md << EOF
+          # Blue-Green Deployment Summary
+          
+          **Environment:** ${{ needs.validate.outputs.environment }}
+          **Strategy:** Blue-Green
+          **Previous Version:** ${{ needs.validate.outputs.current_version }}
+          **New Version:** ${{ needs.validate.outputs.target_version }}
+          **Deployment Status:** ${{ needs.blue-green-deploy.result }}
+          **Timestamp:** $(date)
+          
+          ## Results
+          
+          - Validation: ${{ needs.validate.result }}
+          - Blue-Green Deploy: ${{ needs.blue-green-deploy.result }}
+          
+          ## Next Steps
+          
+          - [ ] Monitor application metrics
+          - [ ] Verify user experience
+          - [ ] Update documentation if needed
+          
+          EOF
+          
+          echo "Deployment Summary:"
+          cat deployment-summary.md
+      
+      - name: Upload deployment summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-summary
+          path: deployment-summary.md
+          retention-days: 90
+      
+      - name: Send notification
+        if: always()
+        run: |
+          STATUS="${{ needs.blue-green-deploy.result }}"
+          if [ "$STATUS" == "success" ]; then
+            EMOJI="✅"
+            COLOR="good"
+          else
+            EMOJI="❌"
+            COLOR="danger"
+          fi
+          
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text":"'$EMOJI' Blue-Green deployment '$STATUS' for LeanVibe Agent Hive",
+              "attachments":[{
+                "color":"'$COLOR'",
+                "fields":[
+                  {"title":"Environment","value":"${{ needs.validate.outputs.environment }}","short":true},
+                  {"title":"Version","value":"${{ needs.validate.outputs.target_version }}","short":true},
+                  {"title":"Status","value":"'$STATUS'","short":true}
+                ]
+              }]
+            }' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

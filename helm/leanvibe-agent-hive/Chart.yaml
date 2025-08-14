@@ -1,0 +1,77 @@
+apiVersion: v2
+name: leanvibe-agent-hive
+description: LeanVibe Agent Hive 2.0 - Multi-Agent Orchestration System for Autonomous Software Development
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+
+keywords:
+  - ai
+  - agents
+  - orchestration
+  - automation
+  - fastapi
+  - postgresql
+  - redis
+  - anthropic
+  - claude
+
+home: https://github.com/leanvibe/agent-hive
+sources:
+  - https://github.com/leanvibe/agent-hive
+
+maintainers:
+  - name: LeanVibe DevOps Team
+    email: devops@leanvibe.com
+    url: https://leanvibe.com
+
+icon: https://leanvibe.com/assets/logo.png
+
+annotations:
+  category: Development
+  licenses: MIT
+  images: |
+    - name: leanvibe-agent-hive
+      image: ghcr.io/leanvibe/agent-hive:2.0.0-production
+    - name: postgres
+      image: pgvector/pgvector:pg15
+    - name: redis
+      image: redis:7-alpine
+    - name: nginx
+      image: nginx:alpine
+
+dependencies:
+  - name: postgresql
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+  
+  - name: redis
+    version: 18.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache
+  
+  - name: prometheus
+    version: 25.x.x
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.prometheus.enabled
+    tags:
+      - monitoring
+  
+  - name: grafana
+    version: 7.x.x
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.grafana.enabled
+    tags:
+      - monitoring
+
+  - name: nginx-ingress
+    version: 4.x.x
+    repository: https://kubernetes.github.io/ingress-nginx
+    condition: ingress.enabled
+    tags:
+      - networking

@@ -520,14 +520,78 @@
     }
   }
   
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .card {
-      @apply bg-gray-800 border-gray-700;
-    }
+  /* Theme system - CSS variables are set by ThemeService */
+  :root {
+    /* Light theme defaults - will be overridden by theme service */
+    --color-primary: #1e40af;
+    --color-primary-dark: #1e3a8a;
+    --color-primary-light: #3b82f6;
+    --color-secondary: #4f46e5;
+    --color-background: #ffffff;
+    --color-background-secondary: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-secondary: #f1f5f9;
+    --color-text: #0f172a;
+    --color-text-secondary: #334155;
+    --color-text-muted: #64748b;
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
+    --color-error: #dc2626;
+    --color-warning: #d97706;
+    --color-success: #059669;
+    --color-info: #0284c7;
     
-    .skeleton {
-      @apply bg-gray-700;
+    /* Glass effect variables */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Dark theme overrides */
+  .theme-dark {
+    --color-primary: #3b82f6;
+    --color-primary-dark: #1d4ed8;
+    --color-primary-light: #60a5fa;
+    --color-secondary: #6366f1;
+    --color-background: #0f172a;
+    --color-background-secondary: #1e293b;
+    --color-surface: #334155;
+    --color-surface-secondary: #475569;
+    --color-text: #f8fafc;
+    --color-text-secondary: #e2e8f0;
+    --color-text-muted: #94a3b8;
+    --color-border: #475569;
+    --color-border-light: #64748b;
+    --color-error: #ef4444;
+    --color-warning: #f59e0b;
+    --color-success: #10b981;
+    --color-info: #3b82f6;
+    
+    /* Dark glass effect */
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Adaptive card styling */
+  .card {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+  
+  .skeleton {
+    background: var(--color-surface-secondary);
+  }
+  
+  /* Auto dark mode support for browsers without JS */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.theme-light) {
+      --color-primary: #3b82f6;
+      --color-background: #0f172a;
+      --color-surface: #334155;
+      --color-text: #f8fafc;
+      --color-border: #475569;
     }
   }
 }

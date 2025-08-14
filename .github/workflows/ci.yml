@@ -4,49 +4,225 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  backend:
+  # Detect changes to optimize CI pipeline
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      docker: ${{ steps.changes.outputs.docker }}
+      docs: ${{ steps.changes.outputs.docs }}
     steps:
       - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'app/**'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+              - 'pytest.ini'
+              - 'alembic.ini'
+              - 'migrations/**'
+              - 'tests/**'
+            frontend:
+              - 'mobile-pwa/**'
+              - 'frontend/**'
+            docker:
+              - 'Dockerfile*'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+            docs:
+              - 'docs/**'
+              - '*.md'
+
+  # Backend testing with matrix strategy
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-group: [unit, integration, api, performance]
+        include:
+          - test-group: unit
+            path: "tests/simple_system tests/test_*unit* tests/test_*basic*"
+            coverage-threshold: 80
+          - test-group: integration  
+            path: "tests/test_*integration* tests/test_*comprehensive*"
+            coverage-threshold: 60
+          - test-group: api
+            path: "tests/test_*api* tests/test_*endpoints*"
+            coverage-threshold: 70
+          - test-group: performance
+            path: "tests/test_*performance* tests/test_*benchmark*"
+            coverage-threshold: 40
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_DB: test_leanvibe
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for test selection
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
-      - name: Install system deps
-        run: sudo apt-get update && sudo apt-get install -y libpq-dev
-      - name: Install Python deps
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev redis-tools postgresql-client
+      
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[dev]
-      - name: Run focused tests (unit/ws/smoke)
+          pip install -e .[dev,monitoring]
+      
+      - name: Wait for services
+        run: |
+          timeout 60 bash -c 'until pg_isready -h localhost -p 5432 -U test_user; do sleep 1; done'
+          timeout 60 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+      
+      - name: Run database migrations
         env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_leanvibe
+        run: |
+          alembic upgrade head
+      
+      - name: Run ${{ matrix.test-group }} tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_leanvibe
+          REDIS_URL: redis://localhost:6379/0
+          ANTHROPIC_API_KEY: test_key
+          SECRET_KEY: test_secret_key_for_ci
           DEBUG: 'true'
-        run: pytest tests/unit tests/ws tests/smoke -q
+          PYTEST_XDIST_WORKER_COUNT: 4
+        run: |
+          pytest ${{ matrix.path }} \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=${{ matrix.coverage-threshold }} \
+            --maxfail=5 \
+            --tb=short \
+            -n auto \
+            --dist=worksteal
+      
+      - name: Upload coverage to Codecov
+        if: matrix.test-group == 'unit'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: backend-${{ matrix.test-group }}
+          name: codecov-backend-${{ matrix.test-group }}
 
-  pwa:
+  # Frontend testing with optimizations
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [mobile-pwa]
+        include:
+          - component: mobile-pwa
+            working-directory: mobile-pwa
+            cache-path: mobile-pwa/node_modules
+    
     defaults:
       run:
-        working-directory: mobile-pwa
+        working-directory: ${{ matrix.working-directory }}
+    
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Cache Node dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.cache-path }}
+          key: ${{ runner.os }}-node-${{ hashFiles(format('{0}/package-lock.json', matrix.working-directory)) }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: mobile-pwa/package.json
-      - name: Install deps
-        run: npm ci
+          cache-dependency-path: ${{ matrix.working-directory }}/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
       - name: Generate types from JSON schemas
+        if: matrix.component == 'mobile-pwa'
         run: npm run -s generate:schemas
+      
       - name: Check for generated types drift
+        if: matrix.component == 'mobile-pwa'
         run: |
           git status --porcelain
           if ! git diff --exit-code; then
             echo "Type definitions drift detected. Please run 'npm run generate:schemas' and commit changes." >&2
             exit 1
           fi
-      - name: Run Vitest unit tests
-        run: npm run -s test
+      
+      - name: Run lint
+        run: npm run lint
+      
+      - name: Run type checking
+        run: npm run type-check
+      
+      - name: Run unit tests
+        run: npm run test -- --coverage
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.component }}-build
+          path: ${{ matrix.working-directory }}/dist
+          retention-days: 7

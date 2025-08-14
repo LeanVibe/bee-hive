@@ -1,0 +1,82 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: leanvibe-agent-hive-base
+  annotations:
+    config.kubernetes.io/local-config: "true"
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: leanvibe-agent-hive
+  app.kubernetes.io/version: "2.0.0"
+  app.kubernetes.io/part-of: leanvibe-platform
+  app.kubernetes.io/managed-by: kustomize
+
+# Namespace for all resources
+namespace: leanvibe-agent-hive
+
+# Resources to include
+resources:
+- namespace.yaml
+- configmap.yaml
+- secret.yaml
+- postgres.yaml
+- redis.yaml
+- api.yaml
+- nginx.yaml
+- ingress.yaml
+- monitoring.yaml
+
+# Images to use (can be overridden in overlays)
+images:
+- name: ghcr.io/leanvibe/agent-hive
+  newTag: latest-production
+
+# ConfigMap generator for environment-specific configs
+configMapGenerator:
+- name: environment-config
+  literals:
+  - ENVIRONMENT=base
+  - BUILD_VERSION=2.0.0
+
+# Secret generator (should be overridden in overlays with actual values)
+secretGenerator:
+- name: generated-secrets
+  literals:
+  - PLACEHOLDER=placeholder_value
+  options:
+    disableNameSuffixHash: true
+
+# Patches to apply
+patches:
+- target:
+    kind: Deployment
+    name: leanvibe-api
+  patch: |-
+    - op: add
+      path: /spec/template/metadata/labels/config.kubernetes.io~1change-trigger
+      value: "CONFIG_HASH_PLACEHOLDER"
+
+# Resource transformations
+replicas:
+- name: leanvibe-api
+  count: 3
+- name: nginx
+  count: 2
+
+# Name prefix for all resources
+namePrefix: ""
+
+# Name suffix for all resources  
+nameSuffix: ""
+
+# Vars for substitution
+vars:
+- name: APP_NAME
+  objref:
+    kind: ConfigMap
+    name: leanvibe-config
+    apiVersion: v1
+  fieldref:
+    fieldpath: metadata.name

@@ -40,10 +40,11 @@ export class WebSocketService extends EventEmitter {
   private pingTimer: number | null = null
   private isConnecting: boolean = false
   private reconnectAttempts: number = 0
-  private readonly maxReconnectAttempts: number = 10
+  private readonly maxReconnectAttempts: number = 15 // More attempts for mobile networks
   private readonly reconnectInterval: number = 1000 // Start with 1 second
   private readonly maxReconnectInterval: number = 30000 // Max 30 seconds
   private readonly pingInterval: number = 15000 // 15 seconds for better responsiveness
+  private readonly mobileReconnectDelay: number = 2000 // Extra delay for mobile networks
   private connectionQuality: 'excellent' | 'good' | 'poor' | 'offline' = 'offline'
   private latencyHistory: number[] = []
   private lastPingTime: number = 0
@@ -70,11 +71,31 @@ export class WebSocketService extends EventEmitter {
     this.authService.on('unauthenticated', () => this.disconnect())
     this.authService.on('token-refreshed', () => this.reconnect())
     
-    // Handle page visibility changes
+    // Handle page visibility changes for mobile app lifecycle
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && this.authService.isAuthenticated()) {
-        this.ensureConnection()
+        // Add delay for mobile network re-establishment
+        setTimeout(() => this.ensureConnection(), this.mobileReconnectDelay)
+      } else if (document.visibilityState === 'hidden') {
+        // Gracefully pause on mobile background
+        this.sendMessage({ type: 'client-backgrounded', data: { timestamp: new Date().toISOString() } })
       }
+    })
+    
+    // Handle online/offline events for mobile network changes
+    window.addEventListener('online', () => {
+      console.log('📶 Network back online - reconnecting WebSocket')
+      setTimeout(() => {
+        if (this.authService.isAuthenticated()) {
+          this.ensureConnection()
+        }
+      }, this.mobileReconnectDelay)
+    })
+    
+    window.addEventListener('offline', () => {
+      console.log('📵 Network offline - will reconnect when available')
+      this.connectionQuality = 'offline'
+      this.emit('connection-quality', { quality: 'offline', timestamp: new Date().toISOString() })
     })
   }
   

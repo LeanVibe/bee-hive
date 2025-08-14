@@ -1,0 +1,802 @@
+name: Performance Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of performance test'
+        required: true
+        default: 'load'
+        type: choice
+        options:
+        - load
+        - stress
+        - endurance
+        - spike
+        - volume
+      duration:
+        description: 'Test duration (minutes)'
+        required: false
+        default: '10'
+        type: string
+      concurrent_users:
+        description: 'Number of concurrent users'
+        required: false
+        default: '100'
+        type: string
+      environment:
+        description: 'Target environment'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+
+jobs:
+  # Setup performance testing environment
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      test_environment: ${{ steps.env.outputs.environment }}
+      test_type: ${{ steps.config.outputs.test_type }}
+      duration: ${{ steps.config.outputs.duration }}
+      concurrent_users: ${{ steps.config.outputs.concurrent_users }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Determine test environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Configure test parameters
+        id: config
+        run: |
+          echo "test_type=${{ github.event.inputs.test_type || 'load' }}" >> $GITHUB_OUTPUT
+          echo "duration=${{ github.event.inputs.duration || '10' }}" >> $GITHUB_OUTPUT
+          echo "concurrent_users=${{ github.event.inputs.concurrent_users || '100' }}" >> $GITHUB_OUTPUT
+      
+      - name: Validate test configuration
+        run: |
+          echo "Performance Test Configuration:"
+          echo "  Environment: ${{ steps.env.outputs.environment }}"
+          echo "  Test Type: ${{ steps.config.outputs.test_type }}"
+          echo "  Duration: ${{ steps.config.outputs.duration }} minutes"
+          echo "  Concurrent Users: ${{ steps.config.outputs.concurrent_users }}"
+
+  # Backend API Performance Tests
+  api-performance:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_DB: test_performance
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install locust pytest-benchmark
+      
+      - name: Setup test database
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_performance
+        run: |
+          alembic upgrade head
+      
+      - name: Start API server
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_performance
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test_secret_key
+          ANTHROPIC_API_KEY: test_key
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+      
+      - name: Run API benchmark tests
+        run: |
+          # Create performance test script
+          cat > locustfile.py << 'EOF'
+          from locust import HttpUser, task, between
+          import json
+          import random
+          
+          class AgentHiveUser(HttpUser):
+              wait_time = between(1, 3)
+              
+              def on_start(self):
+                  # Setup user session
+                  pass
+              
+              @task(10)
+              def health_check(self):
+                  self.client.get("/health")
+              
+              @task(5)
+              def get_agents(self):
+                  self.client.get("/api/v1/agents")
+              
+              @task(3)
+              def create_agent(self):
+                  agent_data = {
+                      "name": f"test-agent-{random.randint(1000, 9999)}",
+                      "persona": "developer",
+                      "capabilities": ["code_generation", "testing"]
+                  }
+                  self.client.post("/api/v1/agents", json=agent_data)
+              
+              @task(2)
+              def get_tasks(self):
+                  self.client.get("/api/v1/tasks")
+              
+              @task(1)
+              def websocket_test(self):
+                  # Simulate WebSocket connection test
+                  self.client.get("/ws/test")
+          EOF
+          
+          # Run Locust performance test
+          locust -f locustfile.py --headless \
+            --users ${{ needs.setup.outputs.concurrent_users }} \
+            --spawn-rate 10 \
+            --run-time ${{ needs.setup.outputs.duration }}m \
+            --host http://localhost:8000 \
+            --html performance-report.html \
+            --csv performance-results
+      
+      - name: Analyze performance results
+        run: |
+          python << 'EOF'
+          import csv
+          import json
+          
+          # Read performance results
+          results = {
+              "requests": [],
+              "failures": [],
+              "summary": {}
+          }
+          
+          try:
+              with open('performance-results_stats.csv', 'r') as f:
+                  reader = csv.DictReader(f)
+                  for row in reader:
+                      if row['Name'] != 'Aggregated':
+                          results["requests"].append({
+                              "name": row['Name'],
+                              "method": row['Method'],
+                              "requests": int(row['Request Count']),
+                              "failures": int(row['Failure Count']),
+                              "avg_response_time": float(row['Average Response Time']),
+                              "min_response_time": float(row['Min Response Time']),
+                              "max_response_time": float(row['Max Response Time']),
+                              "rps": float(row['Requests/s'])
+                          })
+                      else:
+                          results["summary"] = {
+                              "total_requests": int(row['Request Count']),
+                              "total_failures": int(row['Failure Count']),
+                              "avg_response_time": float(row['Average Response Time']),
+                              "rps": float(row['Requests/s'])
+                          }
+          except FileNotFoundError:
+              print("No performance results found")
+              exit(1)
+          
+          # Performance thresholds
+          thresholds = {
+              "max_avg_response_time": 1000,  # ms
+              "max_failure_rate": 0.05,       # 5%
+              "min_rps": 10                    # requests per second
+          }
+          
+          # Validate performance
+          failures = []
+          summary = results["summary"]
+          
+          if summary["avg_response_time"] > thresholds["max_avg_response_time"]:
+              failures.append(f"Average response time too high: {summary['avg_response_time']}ms > {thresholds['max_avg_response_time']}ms")
+          
+          failure_rate = summary["total_failures"] / summary["total_requests"] if summary["total_requests"] > 0 else 0
+          if failure_rate > thresholds["max_failure_rate"]:
+              failures.append(f"Failure rate too high: {failure_rate:.2%} > {thresholds['max_failure_rate']:.2%}")
+          
+          if summary["rps"] < thresholds["min_rps"]:
+              failures.append(f"Requests per second too low: {summary['rps']} < {thresholds['min_rps']}")
+          
+          # Save detailed results
+          with open('performance-analysis.json', 'w') as f:
+              json.dump({
+                  "results": results,
+                  "thresholds": thresholds,
+                  "failures": failures,
+                  "passed": len(failures) == 0
+              }, f, indent=2)
+          
+          # Print summary
+          print(f"Performance Test Results:")
+          print(f"  Total Requests: {summary['total_requests']}")
+          print(f"  Total Failures: {summary['total_failures']}")
+          print(f"  Failure Rate: {failure_rate:.2%}")
+          print(f"  Average Response Time: {summary['avg_response_time']}ms")
+          print(f"  Requests per Second: {summary['rps']}")
+          
+          if failures:
+              print("\n❌ Performance validation failed:")
+              for failure in failures:
+                  print(f"  - {failure}")
+              exit(1)
+          else:
+              print("\n✅ Performance validation passed")
+          EOF
+      
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-performance-results
+          path: |
+            performance-report.html
+            performance-results*.csv
+            performance-analysis.json
+          retention-days: 30
+
+  # Database Performance Tests
+  database-performance:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_DB: test_performance
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install pgbench-tools sqlalchemy-utils
+      
+      - name: Setup test database
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_performance
+        run: |
+          alembic upgrade head
+      
+      - name: Run database performance tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_performance
+        run: |
+          python << 'EOF'
+          import time
+          import statistics
+          import json
+          from sqlalchemy import create_engine, text
+          from sqlalchemy.orm import sessionmaker
+          import os
+          
+          DATABASE_URL = os.getenv('DATABASE_URL')
+          engine = create_engine(DATABASE_URL)
+          Session = sessionmaker(bind=engine)
+          
+          def run_query_benchmark(query, iterations=100):
+              times = []
+              session = Session()
+              
+              try:
+                  for _ in range(iterations):
+                      start = time.time()
+                      session.execute(text(query))
+                      end = time.time()
+                      times.append((end - start) * 1000)  # Convert to ms
+                  
+                  return {
+                      "query": query,
+                      "iterations": iterations,
+                      "avg_time_ms": statistics.mean(times),
+                      "min_time_ms": min(times),
+                      "max_time_ms": max(times),
+                      "p95_time_ms": statistics.quantiles(times, n=20)[18],  # 95th percentile
+                      "p99_time_ms": statistics.quantiles(times, n=100)[98]  # 99th percentile
+                  }
+              finally:
+                  session.close()
+          
+          # Database benchmark queries
+          queries = [
+              "SELECT version()",
+              "SELECT 1",
+              "SELECT COUNT(*) FROM information_schema.tables",
+              "SELECT * FROM pg_stat_user_tables LIMIT 10",
+              "CREATE TEMP TABLE test_perf AS SELECT generate_series(1, 1000) as id; SELECT COUNT(*) FROM test_perf; DROP TABLE test_perf;"
+          ]
+          
+          results = []
+          
+          print("Running database performance benchmarks...")
+          for query in queries:
+              print(f"  Testing: {query[:50]}...")
+              result = run_query_benchmark(query)
+              results.append(result)
+              print(f"    Average: {result['avg_time_ms']:.2f}ms")
+          
+          # Performance thresholds
+          thresholds = {
+              "max_avg_query_time": 100,  # ms
+              "max_p95_query_time": 200   # ms
+          }
+          
+          # Validate performance
+          failures = []
+          for result in results:
+              if result["avg_time_ms"] > thresholds["max_avg_query_time"]:
+                  failures.append(f"Query '{result['query'][:30]}...' average time too high: {result['avg_time_ms']:.2f}ms")
+              
+              if result["p95_time_ms"] > thresholds["max_p95_query_time"]:
+                  failures.append(f"Query '{result['query'][:30]}...' P95 time too high: {result['p95_time_ms']:.2f}ms")
+          
+          # Save results
+          with open('database-performance.json', 'w') as f:
+              json.dump({
+                  "results": results,
+                  "thresholds": thresholds,
+                  "failures": failures,
+                  "passed": len(failures) == 0
+              }, f, indent=2)
+          
+          if failures:
+              print("\n❌ Database performance validation failed:")
+              for failure in failures:
+                  print(f"  - {failure}")
+              exit(1)
+          else:
+              print("\n✅ Database performance validation passed")
+          EOF
+      
+      - name: Upload database performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-performance-results
+          path: database-performance.json
+          retention-days: 30
+
+  # Memory and Resource Usage Tests
+  resource-usage:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install memory-profiler psutil
+      
+      - name: Memory usage baseline test
+        run: |
+          python << 'EOF'
+          import psutil
+          import time
+          import json
+          import gc
+          from memory_profiler import profile
+          import sys
+          
+          def measure_memory_usage():
+              process = psutil.Process()
+              return {
+                  "rss_mb": process.memory_info().rss / 1024 / 1024,
+                  "vms_mb": process.memory_info().vms / 1024 / 1024,
+                  "percent": process.memory_percent(),
+                  "available_mb": psutil.virtual_memory().available / 1024 / 1024
+              }
+          
+          def simulate_agent_workload():
+              # Simulate creating multiple agents
+              agents = []
+              for i in range(100):
+                  agent_data = {
+                      "id": i,
+                      "name": f"agent-{i}",
+                      "status": "active",
+                      "tasks": [f"task-{j}" for j in range(10)],
+                      "memory": list(range(1000))  # Simulate memory usage
+                  }
+                  agents.append(agent_data)
+              
+              return agents
+          
+          print("Starting memory usage test...")
+          
+          # Baseline memory
+          baseline = measure_memory_usage()
+          print(f"Baseline memory: {baseline['rss_mb']:.2f}MB RSS, {baseline['percent']:.2f}%")
+          
+          # Simulate workload
+          agents = simulate_agent_workload()
+          after_workload = measure_memory_usage()
+          print(f"After workload: {after_workload['rss_mb']:.2f}MB RSS, {after_workload['percent']:.2f}%")
+          
+          # Clean up
+          del agents
+          gc.collect()
+          after_cleanup = measure_memory_usage()
+          print(f"After cleanup: {after_cleanup['rss_mb']:.2f}MB RSS, {after_cleanup['percent']:.2f}%")
+          
+          # Calculate metrics
+          workload_increase = after_workload['rss_mb'] - baseline['rss_mb']
+          cleanup_recovery = after_workload['rss_mb'] - after_cleanup['rss_mb']
+          
+          results = {
+              "baseline_mb": baseline['rss_mb'],
+              "peak_mb": after_workload['rss_mb'],
+              "final_mb": after_cleanup['rss_mb'],
+              "workload_increase_mb": workload_increase,
+              "cleanup_recovery_mb": cleanup_recovery,
+              "memory_leak_mb": after_cleanup['rss_mb'] - baseline['rss_mb']
+          }
+          
+          # Thresholds
+          thresholds = {
+              "max_workload_increase": 500,  # MB
+              "max_memory_leak": 50,         # MB
+              "min_cleanup_recovery": 0.8    # 80% of increase should be recovered
+          }
+          
+          failures = []
+          
+          if workload_increase > thresholds["max_workload_increase"]:
+              failures.append(f"Workload memory increase too high: {workload_increase:.2f}MB > {thresholds['max_workload_increase']}MB")
+          
+          if results["memory_leak_mb"] > thresholds["max_memory_leak"]:
+              failures.append(f"Memory leak detected: {results['memory_leak_mb']:.2f}MB > {thresholds['max_memory_leak']}MB")
+          
+          recovery_ratio = cleanup_recovery / workload_increase if workload_increase > 0 else 1
+          if recovery_ratio < thresholds["min_cleanup_recovery"]:
+              failures.append(f"Poor memory cleanup: {recovery_ratio:.2%} < {thresholds['min_cleanup_recovery']:.2%}")
+          
+          # Save results
+          with open('memory-usage.json', 'w') as f:
+              json.dump({
+                  "results": results,
+                  "thresholds": thresholds,
+                  "failures": failures,
+                  "passed": len(failures) == 0
+              }, f, indent=2)
+          
+          print(f"\nMemory Usage Results:")
+          print(f"  Baseline: {baseline['rss_mb']:.2f}MB")
+          print(f"  Peak: {after_workload['rss_mb']:.2f}MB (+{workload_increase:.2f}MB)")
+          print(f"  Final: {after_cleanup['rss_mb']:.2f}MB")
+          print(f"  Memory Leak: {results['memory_leak_mb']:.2f}MB")
+          print(f"  Cleanup Recovery: {recovery_ratio:.2%}")
+          
+          if failures:
+              print("\n❌ Memory usage validation failed:")
+              for failure in failures:
+                  print(f"  - {failure}")
+              sys.exit(1)
+          else:
+              print("\n✅ Memory usage validation passed")
+          EOF
+      
+      - name: Upload memory usage results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memory-usage-results
+          path: memory-usage.json
+          retention-days: 30
+
+  # Frontend Performance Tests
+  frontend-performance:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install frontend dependencies
+        working-directory: mobile-pwa
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: mobile-pwa
+        run: npm run build
+      
+      - name: Install Lighthouse
+        run: npm install -g lighthouse
+      
+      - name: Start local server
+        working-directory: mobile-pwa
+        run: |
+          npx serve dist -l 3000 &
+          sleep 5
+      
+      - name: Run Lighthouse performance audit
+        run: |
+          lighthouse http://localhost:3000 \
+            --output=json \
+            --output=html \
+            --output-path=./lighthouse-results \
+            --chrome-flags="--headless --no-sandbox" \
+            --only-categories=performance
+      
+      - name: Analyze Lighthouse results
+        run: |
+          python << 'EOF'
+          import json
+          
+          # Read Lighthouse results
+          with open('lighthouse-results.report.json', 'r') as f:
+              lighthouse_data = json.load(f)
+          
+          # Extract performance metrics
+          audits = lighthouse_data['audits']
+          metrics = {
+              'first_contentful_paint': audits['first-contentful-paint']['numericValue'],
+              'largest_contentful_paint': audits['largest-contentful-paint']['numericValue'],
+              'cumulative_layout_shift': audits['cumulative-layout-shift']['numericValue'],
+              'total_blocking_time': audits['total-blocking-time']['numericValue'],
+              'speed_index': audits['speed-index']['numericValue'],
+              'interactive': audits['interactive']['numericValue']
+          }
+          
+          # Performance thresholds (in milliseconds, except CLS)
+          thresholds = {
+              'first_contentful_paint': 2000,
+              'largest_contentful_paint': 4000,
+              'cumulative_layout_shift': 0.1,
+              'total_blocking_time': 300,
+              'speed_index': 4000,
+              'interactive': 5000
+          }
+          
+          # Validate performance
+          failures = []
+          for metric, value in metrics.items():
+              threshold = thresholds[metric]
+              if value > threshold:
+                  failures.append(f"{metric}: {value:.2f} > {threshold}")
+          
+          # Overall performance score
+          performance_score = lighthouse_data['categories']['performance']['score']
+          min_score = 0.8  # 80%
+          
+          if performance_score < min_score:
+              failures.append(f"Overall performance score: {performance_score:.2f} < {min_score}")
+          
+          # Save results
+          results = {
+              "metrics": metrics,
+              "thresholds": thresholds,
+              "performance_score": performance_score,
+              "failures": failures,
+              "passed": len(failures) == 0
+          }
+          
+          with open('frontend-performance.json', 'w') as f:
+              json.dump(results, f, indent=2)
+          
+          print(f"Frontend Performance Results:")
+          print(f"  Overall Score: {performance_score:.2f}")
+          print(f"  First Contentful Paint: {metrics['first_contentful_paint']:.0f}ms")
+          print(f"  Largest Contentful Paint: {metrics['largest_contentful_paint']:.0f}ms")
+          print(f"  Cumulative Layout Shift: {metrics['cumulative_layout_shift']:.3f}")
+          print(f"  Total Blocking Time: {metrics['total_blocking_time']:.0f}ms")
+          
+          if failures:
+              print("\n❌ Frontend performance validation failed:")
+              for failure in failures:
+                  print(f"  - {failure}")
+              exit(1)
+          else:
+              print("\n✅ Frontend performance validation passed")
+          EOF
+      
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: |
+            lighthouse-results.report.html
+            lighthouse-results.report.json
+            frontend-performance.json
+          retention-days: 30
+
+  # Performance Summary and Reporting
+  summary:
+    needs: [setup, api-performance, database-performance, resource-usage, frontend-performance]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Generate performance summary
+        run: |
+          python << 'EOF'
+          import json
+          import os
+          
+          # Collect all performance results
+          results = {}
+          
+          artifact_dirs = ['api-performance-results', 'database-performance-results', 'memory-usage-results', 'lighthouse-results']
+          
+          for artifact_dir in artifact_dirs:
+              artifact_path = f'artifacts/{artifact_dir}'
+              if os.path.exists(artifact_path):
+                  for file in os.listdir(artifact_path):
+                      if file.endswith('.json') and 'performance' in file:
+                          with open(os.path.join(artifact_path, file), 'r') as f:
+                              results[artifact_dir] = json.load(f)
+          
+          # Generate summary report
+          summary = {
+              "test_configuration": {
+                  "type": "${{ needs.setup.outputs.test_type }}",
+                  "duration": "${{ needs.setup.outputs.duration }}",
+                  "concurrent_users": "${{ needs.setup.outputs.concurrent_users }}",
+                  "environment": "${{ needs.setup.outputs.test_environment }}"
+              },
+              "results": results,
+              "overall_status": "PASS"
+          }
+          
+          # Check for any failures
+          for test_name, test_results in results.items():
+              if not test_results.get("passed", True):
+                  summary["overall_status"] = "FAIL"
+                  break
+          
+          # Save summary
+          with open('performance-summary.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          
+          # Generate markdown report
+          with open('performance-report.md', 'w') as f:
+              f.write("# Performance Test Report\n\n")
+              f.write(f"**Status:** {summary['overall_status']}\n")
+              f.write(f"**Test Type:** {summary['test_configuration']['type']}\n")
+              f.write(f"**Duration:** {summary['test_configuration']['duration']} minutes\n")
+              f.write(f"**Concurrent Users:** {summary['test_configuration']['concurrent_users']}\n")
+              f.write(f"**Environment:** {summary['test_configuration']['environment']}\n\n")
+              
+              f.write("## Test Results\n\n")
+              
+              for test_name, test_results in results.items():
+                  status = "✅ PASS" if test_results.get("passed", True) else "❌ FAIL"
+                  f.write(f"### {test_name.replace('-', ' ').title()}\n")
+                  f.write(f"**Status:** {status}\n\n")
+                  
+                  if "failures" in test_results and test_results["failures"]:
+                      f.write("**Issues:**\n")
+                      for failure in test_results["failures"]:
+                          f.write(f"- {failure}\n")
+                      f.write("\n")
+          
+          print(f"Performance test summary: {summary['overall_status']}")
+          EOF
+      
+      - name: Upload performance summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-summary
+          path: |
+            performance-summary.json
+            performance-report.md
+          retention-days: 90
+      
+      - name: Send notification
+        if: always()
+        run: |
+          if [ -f performance-summary.json ]; then
+            STATUS=$(python -c "import json; print(json.load(open('performance-summary.json'))['overall_status'])")
+          else
+            STATUS="UNKNOWN"
+          fi
+          
+          if [ "$STATUS" == "PASS" ]; then
+            EMOJI="✅"
+            COLOR="good"
+          else
+            EMOJI="❌"
+            COLOR="danger"
+          fi
+          
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text":"'$EMOJI' Performance validation '$STATUS' for LeanVibe Agent Hive",
+              "attachments":[{
+                "color":"'$COLOR'",
+                "fields":[
+                  {"title":"Test Type","value":"${{ needs.setup.outputs.test_type }}","short":true},
+                  {"title":"Environment","value":"${{ needs.setup.outputs.test_environment }}","short":true},
+                  {"title":"Duration","value":"${{ needs.setup.outputs.duration }} min","short":true},
+                  {"title":"Users","value":"${{ needs.setup.outputs.concurrent_users }}","short":true}
+                ]
+              }]
+            }' \
+            ${{ secrets.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/fake' }}

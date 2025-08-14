@@ -1,0 +1,287 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: leanvibe-api-monitor
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: api
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: postgres-monitor
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: database
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: redis-monitor
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: cache
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-monitor
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: frontend
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: leanvibe-alerts
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: monitoring
+spec:
+  groups:
+  - name: leanvibe.api.alerts
+    rules:
+    - alert: LeanVibeAPIDown
+      expr: up{job="leanvibe-api-monitor"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "LeanVibe API is down"
+        description: "LeanVibe API has been down for more than 1 minute"
+    
+    - alert: LeanVibeAPIHighLatency
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="leanvibe-api-monitor"}[5m])) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "LeanVibe API high latency"
+        description: "95th percentile latency is above 1 second for 5 minutes"
+    
+    - alert: LeanVibeAPIHighErrorRate
+      expr: rate(http_requests_total{job="leanvibe-api-monitor",status=~"5.."}[5m]) / rate(http_requests_total{job="leanvibe-api-monitor"}[5m]) > 0.05
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "LeanVibe API high error rate"
+        description: "Error rate is above 5% for 2 minutes"
+    
+    - alert: LeanVibeAPIHighMemoryUsage
+      expr: container_memory_usage_bytes{container="api"} / container_spec_memory_limit_bytes{container="api"} > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "LeanVibe API high memory usage"
+        description: "Memory usage is above 90% for 5 minutes"
+    
+    - alert: LeanVibeAPIHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{container="api"}[5m]) / container_spec_cpu_quota{container="api"} * container_spec_cpu_period{container="api"} > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "LeanVibe API high CPU usage"
+        description: "CPU usage is above 80% for 5 minutes"
+  
+  - name: leanvibe.agents.alerts
+    rules:
+    - alert: HighActiveAgentCount
+      expr: active_agents_count > 40
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High number of active agents"
+        description: "Active agent count is {{ $value }}, above threshold of 40"
+    
+    - alert: AgentOrchestrationFailures
+      expr: rate(agent_orchestration_failures_total[5m]) > 0.1
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High agent orchestration failure rate"
+        description: "Agent orchestration failure rate is {{ $value }} per second"
+    
+    - alert: AgentTaskQueueBacklog
+      expr: agent_task_queue_size > 100
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High agent task queue backlog"
+        description: "Agent task queue size is {{ $value }}, indicating processing delays"
+  
+  - name: leanvibe.database.alerts
+    rules:
+    - alert: PostgreSQLDown
+      expr: up{job="postgres-monitor"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "PostgreSQL is down"
+        description: "PostgreSQL has been down for more than 1 minute"
+    
+    - alert: PostgreSQLHighConnections
+      expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "PostgreSQL high connection usage"
+        description: "PostgreSQL connection usage is above 80%"
+    
+    - alert: PostgreSQLSlowQueries
+      expr: rate(pg_stat_database_tup_returned[5m]) / rate(pg_stat_database_tup_fetched[5m]) < 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "PostgreSQL slow queries detected"
+        description: "Query efficiency is below 80%"
+  
+  - name: leanvibe.redis.alerts
+    rules:
+    - alert: RedisDown
+      expr: up{job="redis-monitor"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Redis is down"
+        description: "Redis has been down for more than 1 minute"
+    
+    - alert: RedisHighMemoryUsage
+      expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Redis high memory usage"
+        description: "Redis memory usage is above 90%"
+    
+    - alert: RedisHighLatency
+      expr: redis_slowlog_length > 10
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Redis high latency detected"
+        description: "Redis slow log length is {{ $value }}"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: monitoring
+data:
+  leanvibe-overview.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "LeanVibe Agent Hive Overview",
+        "tags": ["leanvibe", "agents", "overview"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Active Agents",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "active_agents_count",
+                "legendFormat": "Active Agents"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 30},
+                    {"color": "red", "value": 45}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "API Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])",
+                "legendFormat": "Requests/sec"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Response Times",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "50th percentile"
+              }
+            ]
+          }
+        ]
+      }
+    }
