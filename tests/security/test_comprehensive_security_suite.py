@@ -23,7 +23,7 @@ from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import SecurityManager, TokenValidator, RateLimiter
-from app.core.authorization_engine import AuthorizationEngine, Permission
+from app.core.authorization_engine import AuthorizationEngine, PermissionContext
 from app.core.audit_logger import AuditLogger
 from app.models.agent import Agent, AgentStatus
 from tests.utils.database_test_utils import DatabaseTestUtils

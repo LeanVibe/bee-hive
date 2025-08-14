@@ -19,7 +19,9 @@ from fastapi.testclient import TestClient
 
 from app.core.redis import AgentMessageBroker, get_redis
 from app.api.dashboard_websockets import DashboardWebSocketManager
-from app.core.database import get_session, Agent, Task, AgentStatus, TaskStatus
+from app.core.database import get_session
+from app.models.agent import Agent, AgentStatus
+from app.models.task import Task, TaskStatus
 from app.main import app
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.contract, pytest.mark.integration]
