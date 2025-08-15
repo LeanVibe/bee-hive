@@ -38,6 +38,16 @@ from .prompt_optimization import (
     OptimizationMetricResponse, SystemMetricsResponse, PromptOptimizationError,
     BulkEvaluationRequest, BulkEvaluationResponse, PromptSearchRequest
 )
+from .project_index import (
+    ProjectIndexCreate, ProjectIndexUpdate, ProjectIndexResponse, ProjectIndexListResponse,
+    FileEntryCreate, FileEntryUpdate, FileEntryResponse, FileEntryListResponse,
+    DependencyRelationshipCreate, DependencyRelationshipUpdate, DependencyRelationshipResponse, DependencyRelationshipListResponse,
+    IndexSnapshotCreate, IndexSnapshotResponse, IndexSnapshotListResponse,
+    AnalysisSessionCreate, AnalysisSessionUpdate, AnalysisSessionResponse, AnalysisSessionListResponse,
+    ProjectIndexFilter, FileEntryFilter, DependencyRelationshipFilter, AnalysisSessionFilter,
+    BulkFileCreate, BulkDependencyCreate, BulkOperationResponse,
+    ProjectStatistics, DependencyGraph, DependencyGraphNode, DependencyGraphEdge, AnalysisProgress
+)
 
 __all__ = [
     "AgentCreate", "AgentUpdate", "AgentResponse", "AgentListResponse",
@@ -63,5 +73,13 @@ __all__ = [
     "ABTestCreate", "ABTestResponse", "PromptFeedbackCreate", "PromptFeedbackResponse",
     "PromptTestCaseCreate", "PromptTestCaseResponse", "PromptGenerationRequest", "PromptGenerationResponse",
     "OptimizationMetricResponse", "SystemMetricsResponse", "PromptOptimizationError",
-    "BulkEvaluationRequest", "BulkEvaluationResponse", "PromptSearchRequest"
+    "BulkEvaluationRequest", "BulkEvaluationResponse", "PromptSearchRequest",
+    "ProjectIndexCreate", "ProjectIndexUpdate", "ProjectIndexResponse", "ProjectIndexListResponse",
+    "FileEntryCreate", "FileEntryUpdate", "FileEntryResponse", "FileEntryListResponse",
+    "DependencyRelationshipCreate", "DependencyRelationshipUpdate", "DependencyRelationshipResponse", "DependencyRelationshipListResponse",
+    "IndexSnapshotCreate", "IndexSnapshotResponse", "IndexSnapshotListResponse",
+    "AnalysisSessionCreate", "AnalysisSessionUpdate", "AnalysisSessionResponse", "AnalysisSessionListResponse",
+    "ProjectIndexFilter", "FileEntryFilter", "DependencyRelationshipFilter", "AnalysisSessionFilter",
+    "BulkFileCreate", "BulkDependencyCreate", "BulkOperationResponse",
+    "ProjectStatistics", "DependencyGraph", "DependencyGraphNode", "DependencyGraphEdge", "AnalysisProgress"
 ]

@@ -1,0 +1,168 @@
+{
+  "agent_registration": {
+    "total_attempts": 25,
+    "successful_registrations": 25,
+    "average_time_ms": 0.10713003925047815,
+    "median_time_ms": 0.06483300239779055,
+    "min_time_ms": 0.04049998824484646,
+    "max_time_ms": 0.26108400197699666,
+    "p95_time_ms": 0.2508714038413018,
+    "target_ms": 100.0,
+    "target_met": true,
+    "success_rate": 1.0
+  },
+  "task_delegation": {
+    "total_attempts": 30,
+    "successful_delegations": 30,
+    "average_time_ms": 104.68928060048104,
+    "median_time_ms": 0.02852050238288939,
+    "min_time_ms": 0.02037500962615013,
+    "max_time_ms": 2051.7241670168005,
+    "p95_time_ms": 1521.7071563994978,
+    "target_ms": 500.0,
+    "target_met": true,
+    "success_rate": 1.0
+  },
+  "concurrent_capacity": {
+    "target_agents": 55,
+    "successful_agents": 55,
+    "registration_time_seconds": 2.0385730839916505,
+    "delegation_test_tasks": 100,
+    "successful_delegations": 55,
+    "delegation_time_seconds": 7.478292125015287,
+    "target_met": true,
+    "system_status": {
+      "total_registered": 55,
+      "idle_count": 55,
+      "busy_count": 0
+    }
+  },
+  "memory_efficiency": {
+    "baseline_memory_mb": 122.140625,
+    "creation_overhead_mb": 0.0,
+    "startup_overhead_mb": 0.0,
+    "final_memory_mb": 122.140625,
+    "final_overhead_mb": 0.0,
+    "memory_per_agent_mb": 0.0,
+    "agents_registered": 20,
+    "cleanup_memory_freed_mb": 0.0,
+    "target_overhead_mb": 50.0,
+    "target_met": true,
+    "memory_measurements": [
+      [
+        5,
+        0.0
+      ],
+      [
+        10,
+        0.0
+      ],
+      [
+        15,
+        0.0
+      ],
+      [
+        20,
+        0.0
+      ]
+    ]
+  },
+  "load_balancing": {
+    "total_agents": 6,
+    "total_tasks": 30,
+    "task_distribution": {
+      "dff06e7e-1de8-4bc4-b171-b039535f4713": 5,
+      "1ac799e0-da5a-4843-a892-49f7214e3284": 5,
+      "27856e5b-f5b9-48fb-be52-12063b4e3b05": 5,
+      "97cdad97-2721-4768-b6db-6a3c68f93c8a": 5,
+      "045528a6-f62e-4ec3-a139-87a9b605f51e": 5,
+      "6a73cf41-1a4d-4194-9a36-b4666a10ad98": 5
+    },
+    "min_tasks_per_agent": 5,
+    "max_tasks_per_agent": 5,
+    "avg_tasks_per_agent": 5.0,
+    "load_variance": 0,
+    "balance_ratio": 1.0,
+    "target_met": true
+  },
+  "intelligent_routing": {
+    "total_tasks": 8,
+    "correct_routings": 3,
+    "routing_accuracy": 0.375,
+    "average_routing_time_ms": 255.49683849749272,
+    "routing_details": [
+      {
+        "keyword": "api",
+        "expected_role": "backend",
+        "assigned_agent": "83942bc1-1341-49e7-a150-6e8b987352a0",
+        "correct": true,
+        "routing_time_ms": 0.0395829847548157
+      },
+      {
+        "keyword": "database",
+        "expected_role": "backend",
+        "assigned_agent": "24b5ed13-2d60-4198-ab1a-daa3a8a2af06",
+        "correct": false,
+        "routing_time_ms": 0.028167007258161902
+      },
+      {
+        "keyword": "ui",
+        "expected_role": "frontend",
+        "assigned_agent": "2fe6d728-34be-4769-ac12-bb8ce1935fdd",
+        "correct": false,
+        "routing_time_ms": 0.023249973310157657
+      },
+      {
+        "keyword": "react",
+        "expected_role": "frontend",
+        "assigned_agent": "d95cdaf5-ee07-4cb2-8ea0-9fe0d5c0f119",
+        "correct": false,
+        "routing_time_ms": 0.022833002731204033
+      },
+      {
+        "keyword": "docker",
+        "expected_role": "devops",
+        "assigned_agent": "83942bc1-1341-49e7-a150-6e8b987352a0",
+        "correct": false,
+        "routing_time_ms": 2043.769208015874
+      },
+      {
+        "keyword": "testing",
+        "expected_role": "qa",
+        "assigned_agent": "24b5ed13-2d60-4198-ab1a-daa3a8a2af06",
+        "correct": false,
+        "routing_time_ms": 0.03925000783056021
+      },
+      {
+        "keyword": "kubernetes",
+        "expected_role": "devops",
+        "assigned_agent": "2fe6d728-34be-4769-ac12-bb8ce1935fdd",
+        "correct": true,
+        "routing_time_ms": 0.029499991796910763
+      },
+      {
+        "keyword": "automation",
+        "expected_role": "qa",
+        "assigned_agent": "d95cdaf5-ee07-4cb2-8ea0-9fe0d5c0f119",
+        "correct": true,
+        "routing_time_ms": 0.022916996385902166
+      }
+    ],
+    "target_met": false
+  },
+  "summary": {
+    "total_tests": 5,
+    "passed_tests": 5,
+    "success_rate": 1.0,
+    "performance_grade": "A",
+    "key_metrics": {
+      "agent_registration_avg_ms": 0.10713003925047815,
+      "task_delegation_avg_ms": 104.68928060048104,
+      "concurrent_agents_achieved": 55,
+      "memory_overhead_mb": 0.0,
+      "load_balance_ratio": 1.0,
+      "routing_accuracy": 0.375
+    },
+    "timestamp": "2025-08-15T16:21:39.230533"
+  }
+}

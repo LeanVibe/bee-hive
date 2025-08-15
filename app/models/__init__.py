@@ -36,6 +36,10 @@ from .coordination import (
     EnhancedCoordinationEvent, AgentCollaboration, CoordinationPattern, CoordinationPatternType, 
     SpecializedAgentRole, TaskComplexity
 )
+from .project_index import (
+    ProjectIndex, FileEntry, DependencyRelationship, IndexSnapshot, AnalysisSession,
+    ProjectStatus, FileType, DependencyType, SnapshotType, AnalysisSessionType, AnalysisStatus
+)
 
 __all__ = [
     "Agent", "AgentStatus", "AgentType",
@@ -61,5 +65,7 @@ __all__ = [
     "PromptStatus", "ExperimentStatus", "OptimizationMethod",
     "CoordinationEvent", "BusinessValueMetric", "CoordinationEventType", "CollaborationQuality",
     "EnhancedCoordinationEvent", "AgentCollaboration", "CoordinationPattern", "CoordinationPatternType", 
-    "SpecializedAgentRole", "TaskComplexity"
+    "SpecializedAgentRole", "TaskComplexity",
+    "ProjectIndex", "FileEntry", "DependencyRelationship", "IndexSnapshot", "AnalysisSession",
+    "ProjectStatus", "FileType", "DependencyType", "SnapshotType", "AnalysisSessionType", "AnalysisStatus"
 ]
