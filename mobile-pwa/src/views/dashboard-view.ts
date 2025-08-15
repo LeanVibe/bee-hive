@@ -22,8 +22,10 @@ import '../components/dashboard/realtime-agent-status-panel'
 import '../components/dashboard/task-distribution-panel'
 import '../components/dashboard/recovery-controls-panel'
 import '../components/dashboard/communication-monitoring-panel'
+import '../components/dashboard/connection-monitor'
 import '../components/autonomous-development/multi-agent-oversight-dashboard'
 import '../components/autonomous-development/remote-control-center'
+import '../components/common/enhanced-loading-spinner'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
@@ -1525,10 +1527,11 @@ export class DashboardView extends LitElement {
   render() {
     if (this.isLoading && this.tasks.length === 0 && this.agents.length === 0) {
       return html`
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading dashboard data...</p>
-        </div>
+        <enhanced-loading-spinner
+          variant="skeleton"
+          message="Loading dashboard data..."
+          overlay
+        ></enhanced-loading-spinner>
       `
     }
     
@@ -1569,6 +1572,9 @@ export class DashboardView extends LitElement {
               <div class="sync-indicator ${this.offline ? 'offline' : ''}"></div>
               ${this.syncStatusText}
             </div>
+            
+            <!-- Connection Monitor -->
+            <connection-monitor compact .showControls=${false}></connection-monitor>
             
             <!-- Real-time Controls -->
             <div class="realtime-controls">

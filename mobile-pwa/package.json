@@ -13,22 +13,51 @@
     "lint": "eslint . --ext .ts,.js --fix",
     "format": "prettier --write src/",
     "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "generate:schemas": "npx json-schema-to-typescript -i ../schemas/ws_messages.schema.json -o src/types/ws-messages.d.ts",
     "check:schemas": "node ./scripts/check-schema-parity.mjs",
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug",
-    "test:e2e:ui": "playwright test --ui",
+    
+    "test:e2e": "node scripts/run-e2e-tests.js",
+    "test:e2e:smoke": "node scripts/run-e2e-tests.js smoke",
+    "test:e2e:full": "node scripts/run-e2e-tests.js full",
+    "test:e2e:mobile": "node scripts/run-e2e-tests.js mobile",
+    "test:e2e:pwa": "node scripts/run-e2e-tests.js pwa",
+    "test:e2e:performance": "node scripts/run-e2e-tests.js performance",
+    "test:e2e:accessibility": "node scripts/run-e2e-tests.js accessibility",
+    "test:e2e:visual": "node scripts/run-e2e-tests.js visual",
+    "test:e2e:agents": "node scripts/run-e2e-tests.js agents",
+    "test:e2e:realtime": "node scripts/run-e2e-tests.js realtime",
+    
+    "test:e2e:headed": "node scripts/run-e2e-tests.js --headed",
+    "test:e2e:debug": "node scripts/run-e2e-tests.js --debug",
+    "test:e2e:update": "node scripts/run-e2e-tests.js visual --update-snapshots",
+    "test:e2e:install": "playwright install --with-deps",
     "test:e2e:report": "playwright show-report",
-    "test:e2e:install": "playwright install",
+    "test:e2e:help": "node scripts/run-e2e-tests.js --help",
+    
+    "playwright": "playwright test",
+    "playwright:headed": "playwright test --headed",
+    "playwright:debug": "playwright test --debug",
+    "playwright:ui": "playwright test --ui",
+    "playwright:report": "playwright show-report",
+    "playwright:install": "playwright install",
+    
     "test:regression": "playwright test tests/e2e/dashboard-regression.spec.ts",
     "test:regression:headed": "playwright test tests/e2e/dashboard-regression.spec.ts --headed",
     "test:regression:report": "playwright test tests/e2e/dashboard-regression.spec.ts --reporter=html",
+    
     "test:cypress": "cypress run",
     "test:cypress:dev": "cypress open",
+    
     "lighthouse": "lighthouse http://localhost:3001 --output json --output html --view",
     "lighthouse:pwa": "node lighthouse-pwa-audit.js",
-    "pwa:validate": "npm run build && npm run preview & sleep 5 && npm run lighthouse:pwa; kill %1"
+    "pwa:validate": "npm run build && npm run preview & sleep 5 && npm run lighthouse:pwa; kill %1",
+    
+    "test:all": "npm run test && npm run test:e2e:smoke",
+    "test:ci": "npm run test && npm run test:e2e:smoke --no-parallel",
+    "test:local": "npm run test:e2e:smoke --headed",
+    "test:comprehensive": "npm run test:e2e:full && npm run test:e2e:mobile && npm run test:e2e:performance"
   },
   "dependencies": {
     "@auth0/auth0-spa-js": "^2.1.0",

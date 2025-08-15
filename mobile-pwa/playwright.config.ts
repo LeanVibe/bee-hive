@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
+ * Enhanced Playwright Configuration for LeanVibe Agent Hive 2.0
+ * Comprehensive E2E Testing Suite with PWA, Mobile, and Performance Testing
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -18,96 +20,260 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  /* Reporter to use with enhanced reporting */
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { 
+      outputFolder: 'playwright-report',
+      open: 'never' // Don't auto-open in CI
+    }],
     ['json', { outputFile: 'test-results/results.json' }],
-    ['junit', { outputFile: 'test-results/junit.xml' }]
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['blob', { outputDir: 'test-results/blob-report' }],
+    // Add GitHub Actions reporter for CI
+    ...(process.env.CI ? [['github' as const]] : [])
   ],
   
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  /* Shared settings for all projects */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:5173',
+    /* Base URL for testing */
+    baseURL: process.env.TEST_BASE_URL || 'http://localhost:5173',
     
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Backend URL for API testing */
+    extraHTTPHeaders: {
+      'X-Test-Backend-URL': process.env.TEST_BACKEND_URL || 'http://localhost:8000'
+    },
     
-    /* Take screenshot on failure */
-    screenshot: 'only-on-failure',
+    /* Enhanced tracing and debugging */
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     
-    /* Record video on failure */
-    video: 'retain-on-failure',
+    /* Enhanced screenshot settings */
+    screenshot: {
+      mode: 'only-on-failure',
+      fullPage: true
+    },
     
-    /* Global test timeout */
-    actionTimeout: 10 * 1000,
+    /* Enhanced video recording */
+    video: {
+      mode: 'retain-on-failure',
+      size: { width: 1280, height: 720 }
+    },
+    
+    /* Timeouts optimized for real-world conditions */
+    actionTimeout: 15 * 1000, // Increased for real API calls
     navigationTimeout: 30 * 1000,
+    
+    /* Enhanced browser context */
+    viewport: { width: 1280, height: 720 },
+    ignoreHTTPSErrors: true,
+    
+    /* Performance and accessibility testing */
+    launchOptions: {
+      slowMo: process.env.SLOW_MO ? parseInt(process.env.SLOW_MO) : 0
+    }
   },
 
-  /* Configure projects for major browsers */
+  /* Test projects with comprehensive device coverage */
   projects: [
+    // Setup project for global configuration
+    {
+      name: 'setup',
+      testMatch: '**/global-setup.ts',
+      teardown: 'cleanup'
+    },
+    
+    // Cleanup project
+    {
+      name: 'cleanup',
+      testMatch: '**/global-teardown.ts'
+    },
+
+    // Smoke tests - critical path validation
+    {
+      name: 'smoke',
+      testMatch: '**/smoke/**',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup']
+    },
+    
+    // Desktop browsers
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      testIgnore: '**/smoke/**',
+      use: { 
+        ...devices['Desktop Chrome'],
+        channel: 'chrome' // Use stable Chrome
+      },
+      dependencies: ['setup']
     },
     
     {
       name: 'firefox',
+      testIgnore: '**/smoke/**',
       use: { ...devices['Desktop Firefox'] },
+      dependencies: ['setup']
     },
     
     {
       name: 'webkit',
+      testIgnore: '**/smoke/**',
       use: { ...devices['Desktop Safari'] },
+      dependencies: ['setup']
     },
     
-    /* Test against mobile viewports. */
+    {
+      name: 'Microsoft Edge',
+      testIgnore: '**/smoke/**',
+      use: { 
+        ...devices['Desktop Edge'], 
+        channel: 'msedge' 
+      },
+      dependencies: ['setup']
+    },
+    
+    // Mobile devices - PWA focus
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      testMatch: ['**/mobile/**', '**/pwa/**', '**/responsive/**'],
+      use: { 
+        ...devices['Pixel 5'],
+        hasTouch: true
+      },
+      dependencies: ['setup']
     },
     
     {
       name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      testMatch: ['**/mobile/**', '**/pwa/**', '**/responsive/**'],
+      use: { 
+        ...devices['iPhone 12'],
+        hasTouch: true
+      },
+      dependencies: ['setup']
     },
     
-    /* Test against tablet viewports. */
+    {
+      name: 'iPhone 13 Pro',
+      testMatch: ['**/mobile/**', '**/pwa/**'],
+      use: { 
+        ...devices['iPhone 13 Pro'],
+        hasTouch: true
+      },
+      dependencies: ['setup']
+    },
+    
+    // Tablet testing
     {
       name: 'iPad',
-      use: { ...devices['iPad Pro'] },
+      testMatch: ['**/tablet/**', '**/responsive/**'],
+      use: { 
+        ...devices['iPad Pro'],
+        hasTouch: true
+      },
+      dependencies: ['setup']
     },
     
-    /* Test against Microsoft Edge. */
     {
-      name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+      name: 'iPad landscape',
+      testMatch: ['**/tablet/**', '**/responsive/**'],
+      use: { 
+        ...devices['iPad Pro landscape'],
+        hasTouch: true
+      },
+      dependencies: ['setup']
     },
+    
+    // Performance testing project
+    {
+      name: 'performance',
+      testMatch: '**/performance/**',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: [
+            '--enable-precise-memory-info',
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-backgrounding-occluded-windows'
+          ]
+        }
+      },
+      dependencies: ['setup']
+    },
+    
+    // Accessibility testing project
+    {
+      name: 'accessibility',
+      testMatch: '**/accessibility/**',
+      use: {
+        ...devices['Desktop Chrome'],
+        reducedMotion: 'reduce',
+        forcedColors: 'active'
+      },
+      dependencies: ['setup']
+    },
+    
+    // Visual regression testing
+    {
+      name: 'visual-regression',
+      testMatch: '**/visual/**',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Disable animations for consistent screenshots
+        reducedMotion: 'reduce'
+      },
+      dependencies: ['setup']
+    }
   ],
 
-  /* Global setup and teardown - temporarily disabled due to build issues */
-  // globalSetup: './tests/fixtures/global-setup.ts',
-  // globalTeardown: './tests/fixtures/global-teardown.ts',
+  /* Global setup and teardown */
+  globalSetup: require.resolve('./tests/fixtures/global-setup.ts'),
+  globalTeardown: require.resolve('./tests/fixtures/global-teardown.ts'),
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 120 * 1000,
-  },
+  /* Enhanced web server configuration */
+  webServer: [
+    // Frontend dev server
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+      env: {
+        NODE_ENV: 'test'
+      }
+    },
+    // Backend server (conditional)
+    ...(process.env.TEST_WITH_BACKEND ? [{
+      command: 'cd .. && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000',
+      url: 'http://localhost:8000/health',
+      reuseExistingServer: true,
+      timeout: 60 * 1000
+    }] : [])
+  ],
   
-  /* Timeout for each test */
-  timeout: 60 * 1000,
+  /* Enhanced timeouts for comprehensive testing */
+  timeout: process.env.CI ? 90 * 1000 : 60 * 1000,
   
   /* Expect timeout for assertions */
   expect: {
-    timeout: 10 * 1000,
+    timeout: 15 * 1000,
+    // Enhanced screenshot comparison
+    threshold: 0.2,
+    // Animation handling
+    animations: 'disabled'
   },
   
   /* Output directory for test artifacts */
   outputDir: 'test-results/',
   
-  /* Maximum number of test failures before stopping */
-  maxFailures: process.env.CI ? 5 : undefined,
+  /* Enhanced failure handling */
+  maxFailures: process.env.CI ? 10 : undefined,
+  
+  /* Metadata for test organization */
+  metadata: {
+    testSuite: 'LeanVibe Agent Hive 2.0 E2E Tests',
+    version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    backend: process.env.TEST_BACKEND_URL || 'http://localhost:8000',
+    frontend: process.env.TEST_BASE_URL || 'http://localhost:5173'
+  }
 })
