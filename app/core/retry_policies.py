@@ -8,7 +8,7 @@ and circuit breaker integration for robust error handling.
 import asyncio
 import random
 import time
-from typing import Callable, TypeVar, Awaitable, Union, Type, Tuple, Optional
+from typing import Callable, TypeVar, Awaitable, Union, Type, Tuple, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 import structlog
@@ -49,6 +49,21 @@ class RetryExhaustedError(Exception):
             f"Retry exhausted after {attempts} attempts. "
             f"Last exception: {last_exception}"
         )
+
+
+@dataclass
+class RetryResult:
+    """Result of a retry operation."""
+    success: bool
+    result: Optional[Any] = None
+    exception: Optional[Exception] = None
+    attempts: int = 0
+    total_time: float = 0.0
+    
+    @property
+    def failed(self) -> bool:
+        """Check if retry failed."""
+        return not self.success
 
 
 class RetryPolicy:
@@ -417,3 +432,110 @@ _retry_metrics = RetryMetrics()
 def get_retry_metrics() -> RetryMetrics:
     """Get global retry metrics."""
     return _retry_metrics
+
+
+class JitterType(Enum):
+    """Types of jitter for retry delays."""
+    NONE = "none"
+    UNIFORM = "uniform"
+    EXPONENTIAL = "exponential"
+
+
+class RetryPolicyFactory:
+    """Factory for creating retry policies."""
+    
+    @staticmethod
+    def create_exponential_backoff(
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        max_delay: float = 60.0,
+        backoff_multiplier: float = 2.0,
+        jitter: bool = True,
+        retryable_exceptions: Tuple[Type[Exception], ...] = (Exception,)
+    ) -> RetryPolicy:
+        """Create exponential backoff retry policy."""
+        config = RetryConfig(
+            max_retries=max_retries,
+            base_delay=base_delay,
+            max_delay=max_delay,
+            backoff_multiplier=backoff_multiplier,
+            jitter=jitter,
+            strategy=RetryStrategy.EXPONENTIAL_BACKOFF,
+            retryable_exceptions=retryable_exceptions
+        )
+        return RetryPolicy(config)
+    
+    @staticmethod
+    def create_linear_backoff(
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        max_delay: float = 30.0,
+        jitter: bool = True,
+        retryable_exceptions: Tuple[Type[Exception], ...] = (Exception,)
+    ) -> RetryPolicy:
+        """Create linear backoff retry policy."""
+        config = RetryConfig(
+            max_retries=max_retries,
+            base_delay=base_delay,
+            max_delay=max_delay,
+            jitter=jitter,
+            strategy=RetryStrategy.LINEAR_BACKOFF,
+            retryable_exceptions=retryable_exceptions
+        )
+        return RetryPolicy(config)
+    
+    @staticmethod
+    def create_fixed_delay(
+        max_retries: int = 3,
+        delay: float = 1.0,
+        jitter: bool = True,
+        retryable_exceptions: Tuple[Type[Exception], ...] = (Exception,)
+    ) -> RetryPolicy:
+        """Create fixed delay retry policy."""
+        config = RetryConfig(
+            max_retries=max_retries,
+            base_delay=delay,
+            max_delay=delay,
+            jitter=jitter,
+            strategy=RetryStrategy.FIXED_DELAY,
+            retryable_exceptions=retryable_exceptions
+        )
+        return RetryPolicy(config)
+
+
+class RetryExecutor:
+    """Executor for retry operations with metrics and monitoring."""
+    
+    def __init__(self, metrics: Optional[RetryMetrics] = None):
+        """Initialize retry executor."""
+        self.metrics = metrics or _retry_metrics
+        
+    async def execute_with_retry(
+        self,
+        func: Callable[[], Awaitable[T]],
+        policy: RetryPolicy
+    ) -> T:
+        """Execute function with retry policy and metrics collection."""
+        attempt = 0
+        last_exception = None
+        
+        while attempt <= policy.config.max_retries:
+            try:
+                result = await func()
+                self.metrics.record_attempt(attempt, success=True)
+                return result
+            except Exception as e:
+                last_exception = e
+                attempt += 1
+                self.metrics.record_attempt(attempt, success=False)
+                
+                if attempt > policy.config.max_retries:
+                    break
+                    
+                if not policy._is_retryable(e):
+                    raise
+                    
+                delay = policy._calculate_delay(attempt)
+                await asyncio.sleep(delay)
+        
+        raise RetryExhaustedError(attempt, last_exception)

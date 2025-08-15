@@ -639,7 +639,7 @@ class UnifiedProductionOrchestrator:
             # Execute the task
             result = await asyncio.wait_for(
                 agent.execute_task(task),
-                timeout=task.estimated_time_minutes * 60 if task.estimated_time_minutes else 300
+                timeout=task.estimated_effort * 60 if task.estimated_effort else 300
             )
             
             # Update success metrics
