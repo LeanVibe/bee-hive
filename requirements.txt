@@ -32,6 +32,9 @@ asyncio-mqtt>=0.13.0
 aiofiles>=23.2.1
 httpx>=0.25.2
 
+# File System Monitoring
+watchdog>=3.0.0
+
 # Background Tasks & Scheduling
 celery[redis]>=5.3.4
 apscheduler>=3.10.4
