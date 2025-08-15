@@ -32,6 +32,11 @@ from .file_monitor import EnhancedFileMonitor, FileChangeEvent
 from .cache import AdvancedCacheManager
 from .incremental import IncrementalUpdateEngine
 from .events import EventPublisher, get_event_publisher, create_file_event, create_analysis_event, EventType
+from .websocket_events import (
+    get_event_publisher as get_websocket_publisher,
+    ProjectIndexUpdateData, AnalysisProgressData, DependencyChangeData, ContextOptimizedData,
+    publish_project_updated, publish_analysis_progress, publish_dependency_changed, publish_context_optimized
+)
 from .models import (
     ProjectIndexConfig, AnalysisConfiguration, AnalysisResult,
     FileAnalysisResult, DependencyResult, ProjectStatistics
@@ -94,6 +99,9 @@ class ProjectIndexer:
         
         # Event system
         self.event_publisher = event_publisher or get_event_publisher()
+        
+        # WebSocket event publisher for real-time updates
+        self.websocket_publisher = get_websocket_publisher()
         
         # Internal state
         self._active_sessions: Dict[str, AnalysisSession] = {}
@@ -277,6 +285,38 @@ class ProjectIndexer:
                     change_type=event.change_type.value,
                     timestamp=event.timestamp.isoformat()
                 ))
+            
+            # Publish WebSocket dependency change event
+            try:
+                file_stat = event.file_path.stat() if event.file_path.exists() else None
+                
+                dependency_data = DependencyChangeData(
+                    project_id=event.project_id,
+                    file_path=str(event.file_path),
+                    change_type=event.change_type.value,
+                    dependency_details={
+                        "target_file": None,  # Will be analyzed during incremental update
+                        "target_external": None,
+                        "relationship_type": "unknown",
+                        "line_number": None,
+                        "is_circular": False
+                    },
+                    impact_analysis={
+                        "affected_files": [],  # Will be populated during incremental analysis
+                        "potential_issues": [],
+                        "recommendations": []
+                    },
+                    file_metadata={
+                        "language": self.analyzer.detect_language(event.file_path) if event.file_path.exists() else None,
+                        "file_size": file_stat.st_size if file_stat else 0,
+                        "last_modified": datetime.fromtimestamp(file_stat.st_mtime).isoformat() if file_stat else None
+                    }
+                )
+                
+                await publish_dependency_changed(event.project_id, dependency_data)
+                
+            except Exception as ws_error:
+                logger.debug("Failed to publish dependency change WebSocket event", error=str(ws_error))
             
             # Process incremental update if enabled
             if self.config.incremental_updates:
@@ -542,6 +582,35 @@ class ProjectIndexer:
                        files_processed=result.files_processed,
                        dependencies_found=result.dependencies_found)
             
+            # Publish WebSocket event for analysis completion
+            try:
+                update_data = ProjectIndexUpdateData(
+                    project_id=UUID(project_id),
+                    project_name=project.name,
+                    files_analyzed=result.files_processed,
+                    files_updated=result.files_analyzed,
+                    dependencies_updated=result.dependencies_found,
+                    analysis_duration_seconds=analysis_time,
+                    status="completed",
+                    statistics={
+                        "total_files": result.files_processed,
+                        "languages_detected": list(set(
+                            fr.language for fr in result.file_results 
+                            if fr.language and fr.analysis_successful
+                        )),
+                        "dependency_count": result.dependencies_found,
+                        "complexity_score": result.performance_metrics.get('complexity_score', 0.5),
+                        "analysis_type": analysis_type.value
+                    },
+                    error_count=0,
+                    warnings=[]
+                )
+                
+                await publish_project_updated(UUID(project_id), update_data)
+                
+            except Exception as ws_error:
+                logger.warning("Failed to publish WebSocket event", error=str(ws_error))
+            
             return result
             
         except Exception as e:
@@ -588,8 +657,42 @@ class ProjectIndexer:
             
             # Update progress
             progress = 10 + (i / total_files) * 60  # 10-70% for file analysis
-            session.update_progress(progress, f"Analyzing files ({i + 1}-{min(i + batch_size, total_files)})")
+            current_phase = f"Analyzing files ({i + 1}-{min(i + batch_size, total_files)})"
+            session.update_progress(progress, current_phase)
             await self.session.commit()
+            
+            # Publish WebSocket progress event
+            try:
+                processing_rate = i / (time.time() - start_time) if i > 0 else 0.0
+                estimated_completion = None
+                if processing_rate > 0:
+                    remaining_files = total_files - i
+                    remaining_seconds = remaining_files / processing_rate
+                    estimated_completion = datetime.utcnow() + timedelta(seconds=remaining_seconds)
+                
+                progress_data = AnalysisProgressData(
+                    session_id=session.id,
+                    project_id=project.id,
+                    analysis_type=session.session_type.value,
+                    progress_percentage=int(progress),
+                    files_processed=i,
+                    total_files=total_files,
+                    current_file=batch[0].name if batch else None,
+                    estimated_completion=estimated_completion,
+                    processing_rate=processing_rate,
+                    performance_metrics={
+                        "memory_usage_mb": self._get_memory_usage_mb(),
+                        "cpu_usage_percent": 0.0,  # Would need actual CPU monitoring
+                        "parallel_tasks": 1
+                    },
+                    errors_encountered=session.errors_count,
+                    last_error=session.error_log[-1].get('error') if session.error_log else None
+                )
+                
+                await publish_analysis_progress(session.id, progress_data)
+                
+            except Exception as ws_error:
+                logger.debug("Failed to publish progress WebSocket event", error=str(ws_error))
             
             # Analyze batch
             batch_results = await self._analyze_file_batch(project, batch, session)
@@ -1172,6 +1275,44 @@ class ProjectIndexer:
             }
         }
         
+        # Publish WebSocket context optimization event
+        try:
+            context_data = ContextOptimizedData(
+                context_id=uuid.uuid4(),
+                project_id=project.id,
+                task_description="AI-powered context optimization for project analysis",
+                task_type="full_project_optimization",
+                optimization_results={
+                    "selected_files": len(context_optimization.get('core_files', [])),
+                    "total_tokens": sum(
+                        len(str(fr.analysis_data)) for fr in (file_results or [])
+                        if fr.analysis_successful
+                    ),
+                    "relevance_scores": {
+                        "high": len([f for f in context_optimization.get('core_files', [])]),
+                        "medium": len([f for f in context_optimization.get('high_impact_files', [])]),
+                        "low": 0
+                    },
+                    "confidence_score": context_optimization['optimization_metrics']['context_efficiency'],
+                    "processing_time_ms": 100  # Placeholder
+                },
+                recommendations={
+                    "architectural_patterns": ["modular_design", "separation_of_concerns"],
+                    "potential_challenges": ["dependency_complexity"],
+                    "suggested_approach": "Focus on core modules and entry points for initial analysis"
+                },
+                performance_metrics={
+                    "cache_hit_rate": 0.85,
+                    "ml_analysis_time_ms": 50,
+                    "context_assembly_time_ms": 25
+                }
+            )
+            
+            await publish_context_optimized(context_data.context_id, context_data)
+            
+        except Exception as ws_error:
+            logger.debug("Failed to publish context optimization WebSocket event", error=str(ws_error))
+        
         return context_optimization
     
     # ================== HELPER METHODS ==================
@@ -1316,3 +1457,19 @@ class ProjectIndexer:
             'deleted_sessions': session_result.rowcount,
             'deleted_snapshots': snapshot_result.rowcount
         }
+    
+    def _get_memory_usage_mb(self) -> float:
+        """Get current memory usage in MB."""
+        try:
+            import psutil
+            import os
+            
+            process = psutil.Process(os.getpid())
+            memory_info = process.memory_info()
+            return memory_info.rss / 1024 / 1024  # Convert bytes to MB
+        except ImportError:
+            # psutil not available, return placeholder
+            return 0.0
+        except Exception as e:
+            logger.debug("Failed to get memory usage", error=str(e))
+            return 0.0

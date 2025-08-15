@@ -224,7 +224,10 @@ class ProjectIndexWebSocketHandler:
                     "connection_id": connection_id,
                     "user_id": user_id,
                     "available_events": [
+                        "project_index_updated",
                         "analysis_progress",
+                        "dependency_changed",
+                        "context_optimized",
                         "file_change", 
                         "dependency_update",
                         "project_status_change"
