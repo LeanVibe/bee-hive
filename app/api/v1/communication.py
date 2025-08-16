@@ -17,15 +17,23 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.communication import MessageBroker, SimplePubSub, CommunicationError
-from ...core.agent_communication_service import AgentCommunicationService, AgentMessage
-from ...core.redis_pubsub_manager import RedisPubSubManager, StreamStats
-from ...core.message_processor import MessageProcessor, ProcessingMetrics
+from ...core.messaging_service import (
+    get_messaging_service, MessagingService, Message, 
+    MessageType as UnifiedMessageType, 
+    MessagePriority as UnifiedMessagePriority, 
+    RoutingStrategy
+)
+from ...core.messaging_migration import LegacyMessageAdapter, mark_migration_complete
+# Legacy imports - DEPRECATED, use messaging_service instead
+# from ...core.communication import MessageBroker, SimplePubSub, CommunicationError
+# from ...core.agent_communication_service import AgentCommunicationService, AgentMessage
+# from ...core.redis_pubsub_manager import RedisPubSubManager, StreamStats
+# from ...core.message_processor import MessageProcessor, ProcessingMetrics
 from ...core.database import get_async_session
 from ...models.message import (
     StreamMessage,
-    MessageType,
-    MessagePriority,
+    MessageType as LegacyMessageType,
+    MessagePriority as LegacyMessagePriority,
     MessageAudit,
     StreamInfo,
     MessageDeliveryReport
@@ -42,11 +50,12 @@ class SendMessageRequest(BaseModel):
     
     from_agent: str = Field(..., min_length=1, max_length=255)
     to_agent: Optional[str] = Field(None, max_length=255)  # None for broadcast
-    message_type: MessageType
+    message_type: UnifiedMessageType
     payload: Dict[str, Any] = Field(default_factory=dict)
-    priority: MessagePriority = MessagePriority.NORMAL
+    priority: UnifiedMessagePriority = UnifiedMessagePriority.NORMAL
     ttl: Optional[int] = Field(None, gt=0, description="TTL in seconds")
     correlation_id: Optional[str] = Field(None, description="For request/response correlation")
+    routing_strategy: RoutingStrategy = RoutingStrategy.DIRECT
 
 
 class SendMessageResponse(BaseModel):
@@ -183,42 +192,57 @@ class ReplayRequest(BaseModel):
     count: int = Field(100, ge=1, le=1000)
 
 
+async def get_messaging_service_dependency():
+    """Dependency to get unified messaging service"""
+    messaging = get_messaging_service()
+    if not messaging._connected:
+        await messaging.connect()
+        await messaging.start_service()
+    return messaging
+
 @router.post("/send", response_model=SendMessageResponse, status_code=status.HTTP_201_CREATED)
 async def send_message(
     request: SendMessageRequest,
-    broker: MessageBroker = Depends(get_message_broker)
+    messaging: MessagingService = Depends(get_messaging_service_dependency)
 ) -> SendMessageResponse:
     """
-    Send a message via Redis Streams with reliability guarantees.
+    Send a message via unified messaging service with reliability guarantees.
     
     The message will be delivered with at-least-once semantics,
-    signed for authenticity, and audited for compliance.
+    circuit breaker protection, and comprehensive monitoring.
     """
     try:
-        # Create stream message
-        message = StreamMessage(
-            from_agent=request.from_agent,
-            to_agent=request.to_agent,
-            message_type=request.message_type,
+        # Create unified message
+        message = Message(
+            type=request.message_type,
+            sender=request.from_agent,
+            recipient=request.to_agent,
             payload=request.payload,
             priority=request.priority,
             ttl=request.ttl,
-            correlation_id=request.correlation_id
+            correlation_id=request.correlation_id,
+            routing_strategy=request.routing_strategy
         )
         
-        # Send message
-        message_id = await broker.send_message(message)
+        # Send message via unified messaging service
+        success = await messaging.send_message(message)
         stream_name = message.get_stream_name()
         
-        logger.info(f"Message sent: {message_id} to {stream_name}")
+        if success:
+            logger.info(f"Message sent: {message.id} to {stream_name}")
+            
+            return SendMessageResponse(
+                message_id=message.id,
+                stream_name=stream_name,
+                timestamp=message.timestamp
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Message delivery failed"
+            )
         
-        return SendMessageResponse(
-            message_id=message_id,
-            stream_name=stream_name,
-            timestamp=message.timestamp
-        )
-        
-    except CommunicationError as e:
+    except Exception as e:
         logger.error(f"Failed to send message: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

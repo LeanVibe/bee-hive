@@ -31,15 +31,18 @@ from pathlib import Path
 
 import structlog
 
-from .redis import get_message_broker, AgentMessageBroker
-from .agent_communication_service import AgentCommunicationService, AgentMessage
+from .messaging_service import get_messaging_service, MessagingService, Message, MessageType as UnifiedMessageType, MessagePriority
+from .messaging_migration import MessagingServiceAdapter, LegacyMessageAdapter, mark_migration_complete
+# Legacy imports - DEPRECATED, use messaging_service instead
+# from .redis import get_message_broker, AgentMessageBroker
+# from .agent_communication_service import AgentCommunicationService, AgentMessage
 from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext
 from .capability_matcher import CapabilityMatcher
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.task import Task, TaskStatus, TaskPriority
 from ..models.workflow import Workflow, WorkflowStatus
-from ..models.message import MessageType
+from ..models.message import MessageType as LegacyMessageType
 from ..models.coordination_event import CoordinationEvent, BusinessValueMetric, CoordinationEventType
 from .database import get_session
 
@@ -284,8 +287,7 @@ class EnhancedMultiAgentCoordinator:
         self.active_collaborations: Dict[str, CollaborationContext] = {}
         
         # Communication and workflow systems
-        self.message_broker: Optional[AgentMessageBroker] = None
-        self.communication_service: Optional[AgentCommunicationService] = None
+        self.messaging_service: Optional[MessagingService] = None
         self.workflow_engine: Optional[WorkflowEngine] = None
         self.task_router: Optional[IntelligentTaskRouter] = None
         self.capability_matcher: Optional[CapabilityMatcher] = None
@@ -308,9 +310,13 @@ class EnhancedMultiAgentCoordinator:
         try:
             self.logger.info("🚀 Initializing Enhanced Multi-Agent Coordination System")
             
-            # Initialize communication systems
-            self.message_broker = await get_message_broker()
-            self.communication_service = AgentCommunicationService(self.message_broker)
+            # Initialize unified messaging service
+            self.messaging_service = get_messaging_service()
+            await self.messaging_service.connect()
+            await self.messaging_service.start_service()
+            
+            # Register coordination message handlers
+            await self._register_coordination_handlers()
             
             # Initialize workflow and routing systems
             self.workflow_engine = WorkflowEngine()
@@ -327,6 +333,107 @@ class EnhancedMultiAgentCoordinator:
         except Exception as e:
             self.logger.error("❌ Failed to initialize coordination system", error=str(e))
             raise
+    
+    async def _register_coordination_handlers(self) -> None:
+        """Register message handlers for multi-agent coordination"""
+        from .messaging_service import MessageHandler
+        
+        class CoordinationMessageHandler(MessageHandler):
+            def __init__(self, coordinator):
+                super().__init__(
+                    handler_id="coordination",
+                    pattern="coordination.*",
+                    message_types=[
+                        UnifiedMessageType.TASK_ASSIGNMENT, UnifiedMessageType.TASK_COMPLETION,
+                        UnifiedMessageType.EVENT, UnifiedMessageType.BROADCAST,
+                        UnifiedMessageType.STATUS_UPDATE, UnifiedMessageType.REQUEST,
+                        UnifiedMessageType.RESPONSE
+                    ]
+                )
+                self.coordinator = coordinator
+            
+            async def _process_message(self, message: Message) -> Optional[Message]:
+                """Process coordination messages"""
+                try:
+                    if message.type == UnifiedMessageType.TASK_ASSIGNMENT:
+                        await self._handle_task_assignment(message)
+                    elif message.type == UnifiedMessageType.TASK_COMPLETION:
+                        await self._handle_task_completion(message)
+                    elif message.type == UnifiedMessageType.STATUS_UPDATE:
+                        await self._handle_agent_status_update(message)
+                    elif message.type == UnifiedMessageType.REQUEST:
+                        return await self._handle_coordination_request(message)
+                    elif message.type == UnifiedMessageType.EVENT:
+                        await self._handle_coordination_event(message)
+                    
+                    return None
+                except Exception as e:
+                    logger.error(f"Coordination message handler failed for {message.id}", error=str(e))
+                    return None
+            
+            async def _handle_task_assignment(self, message: Message) -> None:
+                """Handle task assignment messages"""
+                task_id = message.payload.get("task_id")
+                agent_id = message.recipient
+                task_data = message.payload.get("task_data", {})
+                
+                logger.info(f"Task {task_id} assigned to agent {agent_id}",
+                           task_id=task_id, agent_id=agent_id)
+            
+            async def _handle_task_completion(self, message: Message) -> None:
+                """Handle task completion messages"""
+                task_id = message.payload.get("task_id")
+                agent_id = message.sender
+                result = message.payload.get("result", {})
+                
+                logger.info(f"Task {task_id} completed by agent {agent_id}",
+                           task_id=task_id, agent_id=agent_id)
+            
+            async def _handle_agent_status_update(self, message: Message) -> None:
+                """Handle agent status updates"""
+                agent_id = message.sender
+                status = message.payload.get("status")
+                
+                logger.debug(f"Agent {agent_id} status updated: {status}",
+                            agent_id=agent_id, status=status)
+            
+            async def _handle_coordination_request(self, message: Message) -> Message:
+                """Handle coordination requests from agents"""
+                request_type = message.payload.get("type", "status")
+                
+                return Message(
+                    type=UnifiedMessageType.RESPONSE,
+                    sender="coordination_system",
+                    recipient=message.sender,
+                    payload={
+                        "status": "processed",
+                        "request_type": request_type,
+                        "timestamp": datetime.utcnow().isoformat()
+                    },
+                    correlation_id=message.id,
+                    priority=MessagePriority.NORMAL
+                )
+            
+            async def _handle_coordination_event(self, message: Message) -> None:
+                """Handle coordination events"""
+                event_type = message.payload.get("event_type")
+                
+                logger.info(f"Coordination event: {event_type}",
+                           event_type=event_type, sender=message.sender)
+        
+        # Register the coordination handler
+        handler = CoordinationMessageHandler(self)
+        self.messaging_service.register_handler(handler)
+        
+        # Subscribe to coordination topics
+        await self.messaging_service.subscribe_to_topic("coordination", "coordination")
+        await self.messaging_service.subscribe_to_topic("agents", "coordination")
+        await self.messaging_service.subscribe_to_topic("tasks", "coordination")
+        
+        logger.info("Coordination messaging handlers registered")
+        
+        # Mark coordination as migrated to unified messaging service
+        mark_migration_complete("multiagent_integration")
     
     async def record_collaboration_event(self, 
                                        event_type: CoordinationEventType,

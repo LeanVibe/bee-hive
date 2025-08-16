@@ -23,9 +23,12 @@ import threading
 from anthropic import AsyncAnthropic
 
 from .config import settings
-from .redis import get_message_broker, get_session_cache, AgentMessageBroker, SessionCache
-from .agent_communication_service import AgentCommunicationService, AgentMessage
-from .message_processor import MessageProcessor, ProcessingMetrics
+from .redis import get_session_cache, SessionCache
+from .messaging_service import get_messaging_service, MessagingService, Message, MessageType, MessagePriority
+from .messaging_migration import MessagingServiceAdapter, mark_migration_complete
+# Legacy imports - DEPRECATED, use messaging_service instead
+# from .agent_communication_service import AgentCommunicationService, AgentMessage
+# from .message_processor import MessageProcessor, ProcessingMetrics
 from .database import get_session
 from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy, AgentSuitabilityScore
@@ -105,9 +108,10 @@ class AgentOrchestrator:
     def __init__(self):
         self.agents: Dict[str, AgentInstance] = {}
         self.active_sessions: Dict[str, Session] = {}
-        self.message_broker: Optional[AgentMessageBroker] = None
-        self.communication_service: Optional[AgentCommunicationService] = None
-        self.message_processor: Optional[MessageProcessor] = None
+        
+        # Unified messaging service (replaces message_broker, communication_service, message_processor)
+        self.messaging_service: Optional[MessagingService] = None
+        
         self.session_cache: Optional[SessionCache] = None
         self.anthropic_client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
         
@@ -177,23 +181,17 @@ class AgentOrchestrator:
     
     async def start(self) -> None:
         """Start the agent orchestrator and background tasks."""
-        logger.info("🎭 Starting Agent Orchestrator...")
+        logger.info("🎭 Starting Agent Orchestrator with unified messaging...")
         
-        self.message_broker = get_message_broker()
         self.session_cache = get_session_cache()
         
-        # Initialize enhanced communication system
-        self.communication_service = AgentCommunicationService(
-            enable_streams=True,
-            consumer_name=f"orchestrator-{uuid.uuid4().hex[:8]}"
-        )
-        await self.communication_service.connect()
+        # Initialize unified messaging service (replaces multiple messaging services)
+        self.messaging_service = get_messaging_service()
+        await self.messaging_service.connect()
+        await self.messaging_service.start_service()
         
-        # Initialize message processor
-        self.message_processor = MessageProcessor(
-            dead_letter_handler=self._handle_dead_letter_message
-        )
-        await self.message_processor.start()
+        # Register orchestrator message handlers
+        await self._register_messaging_handlers()
         
         self.is_running = True
         
@@ -240,14 +238,124 @@ class AgentOrchestrator:
         for agent_id in list(self.agents.keys()):
             await self.shutdown_agent(agent_id, graceful=True)
         
-        # Shutdown enhanced communication system
-        if self.message_processor:
-            await self.message_processor.stop()
-        
-        if self.communication_service:
-            await self.communication_service.disconnect()
+        # Shutdown unified messaging service
+        if self.messaging_service:
+            await self.messaging_service.stop_service()
+            await self.messaging_service.disconnect()
         
         logger.info("✅ Agent Orchestrator shutdown complete")
+        
+        # Mark orchestrator as migrated to unified messaging service
+        mark_migration_complete("orchestrator_migrated")
+    
+    async def _register_messaging_handlers(self) -> None:
+        """Register message handlers for orchestrator operations"""
+        from .messaging_service import MessageHandler
+        
+        class OrchestratorMessageHandler(MessageHandler):
+            def __init__(self, orchestrator):
+                super().__init__(
+                    handler_id="orchestrator",
+                    pattern="orchestrator.*",
+                    message_types=[
+                        MessageType.HEARTBEAT_REQUEST, MessageType.HEARTBEAT_RESPONSE,
+                        MessageType.TASK_ASSIGNMENT, MessageType.TASK_COMPLETION,
+                        MessageType.AGENT_REGISTERED, MessageType.AGENT_DEREGISTERED,
+                        MessageType.STATUS_UPDATE, MessageType.SYSTEM_SHUTDOWN
+                    ]
+                )
+                self.orchestrator = orchestrator
+            
+            async def _process_message(self, message: Message) -> Optional[Message]:
+                """Process orchestrator-specific messages"""
+                try:
+                    if message.type == MessageType.HEARTBEAT_REQUEST:
+                        return await self._handle_heartbeat_request(message)
+                    elif message.type == MessageType.TASK_COMPLETION:
+                        await self._handle_task_completion(message)
+                    elif message.type == MessageType.AGENT_REGISTERED:
+                        await self._handle_agent_registration(message)
+                    elif message.type == MessageType.STATUS_UPDATE:
+                        await self._handle_status_update(message)
+                    elif message.type == MessageType.SYSTEM_SHUTDOWN:
+                        await self._handle_system_shutdown(message)
+                    
+                    return None
+                except Exception as e:
+                    logger.error(f"Orchestrator message handler failed for {message.id}", error=str(e))
+                    return None
+            
+            async def _handle_heartbeat_request(self, message: Message) -> Message:
+                """Handle heartbeat requests from agents"""
+                return Message(
+                    type=MessageType.HEARTBEAT_RESPONSE,
+                    sender="orchestrator",
+                    recipient=message.sender,
+                    payload={
+                        "status": "alive",
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "request_id": message.payload.get("request_id"),
+                        "orchestrator_health": "healthy" if self.orchestrator.is_running else "degraded"
+                    },
+                    correlation_id=message.id,
+                    priority=MessagePriority.HIGH
+                )
+            
+            async def _handle_task_completion(self, message: Message) -> None:
+                """Handle task completion notifications"""
+                task_id = message.payload.get("task_id")
+                agent_id = message.sender
+                result = message.payload.get("result")
+                
+                logger.info(f"Task {task_id} completed by agent {agent_id}",
+                           task_id=task_id, agent_id=agent_id)
+                
+                # Update agent status
+                if agent_id in self.orchestrator.agents:
+                    self.orchestrator.agents[agent_id].current_task = None
+                    self.orchestrator.agents[agent_id].status = AgentStatus.IDLE
+            
+            async def _handle_agent_registration(self, message: Message) -> None:
+                """Handle agent registration notifications"""
+                agent_id = message.sender
+                capabilities = message.payload.get("capabilities", [])
+                
+                logger.info(f"Agent {agent_id} registered with orchestrator",
+                           agent_id=agent_id, capabilities=capabilities)
+            
+            async def _handle_status_update(self, message: Message) -> None:
+                """Handle agent status updates"""
+                agent_id = message.sender
+                status = message.payload.get("status")
+                context_usage = message.payload.get("context_usage", 0.0)
+                
+                if agent_id in self.orchestrator.agents:
+                    self.orchestrator.agents[agent_id].context_window_usage = context_usage
+                    self.orchestrator.agents[agent_id].last_heartbeat = datetime.utcnow()
+                    
+                    logger.debug(f"Agent {agent_id} status updated",
+                               agent_id=agent_id, status=status, context_usage=context_usage)
+            
+            async def _handle_system_shutdown(self, message: Message) -> None:
+                """Handle system shutdown notifications"""
+                reason = message.payload.get("reason", "Unknown")
+                grace_period = message.payload.get("grace_period_seconds", 300)
+                
+                logger.warning(f"System shutdown requested: {reason}",
+                              reason=reason, grace_period=grace_period)
+                
+                # Initiate graceful shutdown
+                asyncio.create_task(self.orchestrator.shutdown())
+        
+        # Register the orchestrator handler
+        handler = OrchestratorMessageHandler(self)
+        self.messaging_service.register_handler(handler)
+        
+        # Subscribe to system-wide events
+        await self.messaging_service.subscribe_to_topic("system", "orchestrator")
+        await self.messaging_service.subscribe_to_topic("orchestrator", "orchestrator")
+        
+        logger.info("Orchestrator messaging handlers registered")
     
     async def _handle_dead_letter_message(
         self,
