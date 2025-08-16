@@ -586,6 +586,10 @@ def circuit_breaker(
     return decorator
 
 
+# Alias for backward compatibility and public API consistency
+CircuitBreaker = UnifiedCircuitBreaker
+
+
 class CircuitBreakerRegistry:
     """Registry for managing multiple circuit breakers."""
     
