@@ -63,6 +63,7 @@ class DashboardWebSocketManager:
             "tasks": set(),
             "system": set(),
             "alerts": set(),
+            "project_index": set(),
         }
         self.broadcast_task: asyncio.Task | None = None
         self.redis_listener_task: asyncio.Task | None = None
@@ -647,6 +648,7 @@ class DashboardWebSocketManager:
                     pubsub = await pubsub  # type: ignore[assignment]
                 await pubsub.subscribe("system_events")
                 await pubsub.psubscribe("agent_events:*")
+                await pubsub.subscribe("project_index:websocket_events")
 
                 # Reset backoff after successful subscribe
                 backoff_seconds = 5
@@ -707,6 +709,15 @@ class DashboardWebSocketManager:
                     await self.broadcast_to_subscription("system", "system_event", data)
             elif channel.startswith("agent_events:") and self.subscription_groups["agents"]:
                     await self.broadcast_to_subscription("agents", "agent_event", data)
+            elif channel == "project_index:websocket_events":
+                if self.subscription_groups["project_index"]:
+                    # Extract event from Project Index message format
+                    event = data.get("event", {})
+                    subscribers = data.get("subscribers", [])
+                    
+                    # Route to project_index subscription group if there are subscribers
+                    if event and (not subscribers or any(conn_id in self.connections for conn_id in subscribers)):
+                        await self.broadcast_to_subscription("project_index", "project_index_event", event)
 
         except Exception as e:
             logger.error("Error handling Redis event", error=str(e))
@@ -919,7 +930,7 @@ async def websocket_system(
 async def websocket_dashboard_all(
     websocket: WebSocket,
     connection_id: str | None = Query(None, description="Optional connection ID"),
-    subscriptions: str | None = Query("agents,coordination,tasks,system", description="Comma-separated subscriptions"),
+    subscriptions: str | None = Query("agents,coordination,tasks,system,project_index", description="Comma-separated subscriptions"),
 ):
     """
     WebSocket endpoint for comprehensive dashboard monitoring.
@@ -987,7 +998,8 @@ async def get_websocket_stats():
                 "coordination",
                 "tasks",
                 "system",
-                "alerts"
+                "alerts",
+                "project_index"
             ],
             "last_updated": datetime.utcnow().isoformat()
         }

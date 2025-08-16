@@ -221,6 +221,7 @@ def create_app() -> FastAPI:
     from .api.dashboard_websockets import router as dashboard_websockets_router
     from .api.dashboard_prometheus import router as dashboard_prometheus_router
     from .api.dashboard_compat import router as dashboard_compat_router
+    from .api.project_index import router as project_index_router
 
     app = FastAPI(
         title="LeanVibe Agent Hive 2.0",
@@ -311,6 +312,9 @@ def create_app() -> FastAPI:
     app.include_router(dashboard_prometheus_router, tags=["dashboard-prometheus"])
     # Legacy compatibility routes for PWA expecting /dashboard/api/* (no HTML)
     app.include_router(dashboard_compat_router)
+    
+    # Project Index API for intelligent code analysis and context optimization
+    app.include_router(project_index_router, tags=["project-index"])
     
     @app.get("/debug-agents")
     async def debug_agents():
