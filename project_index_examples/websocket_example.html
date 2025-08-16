@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Index WebSocket Example</title>
+</head>
+<body>
+    <h1>Project Index Real-time Updates</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8000/api/project-index/ws?token=demo');
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+
+        ws.onopen = () => {
+            statusDiv.textContent = 'Connected ✅';
+            
+            // Subscribe to events
+            ws.send(JSON.stringify({
+                action: 'subscribe',
+                event_types: ['analysis_progress', 'file_change', 'dependency_changed'],
+                project_id: 'your-project-id'  // Replace with actual project ID
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const messageDiv = document.createElement('div');
+            
+            switch(data.type) {
+                case 'analysis_progress':
+                    messageDiv.innerHTML = `📊 Analysis: ${data.progress_percentage}% complete`;
+                    break;
+                case 'file_change':
+                    messageDiv.innerHTML = `📁 File changed: ${data.file_path}`;
+                    break;
+                case 'dependency_changed':
+                    messageDiv.innerHTML = `🔗 Dependency: ${data.dependency_details.target_name}`;
+                    break;
+                default:
+                    messageDiv.innerHTML = `📨 ${data.type}: ${JSON.stringify(data)}`;
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+        };
+
+        ws.onclose = () => {
+            statusDiv.textContent = 'Disconnected ❌';
+        };
+
+        ws.onerror = (error) => {
+            statusDiv.textContent = 'Error ⚠️';
+            console.error('WebSocket error:', error);
+        };
+    </script>
+</body>
+</html>
