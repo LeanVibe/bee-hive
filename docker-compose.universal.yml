@@ -1,0 +1,394 @@
+# Universal Project Index - Docker Compose Configuration
+# This file creates a self-contained Project Index deployment for any project
+version: '3.8'
+
+services:
+  # Project Index Core Engine
+  project-index:
+    image: leanvibe/project-index:latest
+    container_name: project_index_core
+    ports:
+      - "${PROJECT_INDEX_PORT:-8100}:8000"
+    environment:
+      # Database connection
+      - DATABASE_URL=postgresql://project_user:${PROJECT_INDEX_PASSWORD}@postgres:5432/project_index
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      
+      # Project configuration
+      - PROJECT_ROOT=/workspace
+      - PROJECT_NAME=${PROJECT_NAME}
+      - PROJECT_LANGUAGE=${PROJECT_LANGUAGE:-auto-detect}
+      - ANALYSIS_MODE=${ANALYSIS_MODE:-smart}
+      
+      # Performance settings
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-2}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-10}
+      - ANALYSIS_TIMEOUT_SECONDS=${ANALYSIS_TIMEOUT_SECONDS:-300}
+      - CACHE_TTL_HOURS=${CACHE_TTL_HOURS:-24}
+      
+      # Feature flags
+      - ENABLE_REAL_TIME_MONITORING=${ENABLE_REAL_TIME_MONITORING:-true}
+      - ENABLE_ML_ANALYSIS=${ENABLE_ML_ANALYSIS:-false}
+      - ENABLE_METRICS=${ENABLE_METRICS:-false}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=json
+      
+      # File patterns (language-specific overrides)
+      - MONITOR_PATTERNS=${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts,**/*.go,**/*.rs,**/*.java,**/*.cpp,**/*.c,**/*.h}
+      - IGNORE_PATTERNS=${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**,**/__pycache__/**,**/target/**,**/build/**,**/dist/**}
+      
+    volumes:
+      # Project files (read-only for security)
+      - "${HOST_PROJECT_PATH}:/workspace:ro"
+      # Persistent data
+      - project_data:/app/data
+      - analysis_cache:/app/cache
+      # Configuration
+      - ./config:/app/config:ro
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+        
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${PROJECT_INDEX_MEMORY_LIMIT:-1G}
+          cpus: ${PROJECT_INDEX_CPU_LIMIT:-0.5}
+        reservations:
+          memory: ${PROJECT_INDEX_MEMORY_RESERVATION:-512M}
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+
+  # PostgreSQL with Vector Extensions  
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: project_index_postgres
+    environment:
+      POSTGRES_DB: project_index
+      POSTGRES_USER: project_user
+      POSTGRES_PASSWORD: ${PROJECT_INDEX_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=md5"
+      
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+      
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U project_user -d project_index"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-512M}
+          cpus: ${POSTGRES_CPU_LIMIT:-0.25}
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+
+  # Redis for Caching and Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: project_index_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory ${REDIS_MEMORY_LIMIT:-256m} --maxmemory-policy allkeys-lru
+    
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+      
+    volumes:
+      - redis_data:/data
+      
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEMORY_LIMIT:-256M}
+          cpus: ${REDIS_CPU_LIMIT:-0.1}
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+
+  # Analysis Worker (Scalable)
+  analysis-worker:
+    image: leanvibe/project-index-worker:latest
+    container_name: project_index_worker_${WORKER_ID:-1}
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - DATABASE_URL=postgresql://project_user:${PROJECT_INDEX_PASSWORD}@postgres:5432/project_index
+      - PROJECT_ROOT=/workspace
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-2}
+      - WORKER_ID=${WORKER_ID:-1}
+      - ANALYSIS_MODE=${ANALYSIS_MODE:-smart}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+    volumes:
+      - "${HOST_PROJECT_PATH}:/workspace:ro"
+      - analysis_cache:/app/cache
+      
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      project-index:
+        condition: service_healthy
+        
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', password='${REDIS_PASSWORD}'); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${WORKER_MEMORY_LIMIT:-512M}
+          cpus: ${WORKER_CPU_LIMIT:-0.25}
+      replicas: ${WORKER_REPLICAS:-1}
+      
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    profiles:
+      - workers
+
+  # File Monitor Service
+  file-monitor:
+    image: leanvibe/project-index-monitor:latest
+    container_name: project_index_monitor
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - PROJECT_ROOT=/workspace
+      - MONITOR_PATTERNS=${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts,**/*.go,**/*.rs,**/*.java}
+      - IGNORE_PATTERNS=${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**,**/__pycache__/**}
+      - DEBOUNCE_SECONDS=${DEBOUNCE_SECONDS:-2.0}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+    volumes:
+      - "${HOST_PROJECT_PATH}:/workspace:ro"
+      
+    depends_on:
+      redis:
+        condition: service_healthy
+        
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; assert os.path.exists('/workspace')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    profiles:
+      - monitoring
+
+  # Web Dashboard (Optional)
+  dashboard:
+    image: leanvibe/project-index-dashboard:latest
+    container_name: project_index_dashboard
+    ports:
+      - "${DASHBOARD_PORT:-8101}:3000"
+      
+    environment:
+      - API_BASE_URL=http://project-index:8000
+      - PROJECT_NAME=${PROJECT_NAME}
+      - WEBSOCKET_URL=ws://project-index:8000/ws
+      - ENABLE_AUTHENTICATION=${DASHBOARD_AUTH:-false}
+      
+    depends_on:
+      project-index:
+        condition: service_healthy
+        
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    profiles:
+      - dashboard
+
+  # Metrics and Monitoring (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: project_index_prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+      
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+      
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      
+    depends_on:
+      - project-index
+      
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.2'
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    profiles:
+      - monitoring
+      - metrics
+
+  # Grafana Dashboard (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: project_index_grafana
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+      
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+      
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+      
+    depends_on:
+      - prometheus
+      
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.1'
+          
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    profiles:
+      - monitoring
+      - metrics
+
+networks:
+  project_index_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  # Persistent database storage
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/postgres
+      
+  # Redis data with persistence
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/redis
+      
+  # Analysis cache - faster access, can be ephemeral
+  analysis_cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/cache
+      
+  # Project metadata and configurations  
+  project_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/project
+      
+  # Monitoring data (optional)
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/prometheus
+      
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/grafana
+
+# Health check extension for better dependency management
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 60s
+
+# Resource limits based on deployment profile
+x-resource-limits:
+  small: &small-resources
+    memory: 512M
+    cpus: '0.25'
+    
+  medium: &medium-resources
+    memory: 1G
+    cpus: '0.5'
+    
+  large: &large-resources
+    memory: 2G
+    cpus: '1.0'

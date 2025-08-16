@@ -1,0 +1,436 @@
+# Project Size-Based Configuration Profiles
+# Optimized resource allocation and performance settings
+
+# Small Projects (< 100 files)
+small:
+  description: "Lightweight configuration for small projects"
+  file_threshold: 100
+  resource_limits:
+    project_index:
+      memory: "512M"
+      cpu: "0.25"
+    postgres:
+      memory: "256M"
+      cpu: "0.1"
+    redis:
+      memory: "128M"
+      cpu: "0.05"
+    worker:
+      memory: "256M"
+      cpu: "0.1"
+  performance:
+    worker_concurrency: 1
+    worker_replicas: 1
+    analysis_mode: "fast"
+    max_file_size_mb: 5
+    analysis_timeout_seconds: 120
+    cache_ttl_hours: 12
+    batch_size: 10
+  monitoring:
+    debounce_seconds: 1.0
+    enable_real_time: true
+    enable_ml_analysis: false
+  features:
+    dashboard: true
+    metrics: false
+    advanced_search: false
+
+# Medium Projects (100-1000 files)  
+medium:
+  description: "Balanced configuration for medium projects"
+  file_threshold: 1000
+  resource_limits:
+    project_index:
+      memory: "1G"
+      cpu: "0.5"
+    postgres:
+      memory: "512M"
+      cpu: "0.25"
+    redis:
+      memory: "256M"
+      cpu: "0.1"
+    worker:
+      memory: "512M"
+      cpu: "0.25"
+  performance:
+    worker_concurrency: 2
+    worker_replicas: 1
+    analysis_mode: "smart"
+    max_file_size_mb: 10
+    analysis_timeout_seconds: 300
+    cache_ttl_hours: 24
+    batch_size: 25
+  monitoring:
+    debounce_seconds: 2.0
+    enable_real_time: true
+    enable_ml_analysis: false
+  features:
+    dashboard: true
+    metrics: false
+    advanced_search: true
+
+# Large Projects (1000-5000 files)
+large:
+  description: "High-performance configuration for large projects"
+  file_threshold: 5000
+  resource_limits:
+    project_index:
+      memory: "2G"
+      cpu: "1.0"
+    postgres:
+      memory: "1G"
+      cpu: "0.5"
+    redis:
+      memory: "512M"
+      cpu: "0.2"
+    worker:
+      memory: "1G"
+      cpu: "0.5"
+  performance:
+    worker_concurrency: 4
+    worker_replicas: 2
+    analysis_mode: "full"
+    max_file_size_mb: 15
+    analysis_timeout_seconds: 600
+    cache_ttl_hours: 48
+    batch_size: 50
+  monitoring:
+    debounce_seconds: 3.0
+    enable_real_time: true
+    enable_ml_analysis: true
+  features:
+    dashboard: true
+    metrics: true
+    advanced_search: true
+
+# Enterprise Projects (5000+ files)
+enterprise:
+  description: "Enterprise-grade configuration for massive projects"
+  file_threshold: 999999
+  resource_limits:
+    project_index:
+      memory: "4G"
+      cpu: "2.0"
+    postgres:
+      memory: "2G"
+      cpu: "1.0"
+    redis:
+      memory: "1G"
+      cpu: "0.5"
+    worker:
+      memory: "2G"
+      cpu: "1.0"
+  performance:
+    worker_concurrency: 8
+    worker_replicas: 4
+    analysis_mode: "comprehensive"
+    max_file_size_mb: 25
+    analysis_timeout_seconds: 1200
+    cache_ttl_hours: 72
+    batch_size: 100
+  monitoring:
+    debounce_seconds: 5.0
+    enable_real_time: true
+    enable_ml_analysis: true
+  features:
+    dashboard: true
+    metrics: true
+    advanced_search: true
+
+# Language-Specific Optimizations
+language_profiles:
+  python:
+    file_patterns:
+      include:
+        - "**/*.py"
+        - "**/*.pyx"
+        - "**/*.pyi"
+        - "**/*.ipynb"
+        - "**/requirements*.txt"
+        - "**/pyproject.toml"
+        - "**/setup.py"
+        - "**/setup.cfg"
+        - "**/*.yml"
+        - "**/*.yaml"
+      exclude:
+        - "**/__pycache__/**"
+        - "**/.pytest_cache/**"
+        - "**/.mypy_cache/**"
+        - "**/venv/**"
+        - "**/.venv/**"
+        - "**/*.pyc"
+        - "**/*.pyo"
+        - "**/build/**"
+        - "**/dist/**"
+        - "**/.tox/**"
+    analysis:
+      ast_parsing: true
+      dependency_extraction: true
+      complexity_analysis: true
+      import_analysis: true
+      docstring_analysis: true
+
+  javascript:
+    file_patterns:
+      include:
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.jsx"
+        - "**/*.tsx"
+        - "**/*.vue"
+        - "**/*.svelte"
+        - "**/package.json"
+        - "**/package-lock.json"
+        - "**/yarn.lock"
+        - "**/*.json"
+      exclude:
+        - "**/node_modules/**"
+        - "**/build/**"
+        - "**/dist/**"
+        - "**/.next/**"
+        - "**/.nuxt/**"
+        - "**/coverage/**"
+        - "**/*.min.js"
+        - "**/*.bundle.js"
+    analysis:
+      ast_parsing: true
+      dependency_extraction: true
+      complexity_analysis: true
+      import_analysis: true
+      jsdoc_analysis: true
+
+  go:
+    file_patterns:
+      include:
+        - "**/*.go"
+        - "**/go.mod"
+        - "**/go.sum"
+        - "**/*.yml"
+        - "**/*.yaml"
+      exclude:
+        - "**/vendor/**"
+        - "**/bin/**"
+        - "**/.git/**"
+    analysis:
+      ast_parsing: true
+      dependency_extraction: true
+      complexity_analysis: true
+      package_analysis: true
+
+  rust:
+    file_patterns:
+      include:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+        - "**/*.yml"
+        - "**/*.yaml"
+      exclude:
+        - "**/target/**"
+        - "**/.git/**"
+    analysis:
+      ast_parsing: true
+      dependency_extraction: true
+      complexity_analysis: true
+      crate_analysis: true
+
+  java:
+    file_patterns:
+      include:
+        - "**/*.java"
+        - "**/*.kt"
+        - "**/*.scala"
+        - "**/pom.xml"
+        - "**/build.gradle"
+        - "**/build.gradle.kts"
+        - "**/*.properties"
+        - "**/*.xml"
+      exclude:
+        - "**/target/**"
+        - "**/build/**"
+        - "**/.gradle/**"
+        - "**/bin/**"
+        - "**/*.class"
+    analysis:
+      ast_parsing: true
+      dependency_extraction: true
+      complexity_analysis: true
+      package_analysis: true
+
+  multi_language:
+    file_patterns:
+      include:
+        - "**/*.py"
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.go"
+        - "**/*.rs"
+        - "**/*.java"
+        - "**/*.cpp"
+        - "**/*.c"
+        - "**/*.h"
+        - "**/*.hpp"
+        - "**/*.cs"
+        - "**/*.php"
+        - "**/*.rb"
+        - "**/*.swift"
+        - "**/*.kt"
+        - "**/*.scala"
+        - "**/*.yml"
+        - "**/*.yaml"
+        - "**/*.json"
+        - "**/*.toml"
+        - "**/*.xml"
+        - "**/*.md"
+      exclude:
+        - "**/node_modules/**"
+        - "**/__pycache__/**"
+        - "**/target/**"
+        - "**/build/**"
+        - "**/dist/**"
+        - "**/.git/**"
+        - "**/vendor/**"
+        - "**/.venv/**"
+        - "**/venv/**"
+    analysis:
+      ast_parsing: true
+      dependency_extraction: true
+      complexity_analysis: true
+      cross_language_analysis: true
+
+# Deployment Mode Configurations
+deployment_modes:
+  development:
+    description: "Development environment with debugging features"
+    log_level: "DEBUG"
+    features:
+      hot_reload: true
+      debug_api: true
+      detailed_errors: true
+      performance_profiling: true
+    security:
+      authentication_required: false
+      cors_enabled: true
+      rate_limiting: false
+    monitoring:
+      metrics_collection: true
+      tracing: true
+      health_checks: true
+
+  production:
+    description: "Production environment with security and performance optimizations"
+    log_level: "INFO"
+    features:
+      hot_reload: false
+      debug_api: false
+      detailed_errors: false
+      performance_profiling: false
+    security:
+      authentication_required: true
+      cors_enabled: false
+      rate_limiting: true
+      ssl_required: true
+    monitoring:
+      metrics_collection: true
+      tracing: false
+      health_checks: true
+      alerting: true
+
+  ci:
+    description: "CI/CD environment optimized for fast startup and analysis"
+    log_level: "WARNING"
+    features:
+      hot_reload: false
+      debug_api: false
+      detailed_errors: false
+      performance_profiling: false
+      fast_startup: true
+    security:
+      authentication_required: false
+      cors_enabled: false
+      rate_limiting: false
+    monitoring:
+      metrics_collection: false
+      tracing: false
+      health_checks: true
+
+# Network and Port Configurations
+networking:
+  default_ports:
+    project_index: 8100
+    dashboard: 8101
+    postgres: 5433
+    redis: 6380
+    prometheus: 9090
+    grafana: 3001
+  
+  # Alternative port ranges for conflict resolution
+  alternative_ports:
+    project_index: [8100, 8110, 8120, 8130]
+    dashboard: [8101, 8111, 8121, 8131]
+    postgres: [5433, 5434, 5435, 5436]
+    redis: [6380, 6381, 6382, 6383]
+  
+  security:
+    allowed_origins:
+      development: ["*"]
+      production: ["https://yourdomain.com"]
+      ci: ["http://localhost"]
+    
+    ssl_config:
+      enabled: false
+      cert_path: "/etc/ssl/certs/project-index.crt"
+      key_path: "/etc/ssl/private/project-index.key"
+
+# Storage and Backup Configurations
+storage:
+  data_retention:
+    analysis_results: "30 days"
+    file_cache: "7 days"
+    logs: "14 days"
+    metrics: "90 days"
+  
+  backup:
+    enabled: true
+    frequency: "daily"
+    retention: "30 days"
+    compression: true
+    encryption: false
+  
+  cache:
+    redis_max_memory: "256mb"
+    redis_policy: "allkeys-lru"
+    file_cache_size: "1GB"
+    analysis_cache_ttl: "24h"
+
+# Feature Flags
+features:
+  real_time_monitoring:
+    enabled: true
+    debounce_ms: 2000
+    max_events_per_second: 100
+  
+  machine_learning:
+    enabled: false
+    models:
+      - "code_similarity"
+      - "bug_prediction"
+      - "complexity_estimation"
+  
+  advanced_search:
+    enabled: true
+    full_text_search: true
+    semantic_search: false
+    search_history: true
+  
+  integrations:
+    github: true
+    gitlab: false
+    bitbucket: false
+    jira: false
+    slack: false
+  
+  experimental:
+    ai_suggestions: false
+    auto_refactoring: false
+    predictive_analysis: false

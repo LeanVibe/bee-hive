@@ -1,0 +1,301 @@
+# Prometheus Configuration for Universal Project Index
+# Optimized for monitoring containerized Project Index deployment
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'project-index'
+    environment: '${ENVIRONMENT:-development}'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files for alerts and recording rules
+rule_files:
+  - "recording_rules.yml"
+  - "alert_rules.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Project Index API metrics
+  - job_name: 'project-index-api'
+    static_configs:
+      - targets: ['project-index:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    honor_labels: false
+    honor_timestamps: true
+    scheme: http
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: project-index:8000
+
+  # PostgreSQL metrics via postgres_exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '(.+)'
+        replacement: 'postgres:5432'
+
+  # Redis metrics via redis_exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '(.+)'
+        replacement: 'redis:6379'
+
+  # Container metrics via cAdvisor
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    honor_labels: false
+    metric_relabel_configs:
+      # Keep only container metrics for project-index services
+      - source_labels: [container_label_com_docker_compose_service]
+        regex: 'project-index|postgres|redis|analysis-worker|file-monitor|dashboard'
+        action: keep
+      # Rename container labels
+      - source_labels: [container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [container_label_com_docker_compose_project]
+        target_label: project
+
+  # Node exporter for host metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+
+  # Analysis workers metrics (dynamic discovery)
+  - job_name: 'analysis-workers'
+    static_configs:
+      - targets: ['analysis-worker:8080']
+    scrape_interval: 15s
+    scrape_timeout: 5s
+    metrics_path: '/worker/metrics'
+
+  # File monitor metrics
+  - job_name: 'file-monitor'
+    static_configs:
+      - targets: ['file-monitor:8080']
+    scrape_interval: 30s
+    scrape_timeout: 5s
+    metrics_path: '/monitor/metrics'
+
+  # Dashboard metrics (if enabled)
+  - job_name: 'dashboard'
+    static_configs:
+      - targets: ['dashboard:3000']
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    metrics_path: '/api/metrics'
+
+  # Self-monitoring (Prometheus itself)
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# Storage configuration
+storage:
+  tsdb:
+    retention.time: 7d
+    retention.size: 10GB
+    wal-compression: true
+    min-block-duration: 2h
+    max-block-duration: 25h
+
+# Remote write configuration (for external storage)
+# remote_write:
+#   - url: "https://your-remote-storage/api/v1/write"
+#     queue_config:
+#       max_samples_per_send: 1000
+#       max_shards: 200
+#       capacity: 2500
+
+# Recording rules for performance optimization
+recording_rules:
+  - name: project_index_aggregates
+    interval: 30s
+    rules:
+      # API request rate
+      - record: project_index:api_request_rate
+        expr: rate(http_requests_total[5m])
+      
+      # API error rate
+      - record: project_index:api_error_rate
+        expr: rate(http_requests_total{status=~"5.."}[5m])
+      
+      # Analysis throughput
+      - record: project_index:analysis_throughput
+        expr: rate(analysis_files_processed_total[5m])
+      
+      # Cache hit ratio
+      - record: project_index:cache_hit_ratio
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)
+      
+      # Database connection usage
+      - record: project_index:db_connection_usage
+        expr: pg_stat_database_numbackends / pg_settings_max_connections
+      
+      # Memory usage percentage
+      - record: project_index:memory_usage_percent
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100
+      
+      # CPU usage percentage
+      - record: project_index:cpu_usage_percent
+        expr: rate(container_cpu_usage_seconds_total[5m]) * 100
+
+# Alert rules for critical issues
+alert_rules:
+  - name: project_index_alerts
+    rules:
+      # Service down alerts
+      - alert: ProjectIndexDown
+        expr: up{job="project-index-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Project Index API is down"
+          description: "Project Index API has been down for more than 1 minute."
+      
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 2 minutes."
+      
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 1 minute."
+      
+      # Performance alerts
+      - alert: HighAPIErrorRate
+        expr: project_index:api_error_rate > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value | humanizePercentage }} for the last 5 minutes."
+      
+      - alert: HighMemoryUsage
+        expr: project_index:memory_usage_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Container {{ $labels.service }} memory usage is {{ $value }}%."
+      
+      - alert: HighCPUUsage
+        expr: project_index:cpu_usage_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "Container {{ $labels.service }} CPU usage is {{ $value }}%."
+      
+      - alert: LowCacheHitRatio
+        expr: project_index:cache_hit_ratio < 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit ratio"
+          description: "Redis cache hit ratio is {{ $value | humanizePercentage }}."
+      
+      - alert: DatabaseConnectionsHigh
+        expr: project_index:db_connection_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection usage is {{ $value | humanizePercentage }}."
+      
+      # Storage alerts
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space usage on {{ $labels.device }} is above 90%."
+      
+      # Analysis workflow alerts
+      - alert: AnalysisQueueBacklog
+        expr: analysis_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Analysis queue backlog"
+          description: "Analysis queue has {{ $value }} pending items."
+      
+      - alert: AnalysisFailureRate
+        expr: rate(analysis_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High analysis failure rate"
+          description: "Analysis failure rate is {{ $value }} failures per second."
+
+# External labels for federation/remote storage
+external_labels:
+  region: 'local'
+  replica: 'A'
+  project: 'project-index'
+
+# Web console configuration
+web:
+  enable_lifecycle: true
+  enable_admin_api: true
+  console:
+    libraries:
+      - '/etc/prometheus/console_libraries'
+    templates:
+      - '/etc/prometheus/consoles'
+  external_url: 'http://localhost:9090'
