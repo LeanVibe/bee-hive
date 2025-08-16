@@ -9,7 +9,6 @@ import asyncio
 from typing import AsyncGenerator, Optional
 from contextlib import asynccontextmanager
 
-import structlog
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     AsyncEngine,
@@ -22,8 +21,9 @@ from sqlalchemy import text, event
 from sqlalchemy.engine import Engine
 
 from .config import settings
+from .logging_service import get_component_logger
 
-logger = structlog.get_logger()
+logger = get_component_logger("database")
 
 # Global engine and session factory
 _engine: Optional[AsyncEngine] = None

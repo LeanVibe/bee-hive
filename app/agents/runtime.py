@@ -14,7 +14,6 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 import traceback
 
-import structlog
 from anthropic import AsyncAnthropic
 import redis.asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,8 +24,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from core.config import settings
 from core.redis import get_message_broker
 from core.database import get_session
+from core.logging_service import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger(__name__)
 
 
 class ContainerizedAgent:
@@ -404,21 +404,7 @@ async def main():
     """Main entry point for containerized agent."""
     agent_type = os.getenv("AGENT_TYPE", "developer")
     
-    # Configure logging
-    structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.add_log_level,
-            structlog.processors.JSONRenderer()
-        ],
-        wrapper_class=structlog.stdlib.BoundLogger,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-    
+    # Logging is now configured via centralized logging service
     logger.info("Starting containerized agent", agent_type=agent_type)
     
     agent = ContainerizedAgent(agent_type)

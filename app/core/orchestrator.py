@@ -20,7 +20,6 @@ import secrets  # Secure random for jitter calculation
 import heapq
 import threading
 
-import structlog
 from anthropic import AsyncAnthropic
 
 from .config import settings
@@ -33,6 +32,7 @@ from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, 
 from .capability_matcher import CapabilityMatcher
 from .agent_persona_system import AgentPersonaSystem, PersonaAssignment, get_agent_persona_system
 from .container_orchestrator import get_container_orchestrator, ContainerAgentOrchestrator
+from .logging_service import get_component_logger
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.session import Session, SessionStatus
 from ..models.task import Task, TaskStatus, TaskPriority
@@ -40,7 +40,7 @@ from ..models.workflow import Workflow, WorkflowStatus
 from ..models.agent_performance import AgentPerformanceHistory, TaskRoutingDecision, WorkloadSnapshot
 from sqlalchemy import select, update, func
 
-logger = structlog.get_logger()
+logger = get_component_logger("orchestrator")
 
 
 class AgentRole(Enum):

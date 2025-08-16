@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple, Union
 from uuid import UUID
 
-import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, update, and_, or_
@@ -23,6 +22,7 @@ from sqlalchemy import select, update, and_, or_
 from ..core.config import settings
 from ..core.database import get_session
 from ..core.redis import get_redis_client, RedisClient
+from ..core.logging_service import get_component_logger
 from ..models.project_index import (
     ProjectIndex, FileEntry, DependencyRelationship, AnalysisSession, IndexSnapshot,
     ProjectStatus, FileType, AnalysisSessionType, AnalysisStatus, SnapshotType
@@ -43,7 +43,7 @@ from .models import (
 )
 from .utils import PathUtils, FileUtils, HashUtils
 
-logger = structlog.get_logger()
+logger = get_component_logger("project_index")
 
 
 class ProjectIndexer:

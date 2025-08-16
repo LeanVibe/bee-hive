@@ -12,14 +12,14 @@ from typing import Any, Dict, List, Optional, Union, AsyncGenerator, Set, Callab
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
-import structlog
 import redis.asyncio as redis
 from redis.asyncio import Redis, ConnectionPool
 from redis.exceptions import ConnectionError, TimeoutError
 
 from .config import settings
+from .logging_service import get_component_logger
 
-logger = structlog.get_logger()
+logger = get_component_logger("redis")
 
 # Global Redis connection pool
 _redis_pool: Optional[ConnectionPool] = None
