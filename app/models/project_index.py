@@ -11,12 +11,12 @@ from typing import Dict, Any, List, Optional, Union
 from enum import Enum
 
 from sqlalchemy import Column, String, Text, DateTime, JSON, Enum as SQLEnum, Integer, ForeignKey, BigInteger, Float, Boolean
-from sqlalchemy.dialects.postgresql import ENUM, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import ENUM, ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base
-from ..core.database_types import DatabaseAgnosticUUID, StringArray
+from ..core.database_types import DatabaseAgnosticUUID, StringArray, DatabaseAgnosticJSON
 
 
 class ProjectStatus(Enum):
@@ -100,11 +100,11 @@ class ProjectIndex(Base):
     
     # Project status and configuration
     status = Column(ENUM(ProjectStatus, name='project_status'), nullable=False, default=ProjectStatus.INACTIVE, index=True)
-    configuration = Column(JSONB, nullable=True, default=dict)
-    analysis_settings = Column(JSONB, nullable=True, default=dict)
-    file_patterns = Column(JSONB, nullable=True, default=dict)
-    ignore_patterns = Column(JSONB, nullable=True, default=dict)
-    meta_data = Column("metadata", JSONB, nullable=True, default=dict)
+    configuration = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    analysis_settings = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    file_patterns = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    ignore_patterns = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
     
     # Statistics
     file_count = Column(Integer, nullable=False, default=0)
@@ -203,9 +203,9 @@ class FileEntry(Base):
     content_preview = Column(Text, nullable=True)
     
     # Analysis data and metadata
-    analysis_data = Column(JSONB, nullable=True, default=dict)
-    meta_data = Column("metadata", JSONB, nullable=True, default=dict)
-    tags = Column(ARRAY(String), nullable=True, default=list)
+    analysis_data = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
+    tags = Column(StringArray(), nullable=True, default=list)
     
     # File flags
     is_binary = Column(Boolean, nullable=False, default=False)
@@ -304,7 +304,7 @@ class DependencyRelationship(Base):
     is_external = Column(Boolean, nullable=False, default=False, index=True)
     is_dynamic = Column(Boolean, nullable=False, default=False)
     confidence_score = Column(Float, nullable=True, default=1.0)
-    meta_data = Column("metadata", JSONB, nullable=True, default=dict)
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -381,9 +381,9 @@ class IndexSnapshot(Base):
     dependency_count = Column(Integer, nullable=False, default=0)
     
     # Change tracking and analysis
-    changes_since_last = Column(JSONB, nullable=True, default=dict)
-    analysis_metrics = Column(JSONB, nullable=True, default=dict)
-    meta_data = Column("metadata", JSONB, nullable=True, default=dict)
+    changes_since_last = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    analysis_metrics = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
     data_checksum = Column(String(64), nullable=True)
     
     # Timestamps
@@ -461,11 +461,11 @@ class AnalysisSession(Base):
     warnings_count = Column(Integer, nullable=False, default=0)
     
     # Session data and results
-    session_data = Column(JSONB, nullable=True, default=dict)
-    error_log = Column(JSONB, nullable=True, default=list)
-    performance_metrics = Column(JSONB, nullable=True, default=dict)
-    configuration = Column(JSONB, nullable=True, default=dict)
-    result_data = Column(JSONB, nullable=True, default=dict)
+    session_data = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    error_log = Column(DatabaseAgnosticJSON(), nullable=True, default=list)
+    performance_metrics = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    configuration = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    result_data = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
     
     # Timing information
     started_at = Column(DateTime(timezone=True), nullable=True)

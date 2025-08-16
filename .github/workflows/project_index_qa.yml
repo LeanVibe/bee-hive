@@ -1,0 +1,363 @@
+name: Project Index Quality Assurance
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'app/models/project_index.py'
+      - 'app/schemas/project_index.py'
+      - 'app/api/project_index*.py'
+      - 'app/project_index/**'
+      - 'tests/project_index/**'
+      - 'migrations/versions/*project_index*'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'app/models/project_index.py'
+      - 'app/schemas/project_index.py'
+      - 'app/api/project_index*.py'
+      - 'app/project_index/**'
+      - 'tests/project_index/**'
+      - 'migrations/versions/*project_index*'
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: test_bee_hive
+  POSTGRES_USER: test_user
+  POSTGRES_PASSWORD: test_password
+  REDIS_URL: redis://localhost:6379/0
+  COVERAGE_THRESHOLD: 90
+
+jobs:
+  quality-assurance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better analysis
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-test.txt
+        pip install pytest-json-report pytest-cov pytest-xdist pytest-benchmark
+        pip install coverage[toml] pytest-html pytest-mock
+        pip install bandit safety semgrep
+
+    - name: Create reports directory
+      run: |
+        mkdir -p reports artifacts
+
+    - name: Verify database connection
+      run: |
+        PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h ${{ env.POSTGRES_HOST }} -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -c "SELECT version();"
+
+    - name: Run database migrations
+      run: |
+        alembic upgrade head
+      env:
+        DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}
+
+    - name: Security Scanning - Bandit
+      run: |
+        bandit -r app/models/project_index.py app/project_index/ app/api/project_index*.py -f json -o reports/bandit-report.json || true
+        bandit -r app/models/project_index.py app/project_index/ app/api/project_index*.py
+
+    - name: Security Scanning - Safety
+      run: |
+        safety check --json --output reports/safety-report.json || true
+        safety check
+
+    - name: Security Scanning - Semgrep
+      run: |
+        semgrep --config=auto app/models/project_index.py app/project_index/ app/api/project_index*.py --json --output=reports/semgrep-report.json || true
+
+    - name: Code Quality - Ruff
+      run: |
+        ruff check app/models/project_index.py app/project_index/ app/api/project_index*.py --output-format=json --output-file=reports/ruff-report.json || true
+        ruff check app/models/project_index.py app/project_index/ app/api/project_index*.py
+
+    - name: Code Quality - MyPy
+      run: |
+        mypy app/models/project_index.py app/project_index/ app/api/project_index*.py --json-report reports/ || true
+
+    - name: Run Unit Tests
+      run: |
+        pytest tests/project_index/test_models.py \
+               tests/project_index/test_core.py \
+               tests/project_index/test_api.py \
+               --cov=app.models.project_index \
+               --cov=app.project_index \
+               --cov=app.api.project_index \
+               --cov=app.schemas.project_index \
+               --cov-report=xml:reports/coverage.xml \
+               --cov-report=html:reports/htmlcov \
+               --cov-report=term-missing \
+               --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
+               --json-report --json-report-file=reports/unit-test-results.json \
+               --html=reports/unit-test-report.html \
+               --junitxml=reports/unit-test-results.xml \
+               -v
+      env:
+        DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}
+
+    - name: Run Integration Tests
+      run: |
+        pytest tests/project_index/test_integration.py \
+               --json-report --json-report-file=reports/integration-test-results.json \
+               --html=reports/integration-test-report.html \
+               --junitxml=reports/integration-test-results.xml \
+               --timeout=300 \
+               -v
+      env:
+        DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}
+
+    - name: Run Performance Tests
+      run: |
+        pytest tests/project_index/test_performance.py \
+               --json-report --json-report-file=reports/performance-test-results.json \
+               --html=reports/performance-test-report.html \
+               --junitxml=reports/performance-test-results.xml \
+               --benchmark-json=reports/benchmark-results.json \
+               --timeout=600 \
+               -v
+      env:
+        DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}
+
+    - name: Run Security Tests
+      run: |
+        pytest tests/project_index/test_security.py \
+               --json-report --json-report-file=reports/security-test-results.json \
+               --html=reports/security-test-report.html \
+               --junitxml=reports/security-test-results.xml \
+               --timeout=300 \
+               -v
+      env:
+        DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}
+
+    - name: Run Comprehensive Test Suite
+      run: |
+        python tests/project_index/test_runner.py --ci --coverage-threshold=${{ env.COVERAGE_THRESHOLD }}
+      env:
+        DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@${{ env.POSTGRES_HOST }}:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}
+
+    - name: Generate Coverage Badge
+      if: github.ref == 'refs/heads/main'
+      run: |
+        coverage-badge -o artifacts/coverage-badge.svg
+
+    - name: Upload Coverage to Codecov
+      if: github.ref == 'refs/heads/main'
+      uses: codecov/codecov-action@v3
+      with:
+        file: reports/coverage.xml
+        flags: project_index
+        name: project-index-coverage
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          reports/
+          artifacts/
+        retention-days: 30
+
+    - name: Upload Coverage Reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-reports-${{ matrix.python-version }}
+        path: |
+          reports/coverage.xml
+          reports/htmlcov/
+        retention-days: 30
+
+    - name: Comment PR with Test Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            // Read comprehensive test report
+            const reportPath = 'artifacts/quality-gates.json';
+            if (fs.existsSync(reportPath)) {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              
+              const comment = `## 🧪 Project Index Quality Assurance Report
+              
+              ### Test Results Summary
+              - **Production Ready**: ${report.production_ready ? '✅ YES' : '❌ NO'}
+              - **Quality Gates**: ${report.quality_gate_status === 'passed' ? '✅ PASSED' : '❌ FAILED'}
+              
+              ### Quality Gates Status
+              ${report.gates.map(gate => 
+                `- ${gate.status === 'passed' ? '✅' : '❌'} **${gate.gate_name}**: ${gate.message}`
+              ).join('\n')}
+              
+              ### Recommendation
+              **${report.recommendation}** - ${report.production_ready ? 'All quality gates passed' : 'Quality gates failed'}
+              
+              <details>
+              <summary>View detailed test results</summary>
+              
+              \`\`\`json
+              ${JSON.stringify(report, null, 2)}
+              \`\`\`
+              </details>`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+          } catch (error) {
+            console.log('Could not post test results comment:', error);
+          }
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          reports/*-test-results.xml
+        check_name: Project Index Test Results
+        comment_title: Project Index Test Results
+
+    - name: Quality Gate Check
+      if: always()
+      run: |
+        if [ -f "artifacts/quality-gates.json" ]; then
+          PRODUCTION_READY=$(jq -r '.production_ready' artifacts/quality-gates.json)
+          if [ "$PRODUCTION_READY" != "true" ]; then
+            echo "❌ Quality gates failed - not production ready"
+            exit 1
+          else
+            echo "✅ All quality gates passed - production ready"
+          fi
+        else
+          echo "❌ Quality gates report not found"
+          exit 1
+        fi
+
+  deployment-readiness:
+    needs: quality-assurance
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download test artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: test-results-3.11
+        path: artifacts/
+
+    - name: Validate Production Readiness
+      run: |
+        if [ -f "artifacts/quality-gates.json" ]; then
+          PRODUCTION_READY=$(jq -r '.production_ready' artifacts/quality-gates.json)
+          if [ "$PRODUCTION_READY" = "true" ]; then
+            echo "✅ Project Index is PRODUCTION READY"
+            echo "🚀 Ready for deployment to staging/production"
+            
+            # Create deployment tag
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            
+            VERSION=$(date +%Y%m%d-%H%M%S)
+            git tag -a "project-index-v$VERSION" -m "Production ready: Project Index v$VERSION"
+            git push origin "project-index-v$VERSION"
+            
+            echo "📦 Created deployment tag: project-index-v$VERSION"
+          else
+            echo "❌ Project Index is NOT production ready"
+            echo "🚫 Deployment blocked by quality gates"
+            exit 1
+          fi
+        else
+          echo "❌ Quality gates report not found"
+          exit 1
+        fi
+
+    - name: Trigger Deployment Pipeline
+      if: success()
+      run: |
+        echo "🚀 Triggering deployment pipeline for Project Index"
+        # In a real environment, this would trigger the deployment pipeline
+        # Example: curl -X POST deployment-webhook-url
+        echo "✅ Deployment pipeline triggered successfully"
+
+  notification:
+    needs: [quality-assurance, deployment-readiness]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify Teams
+      if: failure()
+      run: |
+        echo "📧 Sending failure notifications"
+        # In a real environment, send notifications to teams
+        # Example: Slack, email, etc.
+        echo "🔔 Team notified of quality assurance failure"
+
+    - name: Update Status Badge
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🏷️ Updating project status badge"
+        # In a real environment, update status badges
+        echo "✅ Status badge updated"

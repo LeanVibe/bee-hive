@@ -5,10 +5,10 @@ Provides database-agnostic types that work with both SQLite and PostgreSQL.
 """
 
 import json
-from typing import Any, List, Optional, Union
-from sqlalchemy import TypeDecorator, Text, String
+from typing import Any, List, Optional, Union, Dict
+from sqlalchemy import TypeDecorator, Text, String, JSON
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.engine import Dialect
 
@@ -170,3 +170,37 @@ class DatabaseAgnosticIPAddress(TypeDecorator):
         
         # Return as string for compatibility
         return str(value)
+
+
+class DatabaseAgnosticJSON(TypeDecorator):
+    """
+    A JSON type that works with both SQLite and PostgreSQL.
+    
+    Uses native JSONB type in PostgreSQL and JSON in SQLite.
+    """
+    
+    impl = JSON
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect: Dialect):
+        """Load the appropriate implementation for the current dialect."""
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
+    
+    def process_bind_param(self, value: Any, dialect: Dialect) -> Any:
+        """Process the value before sending to the database."""
+        if value is None:
+            return None
+        
+        # Both PostgreSQL and SQLite can handle JSON directly
+        return value
+    
+    def process_result_value(self, value: Any, dialect: Dialect) -> Any:
+        """Process the value after receiving from the database."""
+        if value is None:
+            return {}
+        
+        # Both databases return JSON objects directly
+        return value
