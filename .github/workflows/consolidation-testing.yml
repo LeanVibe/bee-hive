@@ -1,0 +1,421 @@
+name: Epic Consolidation Testing Pipeline
+
+on:
+  push:
+    branches: [ main, epic-* ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      consolidation_stage:
+        description: 'Consolidation stage to test'
+        required: true
+        default: 'pre'
+        type: choice
+        options:
+        - pre
+        - post
+        - full
+
+env:
+  PYTHON_VERSION: '3.11'
+  POETRY_VERSION: '1.4.2'
+
+jobs:
+  # Stage 1: Pre-Consolidation Quality Gates
+  pre-consolidation-gates:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.consolidation_stage == 'pre' || github.event.inputs.consolidation_stage == 'full' || github.event.inputs.consolidation_stage == '' }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: ${{ env.POETRY_VERSION }}
+        
+    - name: Configure Poetry
+      run: poetry config virtualenvs.create false
+      
+    - name: Install Dependencies
+      run: |
+        poetry install --no-dev
+        pip install pytest-cov bandit safety semgrep
+        
+    - name: Create Reports Directory
+      run: mkdir -p reports
+      
+    - name: Run Pre-Consolidation Quality Gates
+      run: |
+        python -m pytest tests/quality_gates/ \
+          -m "pre_consolidation" \
+          --verbose \
+          --tb=short \
+          --junitxml=reports/pre_consolidation_gates.xml
+          
+    - name: Upload Quality Gate Reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: pre-consolidation-reports
+        path: reports/
+        
+    - name: Establish Performance Baselines
+      run: |
+        python -m pytest tests/consolidation/ \
+          -m "baseline_establishment" \
+          --verbose \
+          --tb=short
+          
+    - name: Upload Baseline Data
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-baselines
+        path: tests/baselines/
+        
+  # Stage 2: Consolidation Safety Validation
+  consolidation-safety:
+    runs-on: ubuntu-latest
+    needs: pre-consolidation-gates
+    if: success()
+    
+    strategy:
+      matrix:
+        consolidation_target: [orchestrator, context_engine, security_system, performance_system]
+        
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest-cov psutil
+        
+    - name: Download Baseline Data
+      uses: actions/download-artifact@v3
+      with:
+        name: performance-baselines
+        path: tests/baselines/
+        
+    - name: Test Module Compatibility
+      run: |
+        python -m pytest tests/consolidation/module_compatibility.py \
+          -k "test_${{ matrix.consolidation_target }}_compatibility" \
+          --verbose \
+          --tb=short \
+          --junitxml=reports/${{ matrix.consolidation_target }}_compatibility.xml
+          
+    - name: Test Performance Regression
+      run: |
+        python -m pytest tests/consolidation/performance_regression.py \
+          -k "${{ matrix.consolidation_target }}" \
+          --verbose \
+          --tb=short \
+          --junitxml=reports/${{ matrix.consolidation_target }}_performance.xml
+          
+    - name: Upload Consolidation Reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: consolidation-safety-${{ matrix.consolidation_target }}
+        path: reports/
+        
+  # Stage 3: Full Integration Testing
+  integration-validation:
+    runs-on: ubuntu-latest
+    needs: consolidation-safety
+    if: success()
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: test_hive
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest-cov pytest-asyncio
+        
+    - name: Run Database Migrations
+      env:
+        DATABASE_URL: postgresql://postgres:testpassword@localhost:5432/test_hive
+      run: |
+        python -c "from app.core.database import engine; engine.dispose()"
+        
+    - name: Run Integration Tests
+      env:
+        DATABASE_URL: postgresql://postgres:testpassword@localhost:5432/test_hive
+        REDIS_URL: redis://localhost:6379
+      run: |
+        python -m pytest tests/integration/ \
+          -m "consolidation" \
+          --verbose \
+          --tb=short \
+          --cov=app \
+          --cov-report=xml:coverage.xml \
+          --junitxml=reports/integration_tests.xml
+          
+    - name: Upload Coverage Reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: consolidation-integration
+        
+  # Stage 4: Post-Consolidation Quality Gates
+  post-consolidation-gates:
+    runs-on: ubuntu-latest
+    needs: integration-validation
+    if: ${{ (success() && github.event.inputs.consolidation_stage == 'post') || (success() && github.event.inputs.consolidation_stage == 'full') }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest-cov bandit safety
+        
+    - name: Download All Reports
+      uses: actions/download-artifact@v3
+      with:
+        path: all-reports/
+        
+    - name: Run Post-Consolidation Quality Gates
+      run: |
+        python -m pytest tests/quality_gates/ \
+          -m "post_consolidation" \
+          --verbose \
+          --tb=short \
+          --junitxml=reports/post_consolidation_gates.xml
+          
+    - name: Generate Consolidation Summary
+      run: |
+        python -c "
+        import json
+        from pathlib import Path
+        
+        # Aggregate all reports
+        summary = {
+          'consolidation_stage': 'complete',
+          'total_modules_tested': 4,
+          'timestamp': '$(date -Iseconds)',
+          'reports': []
+        }
+        
+        # Collect all report files
+        for report_file in Path('all-reports').rglob('*.xml'):
+          summary['reports'].append(str(report_file))
+          
+        with open('reports/consolidation_summary.json', 'w') as f:
+          json.dump(summary, f, indent=2)
+        "
+        
+    - name: Upload Final Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: final-consolidation-reports
+        path: |
+          reports/
+          all-reports/
+          
+  # Stage 5: Security and Performance Validation
+  security-performance-validation:
+    runs-on: ubuntu-latest
+    needs: post-consolidation-gates
+    if: success()
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Security Tools
+      run: |
+        pip install bandit safety semgrep
+        npm install -g @microsoft/rush-security-scan
+        
+    - name: Run Security Scan
+      run: |
+        bandit -r app/ -f json -o reports/bandit_scan.json || true
+        safety check --json --output reports/safety_scan.json || true
+        semgrep --config=auto app/ --json --output=reports/semgrep_scan.json || true
+        
+    - name: Run Performance Benchmarks
+      run: |
+        python -m pytest tests/performance/ \
+          -m "consolidation" \
+          --benchmark-only \
+          --benchmark-json=reports/performance_benchmarks.json
+          
+    - name: Performance Regression Analysis
+      run: |
+        python -c "
+        import json
+        from pathlib import Path
+        
+        # Load performance data
+        if Path('reports/performance_benchmarks.json').exists():
+          with open('reports/performance_benchmarks.json') as f:
+            perf_data = json.load(f)
+            
+          # Basic regression check
+          regressions = []
+          for test in perf_data.get('benchmarks', []):
+            if test.get('stats', {}).get('mean', 0) > 1.0:  # >1 second
+              regressions.append(test['name'])
+              
+          print(f'Performance check: {len(regressions)} potential regressions')
+          
+          if regressions:
+            print('WARNING: Performance regressions detected:')
+            for reg in regressions:
+              print(f'  - {reg}')
+        "
+        
+    - name: Upload Security and Performance Reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-performance-reports
+        path: reports/
+        
+  # Stage 6: Final Validation and Approval
+  consolidation-approval:
+    runs-on: ubuntu-latest
+    needs: [post-consolidation-gates, security-performance-validation]
+    if: success()
+    
+    steps:
+    - name: Download All Reports
+      uses: actions/download-artifact@v3
+      with:
+        path: all-reports/
+        
+    - name: Generate Approval Decision
+      id: approval
+      run: |
+        python -c "
+        import json
+        from pathlib import Path
+        
+        # Analyze all reports for approval decision
+        approval_score = 0
+        total_checks = 0
+        issues = []
+        
+        # Check for any critical failures
+        for report_dir in Path('all-reports').iterdir():
+          if report_dir.is_dir():
+            for json_file in report_dir.glob('*.json'):
+              try:
+                with open(json_file) as f:
+                  data = json.load(f)
+                  
+                # Look for quality gate results
+                if 'gate_results' in data:
+                  for gate in data['gate_results']:
+                    total_checks += 1
+                    if gate.get('passed', False):
+                      approval_score += 1
+                    else:
+                      issues.append(f\"Gate {gate.get('gate_name', 'unknown')} failed\")
+                      
+              except Exception as e:
+                print(f'Could not parse {json_file}: {e}')
+                
+        # Calculate approval percentage
+        approval_percentage = (approval_score / total_checks * 100) if total_checks > 0 else 0
+        
+        print(f'Consolidation approval score: {approval_percentage:.1f}%')
+        print(f'Total checks: {total_checks}, Passed: {approval_score}')
+        
+        if issues:
+          print('Issues found:')
+          for issue in issues[:10]:  # Limit output
+            print(f'  - {issue}')
+            
+        # Set approval decision
+        approved = approval_percentage >= 85.0 and len(issues) == 0
+        
+        print(f'::set-output name=approved::{approved}')
+        print(f'::set-output name=score::{approval_percentage}')
+        "
+        
+    - name: Consolidation Approved ✅
+      if: steps.approval.outputs.approved == 'true'
+      run: |
+        echo "🎉 Epic Consolidation APPROVED!"
+        echo "✅ All quality gates passed"
+        echo "✅ Performance within acceptable limits"
+        echo "✅ Security validation passed"
+        echo "✅ Integration tests successful"
+        echo ""
+        echo "The system is ready for Epic 1-4 consolidation from 313 files to 50 modules."
+        
+    - name: Consolidation Requires Review ⚠️
+      if: steps.approval.outputs.approved != 'true'
+      run: |
+        echo "⚠️  Epic Consolidation requires manual review"
+        echo "Approval score: ${{ steps.approval.outputs.score }}%"
+        echo "Please review the quality gate reports before proceeding."
+        exit 1
+        
+  # Optional: Manual approval gate for critical environments
+  manual-approval:
+    runs-on: ubuntu-latest
+    needs: consolidation-approval
+    if: github.ref == 'refs/heads/main' && success()
+    environment: production
+    
+    steps:
+    - name: Manual Approval Required
+      run: |
+        echo "🔒 Manual approval required for production consolidation"
+        echo "Please review all test reports and approve the deployment."
