@@ -1061,6 +1061,242 @@ class UnifiedProductionOrchestrator:
         
         return statistics.mean(values) if values else 0.0
 
+    # ===== PRODUCTION MONITORING METHODS =====
+    
+    async def collect_production_metrics(self) -> ProductionMetrics:
+        """Collect comprehensive production metrics."""
+        try:
+            # System metrics
+            cpu_usage = psutil.cpu_percent(interval=0.1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            network_io = psutil.net_io_counters()
+            
+            # Application metrics
+            active_agents = len(self._agents)
+            pending_tasks = self._task_queue.qsize()
+            failed_tasks = len([t for t in self._performance_history 
+                              if t.get('status') == 'failed' and 
+                              t.get('timestamp', 0) > time.time() - 3600])
+            
+            # Database metrics (placeholder - would integrate with actual DB monitoring)
+            db_connections = 0  # Would get from connection pool
+            db_query_time = 0.0  # Would get from DB monitoring
+            db_pool_usage = 0.0  # Would calculate from pool stats
+            
+            # Redis metrics (placeholder - would integrate with Redis monitoring)
+            redis_memory = 0.0  # Would get from Redis INFO
+            redis_connections = 0  # Would get from Redis monitoring
+            redis_latency = 0.0  # Would measure Redis ping
+            
+            # Calculate SLA metrics
+            avg_response_time = self._get_avg_metric('response_time_ms')
+            error_rate = self._calculate_error_rate()
+            availability = self._calculate_availability()
+            
+            return ProductionMetrics(
+                timestamp=datetime.utcnow(),
+                
+                # System performance
+                cpu_usage_percent=cpu_usage,
+                memory_usage_percent=memory.percent,
+                disk_usage_percent=disk.percent,
+                network_throughput_mbps=0.0,  # Would calculate from network_io
+                
+                # Application metrics
+                active_agents=active_agents,
+                total_sessions=0,  # Would integrate with session tracking
+                pending_tasks=pending_tasks,
+                failed_tasks_last_hour=failed_tasks,
+                average_response_time_ms=avg_response_time,
+                
+                # Database metrics
+                db_connections=db_connections,
+                db_query_time_ms=db_query_time,
+                db_pool_usage_percent=db_pool_usage,
+                
+                # Redis metrics
+                redis_memory_usage_mb=redis_memory,
+                redis_connections=redis_connections,
+                redis_latency_ms=redis_latency,
+                
+                # SLA metrics
+                availability_percent=availability,
+                error_rate_percent=error_rate,
+                response_time_p95_ms=self._calculate_percentile_response_time(95),
+                response_time_p99_ms=self._calculate_percentile_response_time(99),
+                
+                # Security metrics
+                failed_auth_attempts=0,  # Would integrate with auth monitoring
+                security_events=0,  # Would integrate with security system
+                blocked_requests=0  # Would integrate with security filters
+            )
+            
+        except Exception as e:
+            logger.error("Failed to collect production metrics", error=str(e))
+            # Return minimal metrics to prevent monitoring failure
+            return ProductionMetrics(
+                timestamp=datetime.utcnow(),
+                cpu_usage_percent=0.0, memory_usage_percent=0.0,
+                disk_usage_percent=0.0, network_throughput_mbps=0.0,
+                active_agents=len(self._agents), total_sessions=0,
+                pending_tasks=self._task_queue.qsize(), failed_tasks_last_hour=0,
+                average_response_time_ms=0.0, db_connections=0,
+                db_query_time_ms=0.0, db_pool_usage_percent=0.0,
+                redis_memory_usage_mb=0.0, redis_connections=0,
+                redis_latency_ms=0.0, availability_percent=100.0,
+                error_rate_percent=0.0, response_time_p95_ms=0.0,
+                response_time_p99_ms=0.0, failed_auth_attempts=0,
+                security_events=0, blocked_requests=0
+            )
+
+    async def add_alert_rule(self, rule: AlertRule) -> None:
+        """Add a new alert rule."""
+        self._alert_rules[rule.name] = rule
+        logger.info("Alert rule added", rule_name=rule.name, severity=rule.severity.value)
+
+    async def evaluate_alert_rules(self, metrics: ProductionMetrics) -> None:
+        """Evaluate all alert rules against current metrics."""
+        for rule_name, rule in self._alert_rules.items():
+            try:
+                # Evaluate rule condition
+                triggered = await self._evaluate_alert_condition(rule, metrics)
+                
+                if triggered and rule.current_state != "triggered":
+                    # Rule is newly triggered
+                    await self._trigger_alert(rule, metrics)
+                elif not triggered and rule.current_state == "triggered":
+                    # Rule is resolved
+                    await self._resolve_alert(rule)
+                    
+            except Exception as e:
+                logger.error("Failed to evaluate alert rule", 
+                           rule_name=rule_name, error=str(e))
+
+    async def _evaluate_alert_condition(self, rule: AlertRule, metrics: ProductionMetrics) -> bool:
+        """Evaluate if an alert rule condition is met."""
+        # Simple condition evaluation - would be enhanced with proper expression parser
+        metric_value = getattr(metrics, rule.condition, 0.0)
+        
+        if rule.comparison_operator == ">":
+            return metric_value > rule.threshold_value
+        elif rule.comparison_operator == ">=":
+            return metric_value >= rule.threshold_value
+        elif rule.comparison_operator == "<":
+            return metric_value < rule.threshold_value
+        elif rule.comparison_operator == "<=":
+            return metric_value <= rule.threshold_value
+        elif rule.comparison_operator == "==":
+            return metric_value == rule.threshold_value
+        elif rule.comparison_operator == "!=":
+            return metric_value != rule.threshold_value
+        
+        return False
+
+    async def _trigger_alert(self, rule: AlertRule, metrics: ProductionMetrics) -> None:
+        """Trigger a new alert."""
+        alert_id = str(uuid.uuid4())
+        alert = ProductionAlert(
+            alert_id=alert_id,
+            rule_name=rule.name,
+            severity=rule.severity,
+            title=f"Alert: {rule.name}",
+            description=rule.description,
+            triggered_at=datetime.utcnow(),
+            metric_values=asdict(metrics)
+        )
+        
+        self._active_alerts[alert_id] = alert
+        rule.current_state = "triggered"
+        rule.last_triggered = datetime.utcnow()
+        rule.trigger_count += 1
+        
+        logger.warning("Alert triggered", 
+                      alert_id=alert_id, 
+                      rule_name=rule.name,
+                      severity=rule.severity.value)
+
+    async def _resolve_alert(self, rule: AlertRule) -> None:
+        """Resolve an active alert."""
+        # Find and resolve the alert
+        for alert_id, alert in self._active_alerts.items():
+            if alert.rule_name == rule.name and not alert.resolved_at:
+                alert.resolved_at = datetime.utcnow()
+                rule.current_state = "ok"
+                rule.last_resolved = datetime.utcnow()
+                
+                logger.info("Alert resolved",
+                          alert_id=alert_id,
+                          rule_name=rule.name)
+                break
+
+    def _calculate_error_rate(self) -> float:
+        """Calculate error rate from performance history."""
+        if not self._performance_history:
+            return 0.0
+            
+        recent_tasks = [t for t in self._performance_history 
+                       if t.get('timestamp', 0) > time.time() - 3600]
+        
+        if not recent_tasks:
+            return 0.0
+            
+        failed_tasks = len([t for t in recent_tasks if t.get('status') == 'failed'])
+        return (failed_tasks / len(recent_tasks)) * 100.0
+
+    def _calculate_availability(self) -> float:
+        """Calculate system availability percentage."""
+        # Simplified availability calculation
+        if self._system_health == SystemHealth.HEALTHY:
+            return 100.0
+        elif self._system_health == SystemHealth.DEGRADED:
+            return 95.0
+        elif self._system_health == SystemHealth.UNHEALTHY:
+            return 80.0
+        else:  # CRITICAL
+            return 50.0
+
+    def _calculate_percentile_response_time(self, percentile: int) -> float:
+        """Calculate percentile response time from history."""
+        if not self._performance_history:
+            return 0.0
+            
+        response_times = [
+            t.get('response_time_ms', 0) 
+            for t in self._performance_history 
+            if 'response_time_ms' in t
+        ]
+        
+        if not response_times:
+            return 0.0
+            
+        response_times.sort()
+        index = int((percentile / 100.0) * len(response_times)) - 1
+        return response_times[max(0, index)]
+
+    async def get_system_health(self) -> SystemHealth:
+        """Get current system health status."""
+        return self._system_health
+
+    async def get_active_alerts(self) -> List[ProductionAlert]:
+        """Get all active alerts."""
+        return [alert for alert in self._active_alerts.values() 
+                if not alert.resolved_at]
+
+    async def acknowledge_alert(self, alert_id: str, acknowledged_by: str) -> bool:
+        """Acknowledge an active alert."""
+        if alert_id in self._active_alerts:
+            alert = self._active_alerts[alert_id]
+            alert.acknowledged = True
+            alert.acknowledged_by = acknowledged_by
+            alert.acknowledged_at = datetime.utcnow()
+            
+            logger.info("Alert acknowledged", 
+                       alert_id=alert_id, 
+                       acknowledged_by=acknowledged_by)
+            return True
+        return False
+
 
 class ResourceMonitor:
     """System resource monitoring for orchestrator."""
