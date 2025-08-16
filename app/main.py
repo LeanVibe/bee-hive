@@ -60,7 +60,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         from .core.error_handling_integration import (
             initialize_error_handling_integration,
         )
-        from .core.orchestrator import AgentOrchestrator
+        # Epic 1, Phase 2 Week 3: Migrate to unified production orchestrator
+        from .core.orchestrator_migration_adapter import AgentOrchestrator
         
         # Initialize core infrastructure
         await init_database()

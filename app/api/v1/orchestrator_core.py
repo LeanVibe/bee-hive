@@ -18,6 +18,11 @@ from pydantic import BaseModel, Field
 import structlog
 
 from ...core.database import get_session_dependency
+# Epic 1, Phase 2 Week 3: Migrate to unified production orchestrator
+from ...core.production_orchestrator_unified import (
+    get_production_orchestrator, UnifiedProductionOrchestrator,
+    AgentCapability, OrchestrationTask, TaskPriority as UnifiedTaskPriority
+)
 from ...core.agent_registry import AgentRegistry, AgentRegistrationResult, LifecycleState
 from ...core.task_queue import TaskQueue, QueuedTask, QueueStatus
 from ...core.task_scheduler import TaskScheduler, SchedulingStrategy, SchedulingDecision
@@ -29,10 +34,19 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 # Global service instances (would be dependency-injected in production)
+_unified_orchestrator: Optional[UnifiedProductionOrchestrator] = None
 _agent_registry: Optional[AgentRegistry] = None
 _task_queue: Optional[TaskQueue] = None
 _task_scheduler: Optional[TaskScheduler] = None
 _health_monitor: Optional[HealthMonitor] = None
+
+
+def get_unified_orchestrator() -> UnifiedProductionOrchestrator:
+    """Get unified production orchestrator instance"""
+    global _unified_orchestrator
+    if _unified_orchestrator is None:
+        _unified_orchestrator = get_production_orchestrator()
+    return _unified_orchestrator
 
 
 # Pydantic models for API requests/responses
