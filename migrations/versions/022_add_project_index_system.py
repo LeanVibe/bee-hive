@@ -1,7 +1,7 @@
 """Add Project Index System for code intelligence and context optimization
 
 Revision ID: 022_add_project_index_system
-Revises: d36c23fd2bf9_merge_enum_fixes_and_pgvector_extension
+Revises: 021_add_advanced_github_integration
 Create Date: 2025-01-15 18:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '022_add_project_index_system'
-down_revision = 'd36c23fd2bf9_merge_enum_fixes_and_pgvector_extension'
+down_revision = '021_add_advanced_github_integration'
 branch_labels = None
 depends_on = None
 
