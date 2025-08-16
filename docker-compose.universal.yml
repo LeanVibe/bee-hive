@@ -1,52 +1,110 @@
-# Universal Project Index - Docker Compose Configuration
-# This file creates a self-contained Project Index deployment for any project
+# Universal Project Index - Production-Ready Docker Infrastructure
+# Complete containerized deployment for Project Index analysis system
 version: '3.8'
 
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-restart-policy: &default-restart
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+    window: 120s
+
 services:
-  # Project Index Core Engine
+  # Project Index Core API Service
   project-index:
-    image: leanvibe/project-index:latest
-    container_name: project_index_core
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.project-index
+      target: ${BUILD_TARGET:-production}
+      args:
+        - BUILD_DATE=${BUILD_DATE}
+        - VCS_REF=${VCS_REF}
+        - VERSION=${VERSION:-2.0.0}
+    container_name: project_index_api
+    hostname: project-index-api
     ports:
       - "${PROJECT_INDEX_PORT:-8100}:8000"
+      - "${PROJECT_INDEX_METRICS_PORT:-9100}:9090"
     environment:
-      # Database connection
-      - DATABASE_URL=postgresql://project_user:${PROJECT_INDEX_PASSWORD}@postgres:5432/project_index
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      
-      # Project configuration
-      - PROJECT_ROOT=/workspace
-      - PROJECT_NAME=${PROJECT_NAME}
-      - PROJECT_LANGUAGE=${PROJECT_LANGUAGE:-auto-detect}
-      - ANALYSIS_MODE=${ANALYSIS_MODE:-smart}
-      
-      # Performance settings
-      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-2}
-      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-10}
-      - ANALYSIS_TIMEOUT_SECONDS=${ANALYSIS_TIMEOUT_SECONDS:-300}
-      - CACHE_TTL_HOURS=${CACHE_TTL_HOURS:-24}
-      
-      # Feature flags
-      - ENABLE_REAL_TIME_MONITORING=${ENABLE_REAL_TIME_MONITORING:-true}
-      - ENABLE_ML_ANALYSIS=${ENABLE_ML_ANALYSIS:-false}
-      - ENABLE_METRICS=${ENABLE_METRICS:-false}
-      
-      # Logging
+      # Core configuration
+      - FASTAPI_ENV=${ENVIRONMENT:-production}
+      - DEBUG=${DEBUG:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - LOG_FORMAT=json
       
-      # File patterns (language-specific overrides)
-      - MONITOR_PATTERNS=${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts,**/*.go,**/*.rs,**/*.java,**/*.cpp,**/*.c,**/*.h}
-      - IGNORE_PATTERNS=${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**,**/__pycache__/**,**/target/**,**/build/**,**/dist/**}
+      # Database connection with connection pooling
+      - DATABASE_URL=postgresql+asyncpg://project_user:${PROJECT_INDEX_PASSWORD}@postgres:5432/project_index
+      - DATABASE_POOL_SIZE=${DATABASE_POOL_SIZE:-10}
+      - DATABASE_MAX_OVERFLOW=${DATABASE_MAX_OVERFLOW:-20}
+      - DATABASE_POOL_TIMEOUT=${DATABASE_POOL_TIMEOUT:-30}
+      
+      # Redis configuration with optimal settings
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_MAX_CONNECTIONS=${REDIS_MAX_CONNECTIONS:-50}
+      - REDIS_RETRY_ON_TIMEOUT=true
+      - REDIS_SOCKET_CONNECT_TIMEOUT=5
+      
+      # Project analysis configuration
+      - PROJECT_ROOT=/workspace
+      - PROJECT_NAME=${PROJECT_NAME}
+      - PROJECT_LANGUAGE=${PROJECT_LANGUAGE:-auto-detect}
+      - ANALYSIS_MODE=${ANALYSIS_MODE:-intelligent}
+      - ENABLE_INCREMENTAL_ANALYSIS=${ENABLE_INCREMENTAL:-true}
+      
+      # Performance and resource limits
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-4}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-50}
+      - MAX_FILES_PER_ANALYSIS=${MAX_FILES_PER_ANALYSIS:-10000}
+      - ANALYSIS_TIMEOUT_SECONDS=${ANALYSIS_TIMEOUT_SECONDS:-600}
+      - MEMORY_LIMIT_MB=${API_MEMORY_LIMIT_MB:-1024}
+      
+      # Caching and optimization
+      - CACHE_TTL_HOURS=${CACHE_TTL_HOURS:-24}
+      - ENABLE_SMART_CACHING=${ENABLE_SMART_CACHING:-true}
+      - CACHE_COMPRESSION=${CACHE_COMPRESSION:-true}
+      - CONTEXT_CACHE_SIZE=${CONTEXT_CACHE_SIZE:-1000}
+      
+      # Advanced features
+      - ENABLE_REAL_TIME_MONITORING=${ENABLE_REAL_TIME_MONITORING:-true}
+      - ENABLE_ML_ANALYSIS=${ENABLE_ML_ANALYSIS:-true}
+      - ENABLE_DEPENDENCY_ANALYSIS=${ENABLE_DEPENDENCY_ANALYSIS:-true}
+      - ENABLE_SEMANTIC_SEARCH=${ENABLE_SEMANTIC_SEARCH:-true}
+      - ENABLE_METRICS=${ENABLE_METRICS:-true}
+      - ENABLE_WEBSOCKET_EVENTS=${ENABLE_WEBSOCKET_EVENTS:-true}
+      
+      # Security configuration
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8101}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,project-index}
+      - API_KEY_REQUIRED=${API_KEY_REQUIRED:-false}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - RATE_LIMIT_REQUESTS_PER_MINUTE=${RATE_LIMIT_RPM:-300}
+      
+      # File monitoring patterns optimized for different languages
+      - MONITOR_PATTERNS=${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts,**/*.jsx,**/*.tsx,**/*.go,**/*.rs,**/*.java,**/*.cpp,**/*.c,**/*.h,**/*.cs,**/*.php,**/*.rb,**/*.scala,**/*.kt,**/*.swift}
+      - IGNORE_PATTERNS=${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**,**/__pycache__/**,**/target/**,**/build/**,**/dist/**,**/venv/**,**/.venv/**,**/env/**,**/.env/**,**/vendor/**,**/cmake-build-*/**}
+      
+      # Health and monitoring
+      - HEALTH_CHECK_INTERVAL_SECONDS=${HEALTH_CHECK_INTERVAL:-30}
+      - ENABLE_PERFORMANCE_MONITORING=${ENABLE_PERF_MONITORING:-true}
+      - METRICS_COLLECTION_INTERVAL=${METRICS_INTERVAL:-60}
       
     volumes:
       # Project files (read-only for security)
-      - "${HOST_PROJECT_PATH}:/workspace:ro"
-      # Persistent data
+      - "${HOST_PROJECT_PATH:-./}:/workspace:ro"
+      # Persistent application data
       - project_data:/app/data
       - analysis_cache:/app/cache
-      # Configuration
-      - ./config:/app/config:ro
+      - index_snapshots:/app/snapshots
+      # Configuration files
+      - ./config/project-index:/app/config:ro
+      # Logs for debugging (optional)
+      - project_logs:/app/logs
       
     depends_on:
       postgres:
@@ -55,7 +113,247 @@ services:
         condition: service_healthy
         
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "-H", "User-Agent: Docker-Health", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${PROJECT_INDEX_MEMORY_LIMIT:-2G}
+          cpus: "${PROJECT_INDEX_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: ${PROJECT_INDEX_MEMORY_RESERVATION:-1G}
+          cpus: "${PROJECT_INDEX_CPU_RESERVATION:-0.5}"
+          
+    logging: *default-logging
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=100M,noexec,nosuid,nodev
+
+  # PostgreSQL with Vector Extensions for semantic search
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: project_index_postgres
+    hostname: project-index-postgres
+    user: postgres
+    environment:
+      # Database configuration
+      POSTGRES_DB: project_index
+      POSTGRES_USER: project_user
+      POSTGRES_PASSWORD: ${PROJECT_INDEX_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=md5"
+      
+      # Performance tuning for Project Index workloads
+      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-256MB}
+      POSTGRES_EFFECTIVE_CACHE_SIZE: ${POSTGRES_CACHE_SIZE:-1GB}
+      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_MEM:-64MB}
+      POSTGRES_CHECKPOINT_COMPLETION_TARGET: 0.9
+      POSTGRES_WAL_BUFFERS: 16MB
+      POSTGRES_DEFAULT_STATISTICS_TARGET: 100
+      
+      # Connection settings
+      POSTGRES_MAX_CONNECTIONS: ${POSTGRES_MAX_CONNECTIONS:-100}
+      POSTGRES_SHARED_PRELOAD_LIBRARIES: 'vector'
+      
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+      
+    volumes:
+      # Persistent database storage with optimal mount options
+      - postgres_data:/var/lib/postgresql/data
+      # Initialization scripts for Project Index schema
+      - ./docker/init-scripts/postgres:/docker-entrypoint-initdb.d:ro
+      # Custom PostgreSQL configuration optimized for Project Index
+      - ./config/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./config/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      
+    command: >
+      postgres 
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
+      -c effective_cache_size=${POSTGRES_CACHE_SIZE:-1GB}
+      -c maintenance_work_mem=${POSTGRES_MAINTENANCE_MEM:-64MB}
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=8
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=8
+      -c max_parallel_maintenance_workers=2
+      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U project_user -d project_index -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-1G}
+          cpus: "${POSTGRES_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: ${POSTGRES_MEMORY_RESERVATION:-512M}
+          cpus: "${POSTGRES_CPU_RESERVATION:-0.25}"
+          
+    logging: *default-logging
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:size=100M,noexec,nosuid,nodev
+      - /run/postgresql:size=100M,noexec,nosuid,nodev
+
+  # Redis for Caching, Message Queue, and Real-time Events
+  redis:
+    image: redis:7-alpine
+    container_name: project_index_redis
+    hostname: project-index-redis
+    user: redis
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory ${REDIS_MEMORY_LIMIT:-512m}
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --tcp-keepalive 60
+      --timeout 300
+      --tcp-backlog 511
+      --databases 16
+      --maxclients 10000
+      --stream-node-max-bytes 4096
+      --stream-node-max-entries 100
+      --hash-max-ziplist-entries 512
+      --hash-max-ziplist-value 64
+      --list-max-ziplist-size -2
+      --set-max-intset-entries 512
+      --zset-max-ziplist-entries 128
+      --zset-max-ziplist-value 64
+      --hz 10
+      --rdbcompression yes
+      --rdbchecksum yes
+    
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+      
+    volumes:
+      # Persistent Redis data for caching and message queue
+      - redis_data:/data
+      # Redis configuration optimized for Project Index workloads
+      - ./config/redis/redis.conf:/etc/redis/redis.conf:ro
+      
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+      
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEMORY_LIMIT:-512M}
+          cpus: "${REDIS_CPU_LIMIT:-0.25}"
+        reservations:
+          memory: ${REDIS_MEMORY_RESERVATION:-256M}
+          cpus: "${REDIS_CPU_RESERVATION:-0.1}"
+          
+    logging: *default-logging
+    restart: unless-stopped
+    networks:
+      - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=50M,noexec,nosuid,nodev
+
+  # Analysis Worker (Scalable Background Processing)
+  analysis-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.project-index-worker
+      target: ${BUILD_TARGET:-production}
+    container_name: project_index_worker_${WORKER_ID:-1}
+    hostname: project-index-worker-${WORKER_ID:-1}
+    environment:
+      # Core configuration
+      - WORKER_TYPE=analysis
+      - WORKER_ID=${WORKER_ID:-1}
+      - WORKER_NAME=analysis-worker-${WORKER_ID:-1}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=json
+      
+      # Database and cache connections
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - DATABASE_URL=postgresql+asyncpg://project_user:${PROJECT_INDEX_PASSWORD}@postgres:5432/project_index
+      
+      # Project analysis configuration
+      - PROJECT_ROOT=/workspace
+      - ANALYSIS_MODE=${ANALYSIS_MODE:-intelligent}
+      - ENABLE_INCREMENTAL_ANALYSIS=${ENABLE_INCREMENTAL:-true}
+      - ENABLE_PARALLEL_PROCESSING=${ENABLE_PARALLEL_PROCESSING:-true}
+      
+      # Worker performance settings
+      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-4}
+      - BATCH_SIZE=${ANALYSIS_BATCH_SIZE:-50}
+      - QUEUE_PREFETCH_COUNT=${QUEUE_PREFETCH:-10}
+      - TASK_TIMEOUT_SECONDS=${TASK_TIMEOUT:-300}
+      - MEMORY_LIMIT_MB=${WORKER_MEMORY_LIMIT_MB:-512}
+      
+      # File processing limits
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-50}
+      - MAX_FILES_PER_BATCH=${MAX_FILES_PER_BATCH:-100}
+      
+      # Queue configuration
+      - QUEUE_NAME=project_index_analysis
+      - QUEUE_PRIORITY=${QUEUE_PRIORITY:-normal}
+      - ENABLE_DEAD_LETTER_QUEUE=${ENABLE_DLQ:-true}
+      - MAX_RETRY_ATTEMPTS=${MAX_RETRY_ATTEMPTS:-3}
+      
+      # Monitoring and health
+      - HEALTH_CHECK_INTERVAL_SECONDS=${WORKER_HEALTH_INTERVAL:-30}
+      - ENABLE_WORKER_METRICS=${ENABLE_WORKER_METRICS:-true}
+      - METRICS_PORT=9091
+      
+    volumes:
+      # Project files (read-only)
+      - "${HOST_PROJECT_PATH:-./}:/workspace:ro"
+      # Shared cache with API service
+      - analysis_cache:/app/cache
+      - worker_temp:/app/temp
+      # Worker-specific logs
+      - worker_logs:/app/logs
+      
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      project-index:
+        condition: service_started
+        
+    healthcheck:
+      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', password='${REDIS_PASSWORD}'); assert r.ping()"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,171 +362,150 @@ services:
     deploy:
       resources:
         limits:
-          memory: ${PROJECT_INDEX_MEMORY_LIMIT:-1G}
-          cpus: ${PROJECT_INDEX_CPU_LIMIT:-0.5}
+          memory: ${WORKER_MEMORY_LIMIT:-1G}
+          cpus: "${WORKER_CPU_LIMIT:-0.5}"
         reservations:
-          memory: ${PROJECT_INDEX_MEMORY_RESERVATION:-512M}
-          
+          memory: ${WORKER_MEMORY_RESERVATION:-512M}
+          cpus: "${WORKER_CPU_RESERVATION:-0.25}"
+      replicas: ${WORKER_REPLICAS:-1}
+      
+    logging: *default-logging
     restart: unless-stopped
     networks:
       - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=200M,noexec,nosuid,nodev
+    profiles:
+      - workers
+      - production
 
-  # PostgreSQL with Vector Extensions  
-  postgres:
-    image: pgvector/pgvector:pg15
-    container_name: project_index_postgres
+  # Real-time File Monitor Service
+  file-monitor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.project-index-monitor
+      target: ${BUILD_TARGET:-production}
+    container_name: project_index_monitor
+    hostname: project-index-monitor
     environment:
-      POSTGRES_DB: project_index
-      POSTGRES_USER: project_user
-      POSTGRES_PASSWORD: ${PROJECT_INDEX_PASSWORD}
-      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=md5"
+      # Core configuration
+      - SERVICE_TYPE=file-monitor
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=json
       
-    ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      # Redis connection for event publishing
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - REDIS_CHANNEL_PREFIX=project_index
+      
+      # File monitoring configuration
+      - PROJECT_ROOT=/workspace
+      - MONITOR_PATTERNS=${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts,**/*.jsx,**/*.tsx,**/*.go,**/*.rs,**/*.java,**/*.cpp,**/*.c,**/*.h,**/*.cs,**/*.php,**/*.rb,**/*.scala,**/*.kt,**/*.swift}
+      - IGNORE_PATTERNS=${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**,**/__pycache__/**,**/target/**,**/build/**,**/dist/**,**/venv/**,**/.venv/**,**/env/**,**/.env/**,**/vendor/**,**/cmake-build-*/**}
+      
+      # Performance tuning
+      - DEBOUNCE_SECONDS=${DEBOUNCE_SECONDS:-1.0}
+      - MAX_EVENTS_PER_SECOND=${MAX_EVENTS_PER_SECOND:-100}
+      - BATCH_SIZE=${MONITOR_BATCH_SIZE:-20}
+      - QUEUE_SIZE=${MONITOR_QUEUE_SIZE:-1000}
+      
+      # Advanced monitoring features
+      - ENABLE_RECURSIVE_MONITORING=${ENABLE_RECURSIVE_MONITORING:-true}
+      - ENABLE_SYMLINK_FOLLOWING=${ENABLE_SYMLINK_FOLLOWING:-false}
+      - ENABLE_CONTENT_CHANGE_DETECTION=${ENABLE_CONTENT_CHANGE_DETECTION:-true}
+      - ENABLE_METADATA_TRACKING=${ENABLE_METADATA_TRACKING:-true}
+      
+      # Resource optimization
+      - MAX_MEMORY_MB=${MONITOR_MEMORY_MB:-128}
+      - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL:-1}
+      - CLEANUP_INTERVAL_MINUTES=${CLEANUP_INTERVAL:-5}
+      
+      # Health and monitoring
+      - HEALTH_CHECK_INTERVAL_SECONDS=${MONITOR_HEALTH_INTERVAL:-30}
+      - ENABLE_MONITOR_METRICS=${ENABLE_MONITOR_METRICS:-true}
+      - METRICS_PORT=9092
       
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+      # Project files to monitor (read-only)
+      - "${HOST_PROJECT_PATH:-./}:/workspace:ro"
+      # Monitor state and temporary files
+      - monitor_state:/app/state
+      - monitor_temp:/app/temp
+      # Monitor logs
+      - monitor_logs:/app/logs
       
+    depends_on:
+      redis:
+        condition: service_healthy
+        
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U project_user -d project_index"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "python", "-c", "import os; assert os.path.exists('/workspace'); import redis; r=redis.Redis(host='redis', password='${REDIS_PASSWORD}'); r.ping()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
       start_period: 30s
       
     deploy:
       resources:
         limits:
-          memory: ${POSTGRES_MEMORY_LIMIT:-512M}
-          cpus: ${POSTGRES_CPU_LIMIT:-0.25}
+          memory: ${MONITOR_MEMORY_LIMIT:-256M}
+          cpus: "${MONITOR_CPU_LIMIT:-0.2}"
+        reservations:
+          memory: ${MONITOR_MEMORY_RESERVATION:-128M}
+          cpus: "${MONITOR_CPU_RESERVATION:-0.1}"
           
+    logging: *default-logging
     restart: unless-stopped
     networks:
       - project_index_network
-
-  # Redis for Caching and Message Queue
-  redis:
-    image: redis:7-alpine
-    container_name: project_index_redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory ${REDIS_MEMORY_LIMIT:-256m} --maxmemory-policy allkeys-lru
-    
-    ports:
-      - "${REDIS_PORT:-6380}:6379"
-      
-    volumes:
-      - redis_data:/data
-      
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-      
-    deploy:
-      resources:
-        limits:
-          memory: ${REDIS_MEMORY_LIMIT:-256M}
-          cpus: ${REDIS_CPU_LIMIT:-0.1}
-          
-    restart: unless-stopped
-    networks:
-      - project_index_network
-
-  # Analysis Worker (Scalable)
-  analysis-worker:
-    image: leanvibe/project-index-worker:latest
-    container_name: project_index_worker_${WORKER_ID:-1}
-    environment:
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - DATABASE_URL=postgresql://project_user:${PROJECT_INDEX_PASSWORD}@postgres:5432/project_index
-      - PROJECT_ROOT=/workspace
-      - WORKER_CONCURRENCY=${WORKER_CONCURRENCY:-2}
-      - WORKER_ID=${WORKER_ID:-1}
-      - ANALYSIS_MODE=${ANALYSIS_MODE:-smart}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      
-    volumes:
-      - "${HOST_PROJECT_PATH}:/workspace:ro"
-      - analysis_cache:/app/cache
-      
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      project-index:
-        condition: service_healthy
-        
-    healthcheck:
-      test: ["CMD", "python", "-c", "import redis; r=redis.Redis(host='redis', password='${REDIS_PASSWORD}'); r.ping()"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      
-    deploy:
-      resources:
-        limits:
-          memory: ${WORKER_MEMORY_LIMIT:-512M}
-          cpus: ${WORKER_CPU_LIMIT:-0.25}
-      replicas: ${WORKER_REPLICAS:-1}
-      
-    restart: unless-stopped
-    networks:
-      - project_index_network
-    profiles:
-      - workers
-
-  # File Monitor Service
-  file-monitor:
-    image: leanvibe/project-index-monitor:latest
-    container_name: project_index_monitor
-    environment:
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - PROJECT_ROOT=/workspace
-      - MONITOR_PATTERNS=${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts,**/*.go,**/*.rs,**/*.java}
-      - IGNORE_PATTERNS=${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**,**/__pycache__/**}
-      - DEBOUNCE_SECONDS=${DEBOUNCE_SECONDS:-2.0}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      
-    volumes:
-      - "${HOST_PROJECT_PATH}:/workspace:ro"
-      
-    depends_on:
-      redis:
-        condition: service_healthy
-        
-    healthcheck:
-      test: ["CMD", "python", "-c", "import os; assert os.path.exists('/workspace')"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.1'
-          
-    restart: unless-stopped
-    networks:
-      - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=50M,noexec,nosuid,nodev
     profiles:
       - monitoring
+      - production
 
-  # Web Dashboard (Optional)
+  # Project Index Web Dashboard (Optional)
   dashboard:
-    image: leanvibe/project-index-dashboard:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dashboard
+      target: ${BUILD_TARGET:-production}
     container_name: project_index_dashboard
+    hostname: project-index-dashboard
     ports:
       - "${DASHBOARD_PORT:-8101}:3000"
       
     environment:
+      # Core configuration
+      - NODE_ENV=${NODE_ENV:-production}
+      - DASHBOARD_ENV=${ENVIRONMENT:-production}
+      
+      # API connectivity
       - API_BASE_URL=http://project-index:8000
-      - PROJECT_NAME=${PROJECT_NAME}
       - WEBSOCKET_URL=ws://project-index:8000/ws
+      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:8100}
+      - PUBLIC_WEBSOCKET_URL=${PUBLIC_WEBSOCKET_URL:-ws://localhost:8100/ws}
+      
+      # Project configuration
+      - PROJECT_NAME=${PROJECT_NAME}
+      - PROJECT_DESCRIPTION=${PROJECT_DESCRIPTION:-}
+      - PROJECT_VERSION=${VERSION:-2.0.0}
+      
+      # Dashboard features
       - ENABLE_AUTHENTICATION=${DASHBOARD_AUTH:-false}
+      - ENABLE_REAL_TIME_UPDATES=${ENABLE_REAL_TIME_UPDATES:-true}
+      - ENABLE_ADVANCED_ANALYTICS=${ENABLE_ADVANCED_ANALYTICS:-true}
+      - ENABLE_EXPORT_FEATURES=${ENABLE_EXPORT_FEATURES:-true}
+      
+      # Performance settings
+      - REFRESH_INTERVAL_SECONDS=${DASHBOARD_REFRESH_INTERVAL:-5}
+      - MAX_HISTORY_ENTRIES=${MAX_HISTORY_ENTRIES:-1000}
+      - ENABLE_CACHING=${ENABLE_DASHBOARD_CACHING:-true}
       
     depends_on:
       project-index:
@@ -239,156 +516,339 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
       
     deploy:
       resources:
         limits:
-          memory: 256M
-          cpus: '0.1'
+          memory: ${DASHBOARD_MEMORY_LIMIT:-512M}
+          cpus: "${DASHBOARD_CPU_LIMIT:-0.25}"
+        reservations:
+          memory: ${DASHBOARD_MEMORY_RESERVATION:-256M}
+          cpus: "${DASHBOARD_CPU_RESERVATION:-0.1}"
           
+    logging: *default-logging
     restart: unless-stopped
     networks:
       - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=50M,noexec,nosuid,nodev
     profiles:
       - dashboard
+      - ui
 
-  # Metrics and Monitoring (Optional)
+  # Prometheus Metrics Collection (Optional)
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.45.0
     container_name: project_index_prometheus
+    hostname: project-index-prometheus
+    user: nobody
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
       
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # Prometheus configuration optimized for Project Index
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/rules:/etc/prometheus/rules:ro
+      # Persistent metrics data
       - prometheus_data:/prometheus
       
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=7d'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-7d}'
+      - '--storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-1GB}'
       - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--log.level=${PROMETHEUS_LOG_LEVEL:-info}'
+      - '--query.max-concurrency=${PROMETHEUS_MAX_CONCURRENCY:-20}'
+      - '--query.timeout=${PROMETHEUS_QUERY_TIMEOUT:-2m}'
+      - '--storage.tsdb.min-block-duration=2h'
+      - '--storage.tsdb.max-block-duration=25h'
       
     depends_on:
       - project-index
       
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.2'
+          memory: ${PROMETHEUS_MEMORY_LIMIT:-1G}
+          cpus: "${PROMETHEUS_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: ${PROMETHEUS_MEMORY_RESERVATION:-512M}
+          cpus: "${PROMETHEUS_CPU_RESERVATION:-0.25}"
           
+    logging: *default-logging
     restart: unless-stopped
     networks:
       - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=100M,noexec,nosuid,nodev
     profiles:
       - monitoring
       - metrics
 
-  # Grafana Dashboard (Optional)
+  # Grafana Visualization Dashboard (Optional)
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.0.0
     container_name: project_index_grafana
+    hostname: project-index-grafana
+    user: "472"
     ports:
       - "${GRAFANA_PORT:-3001}:3000"
       
     environment:
+      # Core configuration
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      
+      # Dashboard features
       - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/project-index-overview.json
+      
+      # Performance settings
+      - GF_DATABASE_WAL=true
+      - GF_LOG_LEVEL=${GRAFANA_LOG_LEVEL:-info}
+      - GF_SERVER_ENABLE_GZIP=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      
+      # Security
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_SECURITY_COOKIE_SECURE=false
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=false
       
     volumes:
+      # Persistent Grafana data
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+      # Pre-configured dashboards and data sources
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
       
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_healthy
+      
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
       
     deploy:
       resources:
         limits:
-          memory: 256M
-          cpus: '0.1'
+          memory: ${GRAFANA_MEMORY_LIMIT:-512M}
+          cpus: "${GRAFANA_CPU_LIMIT:-0.25}"
+        reservations:
+          memory: ${GRAFANA_MEMORY_RESERVATION:-256M}
+          cpus: "${GRAFANA_CPU_RESERVATION:-0.1}"
           
+    logging: *default-logging
     restart: unless-stopped
     networks:
       - project_index_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:size=100M,noexec,nosuid,nodev
     profiles:
       - monitoring
       - metrics
 
 networks:
   project_index_network:
+    name: project_index_network
     driver: bridge
     ipam:
+      driver: default
       config:
         - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1
+    driver_opts:
+      com.docker.network.bridge.name: br-project-index
+      com.docker.network.driver.mtu: 1500
 
 volumes:
-  # Persistent database storage
+  # Core Database Storage - Persistent and backed up
   postgres_data:
+    name: project_index_postgres_data
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_DIR}/postgres
+      device: ${DATA_DIR:-./data}/postgres
       
-  # Redis data with persistence
+  # Redis Persistence - Fast access cache and message queue
   redis_data:
+    name: project_index_redis_data
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_DIR}/redis
+      device: ${DATA_DIR:-./data}/redis
       
-  # Analysis cache - faster access, can be ephemeral
+  # High-Performance Analysis Cache - Optimized for frequent reads/writes
   analysis_cache:
+    name: project_index_analysis_cache
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_DIR}/cache
+      device: ${DATA_DIR:-./data}/cache
       
-  # Project metadata and configurations  
+  # Project Metadata and Configuration Storage
   project_data:
+    name: project_index_project_data
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_DIR}/project
+      device: ${DATA_DIR:-./data}/project
       
-  # Monitoring data (optional)
-  prometheus_data:
+  # Index Snapshots for Backup and Recovery
+  index_snapshots:
+    name: project_index_snapshots
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_DIR}/prometheus
+      device: ${DATA_DIR:-./data}/snapshots
+      
+  # Application Logs for Debugging and Monitoring
+  project_logs:
+    name: project_index_logs
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/logs
+      
+  # Worker-Specific Storage
+  worker_temp:
+    name: project_index_worker_temp
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/worker/temp
+      
+  worker_logs:
+    name: project_index_worker_logs
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/worker/logs
+      
+  # File Monitor State and Temporary Files
+  monitor_state:
+    name: project_index_monitor_state
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/monitor/state
+      
+  monitor_temp:
+    name: project_index_monitor_temp
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/monitor/temp
+      
+  monitor_logs:
+    name: project_index_monitor_logs
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/monitor/logs
+      
+  # Monitoring and Metrics Storage (Optional)
+  prometheus_data:
+    name: project_index_prometheus_data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/prometheus
       
   grafana_data:
+    name: project_index_grafana_data
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_DIR}/grafana
+      device: ${DATA_DIR:-./data}/grafana
 
-# Health check extension for better dependency management
+# Resource allocation profiles for different deployment sizes
+x-resource-profiles:
+  small: &small-resources
+    limits:
+      memory: 512M
+      cpus: '0.25'
+    reservations:
+      memory: 256M
+      cpus: '0.1'
+    
+  medium: &medium-resources
+    limits:
+      memory: 1G
+      cpus: '0.5'
+    reservations:
+      memory: 512M
+      cpus: '0.25'
+    
+  large: &large-resources
+    limits:
+      memory: 2G
+      cpus: '1.0'
+    reservations:
+      memory: 1G
+      cpus: '0.5'
+      
+  xlarge: &xlarge-resources
+    limits:
+      memory: 4G
+      cpus: '2.0'
+    reservations:
+      memory: 2G
+      cpus: '1.0'
+
+# Common health check configurations
 x-healthcheck-defaults: &healthcheck-defaults
   interval: 30s
   timeout: 10s
   retries: 3
   start_period: 60s
 
-# Resource limits based on deployment profile
-x-resource-limits:
-  small: &small-resources
-    memory: 512M
-    cpus: '0.25'
-    
-  medium: &medium-resources
-    memory: 1G
-    cpus: '0.5'
-    
-  large: &large-resources
-    memory: 2G
-    cpus: '1.0'
+x-healthcheck-fast: &healthcheck-fast
+  interval: 15s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
+x-healthcheck-critical: &healthcheck-critical
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 45s

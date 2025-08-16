@@ -1,0 +1,123 @@
+# Project Index Analysis Worker - Optimized for Background Processing
+# Specialized container for handling analysis tasks in background queues
+
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=2.0.0
+ARG PYTHON_VERSION=3.12
+
+# Use the same base as the main Project Index service for consistency
+FROM python:${PYTHON_VERSION}-slim as base
+
+LABEL org.opencontainers.image.title="Project Index Analysis Worker" \
+      org.opencontainers.image.description="Background analysis worker for Project Index system" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.vendor="LeanVibe"
+
+# Worker-optimized environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PYTHONOPTIMIZE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app \
+    # Worker-specific optimizations
+    MALLOC_ARENA_MAX=2 \
+    # Analysis worker configuration
+    WORKER_TYPE=analysis \
+    WORKER_COMPONENT=project-index-worker
+
+# Install minimal system dependencies for analysis tasks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Essential tools for code analysis
+    build-essential=12.* \
+    git=1:* \
+    # Database connectivity
+    libpq-dev=15.* \
+    # Redis client
+    redis-tools=7:* \
+    # Network tools for health checks
+    curl=7.* \
+    # Process monitoring
+    procps=2:* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Create worker user with minimal privileges
+RUN groupadd -g 2001 -r worker && \
+    useradd -u 2001 -r -g worker -s /bin/bash -m worker \
+    -c "Project Index Worker User" && \
+    mkdir -p /app /app/cache /app/temp /app/logs && \
+    chown -R worker:worker /app
+
+WORKDIR /app
+
+# Dependencies stage
+FROM base as dependencies
+
+# Copy requirements and install worker-specific dependencies
+COPY requirements.txt requirements-agent.txt ./
+
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --no-deps \
+    -r requirements.txt \
+    -r requirements-agent.txt && \
+    # Additional worker-specific dependencies
+    pip install --no-cache-dir \
+    celery[redis]==5.3.* \
+    kombu==5.3.* \
+    billiard==4.1.* \
+    # Memory-efficient processing
+    numpy==1.24.* \
+    # Async task processing
+    aiofiles==23.* \
+    aioshutil==1.3.* && \
+    rm -rf ~/.cache/pip /tmp/* /var/tmp/* && \
+    python -m compileall /usr/local/lib/python*/site-packages/
+
+# Production worker stage
+FROM dependencies as production
+
+# Copy application code
+COPY --chown=worker:worker app/ ./app/
+COPY --chown=worker:worker worker-entrypoint.sh ./
+
+# Create worker startup script
+RUN cat > /app/worker-entrypoint.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+echo "Starting Project Index Analysis Worker ${WORKER_ID:-1}..."
+
+# Wait for Redis
+while ! redis-cli -h ${REDIS_HOST:-redis} -p ${REDIS_PORT:-6379} -a ${REDIS_PASSWORD} ping > /dev/null; do
+    echo "Waiting for Redis..."
+    sleep 2
+done
+
+# Wait for database
+while ! pg_isready -h ${DATABASE_HOST:-postgres} -p ${DATABASE_PORT:-5432} -U ${DATABASE_USER:-project_user}; do
+    echo "Waiting for database..."
+    sleep 2
+done
+
+echo "Starting analysis worker with concurrency ${WORKER_CONCURRENCY:-4}..."
+
+exec python -m app.workers.analysis_worker \
+    --concurrency ${WORKER_CONCURRENCY:-4} \
+    --loglevel ${LOG_LEVEL:-INFO} \
+    --queues ${QUEUE_NAME:-project_index_analysis} \
+    --pool ${WORKER_POOL:-prefork}
+EOF
+
+RUN chmod +x /app/worker-entrypoint.sh && \
+    chown worker:worker /app/worker-entrypoint.sh
+
+USER worker
+
+HEALTHCHECK --interval=60s --timeout=30s --retries=3 \
+    CMD python -c "import redis; r=redis.Redis(host='${REDIS_HOST:-redis}', password='${REDIS_PASSWORD}'); r.ping()"
+
+CMD ["/app/worker-entrypoint.sh"]

@@ -1,0 +1,135 @@
+# Project Index File Monitor - Lightweight Real-time File Watching Service
+# Optimized container for monitoring file system changes and triggering analysis
+
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=2.0.0
+ARG PYTHON_VERSION=3.12
+
+# Use minimal Python base for lightweight monitoring
+FROM python:${PYTHON_VERSION}-slim as base
+
+LABEL org.opencontainers.image.title="Project Index File Monitor" \
+      org.opencontainers.image.description="Real-time file system monitor for Project Index" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.vendor="LeanVibe"
+
+# Monitor-optimized environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PYTHONOPTIMIZE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app \
+    # Monitor-specific optimizations
+    MONITOR_COMPONENT=project-index-monitor \
+    SERVICE_TYPE=file-monitor
+
+# Install minimal dependencies for file monitoring
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # File system monitoring tools
+    inotify-tools=3.* \
+    # Git for file type detection
+    git=1:* \
+    # Redis client for event publishing
+    redis-tools=7:* \
+    # Network tools for health checks
+    curl=7.* \
+    # Minimal utilities
+    procps=2:* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Create monitor user with read-only access
+RUN groupadd -g 2002 -r monitor && \
+    useradd -u 2002 -r -g monitor -s /bin/bash -m monitor \
+    -c "Project Index Monitor User" && \
+    mkdir -p /app /app/state /app/temp /app/logs && \
+    chown -R monitor:monitor /app
+
+WORKDIR /app
+
+# Dependencies stage
+FROM base as dependencies
+
+# Copy minimal requirements for file monitoring
+COPY requirements-monitor.txt ./
+
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir \
+    # Core monitoring dependencies
+    watchdog==3.0.* \
+    watchfiles==0.21.* \
+    # Redis for event publishing
+    redis==5.0.* \
+    aioredis==2.0.* \
+    # Async file operations
+    aiofiles==23.* \
+    # Pattern matching
+    pathspec==0.11.* \
+    # Logging
+    structlog==23.* \
+    # Configuration
+    pydantic-settings==2.0.* && \
+    rm -rf ~/.cache/pip /tmp/* /var/tmp/* && \
+    python -m compileall /usr/local/lib/python*/site-packages/
+
+# Production monitor stage
+FROM dependencies as production
+
+# Copy monitor application code
+COPY --chown=monitor:monitor app/project_index/file_monitor.py ./app/
+COPY --chown=monitor:monitor app/project_index/events.py ./app/
+COPY --chown=monitor:monitor monitor-entrypoint.sh ./
+
+# Create monitor startup script
+RUN cat > /app/monitor-entrypoint.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+echo "Starting Project Index File Monitor..."
+
+# Wait for Redis
+while ! redis-cli -h ${REDIS_HOST:-redis} -p ${REDIS_PORT:-6379} -a ${REDIS_PASSWORD} ping > /dev/null; do
+    echo "Waiting for Redis..."
+    sleep 2
+done
+
+# Verify workspace exists
+if [ ! -d "/workspace" ]; then
+    echo "ERROR: Workspace directory /workspace not found"
+    exit 1
+fi
+
+echo "Monitoring workspace: /workspace"
+echo "Patterns: ${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts}"
+echo "Ignore patterns: ${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**}"
+
+exec python -m app.file_monitor \
+    --project-root /workspace \
+    --redis-url redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/0 \
+    --patterns "${MONITOR_PATTERNS:-**/*.py,**/*.js,**/*.ts}" \
+    --ignore-patterns "${IGNORE_PATTERNS:-**/node_modules/**,**/.git/**}" \
+    --debounce ${DEBOUNCE_SECONDS:-1.0} \
+    --log-level ${LOG_LEVEL:-INFO}
+EOF
+
+RUN chmod +x /app/monitor-entrypoint.sh && \
+    chown monitor:monitor /app/monitor-entrypoint.sh
+
+USER monitor
+
+# Health check to verify monitor is running and can access workspace
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD python -c "import os; assert os.path.exists('/workspace'); import redis; r=redis.Redis(host='${REDIS_HOST:-redis}', password='${REDIS_PASSWORD}'); r.ping()" && \
+        ps aux | grep -v grep | grep file_monitor > /dev/null
+
+CMD ["/app/monitor-entrypoint.sh"]
+
+# Minimal resource requirements
+LABEL resource.memory.min="64M" \
+      resource.memory.max="256M" \
+      resource.cpu.min="0.05" \
+      resource.cpu.max="0.2"

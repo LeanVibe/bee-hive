@@ -1,0 +1,82 @@
+{
+  "project_name": "bee-hive",
+  "project_path": "/Users/bogdan/work/leanvibe-dev/bee-hive",
+  "detection_metadata": {
+    "detection_timestamp": "2025-08-16T12:38:20.442516",
+    "primary_language": "javascript",
+    "frameworks": [
+      "fastapi",
+      "poetry"
+    ],
+    "project_size": "enterprise",
+    "confidence_score": 0.7999999999999999
+  },
+  "analysis": {
+    "enabled": true,
+    "parse_ast": true,
+    "extract_dependencies": true,
+    "calculate_complexity": true,
+    "analyze_docstrings": true,
+    "max_file_size_mb": 20,
+    "max_line_count": 100000,
+    "timeout_seconds": 60
+  },
+  "file_patterns": {
+    "include": [
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.d.ts",
+      "**/*.py",
+      "**/*.pyi",
+      "**/*.pyx",
+      "**/*.pyw"
+    ],
+    "exclude": []
+  },
+  "ignore_patterns": [
+    "**/__pycache__/**",
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/env/**",
+    "**/*.pyc",
+    "**/*.pyo",
+    "**/*.so",
+    "**/*.dylib",
+    "**/*.dll",
+    "**/target/**",
+    "**/bin/**",
+    "**/obj/**",
+    "**/vendor/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/target/**",
+    "**/*.class",
+    "**/bin/**",
+    "**/obj/**",
+    "**/vendor/**",
+    "**/target/**"
+  ],
+  "monitoring": {
+    "enabled": true,
+    "debounce_seconds": 2.0,
+    "watch_subdirectories": true,
+    "max_file_size_mb": 20
+  },
+  "optimization": {
+    "context_optimization_enabled": true,
+    "max_context_files": 100,
+    "relevance_threshold": 0.8
+  },
+  "performance": {
+    "max_concurrent_analyses": 8,
+    "analysis_batch_size": 100,
+    "cache_enabled": true,
+    "batch_insert_size": 200
+  }
+}

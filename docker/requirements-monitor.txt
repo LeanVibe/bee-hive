@@ -1,0 +1,29 @@
+# Minimal requirements for Project Index file monitor service
+# Optimized for lightweight monitoring container
+
+# Core monitoring dependencies
+watchdog==3.0.*
+watchfiles==0.21.*
+
+# Redis for event publishing
+redis==5.0.*
+aioredis==2.0.*
+
+# Async file operations
+aiofiles==23.*
+
+# Pattern matching for file filtering
+pathspec==0.11.*
+
+# Structured logging
+structlog==23.*
+
+# Configuration management
+pydantic==2.5.*
+pydantic-settings==2.0.*
+
+# JSON serialization
+orjson==3.9.*
+
+# System monitoring (minimal)
+psutil==5.9.*

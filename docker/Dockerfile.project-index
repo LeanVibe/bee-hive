@@ -1,0 +1,313 @@
+# Project Index Universal Installer - Optimized Multi-stage Dockerfile
+# Production-ready containerized deployment for intelligent project analysis
+
+# Build arguments for metadata and versioning
+ARG BUILD_DATE
+ARG VCS_REF  
+ARG VERSION=2.0.0
+ARG PYTHON_VERSION=3.12
+ARG DEBIAN_VERSION=bookworm
+
+# Base stage with optimized Python runtime
+FROM python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION} as base
+
+# Metadata labels for container registry and deployment tracking
+LABEL org.opencontainers.image.title="Project Index Universal Installer" \
+      org.opencontainers.image.description="Intelligent Project Analysis and Context Optimization System" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.vendor="LeanVibe" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/leanvibe/bee-hive" \
+      org.opencontainers.image.documentation="https://docs.leanvibe.com/project-index"
+
+# Security and performance environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PYTHONOPTIMIZE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_ROOT_USER_ACTION=ignore \
+    PYTHONPATH=/app \
+    PATH="/app/.local/bin:$PATH" \
+    # Security hardening
+    DEBIAN_FRONTEND=noninteractive \
+    # Performance optimization for Project Index workloads
+    MALLOC_ARENA_MAX=2 \
+    # FastAPI optimization
+    UVLOOP_ENABLED=1 \
+    # Project Index specific
+    PROJECT_INDEX_VERSION=${VERSION} \
+    PROJECT_INDEX_BUILD_DATE=${BUILD_DATE}
+
+# Install system dependencies with security focus and minimal attack surface
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Essential build tools
+    build-essential=12.* \
+    pkg-config=1.* \
+    # Database clients and libraries
+    postgresql-client=15+* \
+    libpq-dev=15.* \
+    # Redis client tools
+    redis-tools=7:* \
+    # Version control for project analysis
+    git=1:* \
+    # Network and monitoring tools
+    curl=7.* \
+    wget=1.* \
+    netcat-openbsd=1.* \
+    # Security and certificates
+    ca-certificates=* \
+    gnupg=2.* \
+    # Process management
+    procps=2:* \
+    # File system monitoring dependencies
+    inotify-tools=3.* \
+    # Tree-sitter parser dependencies
+    libffi-dev=3.* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/* \
+    && apt-get autoremove -y \
+    && apt-get autoclean
+
+# Create dedicated user for Project Index with security hardening
+RUN groupadd -g 2000 -r projectindex && \
+    useradd -u 2000 -r -g projectindex -s /bin/bash -m projectindex \
+    -c "Project Index Service User" && \
+    # Create application directories with proper permissions
+    mkdir -p /app /app/data /app/cache /app/logs /app/temp /app/config /app/snapshots && \
+    chown -R projectindex:projectindex /app && \
+    # Create workspace mount point
+    mkdir -p /workspace && \
+    chown projectindex:projectindex /workspace
+
+# Set working directory
+WORKDIR /app
+
+# Dependencies stage for optimized layer caching
+FROM base as dependencies
+
+# Copy requirements files for dependency installation
+COPY requirements.txt requirements-agent.txt ./
+
+# Install Python dependencies with optimization for Project Index workloads
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    # Install core dependencies
+    pip install --no-cache-dir --no-deps \
+    -r requirements.txt \
+    -r requirements-agent.txt && \
+    # Install additional Project Index specific dependencies
+    pip install --no-cache-dir \
+    tree-sitter==0.20.* \
+    tree-sitter-python==0.20.* \
+    tree-sitter-javascript==0.20.* \
+    tree-sitter-typescript==0.20.* \
+    tree-sitter-go==0.20.* \
+    tree-sitter-rust==0.20.* \
+    tree-sitter-java==0.20.* \
+    tree-sitter-cpp==0.20.* \
+    tree-sitter-c-sharp==0.20.* \
+    # Vector similarity and ML dependencies
+    scikit-learn==1.3.* \
+    numpy==1.24.* \
+    sentence-transformers==2.2.* \
+    # High-performance async libraries
+    uvloop==0.17.* \
+    orjson==3.9.* \
+    # Memory profiling and optimization
+    psutil==5.9.* \
+    memory-profiler==0.61.* && \
+    # Security: Remove pip cache and temporary files
+    rm -rf ~/.cache/pip /tmp/* /var/tmp/* && \
+    # Performance: Compile Python bytecode for faster imports
+    python -m compileall -b /usr/local/lib/python*/site-packages/ && \
+    find /usr/local/lib/python*/site-packages/ -name "*.py" -delete && \
+    find /usr/local/lib/python*/site-packages/ -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Development stage with debugging and testing tools
+FROM dependencies as development
+
+# Install development tools for debugging and profiling
+RUN pip install --no-cache-dir \
+    # Testing framework
+    pytest==7.4.* \
+    pytest-cov==4.1.* \
+    pytest-xdist==3.3.* \
+    pytest-benchmark==4.0.* \
+    pytest-asyncio==0.21.* \
+    # Code quality tools
+    black==23.* \
+    ruff==0.0.* \
+    mypy==1.5.* \
+    # Security scanning
+    bandit==1.7.* \
+    safety==2.3.* \
+    # Debugging tools
+    debugpy==1.8.* \
+    ipython==8.14.* \
+    rich==13.* \
+    # Performance profiling
+    py-spy==0.3.* \
+    line-profiler==4.0.* && \
+    rm -rf ~/.cache/pip /tmp/* /var/tmp/*
+
+# Copy source code with proper ownership
+COPY --chown=projectindex:projectindex . .
+
+# Create project-specific configuration
+RUN mkdir -p /app/config/project-index && \
+    # Compile Python bytecode for development
+    python -m compileall app/ && \
+    # Set up development environment
+    chmod +x /app/scripts/*.sh 2>/dev/null || true && \
+    # Ensure all permissions are correct
+    chown -R projectindex:projectindex /app
+
+# Switch to non-root user for security
+USER projectindex
+
+# Expose ports for API and metrics
+EXPOSE 8000 9090 5678
+
+# Health check optimized for Project Index
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=3 \
+    CMD curl -f -H "User-Agent: Docker-Health" \
+    -H "X-Health-Check: true" \
+    http://localhost:8000/health || exit 1
+
+# Development command with hot reload and debugging
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--reload", \
+     "--reload-dir", "app", \
+     "--log-level", "debug", \
+     "--access-log", \
+     "--use-colors"]
+
+# Production stage optimized for performance and security
+FROM dependencies as production
+
+# Copy only necessary application files for minimal attack surface
+COPY --chown=projectindex:projectindex app/ ./app/
+COPY --chown=projectindex:projectindex alembic.ini ./
+COPY --chown=projectindex:projectindex migrations/ ./migrations/
+COPY --chown=projectindex:projectindex config/ ./config/
+
+# Create production-optimized configuration
+RUN # Compile Python bytecode for optimal performance
+    python -m compileall -b app/ && \
+    # Remove source files to reduce image size and improve security
+    find app/ -name "*.py" -delete && \
+    find app/ -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    # Create necessary runtime directories
+    mkdir -p /app/runtime/temp /app/runtime/cache /app/runtime/uploads && \
+    # Set production permissions
+    chown -R projectindex:projectindex /app && \
+    chmod -R 750 /app && \
+    # Create startup script
+    cat > /app/start-production.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+# Wait for database to be ready
+echo "Waiting for database..."
+while ! pg_isready -h ${DATABASE_HOST:-postgres} -p ${DATABASE_PORT:-5432} -U ${DATABASE_USER:-project_user}; do
+    sleep 1
+done
+
+# Wait for Redis to be ready
+echo "Waiting for Redis..."
+while ! redis-cli -h ${REDIS_HOST:-redis} -p ${REDIS_PORT:-6379} -a ${REDIS_PASSWORD} ping > /dev/null; do
+    sleep 1
+done
+
+# Run database migrations
+echo "Running database migrations..."
+alembic upgrade head
+
+# Start the application
+echo "Starting Project Index API..."
+exec gunicorn app.main:app \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --workers ${WORKERS:-4} \
+    --worker-connections ${WORKER_CONNECTIONS:-1000} \
+    --max-requests ${MAX_REQUESTS:-10000} \
+    --max-requests-jitter ${MAX_REQUESTS_JITTER:-1000} \
+    --preload \
+    --bind 0.0.0.0:8000 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level ${LOG_LEVEL:-info} \
+    --timeout ${TIMEOUT:-120} \
+    --keepalive ${KEEPALIVE:-5} \
+    --worker-tmp-dir /dev/shm
+EOF
+    chmod +x /app/start-production.sh
+
+# Switch to non-root user
+USER projectindex
+
+# Expose only the API port in production
+EXPOSE 8000
+
+# Production-optimized health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
+    CMD curl -f -H "User-Agent: Docker-Health" \
+    -H "X-Health-Check: true" \
+    --max-time 8 \
+    http://localhost:8000/health || exit 1
+
+# Production startup command
+CMD ["/app/start-production.sh"]
+
+# Monitoring stage with observability tools
+FROM production as monitoring
+
+USER root
+
+# Install monitoring and observability tools
+RUN pip install --no-cache-dir \
+    # Prometheus metrics
+    prometheus-client==0.17.* \
+    prometheus-fastapi-instrumentator==6.1.* \
+    # OpenTelemetry for distributed tracing
+    opentelemetry-api==1.19.* \
+    opentelemetry-sdk==1.19.* \
+    opentelemetry-instrumentation-fastapi==0.40b* \
+    opentelemetry-instrumentation-sqlalchemy==0.40b* \
+    opentelemetry-instrumentation-redis==0.40b* \
+    opentelemetry-exporter-prometheus==1.12.* \
+    # Structured logging
+    structlog==23.1.* \
+    # APM and profiling
+    py-spy==0.3.* && \
+    rm -rf ~/.cache/pip /tmp/* /var/tmp/*
+
+USER projectindex
+
+# Expose metrics port
+EXPOSE 8000 9090
+
+# Monitoring command with telemetry enabled
+CMD ["gunicorn", "app.main:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--workers", "2", \
+     "--bind", "0.0.0.0:8000", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--timeout", "120", \
+     "--preload", \
+     "--enable-stdio-inheritance"]
+
+# Build metadata for automated deployment
+ARG BUILD_METADATA
+LABEL build.metadata="${BUILD_METADATA}" \
+      build.optimized-for="project-index-analysis" \
+      build.security-hardened="true" \
+      build.multi-arch="false" \
+      build.size-optimized="true"
