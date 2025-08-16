@@ -27,10 +27,9 @@ import json
 import redis.asyncio as redis
 
 from ...core.database import get_session_dependency
-from ...core.redis import get_redis
+from ...core.redis_integration import get_redis_service, redis_session
 from ...models.agent import Agent, AgentStatus, AgentType
 from ...models.task import Task, TaskStatus, TaskPriority, TaskType
-from ...core.team_coordination_redis import get_coordination_redis_service
 from ...core.team_coordination_metrics import get_team_coordination_metrics_service
 from ...core.team_coordination_error_handler import (
     ErrorHandlingMiddleware, CoordinationException, AgentNotFoundError,
@@ -299,7 +298,8 @@ class TeamCoordinationService:
         
     async def initialize(self):
         """Initialize service dependencies."""
-        self.redis_service = await get_coordination_redis_service()
+        self.redis_service = get_redis_service()
+        await self.redis_service.connect()
         self.metrics_service = await get_team_coordination_metrics_service()
     
     async def register_agent_with_capabilities(
@@ -330,18 +330,16 @@ class TeamCoordinationService:
         
         # Register agent in Redis coordination system
         if self.redis_service:
-            from ...core.team_coordination_redis import AgentCoordinationState
-            agent_state = AgentCoordinationState(
-                agent_id=str(agent.id),
-                status=agent.status.value,
-                current_workload=0.0,
-                available_capacity=registration_data.workload_preferences.max_concurrent_tasks / 10.0,
-                active_tasks=[],
-                capabilities=[cap.name for cap in registration_data.capabilities],
-                last_heartbeat=datetime.utcnow(),
-                performance_score=0.8
-            )
-            await self.redis_service.register_agent(agent_state)
+            capabilities = [cap.name for cap in registration_data.capabilities]
+            metadata = {
+                "preferred_workload": registration_data.preferred_workload,
+                "timezone": registration_data.timezone,
+                "tags": registration_data.tags,
+                "status": agent.status.value,
+                "current_workload": 0.0,
+                "performance_score": 0.8
+            }
+            await self.redis_service.register_agent(str(agent.id), capabilities, metadata)
         
         logger.info("Agent registered with capabilities",
                    agent_id=str(agent.id),
@@ -422,7 +420,6 @@ class TeamCoordinationService:
     async def distribute_task_intelligently(
         self,
         db: AsyncSession,
-        redis_client: redis.Redis,
         task_data: TaskDistributionRequest
     ) -> Optional[TaskDistributionResponse]:
         """Intelligently distribute task to optimal agent."""
@@ -474,15 +471,15 @@ class TeamCoordinationService:
         await db.commit()
         await db.refresh(task)
         
-        # Send real-time notification via Redis
-        await redis_client.publish("task_assignments", json.dumps({
+        # Send real-time notification via unified Redis service
+        await self.redis_service.publish("task_assignments", {
             "task_id": str(task.id),
             "agent_id": str(agent.id),
             "agent_name": agent.name,
             "task_title": task.title,
             "priority": task.priority.name,
             "assigned_at": datetime.utcnow().isoformat()
-        }))
+        })
         
         # Calculate estimated completion
         estimated_completion = None
@@ -538,8 +535,7 @@ async def startup_coordination_service():
 async def register_agent_for_coordination(
     registration: AgentRegistrationRequest,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_session_dependency),
-    redis_client: redis.Redis = Depends(get_redis)
+    db: AsyncSession = Depends(get_session_dependency)
 ) -> AgentStatusResponse:
     """
     Register an agent with comprehensive capability matching.
@@ -558,20 +554,20 @@ async def register_agent_for_coordination(
         # Background task for performance metrics initialization
         background_tasks.add_task(
             initialize_agent_performance_tracking,
-            agent_id=str(agent.id),
-            redis_client=redis_client
+            agent_id=str(agent.id)
         )
         
         # Calculate initial performance score
         performance_score = 0.8  # Default for new agents
         
-        # Broadcast registration via Redis
-        await redis_client.publish("agent_registrations", json.dumps({
+        # Broadcast registration via unified Redis service
+        redis_service = get_redis_service()
+        await redis_service.publish("agent_registrations", {
             "agent_id": str(agent.id),
             "agent_name": agent.name,
             "capabilities": len(agent.capabilities or []),
             "registered_at": datetime.utcnow().isoformat()
-        }))
+        })
         
         logger.info("Agent registered successfully",
                    agent_id=str(agent.id),
@@ -684,8 +680,7 @@ async def list_coordination_agents(
 async def distribute_task_intelligently(
     task_request: TaskDistributionRequest,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_session_dependency),
-    redis_client: redis.Redis = Depends(get_redis)
+    db: AsyncSession = Depends(get_session_dependency)
 ) -> TaskDistributionResponse:
     """
     Intelligently distribute a task to the optimal agent.
@@ -700,7 +695,7 @@ async def distribute_task_intelligently(
     try:
         # Distribute task using intelligent routing
         distribution_result = await coordination_service.distribute_task_intelligently(
-            db, redis_client, task_request
+            db, task_request
         )
         
         # Background task for metrics collection
@@ -724,8 +719,7 @@ async def distribute_task_intelligently(
 async def reassign_task_intelligently(
     task_id: str = Path(..., description="Task ID to reassign"),
     reassignment: TaskReassignmentRequest = ...,
-    db: AsyncSession = Depends(get_session_dependency),
-    redis_client: redis.Redis = Depends(get_redis)
+    db: AsyncSession = Depends(get_session_dependency)
 ) -> Dict[str, Any]:
     """
     Reassign a task with intelligent agent selection.
@@ -803,14 +797,15 @@ async def reassign_task_intelligently(
         
         await db.commit()
         
-        # Notify via Redis
-        await redis_client.publish("task_reassignments", json.dumps({
+        # Notify via unified Redis service
+        redis_service = get_redis_service()
+        await redis_service.publish("task_reassignments", {
             "task_id": task_id,
             "from_agent_id": str(old_agent_id) if old_agent_id else None,
             "to_agent_id": str(new_agent.id),
             "reason": reassignment.reason,
             "timestamp": datetime.utcnow().isoformat()
-        }))
+        })
         
         # WebSocket notifications
         if old_agent_id:
@@ -1062,8 +1057,7 @@ async def coordination_websocket(websocket: WebSocket, connection_id: str):
 # Health and Status Endpoints
 @router.get("/health", response_model=Dict[str, Any])
 async def get_coordination_health(
-    db: AsyncSession = Depends(get_session_dependency),
-    redis_client: redis.Redis = Depends(get_redis)
+    db: AsyncSession = Depends(get_session_dependency)
 ) -> Dict[str, Any]:
     """Get detailed health status of coordination system."""
     
@@ -1087,13 +1081,13 @@ async def get_coordination_health(
         }
         health_data["status"] = "degraded"
     
-    # Redis health
+    # Redis health via unified service
     try:
-        await redis_client.ping()
-        health_data["components"]["redis"] = {
-            "status": "healthy",
-            "response_time_ms": 3
-        }
+        redis_service = get_redis_service()
+        health_result = await redis_service.health_check()
+        health_data["components"]["redis"] = health_result
+        if health_result.get("status") != "healthy":
+            health_data["status"] = "degraded"
     except Exception as e:
         health_data["components"]["redis"] = {
             "status": "unhealthy",
@@ -1116,16 +1110,17 @@ async def get_coordination_health(
 # BACKGROUND TASKS AND UTILITY FUNCTIONS
 # =====================================================================================
 
-async def initialize_agent_performance_tracking(agent_id: str, redis_client: redis.Redis):
+async def initialize_agent_performance_tracking(agent_id: str):
     """Initialize performance tracking for new agent."""
     try:
-        # Set up initial metrics in Redis
-        await redis_client.hset(f"agent_metrics:{agent_id}", mapping={
+        # Set up initial metrics in Redis via unified service
+        redis_service = get_redis_service()
+        await redis_service.cache_set(f"agent_metrics:{agent_id}", {
             "tasks_assigned": 0,
             "tasks_completed": 0,
             "total_response_time": 0.0,
             "last_active": datetime.utcnow().isoformat()
-        })
+        }, ttl=86400)  # 24 hours
         
         logger.info("Agent performance tracking initialized", agent_id=agent_id)
         

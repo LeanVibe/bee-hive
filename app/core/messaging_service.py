@@ -34,8 +34,8 @@ except (ImportError, NameError, AttributeError, Exception):
     CIRCUIT_BREAKER_AVAILABLE = False
     CircuitBreakerService = None
 
-# Redis and existing messaging imports
-import redis.asyncio as redis
+# Redis unified integration import
+from app.core.redis_integration import get_redis_service, redis_session
 from redis.exceptions import RedisError, ConnectionError as RedisConnectionError, ResponseError
 
 logger = get_component_logger("messaging")
@@ -535,9 +535,8 @@ class MessagingService:
         self.max_retries = self.config.get("max_retries", 3)
         self.message_ttl = self.config.get("message_ttl_seconds", 3600)
         
-        # Connection management
-        self._redis: Optional[redis.Redis] = None
-        self._connection_pool = None
+        # Connection management via unified Redis service
+        self._redis_service = get_redis_service()
         self._connected = False
         
         # Message handling infrastructure
@@ -585,46 +584,31 @@ class MessagingService:
         logger.info("Default message handlers registered")
     
     async def connect(self) -> None:
-        """Connect to Redis with resilience"""
+        """Connect to Redis via unified service"""
         try:
-            self._connection_pool = redis.ConnectionPool.from_url(
-                self.redis_url,
-                decode_responses=True,
-                max_connections=20,
-                retry_on_timeout=True,
-                retry_on_error=[RedisConnectionError],
-                socket_keepalive=True,
-                health_check_interval=30
-            )
-            
-            self._redis = redis.Redis(connection_pool=self._connection_pool)
-            
-            # Test connection
+            # Connect via unified Redis service
             start_time = time.time()
-            await self._redis.ping()
+            await self._redis_service.connect()
             self._metrics.redis_latency_ms = (time.time() - start_time) * 1000
             
             self._connected = True
             self._metrics.redis_connected = True
             
-            logger.info("Connected to Redis for unified messaging service",
+            logger.info("Connected to Redis via unified messaging service",
                        latency_ms=self._metrics.redis_latency_ms)
             
-        except RedisError as e:
-            logger.error("Failed to connect to Redis", error=str(e))
+        except Exception as e:
+            logger.error("Failed to connect to Redis via unified service", error=str(e))
             self._connected = False
             self._metrics.redis_connected = False
-            raise ConnectionError(f"Redis connection failed: {e}")
+            raise ConnectionError(f"Redis unified service connection failed: {e}")
     
     async def disconnect(self) -> None:
         """Disconnect from Redis and cleanup resources"""
         await self.stop_service()
         
-        if self._redis:
-            await self._redis.close()
-        
-        if self._connection_pool:
-            await self._connection_pool.disconnect()
+        # Disconnect via unified Redis service
+        await self._redis_service.disconnect()
         
         self._connected = False
         self._metrics.redis_connected = False
@@ -765,28 +749,20 @@ class MessagingService:
     
     async def _subscription_management_loop(self) -> None:
         """Manage Redis subscriptions for real-time messaging"""
-        if not self._redis:
-            return
-        
-        pubsub = self._redis.pubsub()
+        async def broadcast_handler(channel: str, data: dict):
+            try:
+                msg = Message.from_redis_dict(data)
+                await self.enqueue_message(msg)
+            except Exception as e:
+                logger.error("Failed to process subscription message", error=str(e))
         
         try:
-            # Subscribe to broadcast channel
-            await pubsub.subscribe("broadcast")
-            
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    try:
-                        data = json.loads(message["data"])
-                        msg = Message.from_redis_dict(data)
-                        await self.enqueue_message(msg)
-                    except Exception as e:
-                        logger.error("Failed to process subscription message", error=str(e))
+            # Subscribe to broadcast channel via unified service
+            await self._redis_service.subscribe("broadcast", broadcast_handler)
+            logger.info("Subscribed to broadcast channel via unified Redis service")
                         
         except Exception as e:
             logger.error("Error in subscription management loop", error=str(e))
-        finally:
-            await pubsub.close()
     
     async def send_message(self, message: Message) -> bool:
         """Send message through the messaging system"""
@@ -821,11 +797,10 @@ class MessagingService:
             stream_name = message.get_stream_name()
             redis_data = message.to_redis_dict()
             
-            message_id = await self._redis.xadd(
+            message_id = await self._redis_service.stream_add(
                 stream_name,
                 redis_data,
-                maxlen=10000,
-                approximate=True
+                maxlen=10000
             )
             
             self._metrics.messages_sent += 1
@@ -840,9 +815,7 @@ class MessagingService:
         """Send broadcast message via Redis Pub/Sub"""
         try:
             channel = message.get_channel_name()
-            serialized_message = json.dumps(message.to_redis_dict())
-            
-            subscriber_count = await self._redis.publish(channel, serialized_message)
+            subscriber_count = await self._redis_service.publish(channel, message.to_redis_dict())
             
             self._metrics.messages_sent += 1
             logger.debug(f"Broadcast message sent to {channel}: {subscriber_count} subscribers")
@@ -945,31 +918,20 @@ class MessagingService:
         if handler_id not in self._subscribers[topic]:
             self._subscribers[topic].append(handler_id)
             
-            # Subscribe to Redis channel for real-time messages
-            if self._redis:
-                channel = f"topic:{topic}"
-                pubsub = self._redis.pubsub()
-                await pubsub.subscribe(channel)
-                
-                # Start subscription task
-                task = asyncio.create_task(self._topic_subscription_loop(topic, pubsub))
-                self._subscription_tasks[f"topic:{topic}"] = task
+            # Subscribe to Redis channel for real-time messages via unified service
+            channel = f"topic:{topic}"
+            
+            async def topic_handler(channel: str, data: dict):
+                try:
+                    msg = Message.from_redis_dict(data)
+                    await self.enqueue_message(msg)
+                except Exception as e:
+                    logger.error(f"Failed to process topic {topic} message", error=str(e))
+            
+            await self._redis_service.subscribe(channel, topic_handler)
         
         logger.info(f"Handler {handler_id} subscribed to topic {topic}")
     
-    async def _topic_subscription_loop(self, topic: str, pubsub) -> None:
-        """Handle topic subscription messages"""
-        try:
-            async for message in pubsub.listen():
-                if message["type"] == "message":
-                    try:
-                        data = json.loads(message["data"])
-                        msg = Message.from_redis_dict(data)
-                        await self.enqueue_message(msg)
-                    except Exception as e:
-                        logger.error(f"Failed to process topic {topic} message", error=str(e))
-        finally:
-            await pubsub.close()
     
     async def publish_event(self, topic: str, payload: Dict[str, Any], sender: str = "system") -> bool:
         """Publish event to topic subscribers"""
@@ -1039,13 +1001,12 @@ class MessagingService:
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check and return status"""
         try:
-            if not self._connected or not self._redis:
+            if not self._connected:
                 return {"status": "unhealthy", "error": "Not connected to Redis"}
             
-            # Test Redis connection
-            start_time = time.time()
-            await self._redis.ping()
-            ping_latency = (time.time() - start_time) * 1000
+            # Test Redis connection via unified service
+            redis_health = await self._redis_service.health_check()
+            ping_latency = redis_health.get("ping_latency_ms", 0)
             
             # Get metrics
             metrics = self.get_service_metrics()
