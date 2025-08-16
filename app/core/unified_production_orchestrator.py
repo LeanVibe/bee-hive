@@ -98,6 +98,31 @@ class ResourceType(str, Enum):
     REDIS_CONNECTIONS = "redis_connections"
 
 
+class ProductionEventSeverity(str, Enum):
+    """Production event severity levels."""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
+
+
+class SystemHealth(str, Enum):
+    """Overall system health status."""
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    UNHEALTHY = "unhealthy"
+    CRITICAL = "critical"
+
+
+class AutoScalingAction(str, Enum):
+    """Auto-scaling action types."""
+    SCALE_UP = "scale_up"
+    SCALE_DOWN = "scale_down"
+    MAINTAIN = "maintain"
+    EMERGENCY_SCALE = "emergency_scale"
+
+
 @dataclass
 class AgentCapability:
     """Agent capability definition with performance scoring."""
@@ -156,6 +181,117 @@ class OrchestratorConfig:
     # Circuit Breaker Settings
     circuit_breaker_threshold: int = 5
     circuit_breaker_timeout: float = 60.0
+
+
+@dataclass
+class ProductionMetrics:
+    """Comprehensive production system metrics."""
+    timestamp: datetime
+    
+    # System performance
+    cpu_usage_percent: float
+    memory_usage_percent: float
+    disk_usage_percent: float
+    network_throughput_mbps: float
+    
+    # Application metrics
+    active_agents: int
+    total_sessions: int
+    pending_tasks: int
+    failed_tasks_last_hour: int
+    average_response_time_ms: float
+    
+    # Database metrics
+    db_connections: int
+    db_query_time_ms: float
+    db_pool_usage_percent: float
+    
+    # Redis metrics
+    redis_memory_usage_mb: float
+    redis_connections: int
+    redis_latency_ms: float
+    
+    # SLA metrics
+    availability_percent: float
+    error_rate_percent: float
+    response_time_p95_ms: float
+    response_time_p99_ms: float
+    
+    # Security metrics
+    failed_auth_attempts: int
+    security_events: int
+    blocked_requests: int
+
+
+@dataclass
+class AlertRule:
+    """Production alert rule definition."""
+    name: str
+    description: str
+    condition: str  # Expression to evaluate
+    severity: ProductionEventSeverity
+    threshold_value: float
+    comparison_operator: str  # >, <, >=, <=, ==, !=
+    evaluation_window_minutes: int = 5
+    cooldown_minutes: int = 10
+    escalation_minutes: int = 30
+    
+    # Advanced features
+    anomaly_detection: bool = False
+    trend_analysis: bool = False
+    correlation_rules: List[str] = field(default_factory=list)
+    notification_channels: List[str] = field(default_factory=list)
+    
+    # State tracking
+    last_triggered: Optional[datetime] = None
+    last_resolved: Optional[datetime] = None
+    current_state: str = "ok"  # ok, warning, critical
+    trigger_count: int = 0
+
+
+@dataclass
+class ProductionAlert:
+    """Production alert instance."""
+    alert_id: str
+    rule_name: str
+    severity: ProductionEventSeverity
+    title: str
+    description: str
+    triggered_at: datetime
+    resolved_at: Optional[datetime] = None
+    
+    # Context
+    affected_components: List[str] = field(default_factory=list)
+    metric_values: Dict[str, Any] = field(default_factory=dict)
+    correlation_id: Optional[str] = None
+    
+    # Response tracking
+    acknowledged: bool = False
+    acknowledged_by: Optional[str] = None
+    acknowledged_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert alert to dictionary."""
+        return {
+            **asdict(self),
+            'triggered_at': self.triggered_at.isoformat() if self.triggered_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'acknowledged_at': self.acknowledged_at.isoformat() if self.acknowledged_at else None
+        }
+
+
+@dataclass
+class AutoScalingDecision:
+    """Auto-scaling decision result."""
+    action: AutoScalingAction
+    reason: str
+    confidence: float
+    recommended_agent_count: int
+    current_agent_count: int
+    metric_drivers: Dict[str, float]
+    estimated_impact: str
+    execute_immediately: bool = False
 
 
 class AgentProtocol(Protocol):
@@ -230,6 +366,14 @@ class UnifiedProductionOrchestrator:
         # Performance Tracking
         self._performance_history: deque = deque(maxlen=1000)
         self._last_metrics_collection = datetime.utcnow()
+        
+        # Production Monitoring
+        self._alert_rules: Dict[str, AlertRule] = {}
+        self._active_alerts: Dict[str, ProductionAlert] = {}
+        self._production_metrics_history: deque = deque(maxlen=2000)
+        self._system_health = SystemHealth.HEALTHY
+        self._last_auto_scaling_decision: Optional[AutoScalingDecision] = None
+        self._auto_scaling_cooldown_until: Optional[datetime] = None
         
         logger.info("UnifiedProductionOrchestrator initialized", 
                    config=asdict(self.config))
