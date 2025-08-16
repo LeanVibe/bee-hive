@@ -36,6 +36,7 @@ import threading
 import heapq
 import statistics
 from concurrent.futures import ThreadPoolExecutor
+from abc import ABC, abstractmethod
 
 import structlog
 import psutil
@@ -121,6 +122,75 @@ class AutoScalingAction(str, Enum):
     SCALE_DOWN = "scale_down"
     MAINTAIN = "maintain"
     EMERGENCY_SCALE = "emergency_scale"
+
+
+# ===== PLUGIN ARCHITECTURE FRAMEWORK =====
+
+@dataclass
+class IntegrationRequest:
+    """Request object for plugin integrations."""
+    request_id: str
+    plugin_name: str
+    operation: str
+    parameters: Dict[str, Any]
+    agent_id: Optional[str] = None
+    task_id: Optional[str] = None
+    session_id: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass  
+class IntegrationResponse:
+    """Response object for plugin integrations."""
+    request_id: str
+    success: bool
+    result: Any = None
+    error_message: Optional[str] = None
+    execution_time_ms: float = 0.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+class OrchestrationPlugin(ABC):
+    """Abstract base class for orchestration plugins."""
+    
+    @abstractmethod
+    async def initialize(self, orchestrator: 'UnifiedProductionOrchestrator') -> None:
+        """Initialize the plugin with orchestrator instance."""
+        pass
+    
+    @abstractmethod
+    async def process_request(self, request: IntegrationRequest) -> IntegrationResponse:
+        """Process an integration request."""
+        pass
+    
+    @abstractmethod
+    def get_capabilities(self) -> List[str]:
+        """Get list of capabilities this plugin provides."""
+        pass
+    
+    @abstractmethod
+    async def health_check(self) -> Dict[str, Any]:
+        """Perform health check on the plugin."""
+        pass
+    
+    @abstractmethod
+    async def shutdown(self) -> None:
+        """Clean shutdown of plugin resources."""
+        pass
+
+
+class HookEventType(str, Enum):
+    """Event types for hook system integration."""
+    PRE_AGENT_TASK = "pre_agent_task"
+    POST_AGENT_TASK = "post_agent_task" 
+    AGENT_REGISTERED = "agent_registered"
+    AGENT_UNREGISTERED = "agent_unregistered"
+    TASK_DELEGATED = "task_delegated"
+    TASK_COMPLETED = "task_completed"
+    TASK_FAILED = "task_failed"
+    SYSTEM_HEALTH_CHANGED = "system_health_changed"
+    ALERT_TRIGGERED = "alert_triggered"
+    ALERT_RESOLVED = "alert_resolved"
 
 
 @dataclass
@@ -375,6 +445,13 @@ class UnifiedProductionOrchestrator:
         self._last_auto_scaling_decision: Optional[AutoScalingDecision] = None
         self._auto_scaling_cooldown_until: Optional[datetime] = None
         
+        # Plugin Architecture
+        self._plugins: Dict[str, OrchestrationPlugin] = {}
+        self._plugin_capabilities: Dict[str, List[str]] = {}
+        self._hook_subscribers: Dict[HookEventType, List[str]] = defaultdict(list)
+        self._integration_request_queue: asyncio.Queue = asyncio.Queue()
+        self._plugin_health_status: Dict[str, Dict[str, Any]] = {}
+        
         logger.info("UnifiedProductionOrchestrator initialized", 
                    config=asdict(self.config))
 
@@ -395,7 +472,8 @@ class UnifiedProductionOrchestrator:
                 asyncio.create_task(self._metrics_collection_loop()),
                 asyncio.create_task(self._resource_monitor_loop()),
                 asyncio.create_task(self._task_processing_loop()),
-                asyncio.create_task(self._agent_pool_manager_loop())
+                asyncio.create_task(self._agent_pool_manager_loop()),
+                asyncio.create_task(self._plugin_health_monitor_loop())
             ]
             
             self._is_running = True
@@ -432,6 +510,9 @@ class UnifiedProductionOrchestrator:
                 task.cancel()
                 
             await asyncio.gather(*self._background_tasks, return_exceptions=True)
+            
+            # Shutdown all plugins
+            await self._shutdown_all_plugins()
             
             # Cleanup connection pools
             await self._cleanup_connection_pools()
@@ -1296,6 +1377,226 @@ class UnifiedProductionOrchestrator:
                        acknowledged_by=acknowledged_by)
             return True
         return False
+
+    # ===== PLUGIN MANAGEMENT METHODS =====
+    
+    async def register_plugin(self, name: str, plugin: OrchestrationPlugin) -> None:
+        """Register a new orchestration plugin."""
+        try:
+            # Initialize the plugin
+            await plugin.initialize(self)
+            
+            # Store plugin and capabilities
+            self._plugins[name] = plugin
+            capabilities = plugin.get_capabilities()
+            self._plugin_capabilities[name] = capabilities
+            
+            # Register hook subscribers
+            for capability in capabilities:
+                if capability.startswith("hook:"):
+                    hook_type = capability.replace("hook:", "")
+                    try:
+                        event_type = HookEventType(hook_type)
+                        self._hook_subscribers[event_type].append(name)
+                    except ValueError:
+                        logger.warning("Invalid hook type", plugin=name, hook_type=hook_type)
+            
+            # Initial health check
+            health = await plugin.health_check()
+            self._plugin_health_status[name] = {
+                "status": "healthy" if health.get("healthy", True) else "unhealthy",
+                "last_check": datetime.utcnow(),
+                "details": health
+            }
+            
+            logger.info("Plugin registered successfully",
+                       plugin_name=name,
+                       capabilities=capabilities,
+                       hook_subscriptions=len([c for c in capabilities if c.startswith("hook:")]))
+            
+        except Exception as e:
+            logger.error("Failed to register plugin", plugin_name=name, error=str(e))
+            # Cleanup on failure
+            self._plugins.pop(name, None)
+            self._plugin_capabilities.pop(name, None)
+            self._plugin_health_status.pop(name, None)
+            raise
+
+    async def process_plugin_request(self, request: IntegrationRequest) -> IntegrationResponse:
+        """Process a plugin integration request."""
+        start_time = time.time()
+        
+        if request.plugin_name not in self._plugins:
+            return IntegrationResponse(
+                request_id=request.request_id,
+                success=False,
+                error_message=f"Plugin '{request.plugin_name}' not found",
+                execution_time_ms=(time.time() - start_time) * 1000
+            )
+        
+        plugin = self._plugins[request.plugin_name]
+        
+        try:
+            # Process the request
+            response = await plugin.process_request(request)
+            response.execution_time_ms = (time.time() - start_time) * 1000
+            
+            logger.debug("Plugin request processed",
+                        plugin_name=request.plugin_name,
+                        operation=request.operation,
+                        success=response.success,
+                        execution_time_ms=response.execution_time_ms)
+            
+            return response
+            
+        except Exception as e:
+            execution_time = (time.time() - start_time) * 1000
+            logger.error("Plugin request failed",
+                        plugin_name=request.plugin_name,
+                        operation=request.operation,
+                        error=str(e),
+                        execution_time_ms=execution_time)
+            
+            return IntegrationResponse(
+                request_id=request.request_id,
+                success=False,
+                error_message=str(e),
+                execution_time_ms=execution_time
+            )
+
+    async def fire_hook_event(self, event_type: HookEventType, event_data: Dict[str, Any]) -> None:
+        """Fire a hook event to all subscribed plugins."""
+        if event_type not in self._hook_subscribers:
+            return
+            
+        subscribers = self._hook_subscribers[event_type]
+        if not subscribers:
+            return
+        
+        logger.debug("Firing hook event", 
+                    event_type=event_type.value, 
+                    subscribers=subscribers)
+        
+        # Fire hooks to all subscribers
+        hook_tasks = []
+        for plugin_name in subscribers:
+            if plugin_name in self._plugins:
+                request = IntegrationRequest(
+                    request_id=str(uuid.uuid4()),
+                    plugin_name=plugin_name,
+                    operation="hook_event",
+                    parameters={
+                        "event_type": event_type.value,
+                        "event_data": event_data
+                    }
+                )
+                hook_tasks.append(self.process_plugin_request(request))
+        
+        # Execute all hooks concurrently
+        if hook_tasks:
+            await asyncio.gather(*hook_tasks, return_exceptions=True)
+
+    def get_plugin_capabilities(self) -> Dict[str, List[str]]:
+        """Get capabilities of all registered plugins."""
+        return dict(self._plugin_capabilities)
+
+    async def get_plugin_health(self) -> Dict[str, Dict[str, Any]]:
+        """Get health status of all plugins."""
+        return dict(self._plugin_health_status)
+
+    async def _plugin_health_monitor_loop(self) -> None:
+        """Background task to monitor plugin health."""
+        while self._is_running:
+            try:
+                for plugin_name, plugin in self._plugins.items():
+                    try:
+                        health = await plugin.health_check()
+                        self._plugin_health_status[plugin_name] = {
+                            "status": "healthy" if health.get("healthy", True) else "unhealthy",
+                            "last_check": datetime.utcnow(),
+                            "details": health
+                        }
+                    except Exception as e:
+                        self._plugin_health_status[plugin_name] = {
+                            "status": "error",
+                            "last_check": datetime.utcnow(),
+                            "details": {"error": str(e)}
+                        }
+                        logger.warning("Plugin health check failed",
+                                     plugin_name=plugin_name,
+                                     error=str(e))
+                
+                await asyncio.sleep(60)  # Check every minute
+                
+            except Exception as e:
+                logger.error("Plugin health monitoring error", error=str(e))
+                await asyncio.sleep(60)
+
+    async def _enhanced_agent_task_execution(self, agent_id: str, task: Task) -> Any:
+        """Execute agent task with enhanced plugin capabilities."""
+        # Fire pre-task hook
+        await self.fire_hook_event(HookEventType.PRE_AGENT_TASK, {
+            "agent_id": agent_id,
+            "task_id": getattr(task, 'id', str(uuid.uuid4())),
+            "task_type": getattr(task, 'type', 'unknown'),
+            "task_data": getattr(task, 'data', {})
+        })
+        
+        try:
+            # Execute the task (would integrate with actual task execution)
+            result = await self._execute_agent_task(agent_id, task)
+            
+            # Fire post-task hook
+            await self.fire_hook_event(HookEventType.POST_AGENT_TASK, {
+                "agent_id": agent_id,
+                "task_id": getattr(task, 'id', str(uuid.uuid4())),
+                "result": result,
+                "success": True
+            })
+            
+            return result
+            
+        except Exception as e:
+            # Fire task failed hook
+            await self.fire_hook_event(HookEventType.TASK_FAILED, {
+                "agent_id": agent_id,
+                "task_id": getattr(task, 'id', str(uuid.uuid4())),
+                "error": str(e)
+            })
+            raise
+
+    async def _execute_agent_task(self, agent_id: str, task: Task) -> Any:
+        """Core task execution method (placeholder for actual implementation)."""
+        # This would integrate with the actual agent task execution logic
+        logger.info("Executing task", agent_id=agent_id, task_id=getattr(task, 'id', 'unknown'))
+        return {"status": "completed", "result": "task_result"}
+
+    async def _shutdown_all_plugins(self) -> None:
+        """Shutdown all registered plugins."""
+        if not self._plugins:
+            return
+            
+        logger.info("Shutting down plugins", plugin_count=len(self._plugins))
+        
+        shutdown_tasks = []
+        for plugin_name, plugin in self._plugins.items():
+            try:
+                shutdown_tasks.append(plugin.shutdown())
+            except Exception as e:
+                logger.error("Error initiating plugin shutdown", 
+                           plugin_name=plugin_name, error=str(e))
+        
+        # Wait for all plugins to shutdown
+        if shutdown_tasks:
+            await asyncio.gather(*shutdown_tasks, return_exceptions=True)
+        
+        # Clear plugin registrations
+        self._plugins.clear()
+        self._plugin_capabilities.clear()
+        self._hook_subscribers.clear()
+        self._plugin_health_status.clear()
+        
+        logger.info("All plugins shut down successfully")
 
 
 class ResourceMonitor:
