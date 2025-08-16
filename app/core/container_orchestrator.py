@@ -6,14 +6,26 @@ Provides scalable, production-ready agent lifecycle management.
 """
 
 import asyncio
-import docker
 import json
 import os
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
 from dataclasses import dataclass
 import structlog
+
+# Use TYPE_CHECKING to avoid runtime import issues
+if TYPE_CHECKING:
+    import docker
+    from docker.models.containers import Container
+else:
+    try:
+        import docker
+        from docker.models.containers import Container
+    except ImportError:
+        # Graceful fallback if docker is not available
+        docker = None
+        Container = None
 
 from .config import settings
 from .redis import get_message_broker
@@ -46,8 +58,12 @@ class ContainerAgentOrchestrator:
     """
     
     def __init__(self):
+        if docker is None:
+            raise ImportError(
+                "Docker package not available. Install with: pip install docker"
+            )
         self.docker_client = docker.from_env()
-        self.running_agents: Dict[str, docker.models.containers.Container] = {}
+        self.running_agents: Dict[str, Any] = {}  # Use Any instead of docker.models.containers.Container
         self.agent_specs = self._initialize_agent_specs()
         self.network_name = "leanvibe_network"
         
@@ -157,7 +173,7 @@ class ContainerAgentOrchestrator:
                 await self.stop_agent(agent_id)
             raise
     
-    def _create_container(self, agent_id: str, spec: ContainerAgentSpec) -> docker.models.containers.Container:
+    def _create_container(self, agent_id: str, spec: ContainerAgentSpec) -> Any:
         """Create Docker container with specified configuration."""
         return self.docker_client.containers.run(
             image=spec.image_name,

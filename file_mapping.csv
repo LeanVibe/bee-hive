@@ -1,0 +1,321 @@
+Current_File,Target_Module,Consolidation_Type,Risk_Level,Dependencies,Phase,Priority
+advanced_security_validator.py,compliance_framework.py,merge,low,security_monitoring.py,1,high
+agent_communication_service.py,messaging_service.py,merge,low,redis.py,1,high
+agent_messaging_service.py,messaging_service.py,merge,low,redis.py,1,high
+alert_analysis_engine.py,alert_manager.py,merge,low,performance_monitor.py,1,high
+circuit_breaker.py,circuit_breaker.py,deduplicate,low,,1,high
+communication.py,messaging_service.py,merge,low,redis.py,1,high
+communication_analyzer.py,communication_protocols.py,merge,low,messaging_service.py,1,high
+compliance_framework.py,compliance_framework.py,merge,low,security_monitoring.py,1,high
+context_performance_monitor.py,metrics_collector.py,merge,low,redis_integration.py,1,high
+correlation.py,communication_protocols.py,merge,low,messaging_service.py,1,high
+custom_metrics_exporter.py,metrics_collector.py,merge,low,redis_integration.py,1,high
+dashboard_metrics_streaming.py,metrics_collector.py,merge,low,redis_integration.py,1,high
+database_performance_validator.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+dlq_monitoring.py,alert_manager.py,merge,low,performance_monitor.py,1,high
+enhanced_communication_load_testing.py,benchmarking_framework.py,merge,low,performance_monitor.py,1,high
+enhanced_github_integration.py,github_integration.py,merge,low,encryption_service.py,1,high
+enterprise_compliance.py,compliance_framework.py,merge,low,security_monitoring.py,1,high
+enterprise_compliance_system.py,compliance_framework.py,merge,low,security_monitoring.py,1,high
+event_processor.py,event_processing.py,merge,low,redis_integration.py,1,high
+event_serialization.py,event_processing.py,merge,low,redis_integration.py,1,high
+github_api_client.py,github_integration.py,merge,low,encryption_service.py,1,high
+github_quality_integration.py,github_integration.py,merge,low,encryption_service.py,1,high
+github_webhooks.py,github_integration.py,merge,low,encryption_service.py,1,high
+health_monitor.py,alert_manager.py,merge,low,performance_monitor.py,1,high
+hook_performance_benchmarks.py,benchmarking_framework.py,merge,low,performance_monitor.py,1,high
+hook_processor.py,event_processing.py,merge,low,redis_integration.py,1,high
+integrated_security_system.py,compliance_framework.py,merge,low,security_monitoring.py,1,high
+intelligent_alerting.py,alert_manager.py,merge,low,performance_monitor.py,1,high
+load_testing.py,benchmarking_framework.py,merge,low,performance_monitor.py,1,high
+message_processor.py,messaging_service.py,merge,low,redis.py,1,high
+orchestrator_load_testing.py,benchmarking_framework.py,merge,low,performance_monitor.py,1,high
+performance_benchmarks.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+performance_evaluator.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+performance_metrics_collector.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+performance_metrics_publisher.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+performance_monitoring.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+performance_storage_engine.py,metrics_collector.py,merge,low,redis_integration.py,1,high
+performance_validator.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+prometheus_exporter.py,metrics_collector.py,merge,low,redis_integration.py,1,high
+prometheus_exporter.py,prometheus_integration.py,merge,low,metrics_collector.py,1,high
+pull_request_automator.py,github_integration.py,merge,low,encryption_service.py,1,high
+realtime_coordination_sync.py,websocket_manager.py,merge,low,messaging_service.py,1,high
+realtime_dashboard_streaming.py,websocket_manager.py,merge,low,messaging_service.py,1,high
+stream_monitor.py,communication_protocols.py,merge,low,messaging_service.py,1,high
+team_coordination_metrics.py,metrics_collector.py,merge,low,redis_integration.py,1,high
+transcript_streaming.py,websocket_manager.py,merge,low,messaging_service.py,1,high
+vs_2_1_performance_validator.py,performance_monitor.py,merge,low,metrics_collector.py,1,high
+workflow_message_router.py,event_processing.py,merge,low,redis_integration.py,1,high
+access_control.py,authorization_engine.py,merge,medium,authentication_service.py,2,medium
+advanced_vector_search.py,vector_search.py,merge,medium,database.py,2,medium
+agent_knowledge_manager.py,knowledge_graph.py,merge,medium,semantic_memory.py,2,medium
+agent_load_balancer.py,load_balancing.py,merge,medium,agent_lifecycle_manager.py,2,medium
+api_security_middleware.py,authorization_engine.py,merge,medium,authentication_service.py,2,medium
+audit_logger.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+authorization_engine.py,authorization_engine.py,merge,medium,authentication_service.py,2,medium
+automated_orchestrator.py,production_orchestrator.py,merge,medium,"database.py, redis.py, agent_registry.py",2,medium
+comprehensive_audit_system.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+consolidation_engine.py,context_compression.py,merge,medium,context_engine.py,2,medium
+context_compression.py,context_compression.py,merge,medium,context_engine.py,2,medium
+context_compression_engine.py,context_compression.py,merge,medium,context_engine.py,2,medium
+context_consolidator.py,context_compression.py,merge,medium,context_engine.py,2,medium
+coordination.py,coordination_hub.py,merge,medium,"messaging_service.py, websocket_manager.py",2,medium
+coordination_dashboard.py,coordination_hub.py,merge,medium,"messaging_service.py, websocket_manager.py",2,medium
+dependency_graph_builder.py,knowledge_graph.py,merge,medium,semantic_memory.py,2,medium
+distributed_load_balancing_state.py,load_balancing.py,merge,medium,agent_lifecycle_manager.py,2,medium
+enhanced_intelligent_task_router.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+enhanced_multi_agent_coordination.py,coordination_hub.py,merge,medium,"messaging_service.py, websocket_manager.py",2,medium
+enhanced_redis_streams_manager.py,redis_integration.py,merge,medium,config.py,2,medium
+enhanced_security_audit.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+enhanced_security_safeguards.py,threat_detection.py,merge,medium,security_monitoring.py,2,medium
+enhanced_vector_search.py,vector_search.py,merge,medium,database.py,2,medium
+enhanced_workflow_engine.py,workflow_engine.py,merge,medium,task_execution_engine.py,2,medium
+enterprise_observability.py,observability_engine.py,merge,medium,performance_monitor.py,2,medium
+enterprise_secrets_manager.py,encryption_service.py,merge,medium,config.py,2,medium
+github_security.py,encryption_service.py,merge,medium,config.py,2,medium
+global_coordination_integration.py,coordination_hub.py,merge,medium,"messaging_service.py, websocket_manager.py",2,medium
+gradient_optimizer.py,performance_optimizer.py,merge,medium,performance_monitor.py,2,medium
+high_concurrency_orchestrator.py,production_orchestrator.py,merge,medium,"database.py, redis.py, agent_registry.py",2,medium
+hybrid_search_engine.py,vector_search.py,merge,medium,database.py,2,medium
+intelligent_task_router.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+knowledge_graph_builder.py,knowledge_graph.py,merge,medium,semantic_memory.py,2,medium
+load_balancing_benchmarks.py,load_balancing.py,merge,medium,agent_lifecycle_manager.py,2,medium
+memory_aware_vector_search.py,vector_search.py,merge,medium,database.py,2,medium
+multi_agent_commands.py,coordination_hub.py,merge,medium,"messaging_service.py, websocket_manager.py",2,medium
+observability_hooks.py,observability_engine.py,merge,medium,performance_monitor.py,2,medium
+observability_performance_testing.py,observability_engine.py,merge,medium,performance_monitor.py,2,medium
+observability_streams.py,real_time_coordination.py,merge,medium,"websocket_manager.py, event_processing.py",2,medium
+observability_streams.py,observability_engine.py,merge,medium,performance_monitor.py,2,medium
+optimized_redis.py,redis_integration.py,merge,medium,config.py,2,medium
+orchestrator.py,production_orchestrator.py,merge,medium,"database.py, redis.py, agent_registry.py",2,medium
+orchestrator_load_balancing_integration.py,load_balancing.py,merge,medium,agent_lifecycle_manager.py,2,medium
+performance_optimization_advisor.py,performance_optimizer.py,merge,medium,performance_monitor.py,2,medium
+performance_optimizations.py,performance_optimizer.py,merge,medium,performance_monitor.py,2,medium
+performance_optimizer.py,performance_optimizer.py,merge,medium,performance_monitor.py,2,medium
+performance_orchestrator.py,production_orchestrator.py,merge,medium,"database.py, redis.py, agent_registry.py",2,medium
+poison_message_detector.py,threat_detection.py,merge,medium,security_monitoring.py,2,medium
+production_api_security.py,authorization_engine.py,merge,medium,authentication_service.py,2,medium
+production_orchestrator.py,production_orchestrator.py,merge,medium,"database.py, redis.py, agent_registry.py",2,medium
+rbac_engine.py,authorization_engine.py,merge,medium,authentication_service.py,2,medium
+realtime_coordination_sync.py,coordination_hub.py,merge,medium,"messaging_service.py, websocket_manager.py",2,medium
+realtime_coordination_sync.py,real_time_coordination.py,merge,medium,"websocket_manager.py, event_processing.py",2,medium
+realtime_dashboard_streaming.py,real_time_coordination.py,merge,medium,"websocket_manager.py, event_processing.py",2,medium
+redis.py,redis_integration.py,merge,medium,config.py,2,medium
+redis_pubsub_manager.py,redis_integration.py,merge,medium,config.py,2,medium
+resource_optimizer.py,performance_optimizer.py,merge,medium,performance_monitor.py,2,medium
+secret_manager.py,encryption_service.py,merge,medium,config.py,2,medium
+secure_code_executor.py,encryption_service.py,merge,medium,config.py,2,medium
+security_audit.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+security_middleware.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+security_monitoring_system.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+security_policy_engine.py,threat_detection.py,merge,medium,security_monitoring.py,2,medium
+security_validation_middleware.py,authorization_engine.py,merge,medium,authentication_service.py,2,medium
+semantic_embedding_service.py,semantic_memory.py,merge,medium,vector_search.py,2,medium
+semantic_integrity_validator.py,semantic_memory.py,merge,medium,vector_search.py,2,medium
+semantic_memory_engine.py,semantic_memory.py,merge,medium,vector_search.py,2,medium
+semantic_memory_integration.py,semantic_memory.py,merge,medium,vector_search.py,2,medium
+semantic_memory_task_processor.py,semantic_memory.py,merge,medium,vector_search.py,2,medium
+smart_scheduler.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+task_batch_executor.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+task_distributor.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+task_execution_engine.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+task_queue.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+task_scheduler.py,task_execution_engine.py,merge,medium,"agent_lifecycle_manager.py, redis.py",2,medium
+team_coordination_redis.py,redis_integration.py,merge,medium,config.py,2,medium
+threat_detection_engine.py,security_monitoring.py,merge,medium,logging_service.py,2,medium
+threat_detection_engine.py,threat_detection.py,merge,medium,security_monitoring.py,2,medium
+unified_production_orchestrator.py,production_orchestrator.py,merge,medium,"database.py, redis.py, agent_registry.py",2,medium
+vector_search.py,vector_search.py,merge,medium,database.py,2,medium
+vector_search_engine.py,vector_search.py,merge,medium,database.py,2,medium
+workflow_context_manager.py,workflow_engine.py,merge,medium,task_execution_engine.py,2,medium
+workflow_engine.py,workflow_engine.py,merge,medium,task_execution_engine.py,2,medium
+workflow_intelligence.py,workflow_engine.py,merge,medium,task_execution_engine.py,2,medium
+workflow_state_manager.py,workflow_engine.py,merge,medium,task_execution_engine.py,2,medium
+advanced_context_engine.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+agent_identity_service.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+agent_lifecycle_hooks.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+agent_lifecycle_manager.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+agent_load_balancer.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+agent_persona_system.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+agent_registry.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+agent_spawner.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+api_key_manager.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+auth.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+auth_metrics.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+capability_matcher.py,agent_lifecycle_manager.py,merge,high,"database.py, communication.py",3,low
+context_adapter.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_analytics.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_aware_orchestrator_integration.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_cache_manager.py,memory_manager.py,merge,high,database.py,3,low
+context_engine_integration.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_lifecycle_manager.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_manager.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_memory_manager.py,memory_manager.py,merge,high,database.py,3,low
+context_orchestrator_integration.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+context_relevance_scorer.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+cross_agent_knowledge_manager.py,memory_manager.py,merge,high,database.py,3,low
+enhanced_context_consolidator.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+enhanced_context_engine.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+enhanced_jwt_manager.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+enhanced_memory_manager.py,memory_manager.py,merge,high,database.py,3,low
+memory_consolidation_service.py,memory_manager.py,merge,high,database.py,3,low
+memory_hierarchy_manager.py,memory_manager.py,merge,high,database.py,3,low
+mfa_system.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+oauth_authentication_system.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+oauth_provider_system.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+webauthn_system.py,authentication_service.py,merge,high,"database.py, secret_manager.py",3,low
+workflow_context_manager.py,context_engine.py,merge,high,"memory_manager.py, vector_search.py",3,low
+ab_testing_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+adaptive_scaler.py,infrastructure_utilities.py,inferred,unknown,,4,low
+advanced_ai_capabilities.py,infrastructure_utilities.py,inferred,unknown,,4,low
+advanced_analytics_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+advanced_conflict_resolution_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+advanced_orchestration_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+advanced_rate_limiter.py,infrastructure_utilities.py,inferred,unknown,,4,low
+advanced_repository_management.py,infrastructure_utilities.py,inferred,unknown,,4,low
+agent_workflow_tracker.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+ai_architect_agent.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+ai_enhancement_team.py,infrastructure_utilities.py,inferred,unknown,,4,low
+ai_gateway.py,infrastructure_utilities.py,inferred,unknown,,4,low
+ai_model_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+ai_task_worker.py,workflow_engine.py,inferred,unknown,,4,low
+automated_testing_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+automation_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+autonomous_development_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+autonomous_project_execution.py,infrastructure_utilities.py,inferred,unknown,,4,low
+autonomous_quality_gates.py,infrastructure_utilities.py,inferred,unknown,,4,low
+backpressure_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+branch_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+capacity_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+capacity_planning.py,infrastructure_utilities.py,inferred,unknown,,4,low
+chat_transcript_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+checkpoint_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+claude_code_hooks.py,infrastructure_utilities.py,inferred,unknown,,4,low
+cli_agent_orchestrator.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+code_execution.py,infrastructure_utilities.py,inferred,unknown,,4,low
+code_intelligence_agent.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+code_review_assistant.py,infrastructure_utilities.py,inferred,unknown,,4,low
+collaboration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+command_executor.py,infrastructure_utilities.py,inferred,unknown,,4,low
+command_registry.py,infrastructure_utilities.py,inferred,unknown,,4,low
+command_templates.py,infrastructure_utilities.py,inferred,unknown,,4,low
+comprehensive_dashboard_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+config.py,infrastructure_utilities.py,inferred,unknown,,4,low
+consumer_group_coordinator.py,infrastructure_utilities.py,inferred,unknown,,4,low
+container_orchestrator.py,production_orchestrator.py,inferred,unknown,,4,low
+context_consolidation_triggers.py,context_engine.py,inferred,unknown,,4,low
+conversation_debugging_tools.py,infrastructure_utilities.py,inferred,unknown,,4,low
+conversation_search_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+cost_monitoring.py,performance_monitor.py,inferred,unknown,,4,low
+customer_expansion_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+customer_onboarding_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+dashboard_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+database.py,database_manager.py,inferred,unknown,,4,low
+database_models.py,database_manager.py,inferred,unknown,,4,low
+database_types.py,database_manager.py,inferred,unknown,,4,low
+dead_letter_queue.py,infrastructure_utilities.py,inferred,unknown,,4,low
+dead_letter_queue_handler.py,infrastructure_utilities.py,inferred,unknown,,4,low
+dlq_retry_scheduler.py,infrastructure_utilities.py,inferred,unknown,,4,low
+embedding_service.py,infrastructure_utilities.py,inferred,unknown,,4,low
+embedding_service_simple.py,infrastructure_utilities.py,inferred,unknown,,4,low
+embeddings.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_agent_implementations.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+enhanced_coordination_bridge.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_coordination_commands.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_coordination_database_integration.py,database_manager.py,inferred,unknown,,4,low
+enhanced_failure_recovery_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_git_checkpoint_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_lifecycle_hooks.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_orchestrator_integration.py,production_orchestrator.py,inferred,unknown,,4,low
+enhanced_sleep_wake_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_state_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enhanced_tool_registry.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enterprise_backpressure_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enterprise_consumer_group_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enterprise_demo_orchestrator.py,production_orchestrator.py,inferred,unknown,,4,low
+enterprise_pilot_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enterprise_roi_tracker.py,infrastructure_utilities.py,inferred,unknown,,4,low
+enterprise_security_system.py,authentication_service.py,inferred,unknown,,4,low
+enterprise_tmux_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+error_handling_config.py,infrastructure_utilities.py,inferred,unknown,,4,low
+error_handling_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+error_handling_middleware.py,infrastructure_utilities.py,inferred,unknown,,4,low
+evolutionary_optimizer.py,infrastructure_utilities.py,inferred,unknown,,4,low
+executive_command_center.py,infrastructure_utilities.py,inferred,unknown,,4,low
+executive_engagement_automation.py,infrastructure_utilities.py,inferred,unknown,,4,low
+extended_thinking_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+external_tools.py,infrastructure_utilities.py,inferred,unknown,,4,low
+feature_flag_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+feedback_analyzer.py,infrastructure_utilities.py,inferred,unknown,,4,low
+git_checkpoint_optimizer.py,infrastructure_utilities.py,inferred,unknown,,4,low
+global_deployment_orchestration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+graceful_degradation.py,infrastructure_utilities.py,inferred,unknown,,4,low
+health_monitoring.py,performance_monitor.py,inferred,unknown,,4,low
+hive_slash_commands.py,infrastructure_utilities.py,inferred,unknown,,4,low
+hook_interceptors.py,infrastructure_utilities.py,inferred,unknown,,4,low
+hook_lifecycle_system.py,infrastructure_utilities.py,inferred,unknown,,4,low
+index_management.py,infrastructure_utilities.py,inferred,unknown,,4,low
+integrated_system_performance_validator.py,performance_monitor.py,inferred,unknown,,4,low
+intelligence_framework.py,infrastructure_utilities.py,inferred,unknown,,4,low
+intelligent_retry_scheduler.py,infrastructure_utilities.py,inferred,unknown,,4,low
+intelligent_sleep_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+intelligent_workflow_automation.py,workflow_engine.py,inferred,unknown,,4,low
+international_operations_management.py,infrastructure_utilities.py,inferred,unknown,,4,low
+issue_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+leanvibe_hooks_system.py,infrastructure_utilities.py,inferred,unknown,,4,low
+load_prediction_service.py,infrastructure_utilities.py,inferred,unknown,,4,low
+meta_learning_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+mobile_api_cache.py,infrastructure_utilities.py,inferred,unknown,,4,low
+multi_tenant_architecture.py,infrastructure_utilities.py,inferred,unknown,,4,low
+onboarding_automation.py,infrastructure_utilities.py,inferred,unknown,,4,low
+optimized_embedding_pipeline.py,infrastructure_utilities.py,inferred,unknown,,4,low
+optimized_pgvector_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+orchestrator_hook_integration.py,production_orchestrator.py,inferred,unknown,,4,low
+orchestrator_shared_state_integration.py,production_orchestrator.py,inferred,unknown,,4,low
+parallel_pilot_deployment.py,infrastructure_utilities.py,inferred,unknown,,4,low
+performance_monitoring_dashboard.py,performance_monitor.py,inferred,unknown,,4,low
+pgvector_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+pilot_infrastructure_orchestrator.py,production_orchestrator.py,inferred,unknown,,4,low
+productivity_intelligence.py,infrastructure_utilities.py,inferred,unknown,,4,low
+prompt_generator.py,infrastructure_utilities.py,inferred,unknown,,4,low
+prompt_optimizer.py,infrastructure_utilities.py,inferred,unknown,,4,low
+quality_gates.py,infrastructure_utilities.py,inferred,unknown,,4,low
+real_agent_implementations.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+real_multiagent_workflow.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+recovery_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+retry_policies.py,infrastructure_utilities.py,inferred,unknown,,4,low
+search_analytics.py,infrastructure_utilities.py,inferred,unknown,,4,low
+security.py,authentication_service.py,inferred,unknown,,4,low
+security_orchestrator_integration.py,production_orchestrator.py,inferred,unknown,,4,low
+security_performance_validator.py,authentication_service.py,inferred,unknown,,4,low
+self_improvement.py,infrastructure_utilities.py,inferred,unknown,,4,low
+self_modification_code_analyzer.py,infrastructure_utilities.py,inferred,unknown,,4,low
+self_modification_generator.py,infrastructure_utilities.py,inferred,unknown,,4,low
+self_modification_git_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+self_modification_safety_validator.py,infrastructure_utilities.py,inferred,unknown,,4,low
+self_modification_sandbox.py,infrastructure_utilities.py,inferred,unknown,,4,low
+self_optimization_agent.py,agent_lifecycle_manager.py,inferred,unknown,,4,low
+shared_world_state.py,infrastructure_utilities.py,inferred,unknown,,4,low
+slash_commands.py,infrastructure_utilities.py,inferred,unknown,,4,low
+sleep_analytics.py,infrastructure_utilities.py,inferred,unknown,,4,low
+sleep_scheduler.py,infrastructure_utilities.py,inferred,unknown,,4,low
+sleep_wake_context_optimizer.py,context_engine.py,inferred,unknown,,4,low
+sleep_wake_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+sleep_wake_performance_testing.py,performance_monitor.py,inferred,unknown,,4,low
+sleep_wake_system.py,infrastructure_utilities.py,inferred,unknown,,4,low
+strategic_implementation_engine.py,infrastructure_utilities.py,inferred,unknown,,4,low
+strategic_intelligence_system.py,infrastructure_utilities.py,inferred,unknown,,4,low
+strategic_market_analytics.py,infrastructure_utilities.py,inferred,unknown,,4,low
+team_coordination_error_handler.py,infrastructure_utilities.py,inferred,unknown,,4,low
+tmux_session_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+unified_dlq_service.py,infrastructure_utilities.py,inferred,unknown,,4,low
+updater.py,infrastructure_utilities.py,inferred,unknown,,4,low
+user_preference_system.py,infrastructure_utilities.py,inferred,unknown,,4,low
+vertical_slice_2_1_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+vertical_slice_integration.py,infrastructure_utilities.py,inferred,unknown,,4,low
+vertical_slice_orchestrator.py,production_orchestrator.py,inferred,unknown,,4,low
+weekly_milestone_framework.py,infrastructure_utilities.py,inferred,unknown,,4,low
+work_tree_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
+workflow_engine_error_handling.py,workflow_engine.py,inferred,unknown,,4,low
+workspace_manager.py,infrastructure_utilities.py,inferred,unknown,,4,low
