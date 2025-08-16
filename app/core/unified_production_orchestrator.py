@@ -48,7 +48,7 @@ from anthropic import AsyncAnthropic
 from .database import get_session
 from .redis import get_redis, get_message_broker, get_session_cache
 from .config import settings
-from .circuit_breaker import CircuitBreaker
+from .circuit_breaker import UnifiedCircuitBreaker, CircuitBreakerConfig, CircuitBreakerType
 from .retry_policies import exponential_backoff
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.task import Task, TaskStatus, TaskPriority
@@ -412,18 +412,30 @@ class UnifiedProductionOrchestrator:
         self._connection_pool = None  # Will be initialized in start()
         
         # Circuit Breakers
-        self._circuit_breakers: Dict[str, CircuitBreaker] = {
-            'agent_registration': CircuitBreaker(
-                failure_threshold=self.config.circuit_breaker_threshold,
-                timeout=self.config.circuit_breaker_timeout
+        self._circuit_breakers: Dict[str, UnifiedCircuitBreaker] = {
+            'agent_registration': UnifiedCircuitBreaker(
+                CircuitBreakerConfig(
+                    failure_threshold=self.config.circuit_breaker_threshold,
+                    timeout=self.config.circuit_breaker_timeout,
+                    circuit_type=CircuitBreakerType.ORCHESTRATOR,
+                    name='agent_registration'
+                )
             ),
-            'task_delegation': CircuitBreaker(
-                failure_threshold=self.config.circuit_breaker_threshold,
-                timeout=self.config.circuit_breaker_timeout  
+            'task_delegation': UnifiedCircuitBreaker(
+                CircuitBreakerConfig(
+                    failure_threshold=self.config.circuit_breaker_threshold,
+                    timeout=self.config.circuit_breaker_timeout,
+                    circuit_type=CircuitBreakerType.ORCHESTRATOR,
+                    name='task_delegation'
+                )
             ),
-            'database': CircuitBreaker(
-                failure_threshold=self.config.circuit_breaker_threshold,
-                timeout=self.config.circuit_breaker_timeout
+            'database': UnifiedCircuitBreaker(
+                CircuitBreakerConfig(
+                    failure_threshold=self.config.circuit_breaker_threshold,
+                    timeout=self.config.circuit_breaker_timeout,
+                    circuit_type=CircuitBreakerType.DATABASE,
+                    name='database'
+                )
             )
         }
         
