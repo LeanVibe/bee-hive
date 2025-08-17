@@ -1,0 +1,277 @@
+{
+  "current_architecture": {
+    "agent_files_count": 6,
+    "core_files_count": 353,
+    "orchestrator_files": 53,
+    "communication_files": 8,
+    "has_redis_integration": true,
+    "has_agent_manager": true,
+    "has_multi_cli_support": false,
+    "has_git_isolation": false
+  },
+  "code_duplications": [
+    {
+      "pattern": "async def execute_task",
+      "files": [
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_unified_production_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/unified_production_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/cli_agent_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/integration/test_orchestrator_isolated_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/integration/test_unified_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/contracts/test_epic1_orchestrator_contracts.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/simple_system/test_epic1_orchestrator_isolation.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/workflow_engine.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/workflow_manager.py"
+      ],
+      "similarity_score": 0.8,
+      "consolidation_opportunity": "Consolidate async def execute_task implementations into unified interface"
+    },
+    {
+      "pattern": "class.*Orchestrator",
+      "files": [
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_orchestrator_core.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_unified_production_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_performance_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_orchestrator_enhanced.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_enhanced_orchestrator_comprehensive.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_agent_orchestrator_error_recovery.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/scratchpad/dashboard_deployment_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator_load_testing.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/performance_orchestrator_plugin.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/unified_production_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/vertical_slice_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/production_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/automated_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/task_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/enhanced_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/unified_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/enhanced_orchestrator_plugin.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/pilot_infrastructure_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator_hook_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/enterprise_demo_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/production_orchestrator_unified.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/simple_orchestrator_adapter.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/container_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/context_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator_load_balancing_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/performance_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/security_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/performance_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/cli_agent_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/development_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/high_concurrency_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/context_aware_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/observability/observability_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/sandbox/sandbox_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_core_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/integration/test_orchestrator_isolated_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/integration/test_unified_orchestrator_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/contracts/test_orchestrator_contracts.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/contracts/test_epic1_orchestrator_contracts.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/simple_system/test_simple_orchestrator_isolated.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/simple_system/test_epic1_orchestrator_isolation.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/scratchpad/dashboard_github_workflow.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/resources/examples/semantic_workflows.py"
+      ],
+      "similarity_score": 0.8,
+      "consolidation_opportunity": "Consolidate class.*Orchestrator implementations into unified interface"
+    },
+    {
+      "pattern": "def spawn_agent",
+      "files": [
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/unified_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/simple_orchestrator_adapter.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/container_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/high_concurrency_orchestrator.py"
+      ],
+      "similarity_score": 0.8,
+      "consolidation_opportunity": "Consolidate def spawn_agent implementations into unified interface"
+    },
+    {
+      "pattern": "def delegate_task",
+      "files": [
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/unified_production_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/unified_orchestrator.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator_shared_state_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/simple_orchestrator_adapter.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/orchestrator.py"
+      ],
+      "similarity_score": 0.8,
+      "consolidation_opportunity": "Consolidate def delegate_task implementations into unified interface"
+    },
+    {
+      "pattern": "Message handling logic",
+      "files": [
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_communication_load.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_communication.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/enhanced_communication_load_testing.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/agent_communication_service.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/communication.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/communication_manager.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/api/v1/communication.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_messaging_consolidation.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/messaging_migration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/messaging_service_compat.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/messaging_service.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/agent_messaging_service.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/sdk/messaging.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_redis_messaging.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/kombu/messaging.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/opentelemetry/semconv/_incubating/metrics/messaging_metrics.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/opentelemetry/semconv/_incubating/attributes/messaging_attributes.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/kombu/messaging.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/metrics/messaging_metrics.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/opentelemetry/semconv/_incubating/attributes/messaging_attributes.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/redis_consolidation_validation.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/redis_consolidation_mock_validation.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_redis_streams_consumer_groups.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_redis_pubsub_system.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/redis_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/team_coordination_redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/optimized_redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/enhanced_redis_streams_manager.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_redis_basic.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_redis_messaging.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_database_redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/contracts/test_redis_contracts.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/simple_system/test_redis_isolation.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_redis_disconnect_recover.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/kombu/transport/redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/celery/backends/redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/kombu/transport/redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/celery/backends/redis.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_websocket_simple.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_websocket_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/test_project_index_websocket.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/examples/websocket_client_example.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/project_index/websocket_integration.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/project_index/websocket_events.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/project_index/websocket_monitoring.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/agents/websocket_coordination.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/api/project_index_websocket_monitoring.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/api/dashboard_websockets.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/api/project_index_websocket.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/app/api/v1/websocket.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/simple_system/test_websocket_manager_isolated.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_websocket_subscription_updates.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_websocket_broadcast_and_stats.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_websocket_message_contract.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_websocket_invalid_subscriptions_sorted.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_websocket_unsubscribe_unknown.py",
+        "/Users/bogdan/work/leanvibe-dev/bee-hive/tests/ws/test_websocket_contract.py"
+      ],
+      "similarity_score": 0.7,
+      "consolidation_opportunity": "Unify message handling into single communication manager"
+    }
+  ],
+  "architecture_gaps": [
+    {
+      "component": "Agent Manager",
+      "missing_functionality": "Multi-CLI agent support",
+      "current_implementation": "Homogeneous Python agents only",
+      "required_implementation": "Abstract interface for Claude Code, Cursor, Gemini CLI, OpenCode",
+      "priority": "HIGH",
+      "effort_estimate": "2-3 days"
+    },
+    {
+      "component": "Agent Isolation",
+      "missing_functionality": "Git worktree management",
+      "current_implementation": "No isolation mechanism",
+      "required_implementation": "Git worktree creation and management per agent",
+      "priority": "HIGH",
+      "effort_estimate": "1-2 days"
+    },
+    {
+      "component": "Agent Interface",
+      "missing_functionality": "Universal agent interface protocol",
+      "current_implementation": "Tightly coupled to internal agents",
+      "required_implementation": "Abstract interface supporting multiple CLI types",
+      "priority": "HIGH",
+      "effort_estimate": "2-3 days"
+    }
+  ],
+  "consolidation_strategy": {
+    "phase_1_foundation": {
+      "duration": "1-2 weeks",
+      "description": "Establish multi-CLI agent foundation",
+      "tasks": [
+        "Create universal agent interface",
+        "Implement CLI adapter pattern",
+        "Add git worktree management",
+        "Consolidate orchestration duplications"
+      ]
+    },
+    "phase_2_integration": {
+      "duration": "1-2 weeks",
+      "description": "Integrate external CLI agents",
+      "tasks": [
+        "Implement Claude Code adapter",
+        "Implement Cursor agent adapter",
+        "Implement Gemini CLI adapter",
+        "Add context handoff protocols"
+      ]
+    },
+    "phase_3_optimization": {
+      "duration": "1 week",
+      "description": "Optimize and secure multi-agent system",
+      "tasks": [
+        "Add path security and validation",
+        "Optimize communication protocols",
+        "Add monitoring and observability",
+        "Performance testing and tuning"
+      ]
+    }
+  },
+  "priority_actions": [
+    {
+      "type": "architecture_gap",
+      "action": "Implement Multi-CLI agent support",
+      "component": "Agent Manager",
+      "effort": "2-3 days",
+      "impact": "HIGH"
+    },
+    {
+      "type": "architecture_gap",
+      "action": "Implement Git worktree management",
+      "component": "Agent Isolation",
+      "effort": "1-2 days",
+      "impact": "HIGH"
+    },
+    {
+      "type": "architecture_gap",
+      "action": "Implement Universal agent interface protocol",
+      "component": "Agent Interface",
+      "effort": "2-3 days",
+      "impact": "HIGH"
+    },
+    {
+      "type": "code_consolidation",
+      "action": "Consolidate class.*Orchestrator implementations into unified interface",
+      "files_affected": 45,
+      "impact": "MEDIUM"
+    },
+    {
+      "type": "code_consolidation",
+      "action": "Consolidate async def execute_task implementations into unified interface",
+      "files_affected": 9,
+      "impact": "MEDIUM"
+    },
+    {
+      "type": "code_consolidation",
+      "action": "Consolidate def spawn_agent implementations into unified interface",
+      "files_affected": 5,
+      "impact": "MEDIUM"
+    },
+    {
+      "type": "code_consolidation",
+      "action": "Consolidate def delegate_task implementations into unified interface",
+      "files_affected": 5,
+      "impact": "MEDIUM"
+    }
+  ]
+}

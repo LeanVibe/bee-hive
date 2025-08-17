@@ -35,9 +35,15 @@ class PortManager:
     
     def __init__(self, config_file: Optional[str] = None):
         self.project_root = Path(__file__).parent.parent
+        # Use the actual .env.ports file in the project root
         self.config_file = config_file or self.project_root / ".env.ports"
         self.ports: Dict[str, PortConfig] = {}
-        self.load_configuration()
+        try:
+            self.load_configuration()
+        except FileNotFoundError:
+            print(f"Warning: Port configuration file not found at {self.config_file}")
+            print("Creating default configuration...")
+            self.create_default_configuration()
     
     def load_configuration(self) -> None:
         """Load port configuration from .env.ports file"""
@@ -52,6 +58,8 @@ class PortManager:
                 if line and not line.startswith('#'):
                     if '=' in line:
                         key, value = line.split('=', 1)
+                        # Handle comments at end of line
+                        value = value.split('#')[0].strip()
                         try:
                             env_vars[key.strip()] = int(value.strip())
                         except ValueError:
@@ -311,6 +319,67 @@ class PortManager:
             report.append("")
         
         return '\n'.join(report)
+    
+    def create_default_configuration(self) -> None:
+        """Create a default port configuration if none exists"""
+        # Load the default port definitions directly
+        port_definitions = {
+            # Database Services - Non-standard ports to avoid conflicts
+            'POSTGRES_PORT': (5433, 'PostgreSQL Main Database', 'database', True),
+            'POSTGRES_TEST_PORT': (5434, 'PostgreSQL Test Database', 'database', False),
+            'REDIS_PORT': (6380, 'Redis Main Cache', 'database', True),
+            'REDIS_TEST_PORT': (6381, 'Redis Test Cache', 'database', False),
+            
+            # API Services - Non-standard ports to avoid conflicts
+            'MAIN_API_PORT': (8100, 'Main FastAPI Server', 'api', True),
+            'PROJECT_INDEX_PORT': (8101, 'Project Index API', 'api', True),
+            'MOBILE_BACKEND_PORT': (8102, 'Mobile PWA Backend', 'api', False),
+            'TEST_API_PORT': (8103, 'Test API Server', 'api', False),
+            
+            # Frontend Services
+            'FRONTEND_DEV_PORT': (5173, 'Frontend Development Server', 'frontend', False),
+            'DASHBOARD_PORT': (3001, 'Main Dashboard', 'frontend', True),
+            'PWA_DEV_PORT': (3002, 'PWA Development Server', 'frontend', False),
+            
+            # Monitoring Services
+            'PROMETHEUS_PORT': (9090, 'Prometheus Metrics', 'monitoring', True),
+            'GRAFANA_PORT': (3101, 'Grafana Dashboard', 'monitoring', True),
+            'ALERTMANAGER_PORT': (9093, 'AlertManager', 'monitoring', False),
+            
+            # Exporters
+            'POSTGRES_EXPORTER_PORT': (9187, 'PostgreSQL Exporter', 'exporters', False),
+            'REDIS_EXPORTER_PORT': (9121, 'Redis Exporter', 'exporters', False),
+            'NODE_EXPORTER_PORT': (9100, 'Node Exporter', 'exporters', False),
+            'CADVISOR_PORT': (8180, 'cAdvisor Container Metrics', 'exporters', False),  # Changed from 8080 to avoid conflicts
+            
+            # Management Tools
+            'PGADMIN_PORT': (5150, 'pgAdmin Database Management', 'management', False),
+            'REDIS_INSIGHT_PORT': (8201, 'Redis Insight', 'management', False),
+            'JUPYTER_PORT': (8888, 'Jupyter Notebooks', 'management', False),
+            
+            # Logging Stack
+            'ELASTICSEARCH_PORT': (9200, 'Elasticsearch', 'logging', False),
+            'LOGSTASH_BEATS_PORT': (5044, 'Logstash Beats Input', 'logging', False),
+            'LOGSTASH_TCP_PORT': (5000, 'Logstash TCP Input', 'logging', False),
+            'LOGSTASH_API_PORT': (9600, 'Logstash API', 'logging', False),
+            'KIBANA_PORT': (5601, 'Kibana Log Visualization', 'logging', False),
+            
+            # Web Server - Non-standard HTTPS to avoid conflicts
+            'HTTP_PORT': (80, 'HTTP Server', 'web', False),
+            'HTTPS_PORT': (443, 'HTTPS Server', 'web', False),
+            'NGINX_HTTP_PORT': (8000, 'Nginx HTTP Proxy', 'web', False),
+            'NGINX_HTTPS_PORT': (8443, 'Nginx HTTPS Proxy', 'web', False),
+        }
+        
+        # Create PortConfig objects
+        for env_key, (port_num, description, category, required) in port_definitions.items():
+            self.ports[env_key] = PortConfig(
+                name=env_key,
+                port=port_num,
+                description=description,
+                category=category,
+                required=required
+            )
 
 def main():
     """CLI interface for port management"""

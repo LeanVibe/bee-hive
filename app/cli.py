@@ -925,6 +925,86 @@ def rollback(version: str, steps: int, list_versions: bool, yes: bool):
     console.print("   agent-hive setup  # Re-run setup after downgrade")
 
 
+@cli.command()
+@click.option('--report', is_flag=True, help='Show detailed port usage report')
+@click.option('--scan', is_flag=True, help='Scan for port conflicts')
+@click.option('--fix', is_flag=True, help='Suggest fixes for port conflicts')
+@click.option('--validate', is_flag=True, help='Validate current port configuration')
+def ports(report: bool, scan: bool, fix: bool, validate: bool):
+    """
+    🔌 Manage and monitor port configuration
+    
+    View port status, detect conflicts, and manage service ports.
+    """
+    try:
+        # Import port management
+        import sys
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent
+        sys.path.insert(0, str(project_root / "config"))
+        
+        from port_management import PortManager, PortStatus
+        
+        manager = PortManager()
+        
+        if report or (not scan and not fix and not validate):
+            # Default action: show report
+            console.print("🔌 [bold blue]LeanVibe Port Configuration Report[/bold blue]")
+            print(manager.generate_status_report())
+            
+        elif scan:
+            console.print("🔍 [bold]Scanning for port conflicts...[/bold]")
+            results = manager.scan_all_ports()
+            conflicts = manager.find_conflicts()
+            
+            if conflicts:
+                console.print("⚠️ [yellow]Port conflicts detected:[/yellow]")
+                for service1, service2 in conflicts:
+                    port = manager.ports[service1].port
+                    console.print(f"   • {service1} and {service2} both use port {port}")
+            else:
+                console.print("✅ [green]No port conflicts found[/green]")
+                
+            # Show ports in use
+            in_use = [(name, config) for name, config in manager.ports.items() 
+                     if config.status == PortStatus.IN_USE]
+            if in_use:
+                console.print(f"\n🔴 {len(in_use)} ports currently in use:")
+                for name, config in in_use[:5]:  # Show first 5
+                    console.print(f"   • {config.port} - {config.description}")
+                if len(in_use) > 5:
+                    console.print(f"   ... and {len(in_use) - 5} more")
+        
+        elif fix:
+            conflicts = manager.find_conflicts()
+            if conflicts:
+                console.print("🔧 [bold]Suggested fixes for port conflicts:[/bold]")
+                suggestions = manager.suggest_port_fixes()
+                for service, new_port in suggestions.items():
+                    old_port = manager.ports[service].port
+                    console.print(f"   {service}: {old_port} → {new_port}")
+                    
+                console.print("\n💡 To apply fixes, update your .env.ports file manually")
+            else:
+                console.print("✅ [green]No port conflicts to fix[/green]")
+        
+        elif validate:
+            is_valid, issues = manager.validate_configuration()
+            if is_valid:
+                console.print("✅ [green]Port configuration is valid[/green]")
+            else:
+                console.print("❌ [red]Port configuration has issues:[/red]")
+                for issue in issues:
+                    console.print(f"   • {issue}")
+                    
+        console.print(f"\n📋 Configuration file: {manager.config_file}")
+        console.print("💡 Edit .env.ports to modify port assignments")
+        
+    except Exception as e:
+        console.print(f"❌ [red]Error managing ports: {e}[/red]")
+        console.print("💡 Ensure the port management system is properly configured")
+
+
 def main():
     """Main entry point for the CLI."""
     cli()
