@@ -1,0 +1,99 @@
+# Multi-CLI Agent Testing Requirements
+# Core testing dependencies for comprehensive test suite
+
+# Basic testing framework
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-html>=3.1.0
+pytest-xdist>=3.0.0
+
+# Async and concurrency
+asyncio-mqtt>=0.13.0
+aiofiles>=23.0.0
+aioredis>=2.0.0
+
+# Redis and message queuing
+redis>=4.5.0
+msgpack>=1.0.0
+websockets>=11.0.0
+
+# Git and version control
+GitPython>=3.1.0
+
+# System monitoring and performance
+psutil>=5.9.0
+tracemalloc>=0.1
+memory-profiler>=0.60.0
+
+# Security testing
+cryptography>=40.0.0
+pyjwt>=2.6.0
+
+# Data processing and analysis
+pydantic>=1.10.0
+dataclasses-json>=0.5.0
+
+# HTTP and networking
+httpx>=0.24.0
+aiohttp>=3.8.0
+
+# File system and path handling
+pathlib2>=2.3.0
+tempfile>=1.0
+
+# Mock and testing utilities
+faker>=18.0.0
+factory-boy>=3.2.0
+responses>=0.23.0
+
+# Reporting and visualization
+jinja2>=3.1.0
+matplotlib>=3.6.0
+plotly>=5.14.0
+
+# Code quality and linting
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.0.0
+
+# Documentation
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0
+toml>=0.10.0
+
+# Development utilities
+ipdb>=0.13.0
+rich>=13.0.0
+click>=8.1.0
+
+# Optional dependencies for enhanced testing
+# Uncomment as needed for specific test scenarios
+
+# Container testing (Docker)
+# docker>=6.0.0
+# testcontainers>=3.7.0
+
+# Load testing
+# locust>=2.14.0
+
+# Network simulation
+# netem>=0.1.0
+
+# Database testing
+# sqlalchemy>=2.0.0
+# alembic>=1.10.0
+
+# API testing
+# fastapi>=0.95.0
+# uvicorn>=0.21.0
+
+# Machine learning (for advanced analytics)
+# scikit-learn>=1.2.0
+# numpy>=1.24.0
+# pandas>=2.0.0
