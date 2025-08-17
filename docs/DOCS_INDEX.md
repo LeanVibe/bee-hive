@@ -69,8 +69,13 @@
 - `docs/reference/OBSERVABILITY_EVENT_SCHEMA.md`
 - `docs/reference/SEMANTIC_MEMORY_API.md`
 - `docs/reference/SEMANTIC_MEMORY_PERFORMANCE.md`
+- `docs/reference/validation-framework.md` — Complete validation framework guide
 - `docs/reference/topics/TOPIC_KNOWLEDGE_MAP.md`
 - `docs/reference/topics/TOPIC_RELATIONSHIP_MATRIX.md`
+
+## Implementation Guides
+
+- `docs/implementation/context-compression.md` — Complete context compression implementation
 
 ## Design
 

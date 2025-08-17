@@ -27,6 +27,9 @@ docs/
 
 ## 🎨 **Documentation Standards**
 
+### **System Design Guidelines**
+- **Port Configuration**: All services should use non-standard ports that are easy to configure/change to avoid conflicts with other apps running on the same system
+
 ### **Living Documentation Principles**
 1. **Single Source of Truth**: No duplicate information across files
 2. **Executable Documentation**: Code examples that actually work
