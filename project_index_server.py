@@ -7,6 +7,7 @@ without the complexity of the full bee-hive application.
 """
 
 import asyncio
+import json
 from datetime import datetime
 from typing import Optional, List
 from uuid import UUID, uuid4
@@ -24,6 +25,7 @@ sys.path.append(str(Path(__file__).parent))
 try:
     from app.project_index import ProjectIndexer, AnalysisConfiguration, ProjectIndexConfig
     from app.models.project_index import AnalysisSessionType
+    from app.project_index.language_parsers import LanguageParserFactory, Dependency
     FULL_INTEGRATION_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Full Project Index integration not available: {e}")
@@ -87,6 +89,43 @@ class AnalysisStatusResponse(BaseModel):
     current_phase: Optional[str]
     estimated_completion: Optional[datetime]
 
+class ContextAssemblyRequest(BaseModel):
+    task_description: str
+    max_files: int = 10
+    include_dependencies: bool = True
+    focus_languages: Optional[List[str]] = None
+
+class ContextFileResult(BaseModel):
+    id: str
+    relative_path: str
+    file_name: str
+    language: Optional[str]
+    relevance_score: float
+    content_preview: Optional[str]
+    reason: str  # Why this file was included
+    related_files: List[str] = []  # Related files via dependencies
+
+class DependencyResponse(BaseModel):
+    target_name: str
+    dependency_type: str
+    is_external: bool
+    line_number: Optional[int]
+    source_text: Optional[str]
+    confidence_score: float
+    metadata: dict
+
+class FileDetailResponse(BaseModel):
+    id: str
+    relative_path: str
+    file_name: str
+    file_type: str
+    language: Optional[str]
+    file_size: int
+    line_count: Optional[int]
+    content_preview: Optional[str]
+    last_modified: Optional[datetime]
+    dependencies: List[DependencyResponse]
+
 async def run_project_analysis_background(
     project_id: str,
     session_id: str,
@@ -145,13 +184,15 @@ async def run_project_analysis_background(
             """, UUID(session_id), total_files)
             
             # Process files and store them in database
+            dependencies_found = 0
+            
             for i, file_path in enumerate(files_found):
                 try:
                     # Get file info
                     file_stat = file_path.stat()
                     relative_path = str(file_path.relative_to(project_path))
                     
-                    # Determine file type
+                    # Determine file type and language
                     extension = file_path.suffix.lower()
                     if extension in ['.py']:
                         file_type = 'source'
@@ -172,6 +213,33 @@ async def run_project_analysis_background(
                         file_type = 'other'
                         language = None
                     
+                    # Read file content for analysis (limit to reasonable size)
+                    content = ""
+                    content_preview = ""
+                    line_count = 0
+                    
+                    try:
+                        if file_stat.st_size < 1024 * 1024:  # Only read files smaller than 1MB
+                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                content = f.read()
+                                line_count = len(content.splitlines())
+                                # Create preview (first 500 characters)
+                                content_preview = content[:500] + ("..." if len(content) > 500 else "")
+                    except Exception as read_error:
+                        print(f"Could not read {file_path}: {read_error}")
+                        content = ""
+                    
+                    # Extract dependencies if content is available and parser exists
+                    file_dependencies = []
+                    if content and language and FULL_INTEGRATION_AVAILABLE:
+                        try:
+                            parser = LanguageParserFactory.get_parser(language)
+                            if parser:
+                                file_dependencies = parser.extract_dependencies(file_path, content)
+                                dependencies_found += len(file_dependencies)
+                        except Exception as parse_error:
+                            print(f"Error parsing dependencies in {file_path}: {parse_error}")
+                    
                     # Check if file already exists for this project
                     existing = await conn.fetchval("""
                         SELECT id FROM file_entries 
@@ -182,21 +250,43 @@ async def run_project_analysis_background(
                         # Update existing file entry
                         await conn.execute("""
                             UPDATE file_entries SET
-                                file_size = $3, last_modified = $4, indexed_at = $5
+                                file_size = $3, last_modified = $4, indexed_at = $5,
+                                content_preview = $6, line_count = $7
                             WHERE id = $1 AND project_id = $2
                         """, existing, UUID(project_id), file_stat.st_size,
-                        datetime.fromtimestamp(file_stat.st_mtime), datetime.utcnow())
+                        datetime.fromtimestamp(file_stat.st_mtime), datetime.utcnow(),
+                        content_preview, line_count)
+                        file_entry_id = existing
                     else:
                         # Insert new file entry
-                        await conn.execute("""
+                        file_entry_id = await conn.fetchval("""
                             INSERT INTO file_entries (
                                 project_id, file_path, relative_path, file_name, file_extension,
-                                file_type, language, file_size, last_modified, indexed_at
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                                file_type, language, file_size, last_modified, indexed_at,
+                                content_preview, line_count
+                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                            RETURNING id
                         """, 
                         UUID(project_id), str(file_path), relative_path, file_path.name,
                         extension, file_type, language, file_stat.st_size,
-                        datetime.fromtimestamp(file_stat.st_mtime), datetime.utcnow())
+                        datetime.fromtimestamp(file_stat.st_mtime), datetime.utcnow(),
+                        content_preview, line_count)
+                    
+                    # Insert dependencies
+                    for dep in file_dependencies:
+                        try:
+                            await conn.execute("""
+                                INSERT INTO dependency_relationships (
+                                    project_id, source_file_id, target_name, dependency_type,
+                                    line_number, column_number, source_text, is_external,
+                                    is_dynamic, confidence_score, metadata
+                                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                            """,
+                            UUID(project_id), file_entry_id, dep.target_name, dep.dependency_type,
+                            dep.line_number, dep.column_number, dep.source_text, dep.is_external,
+                            dep.is_dynamic, dep.confidence_score, json.dumps(dep.metadata or {}))
+                        except Exception as dep_error:
+                            print(f"Error inserting dependency {dep.target_name}: {dep_error}")
                     
                     processed_files += 1
                     progress = (processed_files / total_files) * 100
@@ -214,12 +304,12 @@ async def run_project_analysis_background(
                     print(f"Error processing file {file_path}: {e}")
                     continue
             
-            # Update project file count
+            # Update project file count and dependency count
             await conn.execute("""
                 UPDATE project_indexes 
-                SET file_count = $2, last_indexed_at = $3, status = 'active'
+                SET file_count = $2, dependency_count = $3, last_indexed_at = $4, status = 'active'
                 WHERE id = $1
-            """, UUID(project_id), processed_files, datetime.utcnow())
+            """, UUID(project_id), processed_files, dependencies_found, datetime.utcnow())
             
             # Complete analysis session
             await conn.execute("""
@@ -437,6 +527,367 @@ async def get_analysis_status(project_id: str, session_id: str):
             current_phase=session_row['current_phase'],
             estimated_completion=session_row['estimated_completion']
         )
+
+@app.get("/api/project-index/{project_id}/files", response_model=List[FileDetailResponse])
+async def get_project_files(
+    project_id: str,
+    language: Optional[str] = None,
+    file_type: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get files in a project with optional filtering"""
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        # Build query with optional filters
+        where_conditions = ["fe.project_id = $1"]
+        params = [UUID(project_id)]
+        param_count = 1
+        
+        if language:
+            param_count += 1
+            where_conditions.append(f"fe.language = ${param_count}")
+            params.append(language)
+        
+        if file_type:
+            param_count += 1
+            where_conditions.append(f"fe.file_type = ${param_count}")
+            params.append(file_type)
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query = f"""
+            SELECT fe.id, fe.relative_path, fe.file_name, fe.file_extension as file_type,
+                   fe.language, fe.file_size, fe.line_count, fe.content_preview, fe.last_modified,
+                   COUNT(dr.id) as dependency_count
+            FROM file_entries fe
+            LEFT JOIN dependency_relationships dr ON fe.id = dr.source_file_id
+            WHERE {where_clause}
+            GROUP BY fe.id, fe.relative_path, fe.file_name, fe.file_extension,
+                     fe.language, fe.file_size, fe.line_count, fe.content_preview, fe.last_modified
+            ORDER BY fe.relative_path
+            LIMIT ${param_count + 1} OFFSET ${param_count + 2}
+        """
+        
+        params.extend([limit, offset])
+        rows = await conn.fetch(query, *params)
+        
+        files = []
+        for row in rows:
+            # Get dependencies for this file
+            deps_query = """
+                SELECT target_name, dependency_type, is_external, line_number, 
+                       source_text, confidence_score, metadata
+                FROM dependency_relationships 
+                WHERE source_file_id = $1
+                ORDER BY line_number, target_name
+            """
+            dep_rows = await conn.fetch(deps_query, row['id'])
+            
+            dependencies = [
+                DependencyResponse(
+                    target_name=dep['target_name'],
+                    dependency_type=dep['dependency_type'],
+                    is_external=dep['is_external'],
+                    line_number=dep['line_number'],
+                    source_text=dep['source_text'],
+                    confidence_score=float(dep['confidence_score']),
+                    metadata=dep['metadata'] if isinstance(dep['metadata'], dict) else {}
+                )
+                for dep in dep_rows
+            ]
+            
+            file_detail = FileDetailResponse(
+                id=str(row['id']),
+                relative_path=row['relative_path'],
+                file_name=row['file_name'],
+                file_type=row['file_type'],
+                language=row['language'],
+                file_size=row['file_size'],
+                line_count=row['line_count'],
+                content_preview=row['content_preview'],
+                last_modified=row['last_modified'],
+                dependencies=dependencies
+            )
+            files.append(file_detail)
+        
+        return files
+
+@app.get("/api/project-index/{project_id}/dependencies")
+async def get_project_dependencies(
+    project_id: str,
+    dependency_type: Optional[str] = None,
+    is_external: Optional[bool] = None,
+    limit: int = 100,
+    offset: int = 0
+):
+    """Get dependencies in a project with optional filtering"""
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        where_conditions = ["dr.project_id = $1"]
+        params = [UUID(project_id)]
+        param_count = 1
+        
+        if dependency_type:
+            param_count += 1
+            where_conditions.append(f"dr.dependency_type = ${param_count}")
+            params.append(dependency_type)
+        
+        if is_external is not None:
+            param_count += 1
+            where_conditions.append(f"dr.is_external = ${param_count}")
+            params.append(is_external)
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query = f"""
+            SELECT dr.target_name, dr.dependency_type, dr.is_external, dr.line_number,
+                   dr.source_text, dr.confidence_score, dr.metadata,
+                   fe.relative_path, fe.file_name, fe.language,
+                   COUNT(*) OVER() as total_count
+            FROM dependency_relationships dr
+            JOIN file_entries fe ON dr.source_file_id = fe.id
+            WHERE {where_clause}
+            ORDER BY dr.target_name, fe.relative_path
+            LIMIT ${param_count + 1} OFFSET ${param_count + 2}
+        """
+        
+        params.extend([limit, offset])
+        rows = await conn.fetch(query, *params)
+        
+        dependencies = []
+        total_count = 0
+        
+        for row in rows:
+            total_count = row['total_count']
+            
+            dep = {
+                "target_name": row['target_name'],
+                "dependency_type": row['dependency_type'],
+                "is_external": row['is_external'],
+                "line_number": row['line_number'],
+                "source_text": row['source_text'],
+                "confidence_score": float(row['confidence_score']),
+                "metadata": row['metadata'] if isinstance(row['metadata'], dict) else {},
+                "source_file": {
+                    "relative_path": row['relative_path'],
+                    "file_name": row['file_name'],
+                    "language": row['language']
+                }
+            }
+            dependencies.append(dep)
+        
+        return {
+            "dependencies": dependencies,
+            "total_count": total_count,
+            "limit": limit,
+            "offset": offset
+        }
+
+@app.get("/api/project-index/{project_id}/search")
+async def search_project_files(
+    project_id: str,
+    query: str,
+    file_type: Optional[str] = None,
+    language: Optional[str] = None,
+    limit: int = 20
+):
+    """Search through project files by content"""
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        where_conditions = ["fe.project_id = $1"]
+        params = [UUID(project_id)]
+        param_count = 1
+        
+        # Add content search condition
+        param_count += 1
+        where_conditions.append(f"(fe.content_preview ILIKE ${param_count} OR fe.relative_path ILIKE ${param_count})")
+        params.append(f"%{query}%")
+        
+        if file_type:
+            param_count += 1
+            where_conditions.append(f"fe.file_type = ${param_count}")
+            params.append(file_type)
+        
+        if language:
+            param_count += 1
+            where_conditions.append(f"fe.language = ${param_count}")
+            params.append(language)
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query_sql = f"""
+            SELECT fe.id, fe.relative_path, fe.file_name, fe.file_extension as file_type,
+                   fe.language, fe.file_size, fe.line_count, fe.content_preview, fe.last_modified,
+                   -- Simple relevance scoring
+                   CASE 
+                       WHEN fe.relative_path ILIKE ${param_count - len(params) + 2} THEN 3
+                       WHEN fe.file_name ILIKE ${param_count - len(params) + 2} THEN 2
+                       ELSE 1
+                   END as relevance_score
+            FROM file_entries fe
+            WHERE {where_clause}
+            ORDER BY relevance_score DESC, fe.relative_path
+            LIMIT ${param_count + 1}
+        """
+        
+        params.append(limit)
+        rows = await conn.fetch(query_sql, *params)
+        
+        results = []
+        for row in rows:
+            result = {
+                "id": str(row['id']),
+                "relative_path": row['relative_path'],
+                "file_name": row['file_name'],
+                "file_type": row['file_type'],
+                "language": row['language'],
+                "file_size": row['file_size'],
+                "line_count": row['line_count'],
+                "content_preview": row['content_preview'],
+                "last_modified": row['last_modified'],
+                "relevance_score": row['relevance_score']
+            }
+            results.append(result)
+        
+        return {
+            "query": query,
+            "results": results,
+            "total_results": len(results)
+        }
+
+@app.post("/api/project-index/{project_id}/context")
+async def assemble_context(
+    project_id: str,
+    request: ContextAssemblyRequest
+):
+    """Assemble relevant context for AI agents based on task description"""
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        # Verify project exists
+        project_exists = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM project_indexes WHERE id = $1)",
+            UUID(project_id)
+        )
+        if not project_exists:
+            raise HTTPException(status_code=404, detail="Project index not found")
+        
+        # Extract keywords from task description for semantic search
+        keywords = request.task_description.lower().split()
+        search_terms = [word for word in keywords if len(word) > 3][:5]  # Top 5 meaningful terms
+        
+        # Build search conditions
+        where_conditions = ["fe.project_id = $1"]
+        params = [UUID(project_id)]
+        param_count = 1
+        
+        # Language filtering
+        if request.focus_languages:
+            placeholders = []
+            for lang in request.focus_languages:
+                param_count += 1
+                placeholders.append(f'${param_count}')
+                params.append(lang)
+            where_conditions.append(f"fe.language = ANY(ARRAY[{','.join(placeholders)}])")
+        
+        # Build simple search condition 
+        if search_terms:
+            search_term = f"%{search_terms[0]}%"  # Use first search term only for simplicity
+            param_count += 1
+            where_conditions.append(f"""
+                (fe.relative_path ILIKE ${param_count} OR 
+                 fe.file_name ILIKE ${param_count} OR 
+                 fe.content_preview ILIKE ${param_count})
+            """)
+            params.append(search_term)
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        # Simplified query
+        main_query = f"""
+            SELECT fe.id, fe.relative_path, fe.file_name, fe.language, 
+                   fe.content_preview, fe.file_size, fe.line_count,
+                   1 as relevance_score,
+                   COUNT(dr.id) as dependency_count
+            FROM file_entries fe
+            LEFT JOIN dependency_relationships dr ON fe.id = dr.source_file_id
+            WHERE {where_clause}
+            GROUP BY fe.id, fe.relative_path, fe.file_name, fe.language, 
+                     fe.content_preview, fe.file_size, fe.line_count
+            ORDER BY fe.file_size ASC
+            LIMIT ${param_count + 1}
+        """
+        
+        params.append(request.max_files)
+        rows = await conn.fetch(main_query, *params)
+        
+        context_files = []
+        
+        for row in rows:
+            file_id = row['id']
+            
+            # Determine inclusion reason
+            if row['relevance_score'] >= 4:
+                reason = f"High relevance: matches task keywords in file name/path"
+            elif row['relevance_score'] >= 3:
+                reason = f"Content match: contains task-related keywords"
+            elif row['dependency_count'] > 0:
+                reason = f"Dependency hub: {row['dependency_count']} dependencies"
+            else:
+                reason = "General relevance to task"
+            
+            # Get related files via dependencies if requested
+            related_files = []
+            if request.include_dependencies:
+                related_query = """
+                    SELECT DISTINCT fe2.relative_path
+                    FROM dependency_relationships dr
+                    JOIN file_entries fe2 ON dr.source_file_id = fe2.id
+                    WHERE dr.target_name IN (
+                        SELECT dr2.target_name 
+                        FROM dependency_relationships dr2 
+                        WHERE dr2.source_file_id = $1
+                        AND dr2.is_external = false
+                        LIMIT 3
+                    )
+                    AND fe2.id != $1
+                    LIMIT 5
+                """
+                related_rows = await conn.fetch(related_query, file_id)
+                related_files = [r['relative_path'] for r in related_rows]
+            
+            context_file = ContextFileResult(
+                id=str(file_id),
+                relative_path=row['relative_path'],
+                file_name=row['file_name'],
+                language=row['language'],
+                relevance_score=float(row['relevance_score']),
+                content_preview=row['content_preview'],
+                reason=reason,
+                related_files=related_files
+            )
+            context_files.append(context_file)
+        
+        # Calculate context statistics
+        total_lines = sum(file.content_preview.count('\n') if file.content_preview else 0 for file in context_files)
+        estimated_tokens = total_lines * 15  # Rough estimate: ~15 tokens per line
+        
+        return {
+            "task_description": request.task_description,
+            "context_files": context_files,
+            "total_files": len(context_files),
+            "estimated_tokens": estimated_tokens,
+            "search_terms": search_terms,
+            "assembly_metadata": {
+                "include_dependencies": request.include_dependencies,
+                "focus_languages": request.focus_languages,
+                "max_files_requested": request.max_files,
+                "total_project_files": await conn.fetchval(
+                    "SELECT COUNT(*) FROM file_entries WHERE project_id = $1", 
+                    UUID(project_id)
+                )
+            }
+        }
 
 @app.delete("/api/project-index/{project_id}")
 async def delete_project_index(project_id: str):
