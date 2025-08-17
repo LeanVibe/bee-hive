@@ -2,9 +2,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-pytestmark = pytest.mark.asyncio
-
-
 def test_websocket_metrics_endpoint_exposes_core_counters(test_app):
     client = TestClient(test_app)
 

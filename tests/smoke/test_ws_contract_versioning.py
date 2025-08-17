@@ -1,8 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 
-pytestmark = pytest.mark.asyncio
-
 
 def test_ws_contract_info_endpoint(test_app):
     client = TestClient(test_app)
