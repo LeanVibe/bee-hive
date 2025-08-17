@@ -57,20 +57,8 @@ WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
 
 ## Docs
 
-**📚 Documentation Consolidation Complete!** All documentation has been consolidated into comprehensive guides.
-
-### **Quick Start**
-- **Master Index**: [DOCUMENTATION_MASTER_INDEX.md](DOCUMENTATION_MASTER_INDEX.md) - Single source of truth for all docs
-- **Getting Started**: `docs/GETTING_STARTED.md`
-- **Core Overview**: `docs/CORE.md`
-- **Architecture**: `docs/ARCHITECTURE.md`
-
-### **Consolidated Documentation**
-- **Strategic Planning**: [STRATEGIC_PLAN_CONSOLIDATED.md](STRATEGIC_PLAN_CONSOLIDATED.md)
-- **Testing Strategy**: [TESTING_STRATEGY_CONSOLIDATED.md](TESTING_STRATEGY_CONSOLIDATED.md)
-- **Project Index**: [PROJECT_INDEX_CONSOLIDATED.md](PROJECT_INDEX_CONSOLIDATED.md)
-- **Implementation Progress**: [IMPLEMENTATION_PROGRESS_CONSOLIDATED.md](IMPLEMENTATION_PROGRESS_CONSOLIDATED.md)
-- **Product Documentation**: [docs/product/](docs/product/)
-
-### **Legacy Documentation**
-- **Archived**: `docs/archive/` - Previous fragmented documentation (archived)
+- Getting started: `docs/GETTING_STARTED.md`
+- Core overview: `docs/CORE.md`
+- Architecture: `docs/ARCHITECTURE.md`
+ - Index: `docs/NAV_INDEX.md`
+- Agent prompt for consolidation/debt cleanup: `docs/AGENT_PROMPT_CONSOLIDATION.md`

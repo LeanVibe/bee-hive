@@ -26,6 +26,8 @@ import '../components/dashboard/connection-monitor'
 import '../components/autonomous-development/multi-agent-oversight-dashboard'
 import '../components/autonomous-development/remote-control-center'
 import '../components/common/enhanced-loading-spinner'
+import '../components/context-compression/CompressionWidget'
+import '../components/context-compression/CompressionDashboard'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
@@ -40,7 +42,7 @@ export class DashboardView extends LitElement {
   @state() private declare isLoading: boolean
   @state() private declare error: string
   @state() private declare lastSync: Date | null
-  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination'
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'tools'
   @state() private declare servicesInitialized: boolean
   @state() private declare wsConnected: boolean
   @state() private declare realtimeEnabled: boolean
@@ -1435,6 +1437,67 @@ export class DashboardView extends LitElement {
       </div>
     `
   }
+
+  private renderToolsView() {
+    return html`
+      <div id="tools-panel" role="tabpanel" aria-labelledby="tools-tab" style="height: calc(100vh - 140px); padding: 1rem; overflow-y: auto;">
+        <h2 class="sr-only">Development Tools and Utilities</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; max-width: 1200px; margin: 0 auto;">
+          <!-- Context Compression Tools -->
+          <section aria-label="Context compression and optimization tools">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary-color, #1f2937);">
+              Context Compression
+            </h3>
+            <compression-dashboard
+              .contextInfo=${{
+                tokenCount: 45000, // Example token count
+                sessionType: 'development_session',
+                priority: 'quality'
+              }}
+              role="region"
+              aria-label="Context compression dashboard with real-time progress monitoring and analytics"
+            ></compression-dashboard>
+          </section>
+
+          <!-- Quick Tools Grid -->
+          <section aria-label="Quick access development tools">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary-color, #1f2937);">
+              Quick Tools
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+              <compression-widget
+                .contextInfo=${{
+                  tokenCount: 45000,
+                  sessionType: 'development_session',
+                  priority: 'quality'
+                }}
+                @compression-started=${(e: CustomEvent) => {
+                  console.log('Compression started:', e.detail)
+                  this.makeLiveAnnouncement('Context compression started')
+                }}
+                @compression-error=${(e: CustomEvent) => {
+                  console.error('Compression error:', e.detail)
+                  this.makeLiveAnnouncement('Context compression failed')
+                }}
+                role="region"
+                aria-label="Quick context compression widget with smart recommendations"
+              ></compression-widget>
+              
+              <!-- Placeholder for additional tools -->
+              <div style="background: var(--surface-color, #ffffff); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color, #e0e0e0); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; color: var(--text-secondary-color, #666);">
+                <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">🛠️</div>
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">More Tools Coming Soon</div>
+                <div style="font-size: 14px; text-align: center; line-height: 1.5;">
+                  Additional development tools and utilities will be added here.
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    `
+  }
   
   private announceAgentSelection(agent: any) {
     const announcement = `Agent ${agent.name} selected. Status: ${agent.status}. Performance: ${agent.performance?.score || 'unknown'}%`
@@ -1519,6 +1582,8 @@ export class DashboardView extends LitElement {
         return this.renderControlView()
       case 'coordination':
         return this.renderCoordinationView()
+      case 'tools':
+        return this.renderToolsView()
       default:
         return this.renderOverviewView()
     }

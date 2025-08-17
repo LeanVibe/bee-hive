@@ -26,6 +26,10 @@ import './IndexMetrics';
 import './FileDetails';
 import './SearchInterface';
 
+// Import compression components
+import '../context-compression/CompressionWidget';
+import '../context-compression/CompressionDashboard';
+
 @customElement('project-index-dashboard')
 export class ProjectIndexDashboard extends LitElement {
   @property({ type: String }) declare selectedProjectId: string;
@@ -497,6 +501,12 @@ export class ProjectIndexDashboard extends LitElement {
     this.currentTab = tab;
   }
 
+  private handleOpenCompressionDashboard(): void {
+    // Switch to a dedicated compression view or open modal
+    this.activeView = 'compression';
+    this.requestUpdate();
+  }
+
   private showErrorNotification(message: string): void {
     // Emit error event for notification system
     this.dispatchEvent(new CustomEvent('error-notification', {
@@ -570,6 +580,10 @@ export class ProjectIndexDashboard extends LitElement {
                 @click=${() => this.handleTabChange('metrics')}>
           Metrics
         </button>
+        <button class="sidebar-tab ${this.currentTab === 'tools' ? 'active' : ''}"
+                @click=${() => this.handleTabChange('tools')}>
+          Tools
+        </button>
       </div>
 
       <div class="sidebar-panel ${this.currentTab === 'files' ? 'active' : ''}">
@@ -591,6 +605,21 @@ export class ProjectIndexDashboard extends LitElement {
           .projectId=${this.selectedProject?.id}
           .compact=${true}
         ></index-metrics>
+      </div>
+
+      <div class="sidebar-panel ${this.currentTab === 'tools' ? 'active' : ''}">
+        <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+          <compression-widget
+            .contextInfo=${{
+              tokenCount: this.selectedProject?.metadata?.totalTokens,
+              sessionType: 'project_analysis',
+              priority: 'quality'
+            }}
+            @open-compression-dashboard=${this.handleOpenCompressionDashboard}
+          ></compression-widget>
+          
+          <!-- Add more tools here in the future -->
+        </div>
       </div>
     `;
   }
@@ -630,6 +659,17 @@ export class ProjectIndexDashboard extends LitElement {
             .projectId=${this.selectedProject.id}
             .filePath=${this.selectedFilePath}
           ></file-details>
+        `;
+      
+      case 'compression':
+        return html`
+          <compression-dashboard
+            .contextInfo=${{
+              tokenCount: this.selectedProject?.metadata?.totalTokens,
+              sessionType: 'project_analysis',
+              priority: 'quality'
+            }}
+          ></compression-dashboard>
         `;
       
       default:

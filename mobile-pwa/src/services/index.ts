@@ -112,6 +112,20 @@ export type {
 export { OfflineService } from './offline';
 export { OfflineStorageService } from './offline-storage';
 
+// Context Compression Service
+export { 
+  ContextCompressionService, 
+  getContextCompressionService, 
+  resetContextCompressionService 
+} from './context-compression';
+export type { 
+  CompressionOptions, 
+  CompressionResult, 
+  CompressionProgress, 
+  CompressionMetrics, 
+  CompressionHistory 
+} from './context-compression';
+
 // API Types (re-export for convenience)
 export type {
   // Base API types

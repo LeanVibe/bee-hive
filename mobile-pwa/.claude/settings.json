@@ -11,6 +11,30 @@
     }
   },
   "hooks": {
+    "PreCompact": [
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔄 Preparing intelligent context compression...'",
+            "timeout": 5,
+            "description": "Manual compression preparation"
+          }
+        ]
+      },
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command", 
+            "command": "echo '⚡ Auto-compression triggered by context size limits'",
+            "timeout": 5,
+            "description": "Auto compression notification"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|MultiEdit|Write|Bash",
@@ -20,6 +44,17 @@
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/quality-gate.sh",
             "timeout": 30,
             "description": "Consolidated quality gate with mobile notifications"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/context-quality-monitor.py",
+            "timeout": 15,
+            "description": "Context quality monitoring for compression opportunities"
           }
         ]
       }
@@ -53,9 +88,31 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-compact-check.py",
+            "timeout": 10,
+            "description": "Auto-compression opportunity detection"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "echo '🚀 LeanVibe Agent Hive 2.0 active | 📱 Mobile: /hive mobile --qr | 🤖 Agents: /hive agents --list | ⚡ Status: /hive status --mobile'",
             "timeout": 2,
             "description": "Quick help with mobile integration"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/context-quality-monitor.py", 
+            "timeout": 15,
+            "description": "End-of-conversation quality assessment"
           }
         ]
       }

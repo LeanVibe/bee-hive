@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leanvibe_secure_pass}
       POSTGRES_HOST_AUTH_METHOD: md5
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/migrations:/docker-entrypoint-initdb.d
@@ -32,7 +32,7 @@ services:
     container_name: leanvibe_redis
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-leanvibe_redis_pass}
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT:-6380}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -61,7 +61,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
     ports:
-      - "8000:8000"
+      - "${MAIN_API_PORT:-8100}:8000"
     volumes:
       - .:/app
       - /var/run/docker.sock:/var/run/docker.sock  # For tmux session management

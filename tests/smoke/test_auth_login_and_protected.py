@@ -3,9 +3,6 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-pytestmark = pytest.mark.asyncio
-
-
 def test_login_me_and_protected_routes(test_app):
     client = TestClient(test_app)
 
