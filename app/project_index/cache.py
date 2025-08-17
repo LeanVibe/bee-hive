@@ -37,6 +37,15 @@ class CacheLayer(Enum):
 
 
 @dataclass
+class CacheConfig:
+    """Configuration settings for cache manager."""
+    default_ttl: int = 300  # Default time to live in seconds
+    max_key_length: int = 250  # Maximum cache key length
+    compression_threshold: int = 1024  # Minimum size in bytes to trigger compression
+    enable_compression: bool = True  # Enable compression for large cache entries
+
+
+@dataclass
 class CacheStatistics:
     """Comprehensive cache statistics."""
     hits: int = 0
