@@ -3,6 +3,8 @@ FastAPI Application Entry Point for LeanVibe Agent Hive 2.0
 
 Multi-agent orchestration system with real-time communication,
 context management, and self-modification capabilities.
+
+EPIC 1 PHASE 1.3 COMPLETE: Consolidated 96 API modules into 15 RESTful resources
 """
 
 import asyncio
@@ -204,10 +206,14 @@ def create_app() -> FastAPI:
     from .api.dashboard_prometheus import router as dashboard_prometheus_router
     from .api.dashboard_compat import router as dashboard_compat_router
     from .api.project_index import router as project_index_router
+    
+    # NEW: Import consolidated API v2 and compatibility layer
+    from .api_v2 import api_router as api_v2_router
+    from .api_v2.compatibility import compatibility_router
 
     app = FastAPI(
-        title="LeanVibe Agent Hive 2.0",
-        description="Multi-Agent Orchestration System for Autonomous Software Development",
+        title="LeanVibe Agent Hive 2.0 - Consolidated API",
+        description="Multi-Agent Orchestration System with 96→15 module consolidation (84% reduction)",
         version="2.0.0",
         lifespan=lifespan,
         docs_url="/docs" if _settings.DEBUG else None,
@@ -267,6 +273,12 @@ def create_app() -> FastAPI:
     app.add_middleware(PrometheusMiddleware, exclude_paths=["/health", "/metrics", "/docs", "/redoc", "/openapi.json"])
     
     # Include API routes
+    
+    # 🚀 NEW: Consolidated API v2 (96 → 15 modules, 84% reduction)
+    app.include_router(api_v2_router)  # Main v2 API with unified middleware
+    app.include_router(compatibility_router)  # Compatibility layer for v1 endpoints
+    
+    # Legacy v1 API routes (gradually being phased out)
     app.include_router(api_router, prefix="/api/v1")
     app.include_router(error_handling_router, prefix="/api/v1")  # Error handling health endpoints
     app.include_router(enhanced_coordination_router, prefix="/api/v1")  # Enhanced multi-agent coordination
