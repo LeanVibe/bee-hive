@@ -26,6 +26,10 @@ try:
     from app.project_index import ProjectIndexer, AnalysisConfiguration, ProjectIndexConfig
     from app.models.project_index import AnalysisSessionType
     from app.project_index.language_parsers import LanguageParserFactory, Dependency
+    from app.project_index.agent_delegation import (
+        TaskDecomposer, AgentCoordinator, ContextRotPrevention,
+        TaskType, TaskComplexity, AgentSpecialization, AgentTask
+    )
     FULL_INTEGRATION_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Full Project Index integration not available: {e}")
@@ -104,6 +108,45 @@ class ContextFileResult(BaseModel):
     content_preview: Optional[str]
     reason: str  # Why this file was included
     related_files: List[str] = []  # Related files via dependencies
+
+class TaskDecompositionRequest(BaseModel):
+    task_description: str
+    task_type: str = "feature-implementation"  # Maps to TaskType enum
+    
+class SubtaskInfo(BaseModel):
+    id: str
+    title: str
+    description: str
+    complexity: str
+    estimated_duration_minutes: int
+    preferred_specialization: str
+    primary_files: List[str]
+    dependencies: List[str] = []
+    
+class TaskDecompositionResponse(BaseModel):
+    original_task: SubtaskInfo
+    subtasks: List[SubtaskInfo]
+    coordination_plan: Dict[str, Any]
+    estimated_total_duration: int
+    decomposition_strategy: str
+    success: bool
+    reason: str
+
+class AgentAssignmentRequest(BaseModel):
+    decomposition_result_id: str  # Reference to stored decomposition
+    
+class AgentAssignmentInfo(BaseModel):
+    task_id: str
+    agent_id: str
+    specialization: str
+    estimated_start_time: datetime
+    context_requirements: Dict[str, Any]
+    
+class AgentCoordinationResponse(BaseModel):
+    assignments: List[AgentAssignmentInfo]
+    coordination_plan: Dict[str, Any]
+    total_agents: int
+    estimated_completion: datetime
 
 class DependencyResponse(BaseModel):
     target_name: str
@@ -888,6 +931,183 @@ async def assemble_context(
                 )
             }
         }
+
+@app.post("/api/project-index/{project_id}/decompose-task", response_model=TaskDecompositionResponse)
+async def decompose_task(
+    project_id: str,
+    request: TaskDecompositionRequest
+):
+    """Decompose a large task into agent-sized subtasks"""
+    if not FULL_INTEGRATION_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Agent delegation requires full Project Index integration"
+        )
+    
+    pool = await get_db_pool()
+    
+    # Verify project exists
+    async with pool.acquire() as conn:
+        project_exists = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM project_indexes WHERE id = $1)",
+            UUID(project_id)
+        )
+        if not project_exists:
+            raise HTTPException(status_code=404, detail="Project index not found")
+    
+    # Map string to TaskType enum
+    task_type_mapping = {
+        "feature-implementation": TaskType.FEATURE_IMPLEMENTATION,
+        "bug-fix": TaskType.BUG_FIX,
+        "refactoring": TaskType.REFACTORING,
+        "testing": TaskType.TESTING,
+        "documentation": TaskType.DOCUMENTATION,
+        "optimization": TaskType.OPTIMIZATION,
+        "security-audit": TaskType.SECURITY_AUDIT,
+        "database-migration": TaskType.DATABASE_MIGRATION,
+        "api-development": TaskType.API_DEVELOPMENT,
+        "ui-implementation": TaskType.UI_IMPLEMENTATION
+    }
+    
+    task_type = task_type_mapping.get(request.task_type, TaskType.FEATURE_IMPLEMENTATION)
+    
+    # Create task decomposer and perform decomposition
+    decomposer = TaskDecomposer(UUID(project_id), pool)
+    decomposition_result = await decomposer.decompose_task(request.task_description, task_type)
+    
+    # Convert result to response format
+    def convert_task_to_info(task: AgentTask) -> SubtaskInfo:
+        return SubtaskInfo(
+            id=task.id,
+            title=task.title,
+            description=task.description,
+            complexity=task.complexity.value,
+            estimated_duration_minutes=task.estimated_duration_minutes,
+            preferred_specialization=task.preferred_specialization.value,
+            primary_files=task.primary_files,
+            dependencies=task.dependency_task_ids
+        )
+    
+    return TaskDecompositionResponse(
+        original_task=convert_task_to_info(decomposition_result.original_task),
+        subtasks=[convert_task_to_info(task) for task in decomposition_result.subtasks],
+        coordination_plan=decomposition_result.coordination_plan,
+        estimated_total_duration=decomposition_result.estimated_total_duration,
+        decomposition_strategy=decomposition_result.decomposition_strategy,
+        success=decomposition_result.success,
+        reason=decomposition_result.reason
+    )
+
+@app.post("/api/project-index/{project_id}/assign-agents")
+async def assign_agents_to_tasks(
+    project_id: str,
+    request: TaskDecompositionRequest  # For simplicity, reusing the same request
+):
+    """Assign agents to decomposed tasks with coordination"""
+    if not FULL_INTEGRATION_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Agent coordination requires full Project Index integration"
+        )
+    
+    pool = await get_db_pool()
+    
+    # First decompose the task
+    task_type_mapping = {
+        "feature-implementation": TaskType.FEATURE_IMPLEMENTATION,
+        "bug-fix": TaskType.BUG_FIX,
+        "refactoring": TaskType.REFACTORING,
+        "testing": TaskType.TESTING,
+        "documentation": TaskType.DOCUMENTATION,
+        "optimization": TaskType.OPTIMIZATION,
+        "security-audit": TaskType.SECURITY_AUDIT,
+        "database-migration": TaskType.DATABASE_MIGRATION,
+        "api-development": TaskType.API_DEVELOPMENT,
+        "ui-implementation": TaskType.UI_IMPLEMENTATION
+    }
+    
+    task_type = task_type_mapping.get(request.task_type, TaskType.FEATURE_IMPLEMENTATION)
+    
+    decomposer = TaskDecomposer(UUID(project_id), pool)
+    decomposition_result = await decomposer.decompose_task(request.task_description, task_type)
+    
+    if not decomposition_result.success:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Task decomposition failed: {decomposition_result.reason}"
+        )
+    
+    # Create agent coordinator and assign agents
+    coordinator = AgentCoordinator(UUID(project_id), pool)
+    assignment_result = await coordinator.assign_agents_to_tasks(decomposition_result)
+    
+    # Convert to response format
+    assignments = []
+    for assignment in assignment_result["assignments"]:
+        assignments.append(AgentAssignmentInfo(
+            task_id=assignment["task_id"],
+            agent_id=assignment["agent_id"],
+            specialization=assignment.get("specialization_match", "general-purpose"),
+            estimated_start_time=assignment["estimated_start_time"],
+            context_requirements={
+                "estimated_tokens": assignment["context_requirements"].estimated_tokens,
+                "max_files": assignment["context_requirements"].max_files,
+                "primary_languages": assignment["context_requirements"].primary_languages
+            }
+        ))
+    
+    return AgentCoordinationResponse(
+        assignments=assignments,
+        coordination_plan=assignment_result["coordination_plan"],
+        total_agents=assignment_result["total_agents"],
+        estimated_completion=assignment_result["estimated_completion"]
+    )
+
+@app.get("/api/project-index/{project_id}/context-monitoring/{agent_id}")
+async def monitor_agent_context(
+    project_id: str,
+    agent_id: str,
+    current_context_size: int = 50000
+):
+    """Monitor agent context usage and get recommendations"""
+    if not FULL_INTEGRATION_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Context monitoring requires full Project Index integration"
+        )
+    
+    pool = await get_db_pool()
+    
+    # Create context rot prevention system
+    context_monitor = ContextRotPrevention(pool)
+    
+    # Monitor the agent's context
+    monitoring_result = await context_monitor.monitor_agent_context(agent_id, current_context_size)
+    
+    return monitoring_result
+
+@app.post("/api/project-index/{project_id}/refresh-agent-context/{agent_id}")
+async def refresh_agent_context(
+    project_id: str,
+    agent_id: str,
+    refresh_type: str = "full"
+):
+    """Trigger context refresh for an agent"""
+    if not FULL_INTEGRATION_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Context refresh requires full Project Index integration"
+        )
+    
+    pool = await get_db_pool()
+    
+    # Create context rot prevention system
+    context_monitor = ContextRotPrevention(pool)
+    
+    # Trigger refresh
+    refresh_result = await context_monitor.trigger_context_refresh(agent_id, refresh_type)
+    
+    return refresh_result
 
 @app.delete("/api/project-index/{project_id}")
 async def delete_project_index(project_id: str):
