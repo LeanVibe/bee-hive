@@ -22,12 +22,12 @@ import numpy as np
 from collections import defaultdict
 
 import structlog
-import aioredis
+import redis.asyncio as aioredis
 from sqlalchemy import select, and_, or_, desc, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.pool import QueuePool
 
-from .unified_manager_base import UnifiedManagerBase, ManagerConfig, PluginInterface, PluginType
+from .unified_manager_base import UnifiedManagerBase, ManagerConfig, PluginInterface, PluginType, create_manager_config
 from .database import get_async_session
 from .redis import get_redis
 
@@ -1280,6 +1280,37 @@ class StorageManager(UnifiedManagerBase):
             logger.error("Failed to get storage stats", error=str(e))
             return {"error": str(e)}
 
+
+# Session cache implementation for backward compatibility
+class SessionCache:
+    """Session-based cache for temporary data storage."""
+    
+    def __init__(self):
+        self._cache = {}
+        self._created_at = datetime.utcnow()
+    
+    async def get(self, key: str) -> Optional[Any]:
+        """Get value from session cache."""
+        return self._cache.get(key)
+    
+    async def set(self, key: str, value: Any) -> None:
+        """Set value in session cache."""
+        self._cache[key] = value
+    
+    async def delete(self, key: str) -> bool:
+        """Delete value from session cache."""
+        return self._cache.pop(key, None) is not None
+    
+    async def clear(self) -> None:
+        """Clear all values from session cache."""
+        self._cache.clear()
+
+# Global session cache instance
+_session_cache = SessionCache()
+
+def get_session_cache() -> SessionCache:
+    """Get the global session cache instance."""
+    return _session_cache
 
 # Factory function for creating storage manager
 def create_storage_manager(**config_overrides) -> StorageManager:

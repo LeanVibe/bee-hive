@@ -1,558 +1,410 @@
-# LeanVibe Agent Hive: Comprehensive Epic 1-4 Implementation Plan
+# LeanVibe Agent Hive 2.0 - Strategic Implementation Plan
+*4-Epic Development Roadmap for Production-Ready Multi-Agent System*
 
-## 🎯 CRITICAL UPDATE: System State Analysis & Massive Consolidation Opportunity
+## Executive Summary
 
-**⚠️ BREAKTHROUGH DISCOVERY**: While the Project Index system has been completed successfully, comprehensive analysis reveals an unprecedented consolidation opportunity in the core system that will unlock transformational improvements.
+**Current State Analysis:**
+- ✅ **Core Infrastructure**: FastAPI backend, mobile PWA, WebSocket communication working
+- ✅ **App Import Success**: Main application loads successfully with all dependencies resolved
+- ✅ **Project Index Complete**: Full project analysis and context optimization system operational
+- ❌ **Critical Issue**: 25+ orchestrator implementations causing development paralysis
+- ❌ **Code Redundancy**: 348 core files with 80% duplication across manager classes
+- ❌ **API Chaos**: 50+ endpoint modules with overlapping functionality
 
-**Previous Plan Status**: ✅ Project Index Implementation Complete (All 3 Phases)
-**New Critical Priority**: 🚨 Core System Consolidation (348 files → 50 files)
-
-# Project Index System Implementation Plan (COMPLETED)
-
-## 🎯 **Current State Analysis**
-
-**✅ What We Have:**
-- Complete database schema with 5 tables + 60 indexes
-- Working REST API with project registration
-- Standalone server on port 8081 (non-standard as requested)
-- Universal installer with intelligent project detection
-- Comprehensive documentation and validation framework
-
-**❌ Critical Missing Components:**
-- **Code Analysis Engine**: No actual file scanning or dependency extraction
-- **AI Context Optimization**: The core value proposition for agents
-- **WebSocket Events**: Real-time progress tracking during analysis  
-- **Integration**: Not connected to main bee-hive application
-- **Agent Delegation**: Framework designed but not implemented
-
-## 🚀 **Strategic Recommendation: 3-Phase Implementation**
-
-### **Phase 1: Core Analysis Engine (Priority 1 - Next 3-4 hours)**
-
-**Goal**: Transform from "Project Registration System" to "Project Analysis System"
-
-**Phase 1 Details:**
-
-1. **Code Analysis Engine** (`app/project_index/analysis_engine.py`)
-   ```python
-   class ProjectAnalyzer:
-       async def analyze_project(self, project_id: UUID) -> AnalysisSession:
-           # Scan file system
-           # Extract dependencies 
-           # Populate file_entries and dependency_relationships tables
-           # Track progress in analysis_sessions
-   ```
-
-2. **Language-Specific Parsers**
-   - **Python**: AST parsing for imports, function definitions, classes
-   - **JavaScript/TypeScript**: Extract imports, exports, function calls
-   - **SQL**: Parse table references, stored procedures
-   - **Configuration Files**: YAML, JSON dependency extraction
-
-3. **Analysis Session Management**
-   - Real-time progress tracking (files processed / total files)
-   - Error handling and recovery
-   - Performance metrics collection
-
-### **Phase 2: AI Context Optimization (Priority 2 - Next 2-3 hours)**
-
-**Goal**: Deliver the core value proposition for AI agents
-
-```python
-class ContextOptimizer:
-    async def assemble_context(self, project_id: UUID, query: str) -> AgentContext:
-        # Semantic search through files
-        # Dependency graph traversal
-        # Relevance scoring
-        # Context size optimization
-```
-
-**Key Features:**
-- **Semantic File Search**: Find relevant files based on task description
-- **Dependency Graph Navigation**: Include related files automatically
-- **Context Size Management**: Stay within AI token limits
-- **Relevance Scoring**: Prioritize most important code sections
-
-### **Phase 3: Agent Delegation System (Priority 3 - Next 4-6 hours)**
-
-**Goal**: Implement the anti-context-rot agent coordination system
-
-```python
-class AgentDelegationCoordinator:
-    async def delegate_analysis_task(self, project_id: UUID, task_type: str) -> List[AgentTask]:
-        # Break large analysis into chunks
-        # Assign specialized agents
-        # Coordinate results
-        # Prevent context overflow
-```
-
-## 📋 **Detailed Implementation Plan**
-
-### **Phase 1 Implementation (Starting Now)**
-
-**Step 1A: Core Analysis Engine (1.5 hours)**
-```python
-# app/project_index/analysis_engine.py
-class ProjectAnalyzer:
-    async def scan_files(self, project_path: Path) -> List[FileEntry]:
-        """Scan project directory and collect file metadata"""
-        
-    async def extract_dependencies(self, file_path: Path, language: str) -> List[Dependency]:
-        """Language-specific dependency extraction"""
-        
-    async def analyze_project(self, project_id: UUID) -> AnalysisSession:
-        """Main analysis orchestration"""
-```
-
-**Step 1B: Analysis Endpoint (30 minutes)**
-```python
-@app.post("/api/project-index/{project_id}/analyze")
-async def trigger_analysis(project_id: str):
-    """Endpoint that installer expects"""
-```
-
-**Step 1C: Language Parsers (1.5 hours)**
-- Python AST parser for imports and structure
-- JavaScript/TypeScript import/export extraction  
-- SQL table and procedure reference parsing
-- Configuration file dependency detection
-
-**Step 1D: Progress Tracking (30 minutes)**
-- WebSocket events for real-time updates
-- Database persistence in `analysis_sessions` table
-
-### **Phase 2: Context Optimization (2-3 hours)**
-
-**Step 2A: File Indexing for Search (1 hour)**
-```python
-class FileIndexer:
-    async def index_file_content(self, file_id: UUID, content: str):
-        """Create searchable index of file contents"""
-        
-    async def search_files(self, project_id: UUID, query: str) -> List[FileMatch]:
-        """Semantic search through indexed files"""
-```
-
-**Step 2B: Dependency Graph Builder (1 hour)**
-```python
-class DependencyGraphBuilder:
-    async def build_graph(self, project_id: UUID) -> NetworkGraph:
-        """Build navigable dependency graph"""
-        
-    async def find_related_files(self, file_id: UUID, depth: int = 2) -> List[FileEntry]:
-        """Find files related through dependencies"""
-```
-
-**Step 2C: Context Assembly (1 hour)**
-```python
-class ContextAssembler:
-    async def assemble_context(self, project_id: UUID, task_description: str) -> AgentContext:
-        """Assemble optimal context for AI agents"""
-        # 1. Semantic search for relevant files
-        # 2. Dependency graph traversal
-        # 3. Token limit management
-        # 4. Priority scoring
-```
-
-### **Phase 3: Agent Delegation (4-6 hours)**
-
-**Step 3A: Task Decomposition (2 hours)**
-```python
-class TaskDecomposer:
-    async def decompose_large_task(self, task: AgentTask) -> List[SubTask]:
-        """Break large tasks into agent-sized chunks"""
-        
-    async def estimate_context_requirements(self, task: AgentTask) -> ContextEstimate:
-        """Predict context needs to prevent overflow"""
-```
-
-**Step 3B: Agent Coordination (2 hours)**
-```python
-class AgentCoordinator:
-    async def assign_specialized_agents(self, tasks: List[SubTask]) -> List[AgentAssignment]:
-        """Assign tasks to specialized agents"""
-        
-    async def coordinate_results(self, assignments: List[AgentAssignment]) -> ConsolidatedResult:
-        """Merge results from multiple agents"""
-```
-
-**Step 3C: Context Rot Prevention (2 hours)**
-```python
-class ContextRotPrevention:
-    async def monitor_context_usage(self, agent_id: str) -> ContextMetrics:
-        """Monitor agent context consumption"""
-        
-    async def trigger_context_refresh(self, agent_id: str) -> RefreshResult:
-        """Trigger sleep/wake cycle when needed"""
-```
-
-## 🎯 **Success Metrics & Validation**
-
-**Phase 1 Success Criteria:**
-- Analyze bee-hive project: scan 500+ files in <60 seconds
-- Extract 1000+ dependencies across Python/JS/SQL files
-- Generate analysis session with detailed progress tracking
-- Installer script completes full workflow end-to-end
-
-**Phase 2 Success Criteria:**
-- Context assembly for "implement authentication" returns relevant auth-related files
-- Dependency graph navigation finds related files within 2 hops
-- Context stays within 100K tokens for typical agent tasks
-- Semantic search finds relevant code within 200ms
-
-**Phase 3 Success Criteria:**
-- Large refactoring task gets broken into 5+ manageable sub-tasks
-- Multiple agents work on project without context conflicts
-- Context rot detection prevents agent inefficiency
-- Full delegation workflow completes 3x faster than single agent
-
-## ⚡ **Implementation Status**
-
-### **✅ Completed (Previous Work)**
-- [x] Database schema with 5 tables + 60 indexes
-- [x] REST API with project registration endpoints
-- [x] Standalone server on port 8081
-- [x] Universal installer with project detection
-- [x] Documentation framework
-
-### **✅ Phase 1: Core Analysis Engine (COMPLETED)**
-- [x] Core Analysis Engine implementation
-- [x] Language-specific parsers (Python, JS, TS, SQL, JSON, YAML, Markdown)
-- [x] Analysis sessions with progress tracking
-- [x] /analyze endpoint implementation
-- [x] File content extraction and metadata
-- [x] **MILESTONE ACHIEVED**: 2189 files analyzed across 8 languages in <10 seconds
-- [x] End-to-end workflow: installer → analysis → completion working perfectly
-
-### **✅ Phase 2: AI Context Optimization (COMPLETED)**
-- [x] **Phase 2A: Semantic Search & Context Assembly**
-  - [x] File indexing for semantic search with relevance scoring
-  - [x] Comprehensive dependency extraction (195,125 dependencies)
-  - [x] Context assembly API for AI-optimized file retrieval
-  - [x] Multi-language AST parsing (Python, JS, TS, SQL, JSON, YAML, MD)
-  - [x] **MILESTONE ACHIEVED**: Context assembly API returns relevant files for any task description
-  - [x] Performance: <200ms context assembly, semantic search with multi-term scoring
-
-**Phase 2A Success Metrics Met:**
-✅ Context assembly for "implement authentication" returns relevant auth-related files  
-✅ Dependency graph navigation finds related files within 2 hops  
-✅ Context stays within estimated token limits for typical agent tasks  
-✅ Semantic search finds relevant code within 200ms
-
-### **✅ Phase 3: Agent Delegation (COMPLETED)**
-- [x] **Task Decomposition System**: Intelligent analysis and breakdown of large tasks
-  - [x] Complexity analysis with keyword-based scoring (trivial → large)
-  - [x] Architectural layer decomposition for complex tasks
-  - [x] Phase-based decomposition for moderate tasks
-  - [x] Context requirements prediction and estimation
-  - [x] **MILESTONE ACHIEVED**: 83.3% efficiency gain through parallel execution
-
-- [x] **Agent Coordination Framework**: Specialized multi-agent assignment
-  - [x] Specialization-based agent assignment (6 agent types)
-  - [x] Context conflict detection and resolution
-  - [x] Dependency-aware task scheduling
-  - [x] Integration task coordination for multi-agent workflows
-
-- [x] **Context Rot Prevention**: Automatic monitoring and refresh cycles
-  - [x] Real-time context usage monitoring (75k warning, 90k critical thresholds)
-  - [x] Automatic sleep/wake cycle triggers for context optimization
-  - [x] Agent efficiency scoring and trend analysis
-  - [x] Intelligent refresh scheduling with minimal disruption
-
-- [x] **Multi-Agent Workflow Orchestration**: Complete coordination system
-  - [x] Parallel vs sequential execution optimization
-  - [x] Synchronization points and milestone coordination
-  - [x] Specialized agent team composition (database, backend, frontend, security, testing, general)
-  - [x] Performance monitoring and optimization
-
-**Phase 3 Success Metrics Met:**
-✅ Large refactoring task broken into 7 manageable subtasks across 6 specializations  
-✅ Multiple agents work on project without context conflicts  
-✅ Context rot detection prevents agent inefficiency with automatic refresh  
-✅ Full delegation workflow completes 83.3% faster than single agent (5 hours → 1 hour)  
-✅ Zero context overflow incidents with intelligent monitoring
-
-## 📚 **Architecture Decisions**
-
-### **Technology Stack**
-- **Database**: PostgreSQL with pgvector for semantic search
-- **API Framework**: FastAPI with asyncio for high performance
-- **Language Parsing**: AST modules for each language
-- **WebSocket**: For real-time progress updates
-- **Caching**: Redis for performance optimization
-
-### **Design Principles**
-- **Modular**: Each component can be developed and tested independently
-- **Scalable**: Designed to handle large codebases (10K+ files)
-- **Language Agnostic**: Extensible parser system for new languages
-- **Performance Focused**: <60 seconds analysis for typical projects
-- **Agent Optimized**: Built specifically for AI agent workflows
-
-### **Integration Strategy**
-- **Standalone First**: Independent operation to validate core functionality
-- **Gradual Integration**: Progressive integration with main bee-hive system
-- **API-Driven**: RESTful APIs for loose coupling
-- **Event-Driven**: WebSocket events for real-time coordination
-
-## 🎯 **PROJECT INDEX SYSTEM: PRODUCTION READY**
-
-**All 3 Phases Complete**: The Project Index system now provides the complete AI agent workflow optimization platform:
-
-### **🔍 Phase 1: Code Analysis Engine (COMPLETED)**
-- **Complete Code Analysis**: 195,125+ dependencies mapped across 2,190+ files
-- **Multi-language Support**: Python AST, JavaScript/TypeScript regex, SQL, JSON, YAML, Markdown
-- **Real-time Analysis**: <10s full project scan with comprehensive metadata extraction
-
-### **🧠 Phase 2: AI Context Optimization (COMPLETED)**  
-- **Semantic Search**: Task-based file discovery with relevance scoring
-- **Context Assembly**: AI-optimized file retrieval for any task description
-- **Performance**: <200ms context assembly, semantic search with multi-term scoring
-
-### **🤖 Phase 3: Agent Delegation System (COMPLETED)**
-- **Task Decomposition**: Intelligent breakdown of large tasks (83.3% efficiency gain)
-- **Multi-Agent Coordination**: Specialized agent assignment across 6 disciplines
-- **Context Rot Prevention**: Automatic monitoring and refresh cycles
-- **Workflow Orchestration**: Parallel execution with dependency management
-
-## 🚀 **Ready for Enterprise Deployment**
-
-**Complete Anti-Context-Rot Framework**: The Project Index enables:
-- **Intelligent Code Intelligence**: Any agent can instantly find relevant files for any task
-- **Context Optimization**: Agents get exactly the right context without overflow
-- **Multi-Agent Workflows**: Large tasks efficiently distributed across specialized agents
-- **Context Rot Prevention**: Automatic refresh cycles prevent degraded performance
-- **Performance at Scale**: Support for projects with 10K+ files and 100K+ dependencies
-
-**API Endpoints Ready**: Full REST API suite available on port 8081 for immediate integration
-**Test Coverage**: Comprehensive validation across all complexity levels (trivial → large)
-**Production Metrics**: Validated performance thresholds and optimization targets
+**Target State:**
+- 🎯 Production-ready multi-agent orchestration with <100ms response times
+- 🎯 Developer-friendly CLI and API with consistent patterns
+- 🎯 Scalable system supporting 100+ concurrent agents
+- 🎯 80% reduction in codebase complexity while maintaining functionality
 
 ---
 
-*This plan represents the strategic roadmap for transforming the Project Index from a registration system into a full-featured code intelligence platform optimized for AI agent workflows.*
+## Epic 1: Core System Consolidation 🏗️
+**Priority: CRITICAL | Timeline: 3 weeks | Impact: Foundation for all future work**
+
+### Problem Statement
+The system suffers from orchestrator proliferation (25 files) and manager class explosion (348 core files). This creates:
+- Development velocity bottlenecks
+- Bug surface area explosion  
+- Resource utilization inefficiency
+- Maintenance nightmare
+
+### Solution Architecture
+
+#### Phase 1.1: Orchestrator Consolidation (Week 1)
+**Target: 25 orchestrators → 3 unified patterns**
+
+**Keep (3 Core Orchestrators):**
+```
+app/core/
+├── orchestrator.py              # Production orchestrator (unified)
+├── development_orchestrator.py  # Development/testing variant  
+└── orchestrator_plugins/        # Plugin architecture
+    ├── performance_plugin.py
+    ├── security_plugin.py
+    └── context_plugin.py
+```
+
+**Remove (22 Redundant Files):**
+- `enhanced_orchestrator_integration.py`
+- `production_orchestrator.py` 
+- `orchestrator_migration_adapter.py`
+- All specialized orchestrators (CLI, container, automated)
+- Testing/demo orchestrator variants
+- Legacy orchestrator implementations
+
+**Technical Approach:**
+1. Merge functionality from all 25 files into `orchestrator.py`
+2. Extract specialized logic into plugin architecture
+3. Implement backward compatibility layer during transition
+4. Migrate all import statements across codebase
+
+#### Phase 1.2: Manager Class Unification (Week 2)
+**Target: 348 core files → 70 focused modules**
+
+**Unified Manager Architecture:**
+```
+app/core/
+├── agent_manager.py           # Agent lifecycle, spawning, monitoring
+├── workflow_manager.py        # Task distribution, execution flows
+├── resource_manager.py        # Memory, compute, storage allocation
+├── communication_manager.py   # WebSocket, Redis, inter-agent messaging
+├── security_manager.py        # Authentication, authorization, audit
+├── storage_manager.py         # Database, cache, persistent state
+└── context_manager.py         # Session state, context compression
+```
+
+**Consolidation Mapping:**
+- **Agent Domain**: Merge 15 agent-related files → `agent_manager.py`
+- **Context Domain**: Merge 18 context files → `context_manager.py`  
+- **Performance Domain**: Merge 35 files → `resource_manager.py` + plugins
+- **Communication**: Merge 24 files → `communication_manager.py`
+- **Security**: Merge 41 files → `security_manager.py` + enterprise plugins
+
+#### Phase 1.3: Configuration Unification (Week 3)
+**Target: Single configuration pattern across system**
+
+**Unified Config Structure:**
+```python
+# app/core/config.py - Single source of truth
+class Settings(BaseSettings):
+    # Core system settings
+    orchestrator: OrchestratorConfig
+    managers: ManagersConfig  
+    api: APIConfig
+    database: DatabaseConfig
+    redis: RedisConfig
+    
+    # Plugin configurations
+    plugins: Dict[str, Any] = Field(default_factory=dict)
+```
+
+### Success Criteria
+- [ ] 80% reduction in core file count (348 → 70 files)
+- [ ] 88% reduction in orchestrator files (25 → 3 files)  
+- [ ] All existing tests pass after consolidation
+- [ ] 50% faster application startup time
+- [ ] Single configuration entry point
+- [ ] Clean import tree with no circular dependencies
 
 ---
 
-# 🚨 CRITICAL: Core System Consolidation Epic 1-4 Plan
+## Epic 2: API & Communication Layer Unification 🌐
+**Priority: HIGH | Timeline: 2 weeks | Impact: Developer experience & system reliability**
 
-## 📊 Comprehensive System Analysis Results
+### Problem Statement
+API endpoint proliferation (50+ modules) with inconsistent patterns:
+- Multiple authentication schemes
+- Overlapping functionality across v1/, dashboard_, enterprise_ patterns
+- Inconsistent error handling and response formats
+- WebSocket contract violations
 
-### **MASSIVE REDUNDANCY DISCOVERY**
+### Solution Architecture
 
-**Current State Crisis**: 
-- **348 files in app/core/** (vs 331 expected in original analysis)
-- **25 orchestrator files** with 70-85% functionality overlap
-- **49 manager classes** with 75.5% average redundancy
-- **32 engine implementations** with 85% functionality overlap
-- **1,113 circular dependency cycles** creating architectural chaos
-- **46,201 lines of redundant code** across manager classes alone
+#### Phase 2.1: API Endpoint Consolidation (Week 1)
+**Target: 50+ API modules → 15 resource-based endpoints**
 
-**Consolidation Opportunity**:
-- **File Reduction**: 348 → 50 files (85% reduction)
-- **Code Reduction**: 65% reduction in total lines of code
-- **Performance Impact**: 40% memory efficiency improvement, <100ms API responses
-- **Maintenance**: 70% reduction in maintenance overhead
+**RESTful Resource Architecture:**
+```
+app/api/
+├── agents.py          # Agent CRUD, lifecycle operations
+├── workflows.py       # Workflow management, execution
+├── tasks.py           # Task distribution, monitoring
+├── projects.py        # Project indexing, analysis
+├── coordination.py    # Multi-agent coordination
+├── observability.py   # Metrics, logging, health
+├── security.py        # Auth, permissions, audit
+├── resources.py       # System resources, allocation
+├── contexts.py        # Context management, compression
+├── enterprise.py      # Enterprise-specific features
+├── websocket.py       # WebSocket coordination
+├── health.py          # System health, diagnostics
+├── admin.py           # Administrative operations
+├── integrations.py    # External service integrations
+└── dashboard.py       # Dashboard-specific endpoints
+```
 
-**Business Impact**: This consolidation will enable 300% faster development, unlock all blocked feature development, and establish the foundation for enterprise-grade autonomous development.
+**Remove/Consolidate:**
+- All v1/ versioned endpoints → direct resource endpoints
+- Duplicate dashboard/enterprise/monitoring endpoints
+- Legacy route implementations
+- Redundant authentication middleware
+
+#### Phase 2.2: WebSocket Contract Enforcement (Week 2)
+**Target: 100% contract compliance with version guarantees**
+
+**Contract-First Architecture:**
+```typescript
+// WebSocket Contract (shared between frontend/backend)
+interface WSContract {
+  version: "2.0";
+  events: {
+    agent_status: AgentStatusEvent;
+    task_update: TaskUpdateEvent;
+    coordination: CoordinationEvent;
+    error: ErrorEvent;
+  };
+  commands: {
+    spawn_agent: SpawnAgentCommand;
+    execute_task: ExecuteTaskCommand;
+    coordinate: CoordinateCommand;
+  };
+}
+```
+
+**Implementation:**
+- Contract validation middleware
+- Automatic contract testing
+- Version negotiation support
+- Client SDK generation
+
+### Success Criteria
+- [ ] 70% reduction in API files (50 → 15 modules)
+- [ ] 100% WebSocket contract compliance
+- [ ] Consistent authentication across all endpoints
+- [ ] Sub-100ms API response times (P95)
+- [ ] Automated OpenAPI documentation
+- [ ] Zero breaking changes during migration
 
 ---
 
-## 🚀 Epic 1: System Consolidation & Orchestrator Unification (Weeks 1-6)
+## Epic 3: Production-Grade Orchestration MVP 🎯
+**Priority: HIGH | Timeline: 4 weeks | Impact: Core product value delivery**
 
-### **Phase 1.1: Dependency Resolution & Foundation (Week 1)**
+### Problem Statement
+Despite having orchestration components, the system lacks a reliable, production-grade orchestrator that can:
+- Handle 100+ concurrent agents
+- Provide sub-second task distribution
+- Maintain 99.9% uptime
+- Integrate seamlessly with WebSocket communication
 
-**Status**: ✅ COMPLETED
-- ✅ Fixed playwright dependency for dashboard tests
-- ✅ Fixed CacheConfig missing class in project_index
-- ✅ Added aiosqlite dependency for tests
-- ✅ Main app imports successfully (contradicts prompt expectations)
-- ✅ Comprehensive analysis completed via specialized agents
+### Solution Architecture
 
-### **Phase 1.2: Orchestrator Consolidation (Weeks 1-2)**
+#### Phase 3.1: Core Agent Lifecycle (Week 1)
+**Agent Spawning & Management:**
+```python
+class ProductionOrchestrator:
+    async def spawn_agent(
+        self, 
+        agent_spec: AgentSpec,
+        resources: ResourceAllocation
+    ) -> AgentID:
+        """Spawn agent with resource guarantees"""
+        
+    async def coordinate_agents(
+        self,
+        coordination_request: CoordinationRequest
+    ) -> CoordinationResult:
+        """Multi-agent coordination with conflict resolution"""
+        
+    async def terminate_agent(self, agent_id: AgentID) -> None:
+        """Graceful agent termination with cleanup"""
+```
 
-**PRIORITY: CRITICAL | ROI: 10x**
+**Resource Management:**
+- Agent pool management (min/max constraints)
+- Resource allocation and monitoring
+- Agent health checking and recovery
+- Performance metrics collection
 
-**Current State**: 25 orchestrator files with massive overlap
+#### Phase 3.2: Task Distribution System (Week 2)
+**Intelligent Task Routing:**
+```python
+class TaskDistributor:
+    async def distribute_task(
+        self,
+        task: Task,
+        routing_strategy: RoutingStrategy = "load_balanced"
+    ) -> TaskExecution:
+        """Distribute task to optimal agent"""
+        
+    async def monitor_execution(self, execution_id: str) -> ExecutionStatus:
+        """Real-time execution monitoring"""
+```
+
+**Features:**
+- Load-balanced task distribution
+- Agent capability matching
+- Failure recovery and retry logic
+- Real-time progress monitoring
+
+#### Phase 3.3: WebSocket Integration (Week 3)
+**Real-time Coordination:**
+- Bidirectional agent-orchestrator communication
+- Live dashboard updates via WebSocket
+- Event streaming to mobile PWA
+- Coordination conflict resolution
+
+#### Phase 3.4: Performance Optimization (Week 4)
+**Production Requirements:**
+- 100+ concurrent agents support
+- Sub-100ms orchestration decisions
+- Memory-efficient agent pooling
+- Circuit breaker patterns for reliability
+
+### Success Criteria
+- [ ] Handle 100+ concurrent agents reliably
+- [ ] Sub-second task distribution (P95 < 500ms)
+- [ ] 99.9% orchestrator uptime in testing
+- [ ] Complete WebSocket integration with PWA
+- [ ] Memory usage <500MB for 100 agents
+- [ ] Automated failover and recovery
+
+---
+
+## Epic 4: Developer Experience & Testing Infrastructure 🛠️
+**Priority: MEDIUM | Timeline: 3 weeks | Impact: Long-term sustainability**
+
+### Problem Statement
+Development velocity is hindered by:
+- Inconsistent testing patterns
+- Complex local development setup
+- Scattered documentation
+- Manual deployment processes
+
+### Solution Architecture
+
+#### Phase 4.1: Comprehensive Testing (Week 1)
+**Testing Pyramid:**
+```
+┌─────────────────┐
+│   E2E Tests     │ ← WebSocket + PWA integration (existing)
+├─────────────────┤
+│ Integration     │ ← API + Orchestrator + Database
+├─────────────────┤  
+│ Unit Tests      │ ← Core managers, utilities
+└─────────────────┘
+```
+
+**Test Infrastructure:**
+- Automated test discovery and execution
+- Performance benchmarking integration
+- Contract testing for WebSocket/API
+- Chaos engineering for orchestrator resilience
+
+#### Phase 4.2: Developer CLI (Week 2)
+**Local Development Tools:**
 ```bash
-# Files requiring consolidation:
-automated_orchestrator.py            cli_agent_orchestrator.py
-container_orchestrator.py           context_aware_orchestrator_integration.py
-context_orchestrator_integration.py enhanced_orchestrator_integration.py
-enhanced_orchestrator_plugin.py     enterprise_demo_orchestrator.py
-high_concurrency_orchestrator.py    orchestrator.py
-orchestrator_hook_integration.py    orchestrator_load_balancing_integration.py
-orchestrator_load_testing.py        orchestrator_migration_adapter.py
-orchestrator_shared_state_integration.py performance_orchestrator.py
-performance_orchestrator_integration.py performance_orchestrator_plugin.py
-pilot_infrastructure_orchestrator.py production_orchestrator.py
-production_orchestrator_unified.py   security_orchestrator_integration.py
-task_orchestrator_integration.py     unified_production_orchestrator.py
-vertical_slice_orchestrator.py
+# Agent Hive CLI
+hive init         # Initialize local environment
+hive dev          # Start development environment  
+hive test         # Run full test suite
+hive deploy       # Deploy to staging/production
+hive agent spawn  # Spawn test agent
+hive logs         # Tail system logs
 ```
 
-**Consolidation Strategy**:
-1. **Primary UnifiedOrchestrator** (core functionality from all 25 files)
-2. **4 Specialized Plugins** (enterprise, high-concurrency, context, security)
-3. **Backward Compatibility Layer** (migration support)
+**Features:**
+- One-command environment setup
+- Local orchestrator simulation
+- Test data generation
+- Performance profiling tools
 
-**Success Metrics**:
-- 60% code reduction (25,000 → 10,000 lines)
-- <100ms agent registration time
-- 50+ concurrent agents supported
-- All existing functionality preserved
+#### Phase 4.3: Documentation & Monitoring (Week 3)
+**Documentation Automation:**
+- API documentation from OpenAPI specs
+- Architecture diagrams from code analysis
+- Performance benchmarks and SLAs
+- Deployment runbooks
 
-### **Phase 1.3: Manager Class Consolidation (Weeks 2-4)**
+**Monitoring Integration:**
+- Prometheus metrics for all components
+- Grafana dashboards for system health
+- Alert rules for SLA violations
+- Performance regression detection
 
-**PRIORITY: CRITICAL | ROI: 8x**
-
-**Current State**: 49 manager classes with 75.5% average redundancy
-
-**Unified Architecture** (49 → 5 core managers):
-
-1. **CoreAgentManager** (2,800 lines)
-   - **Consolidates**: AgentLifecycleManager, AgentKnowledgeManager, CrossAgentKnowledgeManager
-   - **Reduction**: 8,000+ → 2,800 lines (65% reduction)
-
-2. **CoreWorkflowManager** (3,500 lines)
-   - **Consolidates**: WorkflowStateManager, IssueManager, WorkflowContextManager, TaskExecution
-   - **Reduction**: 8,700+ → 3,500 lines (60% reduction)
-
-3. **CoreResourceManager** (3,200 lines)
-   - **Consolidates**: CapacityManager, BackPressureManager, PerformanceMonitor, RecoveryManager
-   - **Reduction**: 7,100+ → 3,200 lines (55% reduction)
-
-4. **CoreSecurityManager** (2,900 lines)
-   - **Consolidates**: ApiKeyManager, SecretManager, EnhancedJWTManager, AuthorizationEngine
-   - **Reduction**: 9,400+ → 2,900 lines (70% reduction)
-
-5. **CoreStorageManager** (3,800 lines)
-   - **Consolidates**: PGVectorManager, ContextManager, CheckpointManager, RedisManager
-   - **Reduction**: 10,900+ → 3,800 lines (65% reduction)
-
-### **Phase 1.4: Engine Consolidation (Weeks 4-5)**
-
-**PRIORITY: HIGH | ROI: 7x**
-
-**Current State**: 32 engine implementations with 85% functionality overlap
-
-**Unified Architecture** (32 → 6 specialized engines):
-
-1. **Unified Execution Engine** - Task lifecycle & workflow orchestration
-2. **Intelligent Context Engine** - Context compression & semantic processing
-3. **Advanced Analytics Engine** - Performance analytics & predictive insights
-4. **Unified Search Engine** - Vector search & semantic matching
-5. **Security & Authorization Engine** - Access control & policy enforcement
-6. **Orchestration Coordination Engine** - Agent coordination & lifecycle management
-
-**Expected Benefits**:
-- 60% reduction in engine-related memory usage
-- 25-40% improvement in execution performance
-- 70% reduction in duplicate code maintenance
-- 50% faster application initialization
+### Success Criteria
+- [ ] 90% test coverage across core components
+- [ ] Sub-30-second local environment setup
+- [ ] Automated performance regression detection
+- [ ] Single source of truth documentation
+- [ ] Zero-downtime deployment pipeline
+- [ ] Developer onboarding in <1 hour
 
 ---
 
-## 🧪 Epic 2: Comprehensive Testing & Quality Infrastructure (Weeks 7-12)
+## Implementation Timeline
 
-### **Foundation Testing Framework Enhancement**
+### Month 1: Foundation (Epic 1)
+```
+Week 1: Orchestrator consolidation
+Week 2: Manager class unification  
+Week 3: Configuration cleanup
+Week 4: Testing and validation
+```
 
-**Current State**: 135 tests implemented but dependency issues resolved
-- Foundation unit tests: 44 tests
-- Component integration: 28 tests  
-- API testing: 54 tests
-- CLI testing: 37 tests
+### Month 2: Integration (Epic 2 + Epic 3 Start)
+```
+Week 5: API endpoint consolidation
+Week 6: WebSocket contract enforcement
+Week 7: Agent lifecycle implementation
+Week 8: Task distribution system
+```
 
-**Testing Strategy for Consolidation**:
-- 95%+ test coverage for all consolidated components
-- Performance benchmarks for all consolidations
-- Contract testing for new unified architectures
-- Continuous testing pipeline
+### Month 3: Production (Epic 3 Complete + Epic 4)
+```
+Week 9:  WebSocket integration
+Week 10: Performance optimization
+Week 11: Testing infrastructure
+Week 12: Developer tools and documentation
+```
 
----
+## Success Metrics Dashboard
 
-## 🏭 Epic 3: Production Hardening & Enterprise Readiness (Weeks 13-18)
+### Technical Metrics
+- **Code Complexity**: 80% reduction in file count
+- **Performance**: <100ms orchestration, 100+ concurrent agents
+- **Reliability**: 99.9% uptime, automated recovery
+- **Test Coverage**: 90% across core components
 
-### **Post-Consolidation Production Optimization**
+### Business Metrics  
+- **Developer Velocity**: 50% faster feature development
+- **Bug Rate**: 70% reduction in production issues
+- **Onboarding**: <1 hour for new developers
+- **Deployment**: Zero-downtime releases
 
-**Performance Optimization**:
-- Memory usage optimization for consolidated managers
-- Database query optimization for unified storage manager
-- API response time optimization (<100ms target)
-- Startup time optimization (<2s target)
-
-**Security Hardening**:
-- Security audit of consolidated CoreSecurityManager
-- Multi-tenant security validation
-- Compliance framework implementation (SOC2, GDPR)
-- Security monitoring and alerting
-
----
-
-## 🤖 Epic 4: Intelligent Context Engine & Autonomous Coordination (Weeks 19-24)
-
-### **Leveraging Consolidated Architecture**
-
-**Advanced Context Engine**:
-- Semantic memory integration with unified storage manager
-- Intelligent context compression using consolidated context engine
-- Cross-agent knowledge sharing via unified agent manager
-- Context-aware task routing through unified workflow manager
-
-**Autonomous Agent Coordination**:
-- Agent capability matching using consolidated resource manager
-- Autonomous task delegation through unified orchestrator
-- Real-time coordination via consolidated communication systems
-- Intelligent load balancing across agent populations
+### Quality Gates
+Each epic must pass these gates before proceeding:
+1. All existing tests pass
+2. Performance benchmarks met or improved
+3. Security review completed
+4. Documentation updated
+5. Stakeholder approval received
 
 ---
 
-## 📋 Implementation Strategy & Risk Mitigation
+## Conclusion
 
-### **Test-Driven Consolidation Approach**
+This plan transforms LeanVibe Agent Hive from a complex, redundant codebase into a production-ready multi-agent orchestration system. The aggressive consolidation approach (80% code reduction) combined with systematic architecture improvements will deliver:
 
-**Before any consolidation**:
-1. **Comprehensive test coverage** for existing functionality
-2. **Performance baseline** establishment
-3. **Rollback plan** creation
-4. **Incremental implementation** with continuous validation
+1. **Immediate Impact**: Dramatic reduction in development friction
+2. **Medium-term Value**: Reliable, scalable orchestration system  
+3. **Long-term Success**: Sustainable development practices
 
-### **Quality Gates & Success Criteria**
+The plan prioritizes pragmatic wins while building toward a world-class developer experience. Each Epic delivers standalone value while building toward the ultimate goal of production-ready multi-agent coordination.
 
-**Epic 1 Success Criteria**:
-- ✅ 85% file reduction achieved (348 → 50 files)
-- ✅ 65% code reduction in total lines
-- ✅ <2 second main.py startup time
-- ✅ <100ms API response for 95% of requests
-- ✅ All Project Index functionality preserved
-- ✅ Zero breaking changes for existing integrations
+**Next Action**: Execute Epic 1 Phase 1.1 (Orchestrator Consolidation) starting immediately.
 
----
+# Previous Plan Status: ✅ Project Index Implementation Complete (All 3 Phases)
 
-## 💡 Strategic Context & Business Impact
-
-**Why This Consolidation is Critical**:
-1. **Current system is unsustainable** - 348 files with massive redundancy blocks all progress
-2. **Developer productivity is severely impacted** - 70% time wasted navigating redundant code
-3. **Feature development is completely blocked** - complexity prevents any meaningful advancement
-4. **Technical debt compounds daily** - every day without consolidation increases future cost
-
-**Expected Business Outcomes**:
-1. **300% faster development velocity** through simplified architecture
-2. **80% reduction in maintenance costs** via clean, consolidated codebase
-3. **10x improvement in system reliability** through unified, tested components
-4. **Foundation for enterprise customers** enabling revenue scaling
-
----
-
-## ✅ Success Definition
-
-**This consolidation succeeds when**:
-- The 348-file complexity crisis is permanently resolved
-- Technical debt no longer blocks feature development  
-- Developer productivity increases by 300%+
-- System is ready for enterprise customer acquisition
-- Foundation is established for true autonomous development
-
-This represents the most critical architectural transformation in the project's history. The consolidation opportunity is massive, the business impact is transformational, and the execution approach is systematic and risk-mitigated.
-
-**Let's build the future of autonomous development. 🚀**
+**Note**: The previous implementation plan for Project Index system (3 phases) has been completed successfully. All code analysis, context optimization, and agent delegation features are operational. This new plan focuses on the critical core system consolidation needed to unlock the platform's full potential.

@@ -6,7 +6,7 @@ Designed for multi-agent coordination with security and observability in mind.
 """
 
 import os
-from typing import List, Optional
+from typing import List, Optional, Union
 from pathlib import Path
 
 from pydantic import Field
@@ -134,11 +134,8 @@ class Settings(BaseSettings):
     # Security - Enhanced Enterprise Configuration
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
     JWT_EXPIRE_MINUTES: int = Field(default=30, env="JWT_EXPIRE_MINUTES")
-    ALLOWED_HOSTS: List[str] = Field(default=["*"], env="ALLOWED_HOSTS")
-    CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"],
-        env="CORS_ORIGINS"
-    )
+    ALLOWED_HOSTS: Union[str, List[str]] = Field(default="*")
+    CORS_ORIGINS: Union[str, List[str]] = Field(default="http://localhost:3000,http://localhost:8080,http://localhost:5173")
     
     # Enterprise Security Settings
     SECURITY_ENABLED: bool = Field(default=True, env="SECURITY_ENABLED")
@@ -224,19 +221,23 @@ class Settings(BaseSettings):
     
     @field_validator("CORS_ORIGINS", mode="after")
     @classmethod
-    def parse_cors_origins(cls, v):
+    def parse_cors_origins(cls, v) -> List[str]:
         """Parse CORS origins from string or list."""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        if isinstance(v, list):
+            return v
+        return ["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"]
     
     @field_validator("ALLOWED_HOSTS", mode="after") 
     @classmethod
-    def parse_allowed_hosts(cls, v):
+    def parse_allowed_hosts(cls, v) -> List[str]:
         """Parse allowed hosts from string or list."""
         if isinstance(v, str):
-            return [host.strip() for host in v.split(",")]
-        return v
+            return [host.strip() for host in v.split(",") if host.strip()]
+        if isinstance(v, list):
+            return v
+        return ["*"]
     
     @field_validator("WORKSPACE_DIR", "LOGS_DIR", "CHECKPOINTS_DIR", "REPOSITORIES_DIR")
     @classmethod
@@ -245,9 +246,12 @@ class Settings(BaseSettings):
         v.mkdir(parents=True, exist_ok=True)
         return v
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True,
+        "env_parse_none_str": None,
+        "env_nested_delimiter": None,
+    }
 
 
 class _LazySettings:

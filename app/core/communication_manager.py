@@ -20,8 +20,8 @@ from enum import Enum
 from collections import defaultdict, deque
 
 import structlog
-import aioredis
-from aioredis.client import Redis
+import redis.asyncio as aioredis
+from redis.asyncio import Redis
 
 from .unified_manager_base import UnifiedManagerBase, ManagerConfig, PluginInterface, PluginType
 from .redis import get_redis
