@@ -38,10 +38,10 @@ from anthropic import AsyncAnthropic
 
 # Core dependencies
 from .config import settings
-from .redis import get_session_cache, SessionCache, get_redis
-from .messaging_service import get_messaging_service, MessagingService, Message, MessageType, MessagePriority
-from .database import get_session
-from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
+from .storage_manager import get_session_cache, SessionCache, StorageManager, CacheManager
+from .communication_manager import CommunicationManager, MessagingService, Message, MessageType, MessagePriority
+from .storage_manager import StorageManager, DatabaseManager
+from .workflow_manager import WorkflowManager, WorkflowEngine, WorkflowResult, TaskExecutionState, WorkflowDefinition
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy
 from .capability_matcher import CapabilityMatcher
 from .agent_persona_system import AgentPersonaSystem, get_agent_persona_system

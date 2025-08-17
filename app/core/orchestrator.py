@@ -23,14 +23,13 @@ import threading
 from anthropic import AsyncAnthropic
 
 from .config import settings
-from .redis import get_session_cache, SessionCache
-from .messaging_service import get_messaging_service, MessagingService, Message, MessageType, MessagePriority
+from .storage_manager import StorageManager, get_session_cache, SessionCache, CacheManager, DatabaseManager
+from .communication_manager import CommunicationManager, Message, MessageType, MessagePriority
+from .workflow_manager import WorkflowManager, WorkflowEngine, WorkflowResult, TaskExecutionState, WorkflowDefinition
 from .messaging_migration import MessagingServiceAdapter, mark_migration_complete
-# Legacy imports - DEPRECATED, use messaging_service instead
+# Legacy imports - DEPRECATED, use unified managers instead
 # from .agent_communication_service import AgentCommunicationService, AgentMessage
 # from .message_processor import MessageProcessor, ProcessingMetrics
-from .database import get_session
-from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy, AgentSuitabilityScore
 from .capability_matcher import CapabilityMatcher
 from .agent_persona_system import AgentPersonaSystem, PersonaAssignment, get_agent_persona_system
@@ -250,7 +249,7 @@ class AgentOrchestrator:
     
     async def _register_messaging_handlers(self) -> None:
         """Register message handlers for orchestrator operations"""
-        from .messaging_service import MessageHandler
+        from .communication_manager import MessageHandler
         
         class OrchestratorMessageHandler(MessageHandler):
             def __init__(self, orchestrator):
@@ -945,12 +944,14 @@ class AgentOrchestrator:
         spawner_agents = {}
         spawner_agent_count = 0
         try:
-            from .agent_spawner import get_active_agents_status
-            spawner_status = await get_active_agents_status()
+            from .agent_manager import AgentManager
+            agent_manager = AgentManager()
+            await agent_manager.initialize()
+            spawner_status = await agent_manager.list_agents()
             spawner_agents = spawner_status or {}
             spawner_agent_count = len(spawner_agents)
         except Exception as e:
-            logger.debug(f"Could not get spawner agent status: {e}")
+            logger.debug(f"Could not get agent manager status: {e}")
         
         return {
             "orchestrator_status": "running" if self.is_running else "stopped",

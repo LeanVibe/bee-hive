@@ -12,11 +12,9 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import structlog
 
-from ..core.agent_spawner import (
-    get_agent_manager, 
-    spawn_development_team, 
-    get_active_agents_status,
-    AgentSpawnConfig,
+from ..core.agent_manager import (
+    AgentManager,
+    AgentSpec,
     AgentRole
 )
 from ..core.orchestrator import AgentRole
