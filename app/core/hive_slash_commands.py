@@ -11,6 +11,7 @@ Usage:
     /hive:status             # Get platform status
     /hive:develop <project>  # Start autonomous development
     /hive:oversight          # Open remote oversight dashboard
+    /hive:compact [session]  # Compress conversation context
     /hive:stop               # Stop all agents and services
 """
 
@@ -1268,6 +1269,319 @@ class HiveProductivityCommand(HiveSlashCommand):
         }
 
 
+class HiveCompactCommand(HiveSlashCommand):
+    """Context compression command for intelligent conversation summarization."""
+    
+    def __init__(self):
+        super().__init__(
+            name="compact",
+            description="Compress conversation context while preserving key insights and decisions",
+            usage="/hive:compact [session_id] [--level=light|standard|aggressive] [--target-tokens=N] [--preserve-decisions] [--preserve-patterns]"
+        )
+    
+    def validate_args(self, args: List[str]) -> bool:
+        """Validate command arguments."""
+        # All arguments are optional, so basic validation
+        return True
+    
+    async def execute(self, args: List[str] = None, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Execute context compression."""
+        try:
+            logger.info("🗜️ Executing /hive:compact command")
+            
+            # Parse arguments
+            session_id = None
+            compression_level = "standard"
+            target_tokens = None
+            preserve_decisions = True
+            preserve_patterns = True
+            
+            args = args or []
+            
+            # Extract session_id if provided as first non-flag argument
+            non_flag_args = [arg for arg in args if not arg.startswith("--")]
+            if non_flag_args:
+                session_id = non_flag_args[0]
+            
+            # Parse flags
+            for arg in args:
+                if arg.startswith("--level="):
+                    level = arg.split("=")[1].lower()
+                    if level in ["light", "standard", "aggressive"]:
+                        compression_level = level
+                elif arg.startswith("--target-tokens="):
+                    try:
+                        target_tokens = int(arg.split("=")[1])
+                    except ValueError:
+                        return {
+                            "success": False,
+                            "error": "Invalid target-tokens value. Must be a number.",
+                            "usage": self.usage
+                        }
+                elif arg == "--preserve-decisions":
+                    preserve_decisions = True
+                elif arg == "--no-preserve-decisions":
+                    preserve_decisions = False
+                elif arg == "--preserve-patterns":
+                    preserve_patterns = True
+                elif arg == "--no-preserve-patterns":
+                    preserve_patterns = False
+            
+            # Start compression process
+            compression_start = datetime.utcnow()
+            
+            # Extract context based on session_id or current context
+            context_content, metadata = await self._extract_context(session_id, context)
+            
+            if not context_content:
+                return {
+                    "success": False,
+                    "error": "No context found to compress",
+                    "session_id": session_id,
+                    "message": "Specify a valid session_id or ensure there's active context"
+                }
+            
+            # Perform compression
+            compressed_result = await self._compress_context(
+                content=context_content,
+                compression_level=compression_level,
+                target_tokens=target_tokens,
+                preserve_decisions=preserve_decisions,
+                preserve_patterns=preserve_patterns,
+                metadata=metadata
+            )
+            
+            # Store compressed context back to session if applicable
+            if session_id:
+                await self._store_compressed_context(session_id, compressed_result)
+            
+            # Calculate compression time
+            compression_time = (datetime.utcnow() - compression_start).total_seconds()
+            
+            # Return results
+            return {
+                "success": True,
+                "session_id": session_id,
+                "compression_level": compression_level,
+                "original_tokens": compressed_result.original_token_count,
+                "compressed_tokens": compressed_result.compressed_token_count,
+                "compression_ratio": compressed_result.compression_ratio,
+                "tokens_saved": compressed_result.original_token_count - compressed_result.compressed_token_count,
+                "compression_time_seconds": compression_time,
+                "summary": compressed_result.summary,
+                "key_insights": compressed_result.key_insights,
+                "decisions_made": compressed_result.decisions_made,
+                "patterns_identified": compressed_result.patterns_identified,
+                "importance_score": compressed_result.importance_score,
+                "message": f"Compressed {compressed_result.original_token_count} tokens to {compressed_result.compressed_token_count} ({compressed_result.compression_ratio:.1%} reduction)",
+                "performance_met": compression_time < 15.0,  # Target: <15 seconds
+                "timestamp": compression_start.isoformat()
+            }
+            
+        except Exception as e:
+            logger.error("Failed to execute /hive:compact", error=str(e))
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Context compression failed"
+            }
+    
+    async def _extract_context(self, session_id: Optional[str], context: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
+        """Extract conversation context from sessions and messages."""
+        try:
+            content_parts = []
+            metadata = {
+                "source": "unknown",
+                "session_id": session_id,
+                "extraction_time": datetime.utcnow().isoformat()
+            }
+            
+            if session_id:
+                # Extract from specific session
+                session_content = await self._extract_session_context(session_id)
+                if session_content:
+                    content_parts.append(session_content["content"])
+                    metadata.update(session_content["metadata"])
+            else:
+                # Extract from current context
+                if context and "conversation_history" in context:
+                    content_parts.append(str(context["conversation_history"]))
+                    metadata["source"] = "current_context"
+                elif context and "messages" in context:
+                    content_parts.append(str(context["messages"]))
+                    metadata["source"] = "current_messages"
+                elif context:
+                    # Use entire context as fallback
+                    content_parts.append(str(context))
+                    metadata["source"] = "full_context"
+            
+            # Combine all content
+            combined_content = "\n\n".join(content_parts)
+            
+            # Add some sample context if nothing found (for testing)
+            if not combined_content.strip():
+                combined_content = "No conversation context available for compression."
+            
+            return combined_content, metadata
+            
+        except Exception as e:
+            logger.error(f"Failed to extract context: {e}")
+            return "", {"error": str(e)}
+    
+    async def _extract_session_context(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Extract context from a specific session."""
+        try:
+            # Import here to avoid circular imports
+            from ..models.session import Session
+            from ..models.message import StreamMessage
+            from ..core.database import get_db_session
+            
+            async with get_db_session() as db:
+                # Get session
+                session = await db.get(Session, session_id)
+                if not session:
+                    logger.warning(f"Session {session_id} not found")
+                    return None
+                
+                # Extract session data
+                content_parts = []
+                
+                # Add session description and objectives
+                if session.description:
+                    content_parts.append(f"Session Description: {session.description}")
+                
+                if session.objectives:
+                    objectives_text = "\n".join([f"- {obj}" for obj in session.objectives])
+                    content_parts.append(f"Session Objectives:\n{objectives_text}")
+                
+                # Add shared context
+                if session.shared_context:
+                    context_text = json.dumps(session.shared_context, indent=2)
+                    content_parts.append(f"Shared Context:\n{context_text}")
+                
+                # Extract messages related to session (this would need message table integration)
+                # For now, we'll use the session state as context
+                if session.state:
+                    state_text = json.dumps(session.state, indent=2)
+                    content_parts.append(f"Session State:\n{state_text}")
+                
+                combined_content = "\n\n".join(content_parts)
+                
+                metadata = {
+                    "source": "session",
+                    "session_name": session.name,
+                    "session_type": session.session_type.value,
+                    "session_status": session.status.value,
+                    "participant_count": len(session.participant_agents or []),
+                    "created_at": session.created_at.isoformat() if session.created_at else None,
+                    "last_activity": session.last_activity.isoformat() if session.last_activity else None
+                }
+                
+                return {
+                    "content": combined_content,
+                    "metadata": metadata
+                }
+                
+        except Exception as e:
+            logger.error(f"Failed to extract session context: {e}")
+            return None
+    
+    async def _compress_context(
+        self,
+        content: str,
+        compression_level: str,
+        target_tokens: Optional[int],
+        preserve_decisions: bool,
+        preserve_patterns: bool,
+        metadata: Dict[str, Any]
+    ):
+        """Compress context using the existing ContextCompressor."""
+        try:
+            # Import compression utilities
+            from .context_compression import get_context_compressor, CompressionLevel
+            from ..models.context import ContextType
+            
+            # Get compressor instance
+            compressor = get_context_compressor()
+            
+            # Map compression level
+            level_mapping = {
+                "light": CompressionLevel.LIGHT,
+                "standard": CompressionLevel.STANDARD,
+                "aggressive": CompressionLevel.AGGRESSIVE
+            }
+            compression_level_enum = level_mapping.get(compression_level, CompressionLevel.STANDARD)
+            
+            # Determine context type from metadata
+            context_type = None
+            session_type = metadata.get("session_type")
+            if session_type:
+                if "bug" in session_type.lower() or "fix" in session_type.lower():
+                    context_type = ContextType.ERROR_RESOLUTION
+                elif "review" in session_type.lower():
+                    context_type = ContextType.DECISION
+                elif "research" in session_type.lower() or "planning" in session_type.lower():
+                    context_type = ContextType.LEARNING
+            
+            # Use adaptive compression if target tokens specified
+            if target_tokens:
+                result = await compressor.adaptive_compress(
+                    content=content,
+                    target_token_count=target_tokens,
+                    context_type=context_type
+                )
+            else:
+                # Use standard compression
+                result = await compressor.compress_conversation(
+                    conversation_content=content,
+                    compression_level=compression_level_enum,
+                    context_type=context_type,
+                    preserve_decisions=preserve_decisions,
+                    preserve_patterns=preserve_patterns
+                )
+            
+            # Add metadata to result
+            if result.metadata:
+                result.metadata.update(metadata)
+            else:
+                result.metadata = metadata
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Failed to compress context: {e}")
+            raise
+    
+    async def _store_compressed_context(self, session_id: str, compressed_result):
+        """Store compressed context back to session."""
+        try:
+            # Import here to avoid circular imports
+            from ..models.session import Session
+            from ..core.database import get_db_session
+            
+            async with get_db_session() as db:
+                session = await db.get(Session, session_id)
+                if session:
+                    # Store compressed context in session's shared_context
+                    compressed_data = compressed_result.to_dict()
+                    session.update_shared_context("compressed_context", compressed_data)
+                    session.update_shared_context("compression_history", {
+                        "compressed_at": datetime.utcnow().isoformat(),
+                        "original_tokens": compressed_result.original_token_count,
+                        "compressed_tokens": compressed_result.compressed_token_count,
+                        "compression_ratio": compressed_result.compression_ratio
+                    })
+                    
+                    await db.commit()
+                    logger.info(f"Stored compressed context for session {session_id}")
+                else:
+                    logger.warning(f"Session {session_id} not found for storage")
+                    
+        except Exception as e:
+            logger.error(f"Failed to store compressed context: {e}")
+            # Don't fail the entire operation if storage fails
+
+
 class HiveStopCommand(HiveSlashCommand):
     """Stop all agents and services."""
     
@@ -1350,6 +1664,7 @@ class HiveSlashCommandRegistry:
             HiveOversightCommand(),
             HiveFocusCommand(),
             HiveProductivityCommand(),
+            HiveCompactCommand(),
             HiveStopCommand()
         ]
         

@@ -104,7 +104,7 @@ class ContextCompressor:
         
         # Initialize Anthropic client
         self.llm_client = llm_client or AsyncAnthropic(
-            api_key=self.settings.anthropic_api_key
+            api_key=self.settings.ANTHROPIC_API_KEY
         )
         
         # Token counting
