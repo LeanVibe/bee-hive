@@ -1,0 +1,143 @@
+{
+  "dashboards": {
+    "system_overview": {
+      "title": "LeanVibe Agent Hive 2.0 - System Overview",
+      "description": "High-level system health and performance metrics",
+      "refresh_interval": "5s",
+      "time_range": "1h",
+      "priority": "high",
+      "alerts_enabled": true,
+      "key_metrics": [
+        "task_assignment_latency_ms",
+        "message_throughput_per_sec",
+        "system_memory_percent",
+        "error_rate_percent"
+      ]
+    },
+    "component_performance": {
+      "title": "LeanVibe Agent Hive 2.0 - Component Performance",
+      "description": "Detailed performance metrics for individual components",
+      "refresh_interval": "10s",
+      "time_range": "1h",
+      "priority": "high",
+      "alerts_enabled": true,
+      "key_metrics": [
+        "agent_registration_latency_ms",
+        "message_routing_latency_ms",
+        "workflow_execution_time_ms",
+        "cache_hit_rate_percent"
+      ]
+    },
+    "business_metrics": {
+      "title": "LeanVibe Agent Hive 2.0 - Business Metrics",
+      "description": "Business logic performance and SLA compliance",
+      "refresh_interval": "30s",
+      "time_range": "4h",
+      "priority": "medium",
+      "alerts_enabled": true,
+      "key_metrics": [
+        "tasks_completed_per_minute",
+        "agent_success_rate_percent",
+        "system_availability_percent",
+        "sla_compliance_percent"
+      ]
+    },
+    "infrastructure": {
+      "title": "LeanVibe Agent Hive 2.0 - Infrastructure",
+      "description": "Infrastructure-level metrics and resource usage",
+      "refresh_interval": "15s",
+      "time_range": "2h",
+      "priority": "medium",
+      "alerts_enabled": false,
+      "key_metrics": [
+        "cpu_percent",
+        "memory_percent",
+        "disk_io_read_mb_per_sec",
+        "network_bytes_sent_per_sec"
+      ]
+    }
+  },
+  "performance_thresholds": {
+    "critical": {
+      "task_assignment_latency_ms": 0.1,
+      "message_throughput_per_sec": 25000,
+      "memory_usage_mb": 500,
+      "error_rate_percent": 1.0,
+      "system_availability_percent": 99.0
+    },
+    "warning": {
+      "task_assignment_latency_ms": 0.02,
+      "message_throughput_per_sec": 40000,
+      "memory_usage_mb": 400,
+      "error_rate_percent": 0.1,
+      "system_availability_percent": 99.5
+    },
+    "optimal": {
+      "task_assignment_latency_ms": 0.01,
+      "message_throughput_per_sec": 50000,
+      "memory_usage_mb": 285,
+      "error_rate_percent": 0.005,
+      "system_availability_percent": 99.9
+    }
+  },
+  "alert_rules": {
+    "task_assignment_latency_critical": {
+      "metric": "app_task_assignment_latency_ms",
+      "condition": "above",
+      "threshold": 0.1,
+      "duration": "2m",
+      "severity": "critical",
+      "description": "Task assignment latency is critically high (>0.1ms)"
+    },
+    "message_throughput_low": {
+      "metric": "app_message_throughput_per_second",
+      "condition": "below",
+      "threshold": 40000,
+      "duration": "5m",
+      "severity": "warning",
+      "description": "Message throughput is below expected levels"
+    },
+    "memory_usage_high": {
+      "metric": "app_memory_usage_mb",
+      "condition": "above",
+      "threshold": 450,
+      "duration": "3m",
+      "severity": "warning",
+      "description": "Application memory usage approaching limits"
+    },
+    "system_memory_critical": {
+      "metric": "system_memory_percent",
+      "condition": "above",
+      "threshold": 90,
+      "duration": "1m",
+      "severity": "critical",
+      "description": "System memory usage is critically high"
+    },
+    "error_rate_high": {
+      "metric": "app_error_rate_percent",
+      "condition": "above",
+      "threshold": 1.0,
+      "duration": "2m",
+      "severity": "critical",
+      "description": "Application error rate is unacceptably high"
+    }
+  },
+  "visualization_settings": {
+    "color_scheme": "green-yellow-red",
+    "time_series_style": "line",
+    "gauge_style": "arc",
+    "stat_style": "value_and_name",
+    "table_style": "basic",
+    "grid": {
+      "panel_width": 24,
+      "panel_height": 8,
+      "spacing": 0
+    }
+  },
+  "data_source": {
+    "type": "prometheus",
+    "url": "http://localhost:9090",
+    "scrape_interval": "10s",
+    "evaluation_interval": "10s"
+  }
+}

@@ -1,0 +1,176 @@
+# Kubernetes Namespaces for LeanVibe Agent Hive 2.0 Production Deployment
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-production
+  labels:
+    name: leanvibe-production
+    environment: production
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/version: "2.0"
+    app.kubernetes.io/managed-by: kubernetes
+    tier: application
+  annotations:
+    description: "LeanVibe Agent Hive 2.0 Production Environment"
+    contact: "leanvibe-team@company.com"
+    slack: "#leanvibe-alerts"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-monitoring
+  labels:
+    name: leanvibe-monitoring
+    environment: production
+    app.kubernetes.io/name: monitoring
+    app.kubernetes.io/version: "1.0"
+    app.kubernetes.io/managed-by: kubernetes
+    tier: monitoring
+  annotations:
+    description: "LeanVibe Agent Hive Monitoring Stack"
+    contact: "leanvibe-team@company.com"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-ingress
+  labels:
+    name: leanvibe-ingress
+    environment: production
+    app.kubernetes.io/name: ingress
+    app.kubernetes.io/managed-by: kubernetes
+    tier: infrastructure
+  annotations:
+    description: "LeanVibe Agent Hive Ingress Controllers"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-blue
+  labels:
+    name: leanvibe-blue
+    environment: production
+    deployment-slot: blue
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/version: "2.0"
+    app.kubernetes.io/managed-by: kubernetes
+    tier: application
+  annotations:
+    description: "LeanVibe Agent Hive Blue Environment for Blue-Green Deployment"
+    contact: "leanvibe-team@company.com"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-green
+  labels:
+    name: leanvibe-green
+    environment: production
+    deployment-slot: green
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/version: "2.0"
+    app.kubernetes.io/managed-by: kubernetes
+    tier: application
+  annotations:
+    description: "LeanVibe Agent Hive Green Environment for Blue-Green Deployment"
+    contact: "leanvibe-team@company.com"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: production-quota
+  namespace: leanvibe-production
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    persistentvolumeclaims: "20"
+    pods: "50"
+    services: "20"
+    secrets: "30"
+    configmaps: "50"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: blue-quota
+  namespace: leanvibe-blue
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    persistentvolumeclaims: "20"
+    pods: "50"
+    services: "20"
+    secrets: "30"
+    configmaps: "50"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: green-quota
+  namespace: leanvibe-green
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: 40Gi
+    limits.cpu: "40"
+    limits.memory: 80Gi
+    persistentvolumeclaims: "20"
+    pods: "50"
+    services: "20"
+    secrets: "30"
+    configmaps: "50"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: production-limits
+  namespace: leanvibe-production
+spec:
+  limits:
+  - default:
+      cpu: "1000m"
+      memory: "2Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+    type: Container
+  - default:
+      storage: "10Gi"
+    type: PersistentVolumeClaim
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: blue-limits
+  namespace: leanvibe-blue
+spec:
+  limits:
+  - default:
+      cpu: "1000m"
+      memory: "2Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+    type: Container
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: green-limits
+  namespace: leanvibe-green
+spec:
+  limits:
+  - default:
+      cpu: "1000m"
+      memory: "2Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+    type: Container

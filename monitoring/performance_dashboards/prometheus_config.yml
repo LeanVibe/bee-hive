@@ -1,0 +1,144 @@
+# Prometheus Configuration for LeanVibe Agent Hive 2.0 Performance Monitoring
+
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  external_labels:
+    cluster: 'leanvibe-agent-hive'
+    environment: 'production'
+
+# Rule files specify the location of alert rules
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+# Scrape configurations for monitoring targets
+scrape_configs:
+  # LeanVibe Agent Hive Application Metrics
+  - job_name: 'leanvibe-agent-hive'
+    static_configs:
+      - targets: ['localhost:8000']  # Performance monitoring system Prometheus endpoint
+    scrape_interval: 5s
+    scrape_timeout: 4s
+    metrics_path: '/metrics'
+    honor_timestamps: true
+    
+    # Relabel configurations for better metric organization
+    metric_relabel_configs:
+      # Add component labels for better organization
+      - source_labels: [__name__]
+        regex: 'app_(.+)'
+        target_label: 'component'
+        replacement: 'application'
+      
+      - source_labels: [__name__]
+        regex: 'system_(.+)'
+        target_label: 'component'
+        replacement: 'system'
+      
+      - source_labels: [__name__]
+        regex: 'business_(.+)'
+        target_label: 'component'
+        replacement: 'business'
+      
+      - source_labels: [__name__]
+        regex: 'ux_(.+)'
+        target_label: 'component'
+        replacement: 'user_experience'
+    
+    # Sample limits to prevent metric explosion
+    sample_limit: 10000
+    
+    # Additional labels for all metrics from this job
+    relabel_configs:
+      - target_label: 'service'
+        replacement: 'leanvibe-agent-hive'
+      
+      - target_label: 'version'
+        replacement: '2.0'
+
+  # System metrics via node_exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metrics_path: '/metrics'
+
+  # Redis metrics (if available)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+
+  # Custom application endpoints
+  - job_name: 'leanvibe-universal-orchestrator'
+    static_configs:
+      - targets: ['localhost:8001']
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+    
+  - job_name: 'leanvibe-communication-hub'
+    static_configs:
+      - targets: ['localhost:8002']
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+
+  - job_name: 'leanvibe-engines'
+    static_configs:
+      - targets: ['localhost:8003']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+      scheme: http
+      timeout: 10s
+      api_version: v1
+
+# Storage configuration
+storage:
+  tsdb:
+    # Data retention period
+    retention.time: 30d
+    # Maximum storage size
+    retention.size: 50GB
+    
+    # Compaction settings for performance
+    min-block-duration: 2h
+    max-block-duration: 24h
+    
+    # Write-ahead log settings
+    wal-compression: true
+
+# Remote write configuration for long-term storage (optional)
+# remote_write:
+#   - url: "https://your-remote-storage-endpoint/api/v1/write"
+#     queue_config:
+#       max_samples_per_send: 1000
+#       max_shards: 200
+#       capacity: 2500
+
+# Recording rules for pre-computed metrics
+# These are defined in recording_rules.yml
+
+# Performance and resource limits
+query:
+  # Maximum number of samples a single query can load
+  max-samples: 50000000
+  
+  # Query timeout
+  timeout: 2m
+  
+  # Maximum number of queries executed concurrently
+  max-concurrency: 20
+
+# Additional global configuration
+external_labels:
+  region: 'local'
+  replica: 'primary'

@@ -1,0 +1,339 @@
+# LeanVibe Agent Hive 2.0 Production Kubernetes Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leanvibe-agent-hive
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-agent-hive
+    version: "2.0"
+    component: api
+    tier: application
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    app.kubernetes.io/managed-by: "kubernetes"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: leanvibe-agent-hive
+      component: api
+  template:
+    metadata:
+      labels:
+        app: leanvibe-agent-hive
+        version: "2.0"
+        component: api
+        tier: application
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: leanvibe-agent-hive
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: leanvibe-api
+        image: leanvibe/agent-hive:2.0-production
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: websocket
+          containerPort: 8001
+          protocol: TCP
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: leanvibe-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: leanvibe-secrets
+              key: redis-url
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: leanvibe-secrets
+              key: anthropic-api-key
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: leanvibe-secrets
+              key: jwt-secret-key
+        - name: APP_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: leanvibe-secrets
+              key: app-secret-key
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: temp-volume
+          mountPath: /tmp
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1001
+      volumes:
+      - name: config-volume
+        configMap:
+          name: leanvibe-config
+      - name: temp-volume
+        emptyDir: {}
+      nodeSelector:
+        node-type: primary
+        capacity-type: on-demand
+      tolerations:
+      - key: "node-type"
+        operator: "Equal"
+        value: "primary"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - leanvibe-agent-hive
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+              - key: node.kubernetes.io/instance-type
+                operator: NotIn
+                values:
+                - t2.nano
+                - t2.micro
+      terminationGracePeriodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leanvibe-agent-hive-service
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-agent-hive
+    component: api
+    tier: application
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: websocket
+    port: 8001
+    targetPort: 8001
+    protocol: TCP
+  selector:
+    app: leanvibe-agent-hive
+    component: api
+  sessionAffinity: None
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: leanvibe-agent-hive
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-agent-hive
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/leanvibe-production-pod-role
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: leanvibe-agent-hive-hpa
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-agent-hive
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-agent-hive
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Pods
+    pods:
+      metric:
+        name: websocket_connections
+      target:
+        type: AverageValue
+        averageValue: "100"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 120
+      - type: Pods
+        value: 1
+        periodSeconds: 120
+      selectPolicy: Min
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: leanvibe-agent-hive-pdb
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-agent-hive
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: leanvibe-agent-hive
+      component: api
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-agent-hive-netpol
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-agent-hive
+spec:
+  podSelector:
+    matchLabels:
+      app: leanvibe-agent-hive
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-ingress
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-monitoring
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 8001
+  egress:
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+    - protocol: TCP
+      port: 443   # HTTPS outbound
+    - protocol: TCP
+      port: 80    # HTTP outbound
+    - protocol: UDP
+      port: 53    # DNS
