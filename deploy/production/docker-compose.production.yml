@@ -1,0 +1,383 @@
+version: '3.8'
+
+services:
+  # ================================================================================
+  # LeanVibe Agent Hive 2.0 - Production Deployment Configuration
+  # ================================================================================
+  
+  universal-orchestrator:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.production
+      target: orchestrator
+    image: leanvibe/agent-hive:orchestrator-2.0
+    container_name: leanvibe-universal-orchestrator
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - ORCHESTRATOR_MODE=production
+      - MAX_CONCURRENT_AGENTS=80
+      - PERFORMANCE_MONITORING=enabled
+      - SECURITY_LEVEL=enterprise
+      - LOG_LEVEL=info
+    volumes:
+      - orchestrator_data:/app/data
+      - ./config/orchestrator.production.json:/app/config/orchestrator.json:ro
+      - ./ssl:/app/ssl:ro
+    ports:
+      - "8080:8080"  # Main API
+      - "8081:8081"  # Health check endpoint
+    networks:
+      - leanvibe-network
+    depends_on:
+      - redis-cluster
+      - postgres-primary
+      - monitoring-prometheus
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1GB
+        reservations:
+          cpus: '0.5'
+          memory: 512MB
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  communication-hub:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.production
+      target: communication
+    image: leanvibe/agent-hive:communication-2.0
+    container_name: leanvibe-communication-hub
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - COMMUNICATION_MODE=production
+      - TARGET_THROUGHPUT=20000
+      - REDIS_CLUSTER_ENABLED=true
+      - WEBSOCKET_SCALING=enabled
+    volumes:
+      - communication_data:/app/data
+      - ./config/communication.production.json:/app/config/communication.json:ro
+    ports:
+      - "8082:8082"  # Communication API
+      - "8083:8083"  # WebSocket endpoint
+    networks:
+      - leanvibe-network
+    depends_on:
+      - redis-cluster
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512MB
+        reservations:
+          cpus: '0.3'
+          memory: 256MB
+
+  domain-managers:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.production
+      target: managers
+    image: leanvibe/agent-hive:managers-2.0
+    container_name: leanvibe-domain-managers
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - MANAGER_MODE=production
+      - ENABLE_ALL_MANAGERS=true
+      - RESOURCE_LIMITS_ENABLED=true
+    volumes:
+      - managers_data:/app/data
+      - ./config/managers.production.json:/app/config/managers.json:ro
+    ports:
+      - "8084:8084"  # Managers API
+    networks:
+      - leanvibe-network
+    depends_on:
+      - postgres-primary
+      - redis-cluster
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 400MB
+        reservations:
+          cpus: '0.2'
+          memory: 200MB
+
+  specialized-engines:
+    build:
+      context: ../../
+      dockerfile: Dockerfile.production
+      target: engines
+    image: leanvibe/agent-hive:engines-2.0
+    container_name: leanvibe-specialized-engines
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - ENGINE_MODE=production
+      - PERFORMANCE_OPTIMIZATION=maximum
+      - ENABLE_ALL_ENGINES=true
+    volumes:
+      - engines_data:/app/data
+      - ./config/engines.production.json:/app/config/engines.json:ro
+    ports:
+      - "8085:8085"  # Engines API
+    networks:
+      - leanvibe-network
+    depends_on:
+      - postgres-primary
+      - redis-cluster
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1GB
+        reservations:
+          cpus: '0.5'
+          memory: 512MB
+
+  # ================================================================================
+  # Infrastructure Services
+  # ================================================================================
+
+  postgres-primary:
+    image: postgres:15-alpine
+    container_name: leanvibe-postgres-primary
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=leanvibe_production
+      - POSTGRES_USER=leanvibe
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_INITDB_ARGS=--auth-host=md5
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - leanvibe-network
+    secrets:
+      - postgres_password
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1GB
+        reservations:
+          cpus: '0.2'
+          memory: 256MB
+
+  postgres-replica:
+    image: postgres:15-alpine
+    container_name: leanvibe-postgres-replica
+    restart: unless-stopped
+    environment:
+      - PGUSER=postgres
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - PGPASSWORD_FILE=/run/secrets/postgres_password
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./replication-scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - leanvibe-network
+    secrets:
+      - postgres_password
+    depends_on:
+      - postgres-primary
+
+  redis-cluster-node1:
+    image: redis:7-alpine
+    container_name: leanvibe-redis-node1
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - redis_node1_data:/data
+      - ./config/redis-cluster.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "7001:6379"
+      - "17001:16379"
+    networks:
+      - leanvibe-network
+
+  redis-cluster-node2:
+    image: redis:7-alpine
+    container_name: leanvibe-redis-node2
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - redis_node2_data:/data
+      - ./config/redis-cluster.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "7002:6379"
+      - "17002:16379"
+    networks:
+      - leanvibe-network
+
+  redis-cluster-node3:
+    image: redis:7-alpine
+    container_name: leanvibe-redis-node3
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes
+    volumes:
+      - redis_node3_data:/data
+      - ./config/redis-cluster.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "7003:6379"
+      - "17003:16379"
+    networks:
+      - leanvibe-network
+
+  # ================================================================================
+  # Monitoring & Observability
+  # ================================================================================
+
+  monitoring-prometheus:
+    image: prom/prometheus:latest
+    container_name: leanvibe-prometheus
+    restart: unless-stopped
+    volumes:
+      - prometheus_data:/prometheus
+      - ./config/prometheus.production.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - leanvibe-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+
+  monitoring-grafana:
+    image: grafana/grafana:latest
+    container_name: leanvibe-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_admin_password
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource,prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - leanvibe-network
+    secrets:
+      - grafana_admin_password
+    depends_on:
+      - monitoring-prometheus
+
+  log-aggregator:
+    image: elastic/elasticsearch:8.10.0
+    container_name: leanvibe-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD_FILE=/run/secrets/elasticsearch_password
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - leanvibe-network
+    secrets:
+      - elasticsearch_password
+
+  log-processor:
+    image: logstash:8.10.0
+    container_name: leanvibe-logstash
+    restart: unless-stopped
+    volumes:
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"
+    networks:
+      - leanvibe-network
+    depends_on:
+      - log-aggregator
+
+  # ================================================================================
+  # Load Balancer & Reverse Proxy
+  # ================================================================================
+
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: leanvibe-nginx
+    restart: unless-stopped
+    volumes:
+      - ./config/nginx.production.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - leanvibe-network
+    depends_on:
+      - universal-orchestrator
+      - communication-hub
+      - domain-managers
+      - specialized-engines
+
+# ================================================================================
+# Networks & Volumes
+# ================================================================================
+
+networks:
+  leanvibe-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: leanvibe-br0
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  orchestrator_data:
+  communication_data:
+  managers_data:
+  engines_data:
+  postgres_primary_data:
+  postgres_replica_data:
+  redis_node1_data:
+  redis_node2_data:
+  redis_node3_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+  nginx_logs:
+
+# ================================================================================
+# Secrets Management
+# ================================================================================
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password.txt
+  elasticsearch_password:
+    file: ./secrets/elasticsearch_password.txt
