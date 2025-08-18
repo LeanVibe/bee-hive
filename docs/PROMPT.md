@@ -1,8 +1,27 @@
-# Multi-CLI Agent Coordination System - Handoff Prompt
+# CURSOR AGENT HANDOFF PROMPT
+## LeanVibe Agent Hive 2.0 - Critical System Implementation
 
-## 🎯 Context & Mission
+**Date**: August 18, 2025  
+**Handoff From**: Claude Code Analysis Agent  
+**Handoff To**: Cursor Implementation Agent  
+**Priority**: 🚨 **CRITICAL - IMMEDIATE ACTION REQUIRED**
 
-You are taking over a **production-ready Multi-CLI Agent Coordination System** that enables seamless collaboration between heterogeneous CLI agents (Claude Code, Cursor, GitHub Copilot, Gemini CLI, etc.). The core architecture is **100% complete and validated** with comprehensive integration tests passing.
+---
+
+## 🎯 **MISSION BRIEFING: REALITY CHECK COMPLETE**
+
+### **CRITICAL SITUATION DISCOVERED**
+After comprehensive first-principles analysis, I've discovered a **shocking gap between documentation and reality**:
+
+- 📊 **Documentation Claims**: 97.4% consolidation complete, production-ready system
+- 🔧 **Actual Reality**: Core system has critical import failures preventing basic startup
+- 🧪 **Test Infrastructure**: Cannot run due to import errors 
+- 🌐 **API Server**: Missing main entry point (app/api/main.py doesn't exist)
+
+**Bottom Line**: The system is extensively documented as "complete" but fundamental components cannot import or run.
+
+### **YOUR MISSION** 
+You are the **Import Dependency Resolver** and **FastAPI Application Builder** specialized subagent. Your mission is to **get the basic system working** by fixing critical import issues and creating a minimal working API server.
 
 ## 📊 Current System Status
 

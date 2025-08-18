@@ -25,7 +25,8 @@ from anthropic import AsyncAnthropic
 from .config import settings
 from .storage_manager import StorageManager, get_session_cache, SessionCache, CacheManager, DatabaseManager
 from .communication_manager import CommunicationManager, Message, MessageType, MessagePriority
-from .workflow_manager import WorkflowManager, WorkflowEngine, WorkflowResult, TaskExecutionState, WorkflowDefinition
+from .workflow_manager import WorkflowManager, WorkflowDefinition
+from .workflow_engine import WorkflowEngine, WorkflowResult, TaskExecutionState
 from .messaging_migration import MessagingServiceAdapter, mark_migration_complete
 # Legacy imports - DEPRECATED, use unified managers instead
 # from .agent_communication_service import AgentCommunicationService, AgentMessage

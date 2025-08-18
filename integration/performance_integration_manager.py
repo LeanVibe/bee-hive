@@ -26,7 +26,10 @@ from enum import Enum
 from pathlib import Path
 
 # Import existing consolidated architecture components
-from ..core.universal_orchestrator import UniversalOrchestrator
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from app.core.universal_orchestrator import UniversalOrchestrator
 
 # Import performance optimization components
 from ..optimization.task_execution_optimizer import TaskExecutionOptimizer
