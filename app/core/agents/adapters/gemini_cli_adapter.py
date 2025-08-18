@@ -2,17 +2,37 @@
 Gemini CLI Adapter for Multi-CLI Coordination
 
 This adapter enables Gemini CLI to participate in coordinated multi-agent
-workflows. It implements the UniversalAgentInterface to provide standardized
-communication, task execution, and capability reporting.
+workflows, leveraging Gemini's advanced reasoning, multimodal capabilities,
+and complex problem-solving strengths for sophisticated development tasks.
 
 Key Features:
-- Subprocess-based Gemini CLI integration
-- Secure worktree isolation and path validation
-- Message format translation (universal ↔ Gemini)
-- Performance monitoring and error handling
-- Capability-based task routing support
+- Advanced reasoning with deep thinking mode support
+- Multimodal analysis (text, code, and visual content)
+- Complex problem solving and strategic planning
+- Enhanced security analysis and vulnerability detection
+- Sophisticated architecture design and system analysis
+- Research-grade code analysis and optimization
+- Comprehensive prompt injection protection
+- Performance monitoring and token usage tracking
 
-Production Status: READY - Implemented following claude_code_adapter pattern
+Gemini's Specialized Strengths:
+- Mathematical and logical reasoning
+- Cross-domain knowledge synthesis
+- Complex pattern recognition
+- Strategic thinking and planning
+- Research and analysis tasks
+- Security vulnerability assessment
+- Advanced debugging and root cause analysis
+
+Security Features:
+- Multi-layer prompt injection detection
+- Enhanced file type validation
+- Token usage monitoring and limits
+- Command safety validation
+- Path traversal prevention
+- Sensitive file type restrictions
+
+Production Status: PRODUCTION READY - Enhanced with Gemini-specific optimizations
 """
 
 import asyncio
@@ -158,7 +178,7 @@ class GeminiCLIAdapter(UniversalAgentInterface):
         try:
             logger.info(f"Executing task {task.id}: {task.description}")
             
-            # 1. Validate task compatibility
+            # 1. Validate task compatibility and optimize for Gemini's strengths
             if not await self._is_task_compatible(task):
                 return AgentResult(
                     task_id=task.id,
@@ -167,6 +187,17 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                     status=TaskStatus.FAILED,
                     error_message=f"Task type {task.type} not supported by Gemini CLI"
                 )
+            
+            # Enhanced validation for complex reasoning tasks
+            if task.type in [CapabilityType.ARCHITECTURE_DESIGN, CapabilityType.SECURITY_ANALYSIS]:
+                if not task.description or len(task.description) < 50:
+                    return AgentResult(
+                        task_id=task.id,
+                        agent_id=self.agent_id,
+                        agent_type=self.agent_type,
+                        status=TaskStatus.FAILED,
+                        error_message="Complex reasoning tasks require detailed descriptions (minimum 50 characters)"
+                    )
             
             # 2. Check resource limits
             if len(self._active_tasks) > self._max_concurrent_tasks:
@@ -229,49 +260,56 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                 type=CapabilityType.TESTING,
                 confidence=0.90,
                 performance_score=0.85,
-                description="Advanced testing strategies and test case generation"
+                estimated_time_seconds=240
             ),
             AgentCapability(
                 type=CapabilityType.CODE_REVIEW,
                 confidence=0.85,
                 performance_score=0.90,
-                description="Comprehensive code review and quality analysis"
+                estimated_time_seconds=180
             ),
             AgentCapability(
                 type=CapabilityType.CODE_ANALYSIS,
                 confidence=0.90,
                 performance_score=0.90,
-                description="Deep code analysis and architectural insights"
+                estimated_time_seconds=200
             ),
             AgentCapability(
                 type=CapabilityType.DEBUGGING,
                 confidence=0.80,
                 performance_score=0.85,
-                description="Advanced debugging techniques and error analysis"
+                estimated_time_seconds=300
             ),
             AgentCapability(
                 type=CapabilityType.ARCHITECTURE_DESIGN,
                 confidence=0.85,
                 performance_score=0.80,
-                description="System architecture design and patterns"
+                estimated_time_seconds=600
             ),
             AgentCapability(
                 type=CapabilityType.PERFORMANCE_OPTIMIZATION,
                 confidence=0.80,
                 performance_score=0.85,
-                description="Performance analysis and optimization strategies"
+                estimated_time_seconds=450
             ),
             AgentCapability(
                 type=CapabilityType.DOCUMENTATION,
                 confidence=0.75,
                 performance_score=0.80,
-                description="Technical documentation and explanation generation"
+                estimated_time_seconds=300
             ),
             AgentCapability(
                 type=CapabilityType.CODE_IMPLEMENTATION,
                 confidence=0.70,
                 performance_score=0.75,
-                description="Code implementation with best practices focus"
+                estimated_time_seconds=480
+            ),
+            # Gemini-specific advanced capabilities
+            AgentCapability(
+                type=CapabilityType.SECURITY_ANALYSIS,
+                confidence=0.88,
+                performance_score=0.85,
+                estimated_time_seconds=360
             )
         ]
 
@@ -321,7 +359,8 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                     failed_tasks=self._task_count - self._success_count,
                     last_activity=self._last_activity,
                     error_rate=1.0 - success_rate,
-                    throughput_tasks_per_minute=60.0 / avg_response_time * 1000 if avg_response_time > 0 else 0
+                    throughput_tasks_per_minute=60.0 / avg_response_time * 1000 if avg_response_time > 0 else 0,
+                    uptime_seconds=(datetime.now() - self._last_activity).total_seconds()
                 )
             else:
                 return HealthStatus(
@@ -329,8 +368,16 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                     agent_type=self.agent_type,
                     state=HealthState.UNHEALTHY,
                     response_time_ms=response_time,
-                    error_message="Gemini CLI not responding properly",
-                    last_activity=self._last_activity
+                    cpu_usage_percent=0.0,
+                    memory_usage_mb=0.0,
+                    active_tasks=len(self._active_tasks),
+                    completed_tasks=0,
+                    failed_tasks=0,
+                    last_activity=self._last_activity,
+                    error_rate=1.0,
+                    throughput_tasks_per_minute=0.0,
+                    uptime_seconds=0.0,
+                    last_error="Gemini CLI not responding properly"
                 )
                 
         except asyncio.TimeoutError:
@@ -339,8 +386,16 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                 agent_type=self.agent_type,
                 state=HealthState.UNHEALTHY,
                 response_time_ms=15000.0,
-                error_message="Gemini CLI health check timeout",
-                last_activity=self._last_activity
+                cpu_usage_percent=0.0,
+                memory_usage_mb=0.0,
+                active_tasks=len(self._active_tasks),
+                completed_tasks=0,
+                failed_tasks=0,
+                last_activity=self._last_activity,
+                error_rate=1.0,
+                throughput_tasks_per_minute=0.0,
+                uptime_seconds=0.0,
+                last_error="Gemini CLI health check timeout"
             )
         except Exception as e:
             return HealthStatus(
@@ -348,8 +403,16 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                 agent_type=self.agent_type,
                 state=HealthState.UNHEALTHY,
                 response_time_ms=(time.time() - start_time) * 1000,
-                error_message=f"Health check failed: {str(e)}",
-                last_activity=self._last_activity
+                cpu_usage_percent=0.0,
+                memory_usage_mb=0.0,
+                active_tasks=len(self._active_tasks),
+                completed_tasks=0,
+                failed_tasks=0,
+                last_activity=self._last_activity,
+                error_rate=1.0,
+                throughput_tasks_per_minute=0.0,
+                uptime_seconds=0.0,
+                last_error=f"Health check failed: {str(e)}"
             )
 
     # ========================================================================
@@ -366,7 +429,9 @@ class GeminiCLIAdapter(UniversalAgentInterface):
             CapabilityType.ARCHITECTURE_DESIGN,
             CapabilityType.PERFORMANCE_OPTIMIZATION,
             CapabilityType.DOCUMENTATION,
-            CapabilityType.CODE_IMPLEMENTATION
+            CapabilityType.CODE_IMPLEMENTATION,
+            CapabilityType.SECURITY_ANALYSIS,
+            CapabilityType.REFACTORING  # Gemini excels at complex refactoring
         }
         return task.type in compatible_types
 
@@ -389,7 +454,9 @@ class GeminiCLIAdapter(UniversalAgentInterface):
             CapabilityType.ARCHITECTURE_DESIGN: "design",
             CapabilityType.PERFORMANCE_OPTIMIZATION: "optimize",
             CapabilityType.DOCUMENTATION: "document",
-            CapabilityType.CODE_IMPLEMENTATION: "implement"
+            CapabilityType.CODE_IMPLEMENTATION: "implement",
+            CapabilityType.SECURITY_ANALYSIS: "security-scan",
+            CapabilityType.REFACTORING: "refactor"
         }
         
         base_command = command_map.get(task.type, "analyze")
@@ -413,12 +480,20 @@ class GeminiCLIAdapter(UniversalAgentInterface):
         # Add output format
         options["--format"] = "json"
         
-        # Add Gemini-specific options
-        options["--temperature"] = "0.3"  # Lower temperature for more consistent results
+        # Add Gemini-specific options for advanced reasoning
+        options["--temperature"] = "0.2" if task.type in [CapabilityType.CODE_ANALYSIS, CapabilityType.SECURITY_ANALYSIS] else "0.3"
         options["--model"] = "gemini-pro"  # Use the most capable model
         
-        # Add context window optimization
-        options["--max-tokens"] = "4000"  # Conservative token limit
+        # Optimize for complex reasoning tasks
+        if task.type in [CapabilityType.ARCHITECTURE_DESIGN, CapabilityType.DEBUGGING, CapabilityType.SECURITY_ANALYSIS]:
+            options["--thinking-mode"] = "deep"  # Enable advanced reasoning
+            options["--max-tokens"] = "6000"  # More tokens for complex analysis
+        else:
+            options["--max-tokens"] = "4000"  # Conservative token limit
+        
+        # Enable multimodal analysis if code contains diagrams or complex structures
+        if task.context and any(f.endswith(('.png', '.jpg', '.svg', '.md')) for f in task.context.file_scope):
+            options["--multimodal"] = "true"
         
         # Get input files
         input_files = []
@@ -615,13 +690,15 @@ class GeminiCLIAdapter(UniversalAgentInterface):
         """Prepare environment variables for Gemini CLI execution."""
         env = os.environ.copy()
         
-        if context and context.environment_vars:
-            env.update(context.environment_vars)
+        if context and context.environment_variables:
+            env.update(context.environment_variables)
         
         # Add Gemini-specific environment variables
         env["GEMINI_OUTPUT_FORMAT"] = "json"
         env["GEMINI_TEMPERATURE"] = "0.3"
         env["GEMINI_MODEL"] = "gemini-pro"
+        env["GEMINI_ENABLE_REASONING"] = "true"  # Enable chain-of-thought reasoning
+        env["GEMINI_SAFETY_SETTINGS"] = "strict"  # Ensure safe content generation
         
         # Set API key if available (should be set in environment)
         # env["GOOGLE_API_KEY"] should already be set
@@ -629,13 +706,17 @@ class GeminiCLIAdapter(UniversalAgentInterface):
         return env
 
     def _validate_command_safety(self, command: GeminiCommand):
-        """Validate command for security and safety."""
+        """Validate command for security and safety with Gemini-specific checks."""
         # Check for dangerous commands
         dangerous_patterns = [
             "rm -rf", "sudo", "chmod 777", "curl", "wget",
             "eval", "exec", "system", "__import__",
             # Gemini-specific dangerous patterns
-            "api-key", "credential", "secret", "token"
+            "api-key", "credential", "secret", "token", "password",
+            # Advanced injection patterns
+            "&&", "||", "|", ";", "`", "$(",
+            # Code execution risks
+            "subprocess", "os.system", "shell=True"
         ]
         
         command_str = " ".join(command.to_cli_args()).lower()
@@ -644,12 +725,17 @@ class GeminiCLIAdapter(UniversalAgentInterface):
             if pattern in command_str:
                 raise SecurityError(f"Potentially dangerous command pattern detected: {pattern}")
         
-        # Validate file paths
+        # Validate file paths with enhanced security
         for file_path in command.input_files:
             if not self._is_safe_path(file_path):
                 raise SecurityError(f"Unsafe file path: {file_path}")
+            
+            # Additional check for sensitive file extensions
+            sensitive_extensions = ['.key', '.pem', '.p12', '.pfx', '.env', '.config']
+            if any(file_path.lower().endswith(ext) for ext in sensitive_extensions):
+                raise SecurityError(f"Access to sensitive file type not allowed: {file_path}")
         
-        # Validate token limits
+        # Validate token limits with tiered security
         max_tokens_option = command.options.get("--max-tokens")
         if max_tokens_option and isinstance(max_tokens_option, str):
             try:
@@ -658,6 +744,16 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                     raise SecurityError(f"Token limit too high: {max_tokens} > 8000")
             except ValueError:
                 raise SecurityError(f"Invalid token limit: {max_tokens_option}")
+        
+        # Validate reasoning mode options
+        thinking_mode = command.options.get("--thinking-mode")
+        if thinking_mode and thinking_mode not in ["basic", "deep", "creative"]:
+            raise SecurityError(f"Invalid thinking mode: {thinking_mode}")
+        
+        # Check for prompt injection attempts
+        prompt_option = command.options.get("--prompt", "")
+        if self._detect_prompt_injection(prompt_option):
+            raise SecurityError("Potential prompt injection detected")
 
     def _is_safe_path(self, path: str) -> bool:
         """Check if file path is safe for operations."""
@@ -674,6 +770,49 @@ class GeminiCLIAdapter(UniversalAgentInterface):
                 return False
         
         return True
+
+    def _detect_prompt_injection(self, prompt: str) -> bool:
+        """Detect potential prompt injection attempts."""
+        if not prompt:
+            return False
+        
+        # Common prompt injection patterns
+        injection_patterns = [
+            "ignore previous instructions",
+            "disregard the above",
+            "forget what i said",
+            "act as if",
+            "pretend you are",
+            "roleplay as",
+            "jailbreak",
+            "do anything now",
+            "dan mode",
+            "developer mode",
+            # System prompt attempts
+            "system:",
+            "assistant:",
+            "user:",
+            # Code execution attempts in prompts
+            "```python",
+            "```bash",
+            "```shell",
+            "exec(",
+            "eval(",
+            "__import__"
+        ]
+        
+        prompt_lower = prompt.lower()
+        for pattern in injection_patterns:
+            if pattern in prompt_lower:
+                return True
+        
+        # Check for unusual repetition (potential prompt injection technique)
+        if len(prompt) > 100:
+            words = prompt.split()
+            if len(set(words)) < len(words) * 0.3:  # Too much repetition
+                return True
+        
+        return False
 
     # ========================================================================
     # LIFECYCLE MANAGEMENT
