@@ -1,0 +1,32 @@
+# Redis/WebSocket Communication Dependencies
+# For Multi-CLI Agent Coordination System - Production Ready
+
+# Redis async client
+redis[hiredis]==4.5.4
+
+# WebSocket server/client library
+websockets==11.0.3
+
+# Additional async utilities
+aiofiles==23.1.0
+aiohttp==3.8.5
+
+# SSL/TLS support
+cryptography==41.0.1
+
+# Configuration and validation
+pydantic==1.10.9
+python-dotenv==1.0.0
+
+# Performance monitoring
+psutil==5.9.5
+memory-profiler==0.60.0
+
+# Structured logging
+structlog==23.1.0
+colorama==0.4.6
+
+# Testing dependencies (optional)
+pytest-asyncio==0.21.0
+pytest-redis==3.0.2
+pytest-websocket==0.4.0
