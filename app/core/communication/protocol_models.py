@@ -131,6 +131,7 @@ class CLIMessage:
     
     # Execution configuration
     timeout_seconds: int = 300
+    priority: int = 5  # Priority level (1=high, 10=low)
     require_human_approval: bool = False
     isolation_required: bool = True
     

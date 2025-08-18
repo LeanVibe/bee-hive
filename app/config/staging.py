@@ -68,7 +68,7 @@ class StagingConfiguration(ProductionConfiguration):
         # Redis configuration for staging
         self.redis = RedisConfiguration(
             host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
+            port=int(os.getenv("REDIS_PORT", "6381")),  # Non-standard port (6379 + 2)
             db=int(os.getenv("REDIS_DB", "1")),  # Use different DB for staging
             password=os.getenv("REDIS_PASSWORD", None),  # Optional for local Redis
             ssl=False,  # Disable SSL for local testing
@@ -80,7 +80,7 @@ class StagingConfiguration(ProductionConfiguration):
         # WebSocket configuration for staging
         self.websocket = WebSocketConfiguration(
             host=os.getenv("WEBSOCKET_HOST", "localhost"),
-            port=int(os.getenv("WEBSOCKET_PORT", "8766")),  # Different port
+            port=int(os.getenv("WEBSOCKET_PORT", "8767")),  # Non-standard port (8765 + 2)
             ssl_enabled=False,  # Disable SSL for local testing
             ping_interval=10.0,  # More frequent pings for testing
             ping_timeout=10.0,
@@ -109,7 +109,7 @@ class StagingConfiguration(ProductionConfiguration):
         # Monitoring configuration for staging (enhanced)
         self.monitoring = MonitoringConfiguration(
             metrics_enabled=True,
-            metrics_port=int(os.getenv("METRICS_PORT", "9091")),  # Different port
+            metrics_port=int(os.getenv("METRICS_PORT", "9092")),  # Non-standard port (9090 + 2)
             health_check_enabled=True,
             health_check_interval=10,  # More frequent checks
             log_level="DEBUG",  # Debug level for staging
@@ -286,12 +286,13 @@ class DevelopmentConfiguration(StagingConfiguration):
     
     def _apply_development_overrides(self):
         """Apply development-specific configuration overrides."""
-        # Use different Redis DB for development
+        # Use different Redis DB and port for development
         self.redis.db = 2
+        self.redis.port = 6382  # Non-standard port (6379 + 3)
         self.redis.channel_prefix = "dev_cli_agents"
         
         # Use different WebSocket port
-        self.websocket.port = 8767
+        self.websocket.port = 8768  # Non-standard port (8765 + 3)
         
         # Even more relaxed security
         self.security.api_key_required = False

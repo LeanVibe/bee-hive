@@ -47,7 +47,7 @@ async def redis_config():
     """Redis configuration for testing."""
     return RedisConfig(
         host="localhost",
-        port=6379,
+        port=6383,  # Non-standard test port (6379 + 4)
         db=15,  # Use a test-specific database
         password=None,
         connection_pool_size=5
@@ -58,10 +58,10 @@ async def websocket_config():
     """WebSocket configuration for testing."""
     return WebSocketConfig(
         host="localhost",
-        port=8768,  # Use test-specific port
-        ssl_enabled=False,
-        max_connections=10,
-        ping_interval=5.0
+        port=8769,  # Non-standard test port (8765 + 4)
+        ssl_context=None,
+        ping_interval=5.0,
+        max_queue=10
     )
 
 @pytest.fixture
@@ -271,7 +271,7 @@ async def test_websocket_message_exchange(websocket_config, sample_cli_message):
     client_config = WebSocketConfig(
         host=websocket_config.host,
         port=websocket_config.port + 1,  # Different port for client
-        max_connections=5
+        max_queue=5
     )
     client_bridge = WebSocketMessageBridge(client_config)
     
@@ -436,8 +436,8 @@ async def test_websocket_connection_limits(websocket_config):
     """Test WebSocket connection limit handling."""
     logger.info("Testing WebSocket connection limits...")
     
-    # Reduce connection limit for testing
-    websocket_config.max_connections = 5
+    # Reduce queue limit for testing
+    websocket_config.max_queue = 5
     
     bridge = WebSocketMessageBridge(websocket_config)
     await bridge.start_server()
@@ -529,18 +529,18 @@ async def run_all_tests():
     """Run all Redis/WebSocket integration tests."""
     logger.info("🚀 Starting Redis/WebSocket Integration Test Suite")
     
-    # Create test configurations
+    # Create test configurations with non-standard ports
     redis_config = RedisConfig(
         host="localhost",
-        port=6379,
+        port=6383,  # Non-standard test port (6379 + 4)
         db=15,  # Test-specific database
         connection_pool_size=5
     )
     
     websocket_config = WebSocketConfig(
         host="localhost",
-        port=8769,  # Test-specific port
-        max_connections=10
+        port=8769,  # Non-standard test port (8765 + 4)
+        max_queue=10
     )
     
     sample_message = CLIMessage(
@@ -628,8 +628,8 @@ if __name__ == "__main__":
     print("🔧 Redis/WebSocket Integration Test Suite")
     print("="*50)
     print("Prerequisites:")
-    print("- Redis server running on localhost:6379")
-    print("- Test ports 8768-8769 available")
+    print("- Redis server running on localhost:6383 (optional - tests will skip if unavailable)")
+    print("- Test ports 8769-8770 available")
     print("- Required packages: redis, websockets")
     print("\nStarting tests...\n")
     

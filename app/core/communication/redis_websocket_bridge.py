@@ -116,22 +116,41 @@ class RedisMessageBroker:
     async def initialize(self) -> bool:
         """Initialize Redis connection and connection pool."""
         try:
-            # Create connection pool
-            self._redis_pool = aioredis.ConnectionPool(
-                host=self.config.host,
-                port=self.config.port,
-                db=self.config.db,
-                password=self.config.password,
-                ssl=self.config.ssl,
-                ssl_cert_reqs=self.config.ssl_cert_reqs,
-                ssl_ca_certs=self.config.ssl_ca_certs,
-                ssl_certfile=self.config.ssl_certfile,
-                ssl_keyfile=self.config.ssl_keyfile,
-                max_connections=self.config.connection_pool_size,
-                retry_on_timeout=self.config.retry_on_timeout,
-                socket_keepalive=self.config.socket_keepalive,
-                socket_keepalive_options=self.config.socket_keepalive_options
-            )
+            # Create connection pool with SSL handling
+            pool_kwargs = {
+                "host": self.config.host,
+                "port": self.config.port,
+                "db": self.config.db,
+                "max_connections": self.config.connection_pool_size,
+                "retry_on_timeout": self.config.retry_on_timeout,
+                "socket_keepalive": self.config.socket_keepalive,
+            }
+            
+            # Add password if provided
+            if self.config.password:
+                pool_kwargs["password"] = self.config.password
+            
+            # Add SSL configuration if enabled
+            if self.config.ssl:
+                ssl_kwargs = {}
+                if self.config.ssl_cert_reqs:
+                    ssl_kwargs["ssl_cert_reqs"] = self.config.ssl_cert_reqs
+                if self.config.ssl_ca_certs:
+                    ssl_kwargs["ssl_ca_certs"] = self.config.ssl_ca_certs
+                if self.config.ssl_certfile:
+                    ssl_kwargs["ssl_certfile"] = self.config.ssl_certfile
+                if self.config.ssl_keyfile:
+                    ssl_kwargs["ssl_keyfile"] = self.config.ssl_keyfile
+                
+                if ssl_kwargs:  # Only add SSL if we have SSL options
+                    pool_kwargs.update(ssl_kwargs)
+                    pool_kwargs["ssl"] = True
+            
+            # Add socket keepalive options if provided
+            if self.config.socket_keepalive_options:
+                pool_kwargs["socket_keepalive_options"] = self.config.socket_keepalive_options
+            
+            self._redis_pool = aioredis.ConnectionPool(**pool_kwargs)
             
             # Create Redis client
             self._redis_client = aioredis.Redis(connection_pool=self._redis_pool)

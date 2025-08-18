@@ -26,9 +26,9 @@ import ssl
 @dataclass
 class RedisConfiguration:
     """Redis connection and behavior configuration."""
-    # Connection settings
+    # Connection settings - Using non-standard port to avoid conflicts
     host: str = os.getenv("REDIS_HOST", "localhost")
-    port: int = int(os.getenv("REDIS_PORT", "6379"))
+    port: int = int(os.getenv("REDIS_PORT", "6380"))  # Non-standard port (default 6379 + 1)
     db: int = int(os.getenv("REDIS_DB", "0"))
     password: Optional[str] = os.getenv("REDIS_PASSWORD")
     
@@ -55,9 +55,9 @@ class RedisConfiguration:
 @dataclass
 class WebSocketConfiguration:
     """WebSocket server and client configuration."""
-    # Server settings
+    # Server settings - Using non-standard port to avoid conflicts
     host: str = os.getenv("WEBSOCKET_HOST", "0.0.0.0")
-    port: int = int(os.getenv("WEBSOCKET_PORT", "8765"))
+    port: int = int(os.getenv("WEBSOCKET_PORT", "8766"))  # Non-standard port (8765 + 1)
     
     # SSL/TLS settings
     ssl_enabled: bool = os.getenv("WEBSOCKET_SSL_ENABLED", "false").lower() == "true"
@@ -139,9 +139,9 @@ class SecurityConfiguration:
 @dataclass
 class MonitoringConfiguration:
     """Monitoring and observability configuration."""
-    # Prometheus metrics
+    # Prometheus metrics - Using non-standard port to avoid conflicts
     metrics_enabled: bool = os.getenv("METRICS_ENABLED", "true").lower() == "true"
-    metrics_port: int = int(os.getenv("METRICS_PORT", "9090"))
+    metrics_port: int = int(os.getenv("METRICS_PORT", "9091"))  # Non-standard port (9090 + 1)
     metrics_path: str = os.getenv("METRICS_PATH", "/metrics")
     
     # Health checks
