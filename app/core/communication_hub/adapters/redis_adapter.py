@@ -247,7 +247,7 @@ class RedisAdapter(BaseProtocolAdapter):
     async def subscribe(
         self,
         pattern: str,
-        handler: Callable[[UnifiedMessage], asyncio.coroutine],
+        handler: Callable[[UnifiedMessage], Any],
         use_streams: bool = True,
         consumer_group: Optional[str] = None,
         **kwargs

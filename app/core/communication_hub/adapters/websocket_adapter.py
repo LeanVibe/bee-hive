@@ -225,7 +225,7 @@ class WebSocketAdapter(BaseProtocolAdapter):
     async def subscribe(
         self,
         pattern: str,
-        handler: Callable[[UnifiedMessage], asyncio.coroutine],
+        handler: Callable[[UnifiedMessage], Any],
         connection_filter: Optional[str] = None,
         **kwargs
     ) -> SubscriptionResult:

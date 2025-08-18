@@ -70,7 +70,7 @@ class MessageHandler:
     def __init__(
         self,
         handler_id: str,
-        callback: Callable[[UnifiedMessage], asyncio.coroutine],
+        callback: Callable[[UnifiedMessage], Any],
         pattern: str = "*",
         auto_ack: bool = True
     ):
@@ -160,7 +160,7 @@ class BaseProtocolAdapter(ABC):
     async def subscribe(
         self,
         pattern: str,
-        handler: Callable[[UnifiedMessage], asyncio.coroutine],
+        handler: Callable[[UnifiedMessage], Any],
         **kwargs
     ) -> SubscriptionResult:
         """

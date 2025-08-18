@@ -349,7 +349,7 @@ class EventBus:
     async def subscribe(
         self,
         event_pattern: str,
-        handler: Callable[[UnifiedEvent], asyncio.coroutine]
+        handler: Callable[[UnifiedEvent], Any]
     ) -> str:
         """Subscribe to events matching pattern."""
         subscription_id = str(uuid.uuid4())
@@ -560,7 +560,7 @@ class CommunicationHub:
     async def subscribe(
         self,
         pattern: str,
-        handler: Callable[[UnifiedMessage], asyncio.coroutine],
+        handler: Callable[[UnifiedMessage], Any],
         protocols: Optional[List[ProtocolType]] = None,
         **kwargs
     ) -> Dict[str, SubscriptionResult]:
@@ -646,7 +646,7 @@ class CommunicationHub:
     async def subscribe_to_events(
         self,
         event_pattern: str,
-        handler: Callable[[UnifiedEvent], asyncio.coroutine]
+        handler: Callable[[UnifiedEvent], Any]
     ) -> Optional[str]:
         """Subscribe to events on event bus."""
         if not self.event_bus:
