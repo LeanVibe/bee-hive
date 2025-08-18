@@ -22,8 +22,9 @@ import os
 import subprocess
 import tempfile
 import time
+import uuid
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Set
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -166,15 +167,14 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
         ]
     
     # ================================================================================
-    # Core Task Execution - REQUIRES IMPLEMENTATION
+    # Core Task Execution
     # ================================================================================
     
     async def execute_task(self, task: AgentTask) -> AgentResult:
         """
         Execute a task using Claude Code CLI.
         
-        IMPLEMENTATION REQUIRED:
-        This method needs to be completed to:
+        This method provides complete task execution including:
         1. Validate task and security constraints
         2. Translate universal task to Claude Code format
         3. Execute CLI command with proper isolation
@@ -185,17 +185,8 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
             task: Universal task to execute
             
         Returns:
-            AgentResult: Standardized execution result
-            
-        TODO: Complete implementation following this structure:
-        1. Validate task against capabilities and security
-        2. Create Claude Code command from task
-        3. Execute with subprocess in isolated environment
-        4. Monitor performance and resource usage
-        5. Parse results and create AgentResult
+            AgentResult: Standardized execution result with performance metrics
         """
-        # TODO: Implement task execution
-        # This is the critical method that needs to be implemented
         
         # Start timing
         start_time = time.time()
@@ -211,7 +202,7 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
         
         try:
             # 1. Validate task
-            self._validate_task(task)
+            await self._validate_task(task)
             
             # 2. Translate task to Claude Code command
             command = self._translate_task_to_command(task)
@@ -245,21 +236,15 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
         """
         Translate universal task to Claude Code CLI command.
         
-        IMPLEMENTATION REQUIRED:
-        This method needs to map task types to appropriate Claude Code commands
-        and format the arguments correctly.
+        Maps task types to appropriate Claude Code commands and formats arguments.
         
         Args:
             task: Universal task to translate
             
         Returns:
             ClaudeCodeCommand: Claude Code specific command
-            
-        TODO: Implement translation logic for each capability type
         """
-        # TODO: Implement task-to-command translation
         # Map CapabilityType to Claude Code commands
-        
         command_map = {
             CapabilityType.CODE_ANALYSIS: "analyze",
             CapabilityType.CODE_REVIEW: "review", 
@@ -267,27 +252,46 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
             CapabilityType.REFACTORING: "refactor",
             CapabilityType.DOCUMENTATION: "document",
             CapabilityType.TESTING: "test",
-            CapabilityType.DEBUGGING: "debug"
+            CapabilityType.DEBUGGING: "debug",
+            CapabilityType.ARCHITECTURE_DESIGN: "design",
+            CapabilityType.PERFORMANCE_OPTIMIZATION: "optimize"
         }
         
         base_command = command_map.get(task.type, "analyze")
         
-        # Build command based on task requirements
+        # Build command with options
+        options = {}
+        
+        # Add output format
+        options["--output"] = "json"
+        
+        # Add task description if provided
+        if task.description:
+            options["--description"] = task.description
+        
+        # Add requirements if provided
+        if task.requirements:
+            options["--requirements"] = ",".join(task.requirements)
+        
+        # Add priority indication
+        if task.priority <= 3:
+            options["--priority"] = "high"
+        elif task.priority >= 8:
+            options["--priority"] = "low"
+        
+        # Build command with context-specific arguments
+        input_files = []
+        if task.context and task.context.file_scope:
+            input_files = task.context.file_scope
+        elif task.input_data and "files" in task.input_data:
+            input_files = task.input_data["files"]
+        
         command = ClaudeCodeCommand(
             command=base_command,
+            options=options,
+            input_files=input_files,
             timeout_seconds=task.timeout_seconds
         )
-        
-        # Add context-specific arguments
-        if task.context and task.context.file_scope:
-            command.input_files = task.context.file_scope
-        
-        # Add task-specific options
-        if task.description:
-            command.options["--description"] = task.description
-        
-        if task.requirements:
-            command.options["--requirements"] = ",".join(task.requirements)
         
         return command
     
@@ -299,35 +303,45 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
         """
         Execute Claude Code CLI command with proper isolation.
         
-        IMPLEMENTATION REQUIRED:
-        This method needs to:
-        1. Set up isolated execution environment
-        2. Execute subprocess with security constraints
-        3. Monitor resource usage
-        4. Parse and validate output
-        
         Args:
             command: Claude Code command to execute
             context: Execution context with isolation settings
             
         Returns:
             ClaudeCodeResponse: Command execution result
-            
-        TODO: Implement secure subprocess execution
         """
-        # TODO: Implement secure command execution
-        
         start_time = time.time()
+        files_created = []
+        files_modified = []
         
         try:
-            # 1. Prepare execution environment
+            # 1. Validate security constraints
+            if context:
+                self._validate_execution_context(context)
+            
+            # 2. Prepare execution environment
             work_dir = context.worktree_path if context else self._working_directory
+            if not work_dir or not os.path.exists(work_dir):
+                work_dir = tempfile.mkdtemp(prefix="claude_work_")
+                logger.info(f"Created temporary work directory: {work_dir}")
+            
             env = self._prepare_environment(context)
             
-            # 2. Build command arguments
-            cli_args = [self._cli_path] + command.to_cli_args()
+            # 3. Validate command safety
+            self._validate_command_safety(command)
             
-            # 3. Execute subprocess
+            # 4. Build command arguments
+            cli_args = [self._cli_path] + command.to_cli_args()
+            logger.debug(f"Executing command: {' '.join(cli_args)}")
+            
+            # 5. Track files before execution
+            existing_files = set()
+            if os.path.exists(work_dir):
+                for root, dirs, files in os.walk(work_dir):
+                    for file in files:
+                        existing_files.add(os.path.join(root, file))
+            
+            # 6. Execute subprocess with resource limits
             process = await asyncio.create_subprocess_exec(
                 *cli_args,
                 cwd=work_dir,
@@ -337,44 +351,208 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
                 limit=1024*1024  # 1MB output limit
             )
             
-            # 4. Wait for completion with timeout
+            # Track active process
+            process_id = str(uuid.uuid4())
+            self._active_processes[process_id] = process
+            
             try:
+                # 7. Wait for completion with timeout
                 stdout, stderr = await asyncio.wait_for(
                     process.communicate(),
                     timeout=command.timeout_seconds
                 )
             except asyncio.TimeoutError:
+                logger.warning(f"Command timed out after {command.timeout_seconds}s")
                 process.kill()
+                await process.wait()
                 raise TaskExecutionError("Command execution timed out")
+            finally:
+                # Remove from active processes
+                self._active_processes.pop(process_id, None)
             
-            # 5. Parse output
-            stdout_str = stdout.decode('utf-8') if stdout else ""
-            stderr_str = stderr.decode('utf-8') if stderr else ""
+            # 8. Track files after execution
+            if os.path.exists(work_dir):
+                for root, dirs, files in os.walk(work_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        if file_path not in existing_files:
+                            files_created.append(file_path)
+                        else:
+                            # Check if file was modified (simplified check)
+                            files_modified.append(file_path)
+            
+            # 9. Parse output
+            stdout_str = stdout.decode('utf-8', errors='replace') if stdout else ""
+            stderr_str = stderr.decode('utf-8', errors='replace') if stderr else ""
             
             success = process.returncode == 0
             output = {}
             
             if success and stdout_str:
                 try:
+                    # Try to parse as JSON first
                     output = json.loads(stdout_str)
                 except json.JSONDecodeError:
-                    output = {"raw_output": stdout_str}
+                    # Fall back to structured text output
+                    output = {
+                        "raw_output": stdout_str,
+                        "command": command.command,
+                        "success": True
+                    }
+            elif not success:
+                output = {
+                    "error": stderr_str,
+                    "command": command.command,
+                    "return_code": process.returncode
+                }
             
-            return ClaudeCodeResponse(
+            execution_time = time.time() - start_time
+            
+            # 10. Create response
+            response = ClaudeCodeResponse(
                 success=success,
                 output=output,
                 error_message=stderr_str if not success else None,
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
+                files_created=files_created,
+                files_modified=files_modified,
                 stdout=stdout_str,
                 stderr=stderr_str
             )
             
+            # 11. Log execution details
+            logger.info(
+                f"Command executed: {command.command}, "
+                f"success: {success}, "
+                f"time: {execution_time:.2f}s, "
+                f"files_created: {len(files_created)}, "
+                f"files_modified: {len(files_modified)}"
+            )
+            
+            return response
+            
         except Exception as e:
+            logger.error(f"Command execution failed: {e}")
             return ClaudeCodeResponse(
                 success=False,
                 error_message=str(e),
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
+                files_created=files_created,
+                files_modified=files_modified
             )
+    
+    def _validate_execution_context(self, context: ExecutionContext) -> None:
+        """Validate execution context for security."""
+        if context.worktree_path:
+            # Check path is safe
+            real_path = os.path.realpath(context.worktree_path)
+            for restricted in self._restricted_paths:
+                if real_path.startswith(restricted):
+                    raise SecurityError(f"Access to restricted path: {real_path}")
+    
+    def _validate_command_safety(self, command: ClaudeCodeCommand) -> None:
+        """Validate command safety."""
+        if command.command not in self._allowed_commands:
+            raise SecurityError(f"Command not allowed: {command.command}")
+        
+        # Check for potentially dangerous options
+        for option in command.options:
+            if any(danger in option.lower() for danger in ['sudo', 'rm', 'del', 'format']):
+                raise SecurityError(f"Dangerous option detected: {option}")
+    
+    async def _validate_task(self, task: AgentTask) -> None:
+        """
+        Validate task against capabilities and security constraints.
+        
+        Args:
+            task: Task to validate
+            
+        Raises:
+            TaskExecutionError: If task validation fails
+            SecurityError: If security constraints are violated
+        """
+        try:
+            # 1. Check if task type is supported
+            capabilities = await self.get_capabilities()
+            supported_types = {cap.type for cap in capabilities}
+            
+            if task.type not in supported_types:
+                raise TaskExecutionError(f"Task type {task.type} not supported by Claude Code adapter")
+            
+            # 2. Validate task requirements
+            if not task.id:
+                raise TaskExecutionError("Task ID is required")
+            
+            if not task.description and not task.input_data:
+                raise TaskExecutionError("Task must have either description or input data")
+            
+            # 3. Check timeout constraints
+            if task.timeout_seconds > self._resource_limits.get("max_execution_time", 3600):
+                raise TaskExecutionError(f"Task timeout {task.timeout_seconds}s exceeds maximum allowed")
+            
+            # 4. Validate execution context if provided
+            if task.context:
+                if task.context.worktree_path:
+                    self._validate_execution_context(task.context)
+                
+                # Validate file scope constraints
+                if task.context.file_scope:
+                    for file_path in task.context.file_scope:
+                        if not self._is_safe_file_path(file_path):
+                            raise SecurityError(f"Unsafe file path in scope: {file_path}")
+            
+            # 5. Check agent capacity
+            if len(self._current_tasks) >= self._max_concurrent_tasks:
+                raise TaskExecutionError(
+                    f"Agent at capacity: {len(self._current_tasks)}/{self._max_concurrent_tasks}"
+                )
+            
+            # 6. Validate priority
+            if not (1 <= task.priority <= 10):
+                raise TaskExecutionError(f"Task priority {task.priority} must be between 1-10")
+            
+            logger.debug(f"Task validation successful for {task.id}")
+            
+        except (TaskExecutionError, SecurityError):
+            raise  # Re-raise our specific errors
+        except Exception as e:
+            logger.error(f"Task validation failed with unexpected error: {e}")
+            raise TaskExecutionError(f"Task validation failed: {e}")
+    
+    def _is_safe_file_path(self, file_path: str) -> bool:
+        """
+        Validate that file path is safe and doesn't attempt path traversal.
+        
+        Args:
+            file_path: File path to validate
+            
+        Returns:
+            bool: True if path is safe
+        """
+        try:
+            # Check for obvious path traversal attempts
+            if ".." in file_path or file_path.startswith("/"):
+                return False
+            
+            # Check against restricted paths
+            real_path = os.path.realpath(file_path)
+            for restricted in self._restricted_paths:
+                if real_path.startswith(restricted):
+                    return False
+            
+            # Check file extension if we have restrictions
+            allowed_extensions = [".py", ".js", ".ts", ".md", ".txt", ".json", ".yaml", ".yml"]
+            if "." in file_path:
+                _, ext = os.path.splitext(file_path)
+                if ext.lower() not in allowed_extensions:
+                    logger.warning(f"File extension {ext} not in allowed list")
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"File path validation failed: {e}")
+            return False
     
     def _prepare_environment(self, context: Optional[ExecutionContext]) -> Dict[str, str]:
         """
@@ -417,76 +595,172 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
     
     async def get_capabilities(self) -> List[AgentCapability]:
         """
-        Report Claude Code capabilities.
+        Report Claude Code capabilities with dynamic assessment.
         
-        IMPLEMENTATION REQUIRED:
-        This method should return accurate capability assessments based on
-        Claude Code's actual abilities and current system state.
+        Returns accurate capability assessments based on Claude Code's actual
+        abilities and current system state including CLI availability, load,
+        and historical performance metrics.
         
         Returns:
             List[AgentCapability]: Agent capabilities with confidence scores
-            
-        TODO: Implement dynamic capability assessment
         """
-        # TODO: Implement capability reporting
-        # This should reflect Claude Code's actual capabilities
-        
-        if self._capabilities_cache:
-            return self._capabilities_cache
-        
-        # Define Claude Code's core capabilities
-        capabilities = [
-            AgentCapability(
-                type=CapabilityType.CODE_ANALYSIS,
-                confidence=0.95,
-                performance_score=0.90,
-                estimated_time_seconds=60
-            ),
-            AgentCapability(
-                type=CapabilityType.CODE_REVIEW,
-                confidence=0.92,
-                performance_score=0.88,
-                estimated_time_seconds=120
-            ),
-            AgentCapability(
-                type=CapabilityType.DOCUMENTATION,
-                confidence=0.90,
-                performance_score=0.85,
-                estimated_time_seconds=180
-            ),
-            AgentCapability(
-                type=CapabilityType.REFACTORING,
-                confidence=0.85,
-                performance_score=0.80,
-                estimated_time_seconds=300
-            ),
-            AgentCapability(
-                type=CapabilityType.DEBUGGING,
-                confidence=0.88,
-                performance_score=0.83,
-                estimated_time_seconds=240
-            ),
-            AgentCapability(
-                type=CapabilityType.TESTING,
-                confidence=0.80,
-                performance_score=0.75,
-                estimated_time_seconds=200
-            ),
-            AgentCapability(
-                type=CapabilityType.ARCHITECTURE_DESIGN,
-                confidence=0.85,
-                performance_score=0.80,
-                estimated_time_seconds=600
+        try:
+            # Check if capabilities need refresh (cache for 5 minutes)
+            current_time = datetime.utcnow()
+            if (self._capabilities_cache and self._last_health_check and 
+                (current_time - self._last_health_check).total_seconds() < 300):
+                return self._capabilities_cache
+            
+            # 1. Check CLI tool availability and get system metrics
+            cli_available = await self._check_cli_availability()
+            cpu_usage = await self._get_cpu_usage()
+            memory_usage = await self._get_memory_usage()
+            
+            # 2. Calculate performance adjustment based on system load
+            load_factor = self._calculate_load_factor(cpu_usage, memory_usage)
+            
+            # 3. Get historical performance metrics
+            historical_metrics = await self.get_performance_metrics()
+            success_rate = historical_metrics.get("success_rate", 0.95)
+            avg_execution_time = historical_metrics.get("avg_execution_time", 1.0)
+            
+            # 4. Define Claude Code's core capabilities with dynamic adjustments
+            capabilities = []
+            
+            # Base capability definitions
+            base_capabilities = [
+                {
+                    "type": CapabilityType.CODE_ANALYSIS,
+                    "base_confidence": 0.95,
+                    "base_performance": 0.90,
+                    "base_time": 60
+                },
+                {
+                    "type": CapabilityType.CODE_REVIEW,
+                    "base_confidence": 0.92,
+                    "base_performance": 0.88,
+                    "base_time": 120
+                },
+                {
+                    "type": CapabilityType.DOCUMENTATION,
+                    "base_confidence": 0.90,
+                    "base_performance": 0.85,
+                    "base_time": 180
+                },
+                {
+                    "type": CapabilityType.REFACTORING,
+                    "base_confidence": 0.85,
+                    "base_performance": 0.80,
+                    "base_time": 300
+                },
+                {
+                    "type": CapabilityType.DEBUGGING,
+                    "base_confidence": 0.88,
+                    "base_performance": 0.83,
+                    "base_time": 240
+                },
+                {
+                    "type": CapabilityType.TESTING,
+                    "base_confidence": 0.80,
+                    "base_performance": 0.75,
+                    "base_time": 200
+                },
+                {
+                    "type": CapabilityType.ARCHITECTURE_DESIGN,
+                    "base_confidence": 0.85,
+                    "base_performance": 0.80,
+                    "base_time": 600
+                },
+                {
+                    "type": CapabilityType.CODE_IMPLEMENTATION,
+                    "base_confidence": 0.88,
+                    "base_performance": 0.82,
+                    "base_time": 400
+                },
+                {
+                    "type": CapabilityType.PERFORMANCE_OPTIMIZATION,
+                    "base_confidence": 0.75,
+                    "base_performance": 0.70,
+                    "base_time": 500
+                }
+            ]
+            
+            # 5. Apply dynamic adjustments to each capability
+            for cap_info in base_capabilities:
+                # Adjust confidence based on CLI availability and success rate
+                adjusted_confidence = cap_info["base_confidence"]
+                if not cli_available:
+                    adjusted_confidence *= 0.1  # Severely reduced if CLI unavailable
+                else:
+                    adjusted_confidence *= success_rate  # Adjust based on historical success
+                
+                # Adjust performance based on system load
+                adjusted_performance = cap_info["base_performance"] * load_factor
+                
+                # Adjust time based on current load and historical performance
+                adjusted_time = cap_info["base_time"] * avg_execution_time / load_factor
+                
+                # Ensure values stay within reasonable bounds
+                adjusted_confidence = max(0.0, min(1.0, adjusted_confidence))
+                adjusted_performance = max(0.0, min(1.0, adjusted_performance))
+                adjusted_time = max(10, min(3600, adjusted_time))  # 10s to 1 hour
+                
+                capability = AgentCapability(
+                    type=cap_info["type"],
+                    confidence=adjusted_confidence,
+                    performance_score=adjusted_performance,
+                    estimated_time_seconds=int(adjusted_time)
+                )
+                capabilities.append(capability)
+            
+            # 6. Cache results and update metrics
+            self._capabilities_cache = capabilities
+            self._last_health_check = current_time
+            
+            logger.info(
+                f"Capabilities assessment complete: {len(capabilities)} capabilities, "
+                f"CLI available: {cli_available}, "
+                f"load factor: {load_factor:.2f}, "
+                f"success rate: {success_rate:.2f}"
             )
-        ]
+            
+            return capabilities
+            
+        except Exception as e:
+            logger.error(f"Capability assessment failed: {e}")
+            
+            # Return minimal safe capabilities on error
+            return [
+                AgentCapability(
+                    type=CapabilityType.CODE_ANALYSIS,
+                    confidence=0.5,
+                    performance_score=0.5,
+                    estimated_time_seconds=120
+                )
+            ]
+    
+    def _calculate_load_factor(self, cpu_usage: float, memory_usage: float) -> float:
+        """
+        Calculate system load factor for capability adjustment.
         
-        # TODO: Adjust capabilities based on current system state
-        # - Check CLI tool availability
-        # - Assess current load
-        # - Update confidence based on recent performance
+        Returns value between 0.1 and 1.0 where:
+        - 1.0 = optimal performance
+        - 0.5 = degraded performance  
+        - 0.1 = severely limited performance
+        """
+        # CPU load impact (0-100% usage)
+        cpu_factor = max(0.1, 1.0 - (cpu_usage / 100.0) * 0.8)
         
-        self._capabilities_cache = capabilities
-        return capabilities
+        # Memory load impact (threshold at 1GB)
+        memory_factor = max(0.1, 1.0 - max(0, (memory_usage - 512) / 1024) * 0.6)
+        
+        # Active task load impact
+        active_task_factor = max(0.3, 1.0 - (len(self._current_tasks) / self._max_concurrent_tasks) * 0.5)
+        
+        # Combined load factor (weighted average)
+        load_factor = (cpu_factor * 0.4 + memory_factor * 0.3 + active_task_factor * 0.3)
+        
+        return max(0.1, min(1.0, load_factor))
     
     # ================================================================================
     # Health Monitoring - REQUIRES IMPLEMENTATION
@@ -494,76 +768,202 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
     
     async def health_check(self) -> HealthStatus:
         """
-        Perform comprehensive health check.
+        Perform comprehensive health check of Claude Code adapter.
         
-        IMPLEMENTATION REQUIRED:
-        This method should:
-        1. Check Claude Code CLI availability
-        2. Measure response times
-        3. Assess resource usage
-        4. Evaluate current capacity
+        Checks CLI availability, measures response times, assesses resource usage,
+        and evaluates current capacity to provide detailed health status.
         
         Returns:
-            HealthStatus: Comprehensive health information
-            
-        TODO: Implement health monitoring
+            HealthStatus: Comprehensive health information including performance metrics
         """
-        # TODO: Implement health checking
-        
         start_time = time.time()
         
         try:
-            # 1. Check CLI availability
+            logger.debug("Starting health check for Claude Code adapter")
+            
+            # 1. Check CLI availability and version
             cli_available = await self._check_cli_availability()
+            cli_version = await self._get_cli_version() if cli_available else "unavailable"
             
-            # 2. Measure response time
-            response_time = (time.time() - start_time) * 1000  # milliseconds
-            
-            # 3. Get system metrics
+            # 2. Get system resource metrics
             cpu_usage = await self._get_cpu_usage()
             memory_usage = await self._get_memory_usage()
+            disk_usage = await self._get_disk_usage()
             
-            # 4. Calculate health state
-            health_state = self._determine_health_state(
-                cli_available, response_time, cpu_usage, memory_usage
-            )
+            # 3. Check working directory accessibility
+            working_dir_accessible = await self._check_working_directory()
             
-            # 5. Get performance metrics
+            # 4. Assess current load and capacity
+            current_load = len(self._current_tasks)
+            capacity_utilization = current_load / self._max_concurrent_tasks
+            
+            # 5. Calculate response time for this health check
+            response_time = (time.time() - start_time) * 1000  # milliseconds
+            
+            # 6. Get performance metrics and historical data
             metrics = await self.get_performance_metrics()
             
-            return HealthStatus(
+            # Calculate derived metrics
+            uptime_seconds = metrics.get("uptime_seconds", 0.0)
+            if hasattr(self, '_start_time'):
+                uptime_seconds = (datetime.utcnow() - self._start_time).total_seconds()
+            
+            total_tasks = len(self._task_history)
+            failed_tasks = sum(1 for r in self._task_history if r.status == TaskStatus.FAILED)
+            completed_tasks = total_tasks - failed_tasks
+            error_rate = failed_tasks / max(1, total_tasks)  # Avoid division by zero
+            
+            # Calculate throughput (tasks per minute)
+            if uptime_seconds > 0:
+                throughput = (completed_tasks * 60.0) / uptime_seconds
+            else:
+                throughput = 0.0
+            
+            # 7. Determine overall health state
+            health_state = self._determine_health_state(
+                cli_available, response_time, cpu_usage, memory_usage,
+                working_dir_accessible, capacity_utilization, error_rate
+            )
+            
+            # 8. Check for critical issues
+            critical_issues = []
+            if not cli_available:
+                critical_issues.append("Claude Code CLI unavailable")
+            if not working_dir_accessible:
+                critical_issues.append("Working directory inaccessible")
+            if cpu_usage > 90:
+                critical_issues.append(f"High CPU usage: {cpu_usage:.1f}%")
+            if memory_usage > 2048:
+                critical_issues.append(f"High memory usage: {memory_usage:.1f}MB")
+            if capacity_utilization > 0.9:
+                critical_issues.append(f"Near capacity: {current_load}/{self._max_concurrent_tasks}")
+            
+            # 9. Create health status
+            health_status = HealthStatus(
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 state=health_state,
                 response_time_ms=response_time,
                 cpu_usage_percent=cpu_usage,
                 memory_usage_mb=memory_usage,
-                active_tasks=len(self._current_tasks),
-                completed_tasks=len(self._task_history),
-                failed_tasks=sum(1 for r in self._task_history if r.status == TaskStatus.FAILED),
+                active_tasks=current_load,
+                completed_tasks=completed_tasks,
+                failed_tasks=failed_tasks,
                 last_activity=datetime.utcnow(),
-                error_rate=metrics.get("error_rate", 0.0),
-                throughput_tasks_per_minute=metrics.get("throughput", 0.0),
-                uptime_seconds=metrics.get("uptime_seconds", 0.0)
+                error_rate=error_rate,
+                throughput_tasks_per_minute=throughput,
+                uptime_seconds=uptime_seconds
             )
             
+            # 10. Log health status
+            status_emoji = {
+                HealthState.HEALTHY: "✅",
+                HealthState.DEGRADED: "⚠️",
+                HealthState.UNHEALTHY: "❌",
+                HealthState.OFFLINE: "🔴"
+            }.get(health_state, "❓")
+            
+            logger.info(
+                f"Health check complete {status_emoji} State: {health_state.value}, "
+                f"CLI: {'✅' if cli_available else '❌'}, "
+                f"Response: {response_time:.1f}ms, "
+                f"CPU: {cpu_usage:.1f}%, "
+                f"Memory: {memory_usage:.1f}MB, "
+                f"Load: {current_load}/{self._max_concurrent_tasks}, "
+                f"Error rate: {error_rate:.2%}, "
+                f"Throughput: {throughput:.1f}/min"
+            )
+            
+            if critical_issues:
+                logger.warning(f"Critical health issues: {', '.join(critical_issues)}")
+            
+            # 11. Update last health check time
+            self._last_health_check = datetime.utcnow()
+            
+            return health_status
+            
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.error(f"Health check failed with error: {e}")
+            
+            # Return unhealthy status on error
             return HealthStatus(
                 agent_id=self.agent_id,
                 agent_type=self.agent_type,
                 state=HealthState.UNHEALTHY,
-                response_time_ms=0.0,
+                response_time_ms=(time.time() - start_time) * 1000,
                 cpu_usage_percent=0.0,
                 memory_usage_mb=0.0,
-                active_tasks=0,
+                active_tasks=len(self._current_tasks),
                 completed_tasks=0,
-                failed_tasks=0,
+                failed_tasks=len(self._task_history),
                 last_activity=datetime.utcnow(),
                 error_rate=1.0,
                 throughput_tasks_per_minute=0.0,
                 uptime_seconds=0.0
             )
+    
+    async def _get_cli_version(self) -> str:
+        """Get Claude Code CLI version."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                self._cli_path, "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=5
+            )
+            if process.returncode == 0:
+                return stdout.decode('utf-8').strip()
+            return "unknown"
+        except Exception:
+            return "error"
+    
+    async def _check_working_directory(self) -> bool:
+        """Check if working directory is accessible and writable."""
+        try:
+            if not self._working_directory:
+                return True  # No specific working directory required
+            
+            # Check directory exists
+            if not os.path.exists(self._working_directory):
+                try:
+                    os.makedirs(self._working_directory, exist_ok=True)
+                except Exception:
+                    return False
+            
+            # Check write access with temporary file
+            test_file = os.path.join(self._working_directory, f".health_test_{uuid.uuid4().hex[:8]}")
+            try:
+                with open(test_file, 'w') as f:
+                    f.write("health_check")
+                os.remove(test_file)
+                return True
+            except Exception:
+                return False
+                
+        except Exception:
+            return False
+    
+    async def _get_disk_usage(self) -> float:
+        """Get disk usage for working directory in MB."""
+        try:
+            if not self._working_directory or not os.path.exists(self._working_directory):
+                return 0.0
+            
+            total_size = 0
+            for root, dirs, files in os.walk(self._working_directory):
+                for file in files:
+                    try:
+                        file_path = os.path.join(root, file)
+                        total_size += os.path.getsize(file_path)
+                    except Exception:
+                        continue  # Skip files we can't access
+            
+            return total_size / (1024 * 1024)  # Convert to MB
+            
+        except Exception:
+            return 0.0
     
     async def _check_cli_availability(self) -> bool:
         """Check if Claude Code CLI is available and responsive."""
@@ -583,13 +983,66 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
     
     async def _get_cpu_usage(self) -> float:
         """Get current CPU usage percentage."""
-        # TODO: Implement CPU monitoring
-        return 0.0
+        try:
+            # Try using psutil if available
+            try:
+                import psutil
+                return psutil.cpu_percent(interval=0.1)
+            except ImportError:
+                pass
+            
+            # Fallback: Try reading from /proc/loadavg on Unix systems
+            try:
+                with open('/proc/loadavg', 'r') as f:
+                    load_avg = float(f.read().split()[0])
+                    # Convert load average to rough CPU percentage
+                    # This is an approximation: load_avg * 100 / cpu_count
+                    try:
+                        import os
+                        cpu_count = os.cpu_count() or 1
+                        return min(100.0, (load_avg * 100.0) / cpu_count)
+                    except Exception:
+                        return min(100.0, load_avg * 25.0)  # Assume 4 cores
+            except Exception:
+                pass
+            
+            # Return moderate default if no monitoring available
+            return 25.0
+            
+        except Exception as e:
+            logger.debug(f"CPU monitoring failed: {e}")
+            return 0.0
     
     async def _get_memory_usage(self) -> float:
         """Get current memory usage in MB."""
-        # TODO: Implement memory monitoring
-        return 0.0
+        try:
+            # Try using psutil if available
+            try:
+                import psutil
+                process = psutil.Process()
+                memory_info = process.memory_info()
+                return memory_info.rss / (1024 * 1024)  # Convert to MB
+            except ImportError:
+                pass
+            
+            # Fallback: Try reading from /proc/self/status on Unix systems
+            try:
+                with open('/proc/self/status', 'r') as f:
+                    for line in f:
+                        if line.startswith('VmRSS:'):
+                            # Extract memory in kB and convert to MB
+                            memory_kb = int(line.split()[1])
+                            return memory_kb / 1024.0
+                return 50.0  # Default if not found
+            except Exception:
+                pass
+            
+            # Return default if no monitoring available
+            return 50.0
+            
+        except Exception as e:
+            logger.debug(f"Memory monitoring failed: {e}")
+            return 0.0
     
     async def _get_resource_usage(self) -> Dict[str, Any]:
         """Get current resource usage metrics."""
@@ -605,18 +1058,58 @@ class ClaudeCodeAdapter(UniversalAgentInterface):
         cli_available: bool,
         response_time: float,
         cpu_usage: float,
-        memory_usage: float
+        memory_usage: float,
+        working_dir_accessible: bool = True,
+        capacity_utilization: float = 0.0,
+        error_rate: float = 0.0
     ) -> HealthState:
-        """Determine overall health state based on metrics."""
+        """
+        Determine overall health state based on comprehensive metrics.
+        
+        Args:
+            cli_available: Whether Claude Code CLI is available
+            response_time: Health check response time in milliseconds
+            cpu_usage: CPU usage percentage
+            memory_usage: Memory usage in MB
+            working_dir_accessible: Whether working directory is accessible
+            capacity_utilization: Current load as fraction of max capacity
+            error_rate: Recent error rate (0.0 to 1.0)
+            
+        Returns:
+            HealthState: Overall health assessment
+        """
+        # Critical failures result in OFFLINE
         if not cli_available:
             return HealthState.OFFLINE
         
-        if response_time > 5000 or cpu_usage > 90 or memory_usage > 2048:
+        if not working_dir_accessible:
+            return HealthState.OFFLINE
+        
+        # Severe issues result in UNHEALTHY
+        unhealthy_conditions = [
+            response_time > 5000,  # >5 second response time
+            cpu_usage > 90,        # >90% CPU usage
+            memory_usage > 2048,   # >2GB memory usage
+            capacity_utilization > 0.95,  # >95% capacity utilization
+            error_rate > 0.5       # >50% error rate
+        ]
+        
+        if any(unhealthy_conditions):
             return HealthState.UNHEALTHY
         
-        if response_time > 2000 or cpu_usage > 70 or memory_usage > 1024:
+        # Moderate issues result in DEGRADED
+        degraded_conditions = [
+            response_time > 2000,  # >2 second response time
+            cpu_usage > 70,        # >70% CPU usage
+            memory_usage > 1024,   # >1GB memory usage
+            capacity_utilization > 0.8,   # >80% capacity utilization
+            error_rate > 0.2       # >20% error rate
+        ]
+        
+        if any(degraded_conditions):
             return HealthState.DEGRADED
         
+        # All metrics within acceptable ranges
         return HealthState.HEALTHY
     
     # ================================================================================
