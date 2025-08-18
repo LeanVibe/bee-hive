@@ -1,0 +1,1911 @@
+# Manager Class Consolidation Analysis for Epic 1.5
+============================================================
+
+## Executive Summary
+- **Total Manager Classes Found**: 204
+- **Total Lines of Code**: 191,058
+- **Functional Domains Identified**: 9
+
+## Functional Domain Analysis
+
+### MONITORING Domain
+**Description**: System monitoring, observability, and health checks
+**Manager Count**: 42
+**Total Lines**: 38,199
+**Redundancy Score**: 77.78%
+**Core Capabilities**: access, agent, allocation, batch, branch, capacity, checkpoint, compression, config, context, coordination, cpu, database, deployment, embedding, environment, event, execution, feature_flag, git, health, knowledge, lifecycle, logging, memory, metrics, monitoring, notification, observability, performance, permission, persistence, pgvector, pubsub, recovery, redis, resource, secret, security, semantic, session, settings, state, status, streams, task, tmux, vector, workflow, workspace
+
+**Managers in Domain**:
+- `RecoveryManager` (recovery_manager.py) - 1547 lines
+- `RecoveryManager` (recovery_manager.py) - 1547 lines
+- `RecoveryManager` (recovery_manager.py) - 1547 lines
+- `AccessControlManager` (cross_agent_knowledge_manager.py) - 1262 lines
+- `CrossAgentKnowledgeManager` (cross_agent_knowledge_manager.py) - 1262 lines
+- `AccessControlManager` (cross_agent_knowledge_manager.py) - 1262 lines
+- `CrossAgentKnowledgeManager` (cross_agent_knowledge_manager.py) - 1262 lines
+- `AccessControlManager` (cross_agent_knowledge_manager.py) - 1262 lines
+- `CrossAgentKnowledgeManager` (cross_agent_knowledge_manager.py) - 1262 lines
+- `IntelligentSleepManager` (intelligent_sleep_manager.py) - 1119 lines
+- `IntelligentSleepManager` (intelligent_sleep_manager.py) - 1119 lines
+- `IntelligentSleepManager` (intelligent_sleep_manager.py) - 1119 lines
+- `FeatureFlagManager` (feature_flag_manager.py) - 1071 lines
+- `FeatureFlagManager` (feature_flag_manager.py) - 1071 lines
+- `FeatureFlagManager` (feature_flag_manager.py) - 1071 lines
+- `IndexManager` (index_management.py) - 1055 lines
+- `IndexManager` (index_management.py) - 1055 lines
+- `IndexManager` (index_management.py) - 1055 lines
+- `EnterpriseConsumerGroupManager` (enterprise_consumer_group_manager.py) - 909 lines
+- `EnterpriseConsumerGroupManager` (enterprise_consumer_group_manager.py) - 909 lines
+- `EnterpriseConsumerGroupManager` (enterprise_consumer_group_manager.py) - 909 lines
+- `EnhancedRedisStreamsManager` (enhanced_redis_streams_manager.py) - 881 lines
+- `EnhancedRedisStreamsManager` (enhanced_redis_streams_manager.py) - 881 lines
+- `EnhancedRedisStreamsManager` (enhanced_redis_streams_manager.py) - 881 lines
+- `PGVectorManager` (pgvector_manager.py) - 738 lines
+- `PGVectorManager` (pgvector_manager.py) - 738 lines
+- `PGVectorManager` (pgvector_manager.py) - 738 lines
+- `EnhancedGitCheckpointManager` (enhanced_git_checkpoint_manager.py) - 664 lines
+- `EnhancedGitCheckpointManager` (enhanced_git_checkpoint_manager.py) - 664 lines
+- `EnhancedGitCheckpointManager` (enhanced_git_checkpoint_manager.py) - 664 lines
+- `WorktreeManager` (worktree_manager.py) - 589 lines
+- `WorktreeManager` (worktree_manager.py) - 589 lines
+- `WorktreeManager` (worktree_manager.py) - 589 lines
+- `EnterpriseTmuxManager` (enterprise_tmux_manager.py) - 586 lines
+- `EnterpriseTmuxManager` (enterprise_tmux_manager.py) - 586 lines
+- `EnterpriseTmuxManager` (enterprise_tmux_manager.py) - 586 lines
+- `SleepWakeManagerError` (sleep_wake_manager.py) - 525 lines
+- `SleepWakeManager` (sleep_wake_manager.py) - 525 lines
+- `SleepWakeManagerError` (sleep_wake_manager.py) - 525 lines
+- `SleepWakeManager` (sleep_wake_manager.py) - 525 lines
+- `SleepWakeManagerError` (sleep_wake_manager.py) - 525 lines
+- `SleepWakeManager` (sleep_wake_manager.py) - 525 lines
+
+### RESOURCE Domain
+**Description**: System resource monitoring and allocation
+**Manager Count**: 39
+**Total Lines**: 33,366
+**Redundancy Score**: 72.79%
+**Core Capabilities**: access, agent, allocation, batch, capacity, checkpoint, compression, config, context, cpu, database, embedding, environment, event, execution, git, health, lifecycle, logging, memory, metrics, monitoring, notification, observability, orchestration, performance, persona, recovery, redis, resource, security, session, settings, spawning, state, status, streams, task, tmux, workflow, workspace
+
+**Managers in Domain**:
+- `TmuxSessionManager` (workspace_manager.py) - 1588 lines
+- `WorkspaceManager` (workspace_manager.py) - 1588 lines
+- `TmuxSessionManager` (workspace_manager.py) - 1588 lines
+- `WorkspaceManager` (workspace_manager.py) - 1588 lines
+- `TmuxSessionManager` (workspace_manager.py) - 1588 lines
+- `WorkspaceManager` (workspace_manager.py) - 1588 lines
+- `CapacityManager` (resource_manager.py) - 1123 lines
+- `ResourceManager` (resource_manager.py) - 1123 lines
+- `CapacityManager` (resource_manager.py) - 1123 lines
+- `ResourceManager` (resource_manager.py) - 1123 lines
+- `CapacityManager` (resource_manager.py) - 1123 lines
+- `ResourceManager` (resource_manager.py) - 1123 lines
+- `ContextCacheManager` (context_cache_manager.py) - 1006 lines
+- `ContextCacheManager` (context_cache_manager.py) - 1006 lines
+- `ContextCacheManager` (context_cache_manager.py) - 1006 lines
+- `CapacityManager` (capacity_manager.py) - 853 lines
+- `CapacityManager` (capacity_manager.py) - 853 lines
+- `CapacityManager` (capacity_manager.py) - 853 lines
+- `EnterpriseBackPressureManager` (enterprise_backpressure_manager.py) - 826 lines
+- `EnterpriseBackPressureManager` (enterprise_backpressure_manager.py) - 826 lines
+- `EnterpriseBackPressureManager` (enterprise_backpressure_manager.py) - 826 lines
+- `EnhancedFailureRecoveryManager` (enhanced_failure_recovery_manager.py) - 781 lines
+- `EnhancedFailureRecoveryManager` (enhanced_failure_recovery_manager.py) - 781 lines
+- `EnhancedFailureRecoveryManager` (enhanced_failure_recovery_manager.py) - 781 lines
+- `BackPressureManager` (backpressure_manager.py) - 650 lines
+- `BackPressureManager` (backpressure_manager.py) - 650 lines
+- `BackPressureManager` (backpressure_manager.py) - 650 lines
+- `ManagerStatus` (unified_manager_base.py) - 396 lines
+- `ManagerMetrics` (unified_manager_base.py) - 396 lines
+- `ManagerConfig` (unified_manager_base.py) - 396 lines
+- `UnifiedManagerBase` (unified_manager_base.py) - 396 lines
+- `ManagerStatus` (unified_manager_base.py) - 396 lines
+- `ManagerMetrics` (unified_manager_base.py) - 396 lines
+- `ManagerConfig` (unified_manager_base.py) - 396 lines
+- `UnifiedManagerBase` (unified_manager_base.py) - 396 lines
+- `ManagerStatus` (unified_manager_base.py) - 396 lines
+- `ManagerMetrics` (unified_manager_base.py) - 396 lines
+- `ManagerConfig` (unified_manager_base.py) - 396 lines
+- `UnifiedManagerBase` (unified_manager_base.py) - 396 lines
+
+### WORKFLOW Domain
+**Description**: Task orchestration, execution, and state management
+**Manager Count**: 36
+**Total Lines**: 32,736
+**Redundancy Score**: 77.78%
+**Core Capabilities**: access, agent, allocation, api_key, auth, backup, batch, branch, capacity, checkpoint, compression, config, context, coordination, cpu, database, deployment, embedding, encryption, environment, event, execution, feature_flag, git, health, jwt, knowledge, lifecycle, logging, memory, messaging, metrics, monitoring, notification, observability, orchestration, performance, permission, persistence, persona, pgvector, pipeline, pubsub, recovery, redis, registration, resource, secret, security, semantic, session, settings, spawning, state, status, streams, task, tmux, vector, work_tree, workflow, workspace
+
+**Managers in Domain**:
+- `DatabaseManager` (storage_manager.py) - 1319 lines
+- `CacheManager` (storage_manager.py) - 1319 lines
+- `StorageManager` (storage_manager.py) - 1319 lines
+- `DatabaseManager` (storage_manager.py) - 1319 lines
+- `CacheManager` (storage_manager.py) - 1319 lines
+- `StorageManager` (storage_manager.py) - 1319 lines
+- `DatabaseManager` (storage_manager.py) - 1319 lines
+- `CacheManager` (storage_manager.py) - 1319 lines
+- `StorageManager` (storage_manager.py) - 1319 lines
+- `WorkflowManager` (workflow_manager.py) - 1111 lines
+- `WorkflowManager` (workflow_manager.py) - 1111 lines
+- `WorkflowManager` (workflow_manager.py) - 1111 lines
+- `IssueManagerError` (issue_manager.py) - 1072 lines
+- `IssueManager` (issue_manager.py) - 1072 lines
+- `IssueManagerError` (issue_manager.py) - 1072 lines
+- `IssueManager` (issue_manager.py) - 1072 lines
+- `IssueManagerError` (issue_manager.py) - 1072 lines
+- `IssueManager` (issue_manager.py) - 1072 lines
+- `ContextMemoryManager` (context_memory_manager.py) - 972 lines
+- `ContextMemoryManager` (context_memory_manager.py) - 972 lines
+- `ContextMemoryManager` (context_memory_manager.py) - 972 lines
+- `WorkflowStateManager` (workflow_state_manager.py) - 929 lines
+- `WorkflowStateManager` (workflow_state_manager.py) - 929 lines
+- `WorkflowStateManager` (workflow_state_manager.py) - 929 lines
+- `InternationalOperationsManager` (international_operations_management.py) - 809 lines
+- `InternationalOperationsManager` (international_operations_management.py) - 809 lines
+- `InternationalOperationsManager` (international_operations_management.py) - 809 lines
+- `EnterprisePilotManager` (enterprise_pilot_manager.py) - 456 lines
+- `EnterprisePilotManager` (enterprise_pilot_manager.py) - 456 lines
+- `EnterprisePilotManager` (enterprise_pilot_manager.py) - 456 lines
+- `ManagerInfo` (manager_analysis.py) - 267 lines
+- `ManagerAnalyzer` (manager_analysis.py) - 267 lines
+- `ManagerInfo` (manager_analysis.py) - 267 lines
+- `ManagerAnalyzer` (manager_analysis.py) - 267 lines
+- `ManagerInfo` (manager_analysis.py) - 267 lines
+- `ManagerAnalyzer` (manager_analysis.py) - 267 lines
+
+### CONTEXT Domain
+**Description**: Context management, memory, and knowledge sharing
+**Manager Count**: 21
+**Total Lines**: 21,015
+**Redundancy Score**: 75.00%
+**Core Capabilities**: access, agent, allocation, batch, capacity, compression, config, context, database, embedding, event, execution, health, knowledge, lifecycle, logging, memory, metrics, monitoring, performance, permission, persistence, pgvector, redis, resource, semantic, session, settings, state, status, task, vector, workflow
+
+**Managers in Domain**:
+- `MemoryHierarchyManager` (memory_hierarchy_manager.py) - 1201 lines
+- `MemoryHierarchyManager` (memory_hierarchy_manager.py) - 1201 lines
+- `MemoryHierarchyManager` (memory_hierarchy_manager.py) - 1201 lines
+- `EnhancedMemoryManager` (enhanced_memory_manager.py) - 1135 lines
+- `EnhancedMemoryManager` (enhanced_memory_manager.py) - 1135 lines
+- `EnhancedMemoryManager` (enhanced_memory_manager.py) - 1135 lines
+- `ContextUnifiedManager` (context_manager_unified.py) - 1106 lines
+- `ContextUnifiedManager` (context_manager_unified.py) - 1106 lines
+- `ContextUnifiedManager` (context_manager_unified.py) - 1106 lines
+- `AgentKnowledgeManager` (agent_knowledge_manager.py) - 1094 lines
+- `AgentKnowledgeManager` (agent_knowledge_manager.py) - 1094 lines
+- `AgentKnowledgeManager` (agent_knowledge_manager.py) - 1094 lines
+- `WorkflowContextManager` (workflow_context_manager.py) - 1093 lines
+- `WorkflowContextManager` (workflow_context_manager.py) - 1093 lines
+- `WorkflowContextManager` (workflow_context_manager.py) - 1093 lines
+- `ContextManager` (context_manager.py) - 725 lines
+- `ContextManager` (context_manager.py) - 725 lines
+- `ContextManager` (context_manager.py) - 725 lines
+- `OptimizedPGVectorManager` (optimized_pgvector_manager.py) - 651 lines
+- `OptimizedPGVectorManager` (optimized_pgvector_manager.py) - 651 lines
+- `OptimizedPGVectorManager` (optimized_pgvector_manager.py) - 651 lines
+
+### INFRASTRUCTURE Domain
+**Description**: Development infrastructure and workspace management
+**Manager Count**: 21
+**Total Lines**: 17,634
+**Redundancy Score**: 72.22%
+**Core Capabilities**: access, agent, auth, backup, branch, checkpoint, config, context, database, environment, event, execution, git, health, lifecycle, logging, metrics, monitoring, performance, permission, resource, secret, security, session, settings, state, status, task, tmux, work_tree, workspace
+
+**Managers in Domain**:
+- `BranchManagerError` (branch_manager.py) - 1008 lines
+- `BranchManager` (branch_manager.py) - 1008 lines
+- `BranchManagerError` (branch_manager.py) - 1008 lines
+- `BranchManager` (branch_manager.py) - 1008 lines
+- `BranchManagerError` (branch_manager.py) - 1008 lines
+- `BranchManager` (branch_manager.py) - 1008 lines
+- `WorkTreeIsolationManager` (work_tree_manager.py) - 834 lines
+- `GitWorkTreeManager` (work_tree_manager.py) - 834 lines
+- `WorkTreeManager` (work_tree_manager.py) - 834 lines
+- `WorkTreeIsolationManager` (work_tree_manager.py) - 834 lines
+- `GitWorkTreeManager` (work_tree_manager.py) - 834 lines
+- `WorkTreeManager` (work_tree_manager.py) - 834 lines
+- `WorkTreeIsolationManager` (work_tree_manager.py) - 834 lines
+- `GitWorkTreeManager` (work_tree_manager.py) - 834 lines
+- `WorkTreeManager` (work_tree_manager.py) - 834 lines
+- `TmuxSessionManager` (tmux_session_manager.py) - 753 lines
+- `TmuxSessionManager` (tmux_session_manager.py) - 753 lines
+- `TmuxSessionManager` (tmux_session_manager.py) - 753 lines
+- `VersionControlManager` (version_control_manager.py) - 607 lines
+- `VersionControlManager` (version_control_manager.py) - 607 lines
+- `VersionControlManager` (version_control_manager.py) - 607 lines
+
+### SECURITY Domain
+**Description**: Authentication, authorization, and security
+**Manager Count**: 15
+**Total Lines**: 17,193
+**Redundancy Score**: 74.71%
+**Core Capabilities**: access, agent, api_key, auth, batch, config, context, database, encryption, environment, event, git, health, jwt, lifecycle, logging, memory, metrics, monitoring, notification, performance, permission, pipeline, redis, resource, secret, security, session, settings, status, task, workspace
+
+**Managers in Domain**:
+- `SecurityManager` (security_manager.py) - 1485 lines
+- `SecurityManager` (security_manager.py) - 1485 lines
+- `SecurityManager` (security_manager.py) - 1485 lines
+- `EnterpriseApiKeyManager` (api_key_manager.py) - 1251 lines
+- `EnterpriseApiKeyManager` (api_key_manager.py) - 1251 lines
+- `EnterpriseApiKeyManager` (api_key_manager.py) - 1251 lines
+- `EnhancedJWTManager` (enhanced_jwt_manager.py) - 1075 lines
+- `EnhancedJWTManager` (enhanced_jwt_manager.py) - 1075 lines
+- `EnhancedJWTManager` (enhanced_jwt_manager.py) - 1075 lines
+- `SecretManager` (secret_manager.py) - 1033 lines
+- `SecretManager` (secret_manager.py) - 1033 lines
+- `SecretManager` (secret_manager.py) - 1033 lines
+- `EnterpriseSecretsManager` (enterprise_secrets_manager.py) - 887 lines
+- `EnterpriseSecretsManager` (enterprise_secrets_manager.py) - 887 lines
+- `EnterpriseSecretsManager` (enterprise_secrets_manager.py) - 887 lines
+
+### STORAGE Domain
+**Description**: Data persistence, checkpointing, and recovery
+**Manager Count**: 12
+**Total Lines**: 13,137
+**Redundancy Score**: 69.50%
+**Core Capabilities**: access, agent, auth, backup, batch, branch, checkpoint, compression, config, context, database, event, execution, git, health, lifecycle, logging, memory, metrics, monitoring, performance, permission, persistence, pipeline, recovery, redis, secret, security, session, settings, state, status, streams, task
+
+**Managers in Domain**:
+- `CheckpointManager` (checkpoint_manager.py) - 1709 lines
+- `CheckpointManager` (checkpoint_manager.py) - 1709 lines
+- `CheckpointManager` (checkpoint_manager.py) - 1709 lines
+- `ContextLifecycleManager` (context_lifecycle_manager.py) - 1095 lines
+- `ContextLifecycleManager` (context_lifecycle_manager.py) - 1095 lines
+- `ContextLifecycleManager` (context_lifecycle_manager.py) - 1095 lines
+- `SecureGitManager` (self_modification_git_manager.py) - 864 lines
+- `SecureGitManager` (self_modification_git_manager.py) - 864 lines
+- `SecureGitManager` (self_modification_git_manager.py) - 864 lines
+- `EnhancedStateManager` (enhanced_state_manager.py) - 711 lines
+- `EnhancedStateManager` (enhanced_state_manager.py) - 711 lines
+- `EnhancedStateManager` (enhanced_state_manager.py) - 711 lines
+
+### AGENT Domain
+**Description**: Agent lifecycle, coordination, and persona management
+**Manager Count**: 9
+**Total Lines**: 8,964
+**Redundancy Score**: 83.33%
+**Core Capabilities**: agent, config, context, coordination, database, event, execution, health, knowledge, lifecycle, messaging, metrics, monitoring, performance, persistence, persona, redis, registration, resource, security, session, spawning, state, status, streams, task, tmux, workflow
+
+**Managers in Domain**:
+- `AgentKnowledgeManager` (agent_manager.py) - 1125 lines
+- `AgentManager` (agent_manager.py) - 1125 lines
+- `AgentKnowledgeManager` (agent_manager.py) - 1125 lines
+- `AgentManager` (agent_manager.py) - 1125 lines
+- `AgentKnowledgeManager` (agent_manager.py) - 1125 lines
+- `AgentManager` (agent_manager.py) - 1125 lines
+- `AgentLifecycleManager` (agent_lifecycle_manager.py) - 738 lines
+- `AgentLifecycleManager` (agent_lifecycle_manager.py) - 738 lines
+- `AgentLifecycleManager` (agent_lifecycle_manager.py) - 738 lines
+
+### COMMUNICATION Domain
+**Description**: Inter-agent messaging and event coordination
+**Manager Count**: 9
+**Total Lines**: 8,814
+**Redundancy Score**: 74.07%
+**Core Capabilities**: agent, batch, config, context, coordination, database, embedding, event, health, knowledge, logging, memory, messaging, metrics, monitoring, notification, observability, performance, persistence, pubsub, recovery, redis, resource, semantic, session, settings, state, status, streams, task, vector
+
+**Managers in Domain**:
+- `CommunicationManager` (communication_manager.py) - 1293 lines
+- `CommunicationManager` (communication_manager.py) - 1293 lines
+- `CommunicationManager` (communication_manager.py) - 1293 lines
+- `RedisPubSubManager` (redis_pubsub_manager.py) - 840 lines
+- `RedisPubSubManager` (redis_pubsub_manager.py) - 840 lines
+- `RedisPubSubManager` (redis_pubsub_manager.py) - 840 lines
+- `ChatTranscriptManager` (chat_transcript_manager.py) - 805 lines
+- `ChatTranscriptManager` (chat_transcript_manager.py) - 805 lines
+- `ChatTranscriptManager` (chat_transcript_manager.py) - 805 lines
+
+## Detailed Manager Inventory
+
+### AGENT Domain Managers
+#### AgentKnowledgeManager
+- **File**: `agent_manager.py`
+- **Lines of Code**: 1125
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: Manages cross-agent knowledge sharing and learning
+
+#### AgentManager
+- **File**: `agent_manager.py`
+- **Lines of Code**: 1125
+- **Method Count**: 2
+- **Key Methods**: __init__, _determine_coordination_role
+- **Purpose**: 
+    Unified Agent Manager consolidating all agent-related functionality
+
+#### AgentKnowledgeManager
+- **File**: `agent_manager.py`
+- **Lines of Code**: 1125
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: Manages cross-agent knowledge sharing and learning
+
+#### AgentManager
+- **File**: `agent_manager.py`
+- **Lines of Code**: 1125
+- **Method Count**: 2
+- **Key Methods**: __init__, _determine_coordination_role
+- **Purpose**: 
+    Unified Agent Manager consolidating all agent-related functionality
+
+#### AgentKnowledgeManager
+- **File**: `agent_manager.py`
+- **Lines of Code**: 1125
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: Manages cross-agent knowledge sharing and learning
+
+#### AgentManager
+- **File**: `agent_manager.py`
+- **Lines of Code**: 1125
+- **Method Count**: 2
+- **Key Methods**: __init__, _determine_coordination_role
+- **Purpose**: 
+    Unified Agent Manager consolidating all agent-related functionality
+
+#### AgentLifecycleManager
+- **File**: `agent_lifecycle_manager.py`
+- **Lines of Code**: 738
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Manages the complete lifecycle of agents in the multi-agent system
+
+#### AgentLifecycleManager
+- **File**: `agent_lifecycle_manager.py`
+- **Lines of Code**: 738
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Manages the complete lifecycle of agents in the multi-agent system
+
+#### AgentLifecycleManager
+- **File**: `agent_lifecycle_manager.py`
+- **Lines of Code**: 738
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Manages the complete lifecycle of agents in the multi-agent system
+
+### COMMUNICATION Domain Managers
+#### CommunicationManager
+- **File**: `communication_manager.py`
+- **Lines of Code**: 1293
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Communication Manager consolidating all communication-related functionality
+
+#### CommunicationManager
+- **File**: `communication_manager.py`
+- **Lines of Code**: 1293
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Communication Manager consolidating all communication-related functionality
+
+#### CommunicationManager
+- **File**: `communication_manager.py`
+- **Lines of Code**: 1293
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Communication Manager consolidating all communication-related functionality
+
+#### RedisPubSubManager
+- **File**: `redis_pubsub_manager.py`
+- **Lines of Code**: 840
+- **Method Count**: 5
+- **Key Methods**: __init__, _ensure_connected, _handle_connection_error, _update_send_metrics, _update_receive_metrics
+- **Purpose**: 
+    Advanced Redis Pub/Sub and Streams manager for agent communication
+
+#### RedisPubSubManager
+- **File**: `redis_pubsub_manager.py`
+- **Lines of Code**: 840
+- **Method Count**: 5
+- **Key Methods**: __init__, _ensure_connected, _handle_connection_error, _update_send_metrics, _update_receive_metrics
+- **Purpose**: 
+    Advanced Redis Pub/Sub and Streams manager for agent communication
+
+#### RedisPubSubManager
+- **File**: `redis_pubsub_manager.py`
+- **Lines of Code**: 840
+- **Method Count**: 5
+- **Key Methods**: __init__, _ensure_connected, _handle_connection_error, _update_send_metrics, _update_receive_metrics
+- **Purpose**: 
+    Advanced Redis Pub/Sub and Streams manager for agent communication
+
+#### ChatTranscriptManager
+- **File**: `chat_transcript_manager.py`
+- **Lines of Code**: 805
+- **Method Count**: 3
+- **Key Methods**: __init__, _map_message_type_to_event_type, _map_event_type_to_message_type
+- **Purpose**: 
+    Comprehensive chat transcript manager for multi-agent conversation tracking
+
+#### ChatTranscriptManager
+- **File**: `chat_transcript_manager.py`
+- **Lines of Code**: 805
+- **Method Count**: 3
+- **Key Methods**: __init__, _map_message_type_to_event_type, _map_event_type_to_message_type
+- **Purpose**: 
+    Comprehensive chat transcript manager for multi-agent conversation tracking
+
+#### ChatTranscriptManager
+- **File**: `chat_transcript_manager.py`
+- **Lines of Code**: 805
+- **Method Count**: 3
+- **Key Methods**: __init__, _map_message_type_to_event_type, _map_event_type_to_message_type
+- **Purpose**: 
+    Comprehensive chat transcript manager for multi-agent conversation tracking
+
+### CONTEXT Domain Managers
+#### MemoryHierarchyManager
+- **File**: `memory_hierarchy_manager.py`
+- **Lines of Code**: 1201
+- **Method Count**: 3
+- **Key Methods**: __init__, get_memory_statistics, get_memory_pressure
+- **Purpose**: 
+    Manages hierarchical memory storage with intelligent aging, consolidation,
+    and cross-session continuity for optimal memory utilization
+
+#### MemoryHierarchyManager
+- **File**: `memory_hierarchy_manager.py`
+- **Lines of Code**: 1201
+- **Method Count**: 3
+- **Key Methods**: __init__, get_memory_statistics, get_memory_pressure
+- **Purpose**: 
+    Manages hierarchical memory storage with intelligent aging, consolidation,
+    and cross-session continuity for optimal memory utilization
+
+#### MemoryHierarchyManager
+- **File**: `memory_hierarchy_manager.py`
+- **Lines of Code**: 1201
+- **Method Count**: 3
+- **Key Methods**: __init__, get_memory_statistics, get_memory_pressure
+- **Purpose**: 
+    Manages hierarchical memory storage with intelligent aging, consolidation,
+    and cross-session continuity for optimal memory utilization
+
+#### EnhancedMemoryManager
+- **File**: `enhanced_memory_manager.py`
+- **Lines of Code**: 1135
+- **Method Count**: 5
+- **Key Methods**: __init__, _determine_decay_strategy, _calculate_relevance_score, _should_remove_memory, _apply_decay_factor
+- **Purpose**: 
+    Advanced Memory Manager for long-term persistence and hierarchical organization
+
+#### EnhancedMemoryManager
+- **File**: `enhanced_memory_manager.py`
+- **Lines of Code**: 1135
+- **Method Count**: 5
+- **Key Methods**: __init__, _determine_decay_strategy, _calculate_relevance_score, _should_remove_memory, _apply_decay_factor
+- **Purpose**: 
+    Advanced Memory Manager for long-term persistence and hierarchical organization
+
+#### EnhancedMemoryManager
+- **File**: `enhanced_memory_manager.py`
+- **Lines of Code**: 1135
+- **Method Count**: 5
+- **Key Methods**: __init__, _determine_decay_strategy, _calculate_relevance_score, _should_remove_memory, _apply_decay_factor
+- **Purpose**: 
+    Advanced Memory Manager for long-term persistence and hierarchical organization
+
+#### ContextUnifiedManager
+- **File**: `context_manager_unified.py`
+- **Lines of Code**: 1106
+- **Method Count**: 3
+- **Key Methods**: __init__, _generate_cache_key, _create_snippet
+- **Purpose**: 
+    Unified Context Manager consolidating all context-related functionality
+
+#### ContextUnifiedManager
+- **File**: `context_manager_unified.py`
+- **Lines of Code**: 1106
+- **Method Count**: 3
+- **Key Methods**: __init__, _generate_cache_key, _create_snippet
+- **Purpose**: 
+    Unified Context Manager consolidating all context-related functionality
+
+#### ContextUnifiedManager
+- **File**: `context_manager_unified.py`
+- **Lines of Code**: 1106
+- **Method Count**: 3
+- **Key Methods**: __init__, _generate_cache_key, _create_snippet
+- **Purpose**: 
+    Unified Context Manager consolidating all context-related functionality
+
+#### AgentKnowledgeManager
+- **File**: `agent_knowledge_manager.py`
+- **Lines of Code**: 1094
+- **Method Count**: 2
+- **Key Methods**: __init__, _calculate_knowledge_relevance
+- **Purpose**: 
+    Manages agent-scoped knowledge with cross-agent sharing and access controls
+
+#### AgentKnowledgeManager
+- **File**: `agent_knowledge_manager.py`
+- **Lines of Code**: 1094
+- **Method Count**: 2
+- **Key Methods**: __init__, _calculate_knowledge_relevance
+- **Purpose**: 
+    Manages agent-scoped knowledge with cross-agent sharing and access controls
+
+#### AgentKnowledgeManager
+- **File**: `agent_knowledge_manager.py`
+- **Lines of Code**: 1094
+- **Method Count**: 2
+- **Key Methods**: __init__, _calculate_knowledge_relevance
+- **Purpose**: 
+    Manages agent-scoped knowledge with cross-agent sharing and access controls
+
+#### WorkflowContextManager
+- **File**: `workflow_context_manager.py`
+- **Lines of Code**: 1093
+- **Method Count**: 7
+- **Key Methods**: __init__, _generate_context_summary, _filter_fragments_for_sharing, _estimate_token_count, _get_injection_cache_key
+- **Purpose**: 
+    Manages workflow-scoped context with intelligent injection and compression
+
+#### WorkflowContextManager
+- **File**: `workflow_context_manager.py`
+- **Lines of Code**: 1093
+- **Method Count**: 7
+- **Key Methods**: __init__, _generate_context_summary, _filter_fragments_for_sharing, _estimate_token_count, _get_injection_cache_key
+- **Purpose**: 
+    Manages workflow-scoped context with intelligent injection and compression
+
+#### WorkflowContextManager
+- **File**: `workflow_context_manager.py`
+- **Lines of Code**: 1093
+- **Method Count**: 7
+- **Key Methods**: __init__, _generate_context_summary, _filter_fragments_for_sharing, _estimate_token_count, _get_injection_cache_key
+- **Purpose**: 
+    Manages workflow-scoped context with intelligent injection and compression
+
+#### ContextManager
+- **File**: `context_manager.py`
+- **Lines of Code**: 725
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-level context management service
+
+#### ContextManager
+- **File**: `context_manager.py`
+- **Lines of Code**: 725
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-level context management service
+
+#### ContextManager
+- **File**: `context_manager.py`
+- **Lines of Code**: 725
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-level context management service
+
+#### OptimizedPGVectorManager
+- **File**: `optimized_pgvector_manager.py`
+- **Lines of Code**: 651
+- **Method Count**: 3
+- **Key Methods**: __init__, _create_cache_key, _compress_embedding
+- **Purpose**: 
+    Performance-optimized pgvector manager with advanced caching,
+    connection pooling, and batch processing capabilities
+
+#### OptimizedPGVectorManager
+- **File**: `optimized_pgvector_manager.py`
+- **Lines of Code**: 651
+- **Method Count**: 3
+- **Key Methods**: __init__, _create_cache_key, _compress_embedding
+- **Purpose**: 
+    Performance-optimized pgvector manager with advanced caching,
+    connection pooling, and batch processing capabilities
+
+#### OptimizedPGVectorManager
+- **File**: `optimized_pgvector_manager.py`
+- **Lines of Code**: 651
+- **Method Count**: 3
+- **Key Methods**: __init__, _create_cache_key, _compress_embedding
+- **Purpose**: 
+    Performance-optimized pgvector manager with advanced caching,
+    connection pooling, and batch processing capabilities
+
+### INFRASTRUCTURE Domain Managers
+#### BranchManagerError
+- **File**: `branch_manager.py`
+- **Lines of Code**: 1008
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Custom exception for branch management operations
+
+#### BranchManager
+- **File**: `branch_manager.py`
+- **Lines of Code**: 1008
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive branch management for multi-agent development
+
+#### BranchManagerError
+- **File**: `branch_manager.py`
+- **Lines of Code**: 1008
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Custom exception for branch management operations
+
+#### BranchManager
+- **File**: `branch_manager.py`
+- **Lines of Code**: 1008
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive branch management for multi-agent development
+
+#### BranchManagerError
+- **File**: `branch_manager.py`
+- **Lines of Code**: 1008
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Custom exception for branch management operations
+
+#### BranchManager
+- **File**: `branch_manager.py`
+- **Lines of Code**: 1008
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive branch management for multi-agent development
+
+#### WorkTreeIsolationManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 3
+- **Key Methods**: __init__, get_work_tree_path, check_path_security
+- **Purpose**: 
+    Manages filesystem-level isolation between agent work trees
+
+#### GitWorkTreeManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Git-specific work tree management with advanced isolation and branch handling
+
+#### WorkTreeManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-level work tree management orchestrating all work tree operations
+
+#### WorkTreeIsolationManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 3
+- **Key Methods**: __init__, get_work_tree_path, check_path_security
+- **Purpose**: 
+    Manages filesystem-level isolation between agent work trees
+
+#### GitWorkTreeManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Git-specific work tree management with advanced isolation and branch handling
+
+#### WorkTreeManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-level work tree management orchestrating all work tree operations
+
+#### WorkTreeIsolationManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 3
+- **Key Methods**: __init__, get_work_tree_path, check_path_security
+- **Purpose**: 
+    Manages filesystem-level isolation between agent work trees
+
+#### GitWorkTreeManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Git-specific work tree management with advanced isolation and branch handling
+
+#### WorkTreeManager
+- **File**: `work_tree_manager.py`
+- **Lines of Code**: 834
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-level work tree management orchestrating all work tree operations
+
+#### TmuxSessionManager
+- **File**: `tmux_session_manager.py`
+- **Lines of Code**: 753
+- **Method Count**: 6
+- **Key Methods**: __init__, get_session_info, get_agent_session, list_sessions, _prepare_environment_variables
+- **Purpose**: 
+    Manages tmux sessions for agent isolation and workspace management
+
+#### TmuxSessionManager
+- **File**: `tmux_session_manager.py`
+- **Lines of Code**: 753
+- **Method Count**: 6
+- **Key Methods**: __init__, get_session_info, get_agent_session, list_sessions, _prepare_environment_variables
+- **Purpose**: 
+    Manages tmux sessions for agent isolation and workspace management
+
+#### TmuxSessionManager
+- **File**: `tmux_session_manager.py`
+- **Lines of Code**: 753
+- **Method Count**: 6
+- **Key Methods**: __init__, get_session_info, get_agent_session, list_sessions, _prepare_environment_variables
+- **Purpose**: 
+    Manages tmux sessions for agent isolation and workspace management
+
+#### VersionControlManager
+- **File**: `self_modification/version_control_manager.py`
+- **Lines of Code**: 607
+- **Method Count**: 18
+- **Key Methods**: __init__, _initialize_repository, _configure_repository, create_modification_branch, apply_modifications
+- **Purpose**: Manages git operations for the self-modification engine
+
+#### VersionControlManager
+- **File**: `self_modification/version_control_manager.py`
+- **Lines of Code**: 607
+- **Method Count**: 18
+- **Key Methods**: __init__, _initialize_repository, _configure_repository, create_modification_branch, apply_modifications
+- **Purpose**: Manages git operations for the self-modification engine
+
+#### VersionControlManager
+- **File**: `self_modification/version_control_manager.py`
+- **Lines of Code**: 607
+- **Method Count**: 18
+- **Key Methods**: __init__, _initialize_repository, _configure_repository, create_modification_branch, apply_modifications
+- **Purpose**: Manages git operations for the self-modification engine
+
+### MONITORING Domain Managers
+#### RecoveryManager
+- **File**: `recovery_manager.py`
+- **Lines of Code**: 1547
+- **Method Count**: 3
+- **Key Methods**: __init__, _get_recovery_cache, _set_recovery_cache
+- **Purpose**: 
+    Manages checkpoint restoration and system recovery operations
+
+#### RecoveryManager
+- **File**: `recovery_manager.py`
+- **Lines of Code**: 1547
+- **Method Count**: 3
+- **Key Methods**: __init__, _get_recovery_cache, _set_recovery_cache
+- **Purpose**: 
+    Manages checkpoint restoration and system recovery operations
+
+#### RecoveryManager
+- **File**: `recovery_manager.py`
+- **Lines of Code**: 1547
+- **Method Count**: 3
+- **Key Methods**: __init__, _get_recovery_cache, _set_recovery_cache
+- **Purpose**: 
+    Manages checkpoint restoration and system recovery operations
+
+#### AccessControlManager
+- **File**: `cross_agent_knowledge_manager.py`
+- **Lines of Code**: 1262
+- **Method Count**: 5
+- **Key Methods**: __init__, set_agent_role, set_team_membership, can_access_knowledge, create_sharing_policy
+- **Purpose**: Manages access control and permissions for knowledge sharing
+
+#### CrossAgentKnowledgeManager
+- **File**: `cross_agent_knowledge_manager.py`
+- **Lines of Code**: 1262
+- **Method Count**: 6
+- **Key Methods**: __init__, get_quality_metrics, _create_shared_knowledge_copy, _calculate_proficiency, _identify_collaboration_pattern
+- **Purpose**: 
+    Enhanced cross-agent knowledge management system with sophisticated sharing,
+    access controls, quality assessment, and collaborative learning capabilities
+
+#### AccessControlManager
+- **File**: `cross_agent_knowledge_manager.py`
+- **Lines of Code**: 1262
+- **Method Count**: 5
+- **Key Methods**: __init__, set_agent_role, set_team_membership, can_access_knowledge, create_sharing_policy
+- **Purpose**: Manages access control and permissions for knowledge sharing
+
+#### CrossAgentKnowledgeManager
+- **File**: `cross_agent_knowledge_manager.py`
+- **Lines of Code**: 1262
+- **Method Count**: 6
+- **Key Methods**: __init__, get_quality_metrics, _create_shared_knowledge_copy, _calculate_proficiency, _identify_collaboration_pattern
+- **Purpose**: 
+    Enhanced cross-agent knowledge management system with sophisticated sharing,
+    access controls, quality assessment, and collaborative learning capabilities
+
+#### AccessControlManager
+- **File**: `cross_agent_knowledge_manager.py`
+- **Lines of Code**: 1262
+- **Method Count**: 5
+- **Key Methods**: __init__, set_agent_role, set_team_membership, can_access_knowledge, create_sharing_policy
+- **Purpose**: Manages access control and permissions for knowledge sharing
+
+#### CrossAgentKnowledgeManager
+- **File**: `cross_agent_knowledge_manager.py`
+- **Lines of Code**: 1262
+- **Method Count**: 6
+- **Key Methods**: __init__, get_quality_metrics, _create_shared_knowledge_copy, _calculate_proficiency, _identify_collaboration_pattern
+- **Purpose**: 
+    Enhanced cross-agent knowledge management system with sophisticated sharing,
+    access controls, quality assessment, and collaborative learning capabilities
+
+#### IntelligentSleepManager
+- **File**: `intelligent_sleep_manager.py`
+- **Lines of Code**: 1119
+- **Method Count**: 3
+- **Key Methods**: __init__, _time_windows_overlap, _determine_implementation_priority
+- **Purpose**: 
+    Advanced sleep management with machine learning and coordination
+
+#### IntelligentSleepManager
+- **File**: `intelligent_sleep_manager.py`
+- **Lines of Code**: 1119
+- **Method Count**: 3
+- **Key Methods**: __init__, _time_windows_overlap, _determine_implementation_priority
+- **Purpose**: 
+    Advanced sleep management with machine learning and coordination
+
+#### IntelligentSleepManager
+- **File**: `intelligent_sleep_manager.py`
+- **Lines of Code**: 1119
+- **Method Count**: 3
+- **Key Methods**: __init__, _time_windows_overlap, _determine_implementation_priority
+- **Purpose**: 
+    Advanced sleep management with machine learning and coordination
+
+#### FeatureFlagManager
+- **File**: `feature_flag_manager.py`
+- **Lines of Code**: 1071
+- **Method Count**: 3
+- **Key Methods**: __init__, _get_next_rollout_stage, _get_stage_percentage
+- **Purpose**: 
+    Advanced feature flag manager for gradual rollout control
+
+#### FeatureFlagManager
+- **File**: `feature_flag_manager.py`
+- **Lines of Code**: 1071
+- **Method Count**: 3
+- **Key Methods**: __init__, _get_next_rollout_stage, _get_stage_percentage
+- **Purpose**: 
+    Advanced feature flag manager for gradual rollout control
+
+#### FeatureFlagManager
+- **File**: `feature_flag_manager.py`
+- **Lines of Code**: 1071
+- **Method Count**: 3
+- **Key Methods**: __init__, _get_next_rollout_stage, _get_stage_percentage
+- **Purpose**: 
+    Advanced feature flag manager for gradual rollout control
+
+#### IndexManager
+- **File**: `index_management.py`
+- **Lines of Code**: 1055
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive index management system for vector search optimization
+
+#### IndexManager
+- **File**: `index_management.py`
+- **Lines of Code**: 1055
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive index management system for vector search optimization
+
+#### IndexManager
+- **File**: `index_management.py`
+- **Lines of Code**: 1055
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive index management system for vector search optimization
+
+#### EnterpriseConsumerGroupManager
+- **File**: `enterprise_consumer_group_manager.py`
+- **Lines of Code**: 909
+- **Method Count**: 4
+- **Key Methods**: __init__, register_health_callback, register_scaling_callback, _generate_health_recommendations
+- **Purpose**: 
+    Enterprise consumer group management system combining health monitoring,
+    load balancing, and automatic scaling
+
+#### EnterpriseConsumerGroupManager
+- **File**: `enterprise_consumer_group_manager.py`
+- **Lines of Code**: 909
+- **Method Count**: 4
+- **Key Methods**: __init__, register_health_callback, register_scaling_callback, _generate_health_recommendations
+- **Purpose**: 
+    Enterprise consumer group management system combining health monitoring,
+    load balancing, and automatic scaling
+
+#### EnterpriseConsumerGroupManager
+- **File**: `enterprise_consumer_group_manager.py`
+- **Lines of Code**: 909
+- **Method Count**: 4
+- **Key Methods**: __init__, register_health_callback, register_scaling_callback, _generate_health_recommendations
+- **Purpose**: 
+    Enterprise consumer group management system combining health monitoring,
+    load balancing, and automatic scaling
+
+#### EnhancedRedisStreamsManager
+- **File**: `enhanced_redis_streams_manager.py`
+- **Lines of Code**: 881
+- **Method Count**: 2
+- **Key Methods**: __init__, _enhanced_message_handler
+- **Purpose**: 
+    Enhanced Redis Streams Manager with Consumer Groups and Load Balancing
+
+#### EnhancedRedisStreamsManager
+- **File**: `enhanced_redis_streams_manager.py`
+- **Lines of Code**: 881
+- **Method Count**: 2
+- **Key Methods**: __init__, _enhanced_message_handler
+- **Purpose**: 
+    Enhanced Redis Streams Manager with Consumer Groups and Load Balancing
+
+#### EnhancedRedisStreamsManager
+- **File**: `enhanced_redis_streams_manager.py`
+- **Lines of Code**: 881
+- **Method Count**: 2
+- **Key Methods**: __init__, _enhanced_message_handler
+- **Purpose**: 
+    Enhanced Redis Streams Manager with Consumer Groups and Load Balancing
+
+#### PGVectorManager
+- **File**: `pgvector_manager.py`
+- **Lines of Code**: 738
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-performance pgvector manager for semantic memory operations
+
+#### PGVectorManager
+- **File**: `pgvector_manager.py`
+- **Lines of Code**: 738
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-performance pgvector manager for semantic memory operations
+
+#### PGVectorManager
+- **File**: `pgvector_manager.py`
+- **Lines of Code**: 738
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    High-performance pgvector manager for semantic memory operations
+
+#### EnhancedGitCheckpointManager
+- **File**: `enhanced_git_checkpoint_manager.py`
+- **Lines of Code**: 664
+- **Method Count**: 2
+- **Key Methods**: __init__, _generate_sleep_cycle_branch_name
+- **Purpose**: 
+    Enhanced Git-based checkpoint manager with deep sleep cycle integration
+
+#### EnhancedGitCheckpointManager
+- **File**: `enhanced_git_checkpoint_manager.py`
+- **Lines of Code**: 664
+- **Method Count**: 2
+- **Key Methods**: __init__, _generate_sleep_cycle_branch_name
+- **Purpose**: 
+    Enhanced Git-based checkpoint manager with deep sleep cycle integration
+
+#### EnhancedGitCheckpointManager
+- **File**: `enhanced_git_checkpoint_manager.py`
+- **Lines of Code**: 664
+- **Method Count**: 2
+- **Key Methods**: __init__, _generate_sleep_cycle_branch_name
+- **Purpose**: 
+    Enhanced Git-based checkpoint manager with deep sleep cycle integration
+
+#### WorktreeManager
+- **File**: `isolation/worktree_manager.py`
+- **Lines of Code**: 589
+- **Method Count**: 3
+- **Key Methods**: __init__, get_agent_worktrees, get_statistics
+- **Purpose**: 
+    Manages isolated git worktrees for secure multi-agent coordination
+
+#### WorktreeManager
+- **File**: `isolation/worktree_manager.py`
+- **Lines of Code**: 589
+- **Method Count**: 3
+- **Key Methods**: __init__, get_agent_worktrees, get_statistics
+- **Purpose**: 
+    Manages isolated git worktrees for secure multi-agent coordination
+
+#### WorktreeManager
+- **File**: `isolation/worktree_manager.py`
+- **Lines of Code**: 589
+- **Method Count**: 3
+- **Key Methods**: __init__, get_agent_worktrees, get_statistics
+- **Purpose**: 
+    Manages isolated git worktrees for secure multi-agent coordination
+
+#### EnterpriseTmuxManager
+- **File**: `enterprise_tmux_manager.py`
+- **Lines of Code**: 586
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Enterprise-grade tmux session manager with fault tolerance
+
+#### EnterpriseTmuxManager
+- **File**: `enterprise_tmux_manager.py`
+- **Lines of Code**: 586
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Enterprise-grade tmux session manager with fault tolerance
+
+#### EnterpriseTmuxManager
+- **File**: `enterprise_tmux_manager.py`
+- **Lines of Code**: 586
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Enterprise-grade tmux session manager with fault tolerance
+
+#### SleepWakeManagerError
+- **File**: `sleep_wake_manager.py`
+- **Lines of Code**: 525
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Raised when sleep-wake operations fail
+
+#### SleepWakeManager
+- **File**: `sleep_wake_manager.py`
+- **Lines of Code**: 525
+- **Method Count**: 2
+- **Key Methods**: __init__, _update_average_metric
+- **Purpose**: 
+    Main orchestrator for sleep-wake operations
+
+#### SleepWakeManagerError
+- **File**: `sleep_wake_manager.py`
+- **Lines of Code**: 525
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Raised when sleep-wake operations fail
+
+#### SleepWakeManager
+- **File**: `sleep_wake_manager.py`
+- **Lines of Code**: 525
+- **Method Count**: 2
+- **Key Methods**: __init__, _update_average_metric
+- **Purpose**: 
+    Main orchestrator for sleep-wake operations
+
+#### SleepWakeManagerError
+- **File**: `sleep_wake_manager.py`
+- **Lines of Code**: 525
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Raised when sleep-wake operations fail
+
+#### SleepWakeManager
+- **File**: `sleep_wake_manager.py`
+- **Lines of Code**: 525
+- **Method Count**: 2
+- **Key Methods**: __init__, _update_average_metric
+- **Purpose**: 
+    Main orchestrator for sleep-wake operations
+
+### RESOURCE Domain Managers
+#### TmuxSessionManager
+- **File**: `workspace_manager.py`
+- **Lines of Code**: 1588
+- **Method Count**: 3
+- **Key Methods**: __init__, _initialize_session_templates, _merge_config
+- **Purpose**: 
+    Enhanced tmux session management for agent isolation and lifecycle management
+
+#### WorkspaceManager
+- **File**: `workspace_manager.py`
+- **Lines of Code**: 1588
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Manages all agent workspaces in the system with enhanced tmux session management
+
+#### TmuxSessionManager
+- **File**: `workspace_manager.py`
+- **Lines of Code**: 1588
+- **Method Count**: 3
+- **Key Methods**: __init__, _initialize_session_templates, _merge_config
+- **Purpose**: 
+    Enhanced tmux session management for agent isolation and lifecycle management
+
+#### WorkspaceManager
+- **File**: `workspace_manager.py`
+- **Lines of Code**: 1588
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Manages all agent workspaces in the system with enhanced tmux session management
+
+#### TmuxSessionManager
+- **File**: `workspace_manager.py`
+- **Lines of Code**: 1588
+- **Method Count**: 3
+- **Key Methods**: __init__, _initialize_session_templates, _merge_config
+- **Purpose**: 
+    Enhanced tmux session management for agent isolation and lifecycle management
+
+#### WorkspaceManager
+- **File**: `workspace_manager.py`
+- **Lines of Code**: 1588
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Manages all agent workspaces in the system with enhanced tmux session management
+
+#### CapacityManager
+- **File**: `resource_manager.py`
+- **Lines of Code**: 1123
+- **Method Count**: 4
+- **Key Methods**: __init__, allocate_resources, deallocate_resources, get_available_capacity
+- **Purpose**: System capacity planning and management
+
+#### ResourceManager
+- **File**: `resource_manager.py`
+- **Lines of Code**: 1123
+- **Method Count**: 2
+- **Key Methods**: __init__, record_application_metric
+- **Purpose**: 
+    Unified Resource Manager consolidating all performance and resource-related functionality
+
+#### CapacityManager
+- **File**: `resource_manager.py`
+- **Lines of Code**: 1123
+- **Method Count**: 4
+- **Key Methods**: __init__, allocate_resources, deallocate_resources, get_available_capacity
+- **Purpose**: System capacity planning and management
+
+#### ResourceManager
+- **File**: `resource_manager.py`
+- **Lines of Code**: 1123
+- **Method Count**: 2
+- **Key Methods**: __init__, record_application_metric
+- **Purpose**: 
+    Unified Resource Manager consolidating all performance and resource-related functionality
+
+#### CapacityManager
+- **File**: `resource_manager.py`
+- **Lines of Code**: 1123
+- **Method Count**: 4
+- **Key Methods**: __init__, allocate_resources, deallocate_resources, get_available_capacity
+- **Purpose**: System capacity planning and management
+
+#### ResourceManager
+- **File**: `resource_manager.py`
+- **Lines of Code**: 1123
+- **Method Count**: 2
+- **Key Methods**: __init__, record_application_metric
+- **Purpose**: 
+    Unified Resource Manager consolidating all performance and resource-related functionality
+
+#### ContextCacheManager
+- **File**: `context_cache_manager.py`
+- **Lines of Code**: 1006
+- **Method Count**: 8
+- **Key Methods**: __init__, _serialize_context, _deserialize_context, _generate_search_cache_key, _record_cache_hit
+- **Purpose**: 
+    Intelligent multi-level caching system for contexts
+
+#### ContextCacheManager
+- **File**: `context_cache_manager.py`
+- **Lines of Code**: 1006
+- **Method Count**: 8
+- **Key Methods**: __init__, _serialize_context, _deserialize_context, _generate_search_cache_key, _record_cache_hit
+- **Purpose**: 
+    Intelligent multi-level caching system for contexts
+
+#### ContextCacheManager
+- **File**: `context_cache_manager.py`
+- **Lines of Code**: 1006
+- **Method Count**: 8
+- **Key Methods**: __init__, _serialize_context, _deserialize_context, _generate_search_cache_key, _record_cache_hit
+- **Purpose**: 
+    Intelligent multi-level caching system for contexts
+
+#### CapacityManager
+- **File**: `capacity_manager.py`
+- **Lines of Code**: 853
+- **Method Count**: 5
+- **Key Methods**: __init__, _initialize_tier_templates, _get_next_tier, _create_allocation_for_tier, get_agent_allocation
+- **Purpose**: 
+    Intelligent capacity manager for agent scaling and resource optimization
+
+#### CapacityManager
+- **File**: `capacity_manager.py`
+- **Lines of Code**: 853
+- **Method Count**: 5
+- **Key Methods**: __init__, _initialize_tier_templates, _get_next_tier, _create_allocation_for_tier, get_agent_allocation
+- **Purpose**: 
+    Intelligent capacity manager for agent scaling and resource optimization
+
+#### CapacityManager
+- **File**: `capacity_manager.py`
+- **Lines of Code**: 853
+- **Method Count**: 5
+- **Key Methods**: __init__, _initialize_tier_templates, _get_next_tier, _create_allocation_for_tier, get_agent_allocation
+- **Purpose**: 
+    Intelligent capacity manager for agent scaling and resource optimization
+
+#### EnterpriseBackPressureManager
+- **File**: `enterprise_backpressure_manager.py`
+- **Lines of Code**: 826
+- **Method Count**: 3
+- **Key Methods**: __init__, _is_circuit_breaker_open, _generate_health_recommendations
+- **Purpose**: 
+    Enterprise-grade back-pressure management system
+
+#### EnterpriseBackPressureManager
+- **File**: `enterprise_backpressure_manager.py`
+- **Lines of Code**: 826
+- **Method Count**: 3
+- **Key Methods**: __init__, _is_circuit_breaker_open, _generate_health_recommendations
+- **Purpose**: 
+    Enterprise-grade back-pressure management system
+
+#### EnterpriseBackPressureManager
+- **File**: `enterprise_backpressure_manager.py`
+- **Lines of Code**: 826
+- **Method Count**: 3
+- **Key Methods**: __init__, _is_circuit_breaker_open, _generate_health_recommendations
+- **Purpose**: 
+    Enterprise-grade back-pressure management system
+
+#### EnhancedFailureRecoveryManager
+- **File**: `enhanced_failure_recovery_manager.py`
+- **Lines of Code**: 781
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Enhanced failure recovery manager with automatic task reassignment,
+    circuit breaker patterns, and intelligent recovery strategies
+
+#### EnhancedFailureRecoveryManager
+- **File**: `enhanced_failure_recovery_manager.py`
+- **Lines of Code**: 781
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Enhanced failure recovery manager with automatic task reassignment,
+    circuit breaker patterns, and intelligent recovery strategies
+
+#### EnhancedFailureRecoveryManager
+- **File**: `enhanced_failure_recovery_manager.py`
+- **Lines of Code**: 781
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Enhanced failure recovery manager with automatic task reassignment,
+    circuit breaker patterns, and intelligent recovery strategies
+
+#### BackPressureManager
+- **File**: `backpressure_manager.py`
+- **Lines of Code**: 650
+- **Method Count**: 12
+- **Key Methods**: __init__, register_scaling_callback, _determine_backpressure_state, _determine_scaling_action, _update_performance_history
+- **Purpose**: 
+    Advanced back-pressure management system for Redis Streams
+
+#### BackPressureManager
+- **File**: `backpressure_manager.py`
+- **Lines of Code**: 650
+- **Method Count**: 12
+- **Key Methods**: __init__, register_scaling_callback, _determine_backpressure_state, _determine_scaling_action, _update_performance_history
+- **Purpose**: 
+    Advanced back-pressure management system for Redis Streams
+
+#### BackPressureManager
+- **File**: `backpressure_manager.py`
+- **Lines of Code**: 650
+- **Method Count**: 12
+- **Key Methods**: __init__, register_scaling_callback, _determine_backpressure_state, _determine_scaling_action, _update_performance_history
+- **Purpose**: 
+    Advanced back-pressure management system for Redis Streams
+
+#### ManagerStatus
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Manager lifecycle status
+
+#### ManagerMetrics
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 2
+- **Key Methods**: record_operation, get_error_rate
+- **Purpose**: Performance metrics for a manager
+
+#### ManagerConfig
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Base configuration for unified managers
+
+#### UnifiedManagerBase
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 8
+- **Key Methods**: __init__, add_plugin, get_plugin, inject_dependency, get_dependency
+- **Purpose**: 
+    Base class for all unified managers in the system
+
+#### ManagerStatus
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Manager lifecycle status
+
+#### ManagerMetrics
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 2
+- **Key Methods**: record_operation, get_error_rate
+- **Purpose**: Performance metrics for a manager
+
+#### ManagerConfig
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Base configuration for unified managers
+
+#### UnifiedManagerBase
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 8
+- **Key Methods**: __init__, add_plugin, get_plugin, inject_dependency, get_dependency
+- **Purpose**: 
+    Base class for all unified managers in the system
+
+#### ManagerStatus
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Manager lifecycle status
+
+#### ManagerMetrics
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 2
+- **Key Methods**: record_operation, get_error_rate
+- **Purpose**: Performance metrics for a manager
+
+#### ManagerConfig
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Base configuration for unified managers
+
+#### UnifiedManagerBase
+- **File**: `unified_manager_base.py`
+- **Lines of Code**: 396
+- **Method Count**: 8
+- **Key Methods**: __init__, add_plugin, get_plugin, inject_dependency, get_dependency
+- **Purpose**: 
+    Base class for all unified managers in the system
+
+### SECURITY Domain Managers
+#### SecurityManager
+- **File**: `security_manager.py`
+- **Lines of Code**: 1485
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Security Manager consolidating all security-related functionality
+
+#### SecurityManager
+- **File**: `security_manager.py`
+- **Lines of Code**: 1485
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Security Manager consolidating all security-related functionality
+
+#### SecurityManager
+- **File**: `security_manager.py`
+- **Lines of Code**: 1485
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Security Manager consolidating all security-related functionality
+
+#### EnterpriseApiKeyManager
+- **File**: `api_key_manager.py`
+- **Lines of Code**: 1251
+- **Method Count**: 4
+- **Key Methods**: __init__, _setup_encryption, _extract_key_id, _get_client_ip
+- **Purpose**: 
+    Enterprise API Key Management System
+
+#### EnterpriseApiKeyManager
+- **File**: `api_key_manager.py`
+- **Lines of Code**: 1251
+- **Method Count**: 4
+- **Key Methods**: __init__, _setup_encryption, _extract_key_id, _get_client_ip
+- **Purpose**: 
+    Enterprise API Key Management System
+
+#### EnterpriseApiKeyManager
+- **File**: `api_key_manager.py`
+- **Lines of Code**: 1251
+- **Method Count**: 4
+- **Key Methods**: __init__, _setup_encryption, _extract_key_id, _get_client_ip
+- **Purpose**: 
+    Enterprise API Key Management System
+
+#### EnhancedJWTManager
+- **File**: `enhanced_jwt_manager.py`
+- **Lines of Code**: 1075
+- **Method Count**: 4
+- **Key Methods**: __init__, _get_token_hash, _get_default_ttl, _update_avg_metric
+- **Purpose**: 
+    Enhanced JWT Manager with automatic key rotation and advanced security features
+
+#### EnhancedJWTManager
+- **File**: `enhanced_jwt_manager.py`
+- **Lines of Code**: 1075
+- **Method Count**: 4
+- **Key Methods**: __init__, _get_token_hash, _get_default_ttl, _update_avg_metric
+- **Purpose**: 
+    Enhanced JWT Manager with automatic key rotation and advanced security features
+
+#### EnhancedJWTManager
+- **File**: `enhanced_jwt_manager.py`
+- **Lines of Code**: 1075
+- **Method Count**: 4
+- **Key Methods**: __init__, _get_token_hash, _get_default_ttl, _update_avg_metric
+- **Purpose**: 
+    Enhanced JWT Manager with automatic key rotation and advanced security features
+
+#### SecretManager
+- **File**: `secret_manager.py`
+- **Lines of Code**: 1033
+- **Method Count**: 12
+- **Key Methods**: __init__, _get_or_generate_master_key, _get_kms_key, _get_aws_kms_key, _get_azure_kv_key
+- **Purpose**: 
+    Enterprise-grade Secret Management System
+
+#### SecretManager
+- **File**: `secret_manager.py`
+- **Lines of Code**: 1033
+- **Method Count**: 12
+- **Key Methods**: __init__, _get_or_generate_master_key, _get_kms_key, _get_aws_kms_key, _get_azure_kv_key
+- **Purpose**: 
+    Enterprise-grade Secret Management System
+
+#### SecretManager
+- **File**: `secret_manager.py`
+- **Lines of Code**: 1033
+- **Method Count**: 12
+- **Key Methods**: __init__, _get_or_generate_master_key, _get_kms_key, _get_aws_kms_key, _get_azure_kv_key
+- **Purpose**: 
+    Enterprise-grade Secret Management System
+
+#### EnterpriseSecretsManager
+- **File**: `enterprise_secrets_manager.py`
+- **Lines of Code**: 887
+- **Method Count**: 8
+- **Key Methods**: __init__, _initialize_encryption, _initialize_storage_backends, _encrypt_secret, _decrypt_secret
+- **Purpose**: 
+    Enterprise-grade secrets management system
+
+#### EnterpriseSecretsManager
+- **File**: `enterprise_secrets_manager.py`
+- **Lines of Code**: 887
+- **Method Count**: 8
+- **Key Methods**: __init__, _initialize_encryption, _initialize_storage_backends, _encrypt_secret, _decrypt_secret
+- **Purpose**: 
+    Enterprise-grade secrets management system
+
+#### EnterpriseSecretsManager
+- **File**: `enterprise_secrets_manager.py`
+- **Lines of Code**: 887
+- **Method Count**: 8
+- **Key Methods**: __init__, _initialize_encryption, _initialize_storage_backends, _encrypt_secret, _decrypt_secret
+- **Purpose**: 
+    Enterprise-grade secrets management system
+
+### STORAGE Domain Managers
+#### CheckpointManager
+- **File**: `checkpoint_manager.py`
+- **Lines of Code**: 1709
+- **Method Count**: 4
+- **Key Methods**: __init__, _initialize_git_repository, _generate_checkpoint_id, _create_git_checkpoint_sync
+- **Purpose**: 
+    Manages atomic checkpoint creation, validation, and recovery with Git integration
+
+#### CheckpointManager
+- **File**: `checkpoint_manager.py`
+- **Lines of Code**: 1709
+- **Method Count**: 4
+- **Key Methods**: __init__, _initialize_git_repository, _generate_checkpoint_id, _create_git_checkpoint_sync
+- **Purpose**: 
+    Manages atomic checkpoint creation, validation, and recovery with Git integration
+
+#### CheckpointManager
+- **File**: `checkpoint_manager.py`
+- **Lines of Code**: 1709
+- **Method Count**: 4
+- **Key Methods**: __init__, _initialize_git_repository, _generate_checkpoint_id, _create_git_checkpoint_sync
+- **Purpose**: 
+    Manages atomic checkpoint creation, validation, and recovery with Git integration
+
+#### ContextLifecycleManager
+- **File**: `context_lifecycle_manager.py`
+- **Lines of Code**: 1095
+- **Method Count**: 8
+- **Key Methods**: __init__, _create_content_snapshot, _create_metadata_snapshot, _calculate_content_hash, _get_context_state
+- **Purpose**: 
+    Comprehensive context lifecycle management system
+
+#### ContextLifecycleManager
+- **File**: `context_lifecycle_manager.py`
+- **Lines of Code**: 1095
+- **Method Count**: 8
+- **Key Methods**: __init__, _create_content_snapshot, _create_metadata_snapshot, _calculate_content_hash, _get_context_state
+- **Purpose**: 
+    Comprehensive context lifecycle management system
+
+#### ContextLifecycleManager
+- **File**: `context_lifecycle_manager.py`
+- **Lines of Code**: 1095
+- **Method Count**: 8
+- **Key Methods**: __init__, _create_content_snapshot, _create_metadata_snapshot, _calculate_content_hash, _get_context_state
+- **Purpose**: 
+    Comprehensive context lifecycle management system
+
+#### SecureGitManager
+- **File**: `self_modification_git_manager.py`
+- **Lines of Code**: 864
+- **Method Count**: 33
+- **Key Methods**: __init__, create_checkpoint, rollback_to_checkpoint, apply_modification, schedule_automatic_checkpoints
+- **Purpose**: 
+    Secure Git version control manager with automatic checkpointing
+
+#### SecureGitManager
+- **File**: `self_modification_git_manager.py`
+- **Lines of Code**: 864
+- **Method Count**: 33
+- **Key Methods**: __init__, create_checkpoint, rollback_to_checkpoint, apply_modification, schedule_automatic_checkpoints
+- **Purpose**: 
+    Secure Git version control manager with automatic checkpointing
+
+#### SecureGitManager
+- **File**: `self_modification_git_manager.py`
+- **Lines of Code**: 864
+- **Method Count**: 33
+- **Key Methods**: __init__, create_checkpoint, rollback_to_checkpoint, apply_modification, schedule_automatic_checkpoints
+- **Purpose**: 
+    Secure Git version control manager with automatic checkpointing
+
+#### EnhancedStateManager
+- **File**: `enhanced_state_manager.py`
+- **Lines of Code**: 711
+- **Method Count**: 2
+- **Key Methods**: __init__, _update_average_metric
+- **Purpose**: 
+    VS 7
+
+#### EnhancedStateManager
+- **File**: `enhanced_state_manager.py`
+- **Lines of Code**: 711
+- **Method Count**: 2
+- **Key Methods**: __init__, _update_average_metric
+- **Purpose**: 
+    VS 7
+
+#### EnhancedStateManager
+- **File**: `enhanced_state_manager.py`
+- **Lines of Code**: 711
+- **Method Count**: 2
+- **Key Methods**: __init__, _update_average_metric
+- **Purpose**: 
+    VS 7
+
+### WORKFLOW Domain Managers
+#### DatabaseManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 2
+- **Key Methods**: __init__, get_connection_stats
+- **Purpose**: Advanced database management and connection pooling
+
+#### CacheManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 2
+- **Key Methods**: __init__, get_cache_stats
+- **Purpose**: Advanced caching system with Redis and in-memory tiers
+
+#### StorageManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Storage Manager consolidating all storage-related functionality
+
+#### DatabaseManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 2
+- **Key Methods**: __init__, get_connection_stats
+- **Purpose**: Advanced database management and connection pooling
+
+#### CacheManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 2
+- **Key Methods**: __init__, get_cache_stats
+- **Purpose**: Advanced caching system with Redis and in-memory tiers
+
+#### StorageManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Storage Manager consolidating all storage-related functionality
+
+#### DatabaseManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 2
+- **Key Methods**: __init__, get_connection_stats
+- **Purpose**: Advanced database management and connection pooling
+
+#### CacheManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 2
+- **Key Methods**: __init__, get_cache_stats
+- **Purpose**: Advanced caching system with Redis and in-memory tiers
+
+#### StorageManager
+- **File**: `storage_manager.py`
+- **Lines of Code**: 1319
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Storage Manager consolidating all storage-related functionality
+
+#### WorkflowManager
+- **File**: `workflow_manager.py`
+- **Lines of Code**: 1111
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Workflow Manager consolidating all workflow and task-related functionality
+
+#### WorkflowManager
+- **File**: `workflow_manager.py`
+- **Lines of Code**: 1111
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Workflow Manager consolidating all workflow and task-related functionality
+
+#### WorkflowManager
+- **File**: `workflow_manager.py`
+- **Lines of Code**: 1111
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Unified Workflow Manager consolidating all workflow and task-related functionality
+
+#### IssueManagerError
+- **File**: `issue_manager.py`
+- **Lines of Code**: 1072
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Custom exception for issue management operations
+
+#### IssueManager
+- **File**: `issue_manager.py`
+- **Lines of Code**: 1072
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive issue management system for GitHub integration
+
+#### IssueManagerError
+- **File**: `issue_manager.py`
+- **Lines of Code**: 1072
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Custom exception for issue management operations
+
+#### IssueManager
+- **File**: `issue_manager.py`
+- **Lines of Code**: 1072
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive issue management system for GitHub integration
+
+#### IssueManagerError
+- **File**: `issue_manager.py`
+- **Lines of Code**: 1072
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Custom exception for issue management operations
+
+#### IssueManager
+- **File**: `issue_manager.py`
+- **Lines of Code**: 1072
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Comprehensive issue management system for GitHub integration
+
+#### ContextMemoryManager
+- **File**: `context_memory_manager.py`
+- **Lines of Code**: 972
+- **Method Count**: 4
+- **Key Methods**: __init__, _calculate_memory_pressure, _select_cleanup_policy, _analyze_memory_trends
+- **Purpose**: 
+    Advanced memory management system for context storage
+
+#### ContextMemoryManager
+- **File**: `context_memory_manager.py`
+- **Lines of Code**: 972
+- **Method Count**: 4
+- **Key Methods**: __init__, _calculate_memory_pressure, _select_cleanup_policy, _analyze_memory_trends
+- **Purpose**: 
+    Advanced memory management system for context storage
+
+#### ContextMemoryManager
+- **File**: `context_memory_manager.py`
+- **Lines of Code**: 972
+- **Method Count**: 4
+- **Key Methods**: __init__, _calculate_memory_pressure, _select_cleanup_policy, _analyze_memory_trends
+- **Purpose**: 
+    Advanced memory management system for context storage
+
+#### WorkflowStateManager
+- **File**: `workflow_state_manager.py`
+- **Lines of Code**: 929
+- **Method Count**: 4
+- **Key Methods**: __init__, get_metrics, _row_to_snapshot, _update_snapshot_metrics
+- **Purpose**: 
+    Advanced workflow state management system
+
+#### WorkflowStateManager
+- **File**: `workflow_state_manager.py`
+- **Lines of Code**: 929
+- **Method Count**: 4
+- **Key Methods**: __init__, get_metrics, _row_to_snapshot, _update_snapshot_metrics
+- **Purpose**: 
+    Advanced workflow state management system
+
+#### WorkflowStateManager
+- **File**: `workflow_state_manager.py`
+- **Lines of Code**: 929
+- **Method Count**: 4
+- **Key Methods**: __init__, get_metrics, _row_to_snapshot, _update_snapshot_metrics
+- **Purpose**: 
+    Advanced workflow state management system
+
+#### InternationalOperationsManager
+- **File**: `international_operations_management.py`
+- **Lines of Code**: 809
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Advanced International Operations Management System
+
+#### InternationalOperationsManager
+- **File**: `international_operations_management.py`
+- **Lines of Code**: 809
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Advanced International Operations Management System
+
+#### InternationalOperationsManager
+- **File**: `international_operations_management.py`
+- **Lines of Code**: 809
+- **Method Count**: 1
+- **Key Methods**: __init__
+- **Purpose**: 
+    Advanced International Operations Management System
+
+#### EnterprisePilotManager
+- **File**: `enterprise_pilot_manager.py`
+- **Lines of Code**: 456
+- **Method Count**: 5
+- **Key Methods**: __init__, _get_conversion_recommendation, _get_next_steps, _get_tier_breakdown, _get_status_breakdown
+- **Purpose**: 
+    Enterprise pilot program manager for Fortune 500 customer acquisition
+
+#### EnterprisePilotManager
+- **File**: `enterprise_pilot_manager.py`
+- **Lines of Code**: 456
+- **Method Count**: 5
+- **Key Methods**: __init__, _get_conversion_recommendation, _get_next_steps, _get_tier_breakdown, _get_status_breakdown
+- **Purpose**: 
+    Enterprise pilot program manager for Fortune 500 customer acquisition
+
+#### EnterprisePilotManager
+- **File**: `enterprise_pilot_manager.py`
+- **Lines of Code**: 456
+- **Method Count**: 5
+- **Key Methods**: __init__, _get_conversion_recommendation, _get_next_steps, _get_tier_breakdown, _get_status_breakdown
+- **Purpose**: 
+    Enterprise pilot program manager for Fortune 500 customer acquisition
+
+#### ManagerInfo
+- **File**: `manager_analysis.py`
+- **Lines of Code**: 267
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Information about a manager class
+
+#### ManagerAnalyzer
+- **File**: `manager_analysis.py`
+- **Lines of Code**: 267
+- **Method Count**: 6
+- **Key Methods**: __init__, analyze_manager_file, find_all_managers, classify_managers_by_domain, generate_consolidation_report
+- **Purpose**: Analyzes manager classes for consolidation planning
+
+#### ManagerInfo
+- **File**: `manager_analysis.py`
+- **Lines of Code**: 267
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Information about a manager class
+
+#### ManagerAnalyzer
+- **File**: `manager_analysis.py`
+- **Lines of Code**: 267
+- **Method Count**: 6
+- **Key Methods**: __init__, analyze_manager_file, find_all_managers, classify_managers_by_domain, generate_consolidation_report
+- **Purpose**: Analyzes manager classes for consolidation planning
+
+#### ManagerInfo
+- **File**: `manager_analysis.py`
+- **Lines of Code**: 267
+- **Method Count**: 0
+- **Key Methods**: 
+- **Purpose**: Information about a manager class
+
+#### ManagerAnalyzer
+- **File**: `manager_analysis.py`
+- **Lines of Code**: 267
+- **Method Count**: 6
+- **Key Methods**: __init__, analyze_manager_file, find_all_managers, classify_managers_by_domain, generate_consolidation_report
+- **Purpose**: Analyzes manager classes for consolidation planning
+
