@@ -106,6 +106,14 @@ class MockCLIAdapter(UniversalAgentInterface):
             "total_tasks": len(self.executed_tasks),
             "mock": True
         }
+    
+    async def initialize(self, config: Dict[str, Any]) -> bool:
+        """Initialize mock adapter."""
+        return True
+    
+    async def shutdown(self) -> None:
+        """Shutdown mock adapter."""
+        pass
 
 
 class TestMultiCLIIntegration:

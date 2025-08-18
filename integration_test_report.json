@@ -1,0 +1,253 @@
+{
+  "test_execution": {
+    "start_time": 1755541218.304394,
+    "total_time_seconds": 18.853323936462402,
+    "timestamp": 1755541237.15774
+  },
+  "summary": {
+    "total_suites": 8,
+    "passed_suites": 5,
+    "failed_suites": 3,
+    "error_suites": 0,
+    "success_rate": 62.5,
+    "overall_status": "FAILED"
+  },
+  "detailed_results": {
+    "System Dependencies Check": {
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "dependencies": {
+          "python": {
+            "status": "available",
+            "version": "Python 3.12.7",
+            "required": true
+          },
+          "redis": {
+            "status": "available",
+            "version": "redis-cli 8.2.0",
+            "required": false
+          },
+          "git": {
+            "status": "available",
+            "version": "git version 2.50.1",
+            "required": true
+          },
+          "pytest": {
+            "status": "available",
+            "version": "pytest 8.3.5",
+            "required": true
+          }
+        },
+        "missing_required": []
+      }
+    },
+    "Unit Tests": {
+      "status": "FAILED",
+      "details": {
+        "success": false,
+        "test_results": {
+          "tests/unit/test_universal_agent_interface.py": {
+            "status": "MISSING",
+            "error": "Test file not found: /Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_universal_agent_interface.py"
+          },
+          "tests/unit/test_agent_registry.py": {
+            "status": "MISSING",
+            "error": "Test file not found: /Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_agent_registry.py"
+          },
+          "tests/unit/test_context_preserver.py": {
+            "status": "FAILED",
+            "stdout": "",
+            "stderr": "DEBUG:passlib.utils.compat:loaded lazy attr 'SafeConfigParser': <class 'configparser.ConfigParser'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'NativeStringIO': <class '_io.StringIO'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'BytesIO': <class '_io.BytesIO'>\nDEBUG:passlib.registry:registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'SafeConfigParser': <class 'configparser.ConfigParser'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'NativeStringIO': <class '_io.StringIO'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'BytesIO': <class '_io.BytesIO'>\nDEBUG:passlib.registry:registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>\nINFO:app.core.configuration_service:\ud83c\udfd6\ufe0f Sandbox mode auto-enabled due to missing API keys: ANTHROPIC_API_KEY\nINFO:app.core.configuration_service:\u2705 Applied development environment optimizations\nINFO:app.core.configuration_service:\ud83d\ude80 Configuration loaded successfully\nDEBUG:git.cmd:Popen(['git', 'version'], cwd=/Users/bogdan/work/leanvibe-dev/bee-hive, stdin=None, shell=False, universal_newlines=False)\nDEBUG:git.cmd:Popen(['git', 'version'], cwd=/Users/bogdan/work/leanvibe-dev/bee-hive, stdin=None, shell=False, universal_newlines=False)\nINFO:app.core.strategic_market_analytics:{\"event\": \"\\ud83c\\udfaf Strategic Market Analytics Engine initialized\", \"logger\": \"app.core.strategic_market_analytics\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.454950Z\"}\nINFO:app.core.performance_monitoring_dashboard:{\"event\": \"\\ud83d\\udcca Performance Monitoring Dashboard initialized\", \"logger\": \"app.core.performance_monitoring_dashboard\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.460602Z\"}\nINFO:app.core.strategic_intelligence_system:{\"event\": \"\\ud83c\\udfaf Strategic Intelligence System initialized\", \"logger\": \"app.core.strategic_intelligence_system\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.463721Z\"}\nINFO:app.core.global_deployment_orchestration:{\"event\": \"\\ud83c\\udf0d Global Deployment Orchestrator initialized\", \"logger\": \"app.core.global_deployment_orchestration\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.649102Z\"}\nINFO:app.core.strategic_implementation_engine:{\"event\": \"\\ud83d\\ude80 Strategic Implementation Engine initialized\", \"logger\": \"app.core.strategic_implementation_engine\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.656920Z\"}\nINFO:app.core.international_operations_management:{\"event\": \"\\ud83c\\udf0d International Operations Manager initialized\", \"logger\": \"app.core.international_operations_management\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.663595Z\"}\nINFO:app.core.executive_command_center:{\"event\": \"\\ud83c\\udfaf Executive Command Center initialized\", \"logger\": \"app.core.executive_command_center\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:29.669514Z\"}\nImportError while loading conftest '/Users/bogdan/work/leanvibe-dev/bee-hive/tests/conftest.py'.\ntests/conftest.py:31: in <module>\n    from app.main import create_app\napp/main.py:603: in <module>\n    app = create_app()\napp/main.py:195: in create_app\n    from .api.agent_activation import router as agent_activation_router\napp/api/agent_activation.py:15: in <module>\n    from ..core.agent_manager import (\nE   ImportError: cannot import name 'AgentRole' from 'app.core.agent_manager' (/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/agent_manager.py)\n",
+            "return_code": 4
+          },
+          "tests/unit/test_claude_code_adapter.py": {
+            "status": "MISSING",
+            "error": "Test file not found: /Users/bogdan/work/leanvibe-dev/bee-hive/tests/unit/test_claude_code_adapter.py"
+          }
+        },
+        "total_tests": 4,
+        "passed_tests": 0
+      }
+    },
+    "Component Integration Tests": {
+      "status": "FAILED",
+      "details": {
+        "success": false,
+        "component_results": {
+          "agent_registry": {
+            "status": "FAILED",
+            "execution_time": 0.026273012161254883,
+            "details": {
+              "success": false,
+              "error": "cannot import name 'ProductionAgentRegistry' from 'app.core.agents.agent_registry' (/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/agents/agent_registry.py)"
+            }
+          },
+          "orchestrator": {
+            "status": "FAILED",
+            "execution_time": 0.06322383880615234,
+            "details": {
+              "success": false,
+              "error": "No module named 'app.core.orchestration.enhanced_orchestrator'"
+            }
+          },
+          "context_preserver": {
+            "status": "PASSED",
+            "execution_time": 0.138840913772583,
+            "details": {
+              "success": true,
+              "package_size": 314,
+              "validation_passed": true,
+              "restoration_successful": true
+            }
+          },
+          "multi_cli_protocol": {
+            "status": "PASSED",
+            "execution_time": 0.1003730297088623,
+            "details": {
+              "success": true,
+              "protocol_id": "test-protocol"
+            }
+          }
+        }
+      }
+    },
+    "Multi-CLI Coordination Tests": {
+      "status": "FAILED",
+      "details": {
+        "success": false,
+        "return_code": 4,
+        "stdout": "",
+        "stderr": "DEBUG:passlib.utils.compat:loaded lazy attr 'SafeConfigParser': <class 'configparser.ConfigParser'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'NativeStringIO': <class '_io.StringIO'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'BytesIO': <class '_io.BytesIO'>\nDEBUG:passlib.registry:registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'SafeConfigParser': <class 'configparser.ConfigParser'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'NativeStringIO': <class '_io.StringIO'>\nDEBUG:passlib.utils.compat:loaded lazy attr 'BytesIO': <class '_io.BytesIO'>\nDEBUG:passlib.registry:registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>\nINFO:app.core.configuration_service:\ud83c\udfd6\ufe0f Sandbox mode auto-enabled due to missing API keys: ANTHROPIC_API_KEY\nINFO:app.core.configuration_service:\u2705 Applied development environment optimizations\nINFO:app.core.configuration_service:\ud83d\ude80 Configuration loaded successfully\nDEBUG:git.cmd:Popen(['git', 'version'], cwd=/Users/bogdan/work/leanvibe-dev/bee-hive, stdin=None, shell=False, universal_newlines=False)\nDEBUG:git.cmd:Popen(['git', 'version'], cwd=/Users/bogdan/work/leanvibe-dev/bee-hive, stdin=None, shell=False, universal_newlines=False)\nINFO:app.core.strategic_market_analytics:{\"event\": \"\\ud83c\\udfaf Strategic Market Analytics Engine initialized\", \"logger\": \"app.core.strategic_market_analytics\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.490335Z\"}\nINFO:app.core.performance_monitoring_dashboard:{\"event\": \"\\ud83d\\udcca Performance Monitoring Dashboard initialized\", \"logger\": \"app.core.performance_monitoring_dashboard\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.495428Z\"}\nINFO:app.core.strategic_intelligence_system:{\"event\": \"\\ud83c\\udfaf Strategic Intelligence System initialized\", \"logger\": \"app.core.strategic_intelligence_system\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.498170Z\"}\nINFO:app.core.global_deployment_orchestration:{\"event\": \"\\ud83c\\udf0d Global Deployment Orchestrator initialized\", \"logger\": \"app.core.global_deployment_orchestration\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.663220Z\"}\nINFO:app.core.strategic_implementation_engine:{\"event\": \"\\ud83d\\ude80 Strategic Implementation Engine initialized\", \"logger\": \"app.core.strategic_implementation_engine\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.671080Z\"}\nINFO:app.core.international_operations_management:{\"event\": \"\\ud83c\\udf0d International Operations Manager initialized\", \"logger\": \"app.core.international_operations_management\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.677321Z\"}\nINFO:app.core.executive_command_center:{\"event\": \"\\ud83c\\udfaf Executive Command Center initialized\", \"logger\": \"app.core.executive_command_center\", \"level\": \"info\", \"timestamp\": \"2025-08-18T18:20:35.683158Z\"}\nImportError while loading conftest '/Users/bogdan/work/leanvibe-dev/bee-hive/tests/conftest.py'.\ntests/conftest.py:31: in <module>\n    from app.main import create_app\napp/main.py:603: in <module>\n    app = create_app()\napp/main.py:195: in create_app\n    from .api.agent_activation import router as agent_activation_router\napp/api/agent_activation.py:15: in <module>\n    from ..core.agent_manager import (\nE   ImportError: cannot import name 'AgentRole' from 'app.core.agent_manager' (/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/agent_manager.py)\n"
+      }
+    },
+    "Performance Benchmarks": {
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "benchmarks": {
+          "agent_registration": {
+            "status": "PASSED",
+            "avg_time_ms": 1.270456314086914,
+            "max_time_ms": 1.3492107391357422,
+            "min_time_ms": 1.046895980834961,
+            "target_ms": 100,
+            "iterations": 50
+          },
+          "task_execution": {
+            "status": "PASSED",
+            "avg_time_ms": 1.2768030166625977,
+            "max_time_ms": 1.291036605834961,
+            "min_time_ms": 1.2700557708740234,
+            "target_ms": 500,
+            "iterations": 20
+          },
+          "context_packaging": {
+            "status": "PASSED",
+            "avg_time_ms": 1.2483835220336914,
+            "max_time_ms": 1.2750625610351562,
+            "min_time_ms": 1.0380744934082031,
+            "target_ms": 1000,
+            "iterations": 10
+          },
+          "concurrent_operations": {
+            "status": "PASSED",
+            "avg_time_ms": 1.2770652770996094,
+            "max_time_ms": 1.2819766998291016,
+            "min_time_ms": 1.2700557708740234,
+            "target_ms": 2000,
+            "iterations": 5
+          }
+        }
+      }
+    },
+    "Load Testing": {
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "load_scenarios": {
+          "low_load": {
+            "status": "PASSED",
+            "execution_time": 0.10166120529174805,
+            "target_time": 10,
+            "throughput_ops_per_sec": 49.18296990135976,
+            "concurrent_tasks": 5
+          },
+          "medium_load": {
+            "status": "PASSED",
+            "execution_time": 0.10038137435913086,
+            "target_time": 15,
+            "throughput_ops_per_sec": 199.24014915801723,
+            "concurrent_tasks": 20
+          },
+          "high_load": {
+            "status": "PASSED",
+            "execution_time": 0.10231280326843262,
+            "target_time": 20,
+            "throughput_ops_per_sec": 488.6973907734468,
+            "concurrent_tasks": 50
+          }
+        }
+      }
+    },
+    "Real-World Scenarios": {
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "scenarios": {
+          "code_review_workflow": {
+            "status": "PASSED",
+            "description": "Simulated code_review_workflow execution",
+            "execution_time": 0.1
+          },
+          "multi_agent_coordination": {
+            "status": "PASSED",
+            "description": "Simulated multi_agent_coordination execution",
+            "execution_time": 0.1
+          },
+          "context_handoff_chain": {
+            "status": "PASSED",
+            "description": "Simulated context_handoff_chain execution",
+            "execution_time": 0.1
+          },
+          "error_recovery_workflow": {
+            "status": "PASSED",
+            "description": "Simulated error_recovery_workflow execution",
+            "execution_time": 0.1
+          }
+        }
+      }
+    },
+    "System Health Validation": {
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "health_checks": {
+          "memory_usage": {
+            "status": "HEALTHY",
+            "value": "normal",
+            "threshold": "acceptable"
+          },
+          "resource_cleanup": {
+            "status": "HEALTHY",
+            "value": "normal",
+            "threshold": "acceptable"
+          },
+          "connection_pools": {
+            "status": "HEALTHY",
+            "value": "normal",
+            "threshold": "acceptable"
+          },
+          "error_rates": {
+            "status": "HEALTHY",
+            "value": "normal",
+            "threshold": "acceptable"
+          }
+        }
+      }
+    }
+  },
+  "recommendations": [
+    "Address 3 failed test suite(s)"
+  ]
+}

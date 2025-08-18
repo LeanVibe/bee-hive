@@ -1,0 +1,161 @@
+{
+  "validation_summary": {
+    "timestamp": "2025-08-18T21:18:20.277805",
+    "total_time_seconds": 1.3090863227844238,
+    "total_validations": 9,
+    "passed_validations": 2,
+    "success_rate_percent": 22.22222222222222,
+    "overall_status": "ISSUES_FOUND"
+  },
+  "detailed_results": {
+    "System Architecture Validation": {
+      "status": "FAILED",
+      "execution_time": 2.7894973754882812e-05,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    },
+    "Agent Registration & Discovery": {
+      "status": "FAILED",
+      "execution_time": 1.1205673217773438e-05,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    },
+    "Task Routing & Execution": {
+      "status": "FAILED",
+      "execution_time": 7.867813110351562e-06,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    },
+    "Context Preservation": {
+      "status": "PASSED",
+      "execution_time": 0.00047779083251953125,
+      "details": {
+        "success": true,
+        "compression_tests": [
+          {
+            "compression_level": 0,
+            "target_agent": "cursor",
+            "package_size_bytes": 1842,
+            "compression_ratio": 1.0,
+            "packaging_time_ms": 0.10704994201660156,
+            "restoration_time_ms": 0.032901763916015625,
+            "integrity_valid": true,
+            "data_integrity": true,
+            "performance_met": true
+          },
+          {
+            "compression_level": 6,
+            "target_agent": "claude_code",
+            "package_size_bytes": 761,
+            "compression_ratio": 0.41112911939492164,
+            "packaging_time_ms": 0.11968612670898438,
+            "restoration_time_ms": 0.04100799560546875,
+            "integrity_valid": true,
+            "data_integrity": true,
+            "performance_met": true
+          },
+          {
+            "compression_level": 9,
+            "target_agent": "github_copilot",
+            "package_size_bytes": 766,
+            "compression_ratio": 0.4113856068743287,
+            "packaging_time_ms": 0.10085105895996094,
+            "restoration_time_ms": 0.027894973754882812,
+            "integrity_valid": true,
+            "data_integrity": true,
+            "performance_met": true
+          }
+        ],
+        "context_size": 971,
+        "avg_packaging_time": 0.10919570922851562,
+        "avg_restoration_time": 0.0339349110921224
+      }
+    },
+    "Multi-Agent Coordination": {
+      "status": "FAILED",
+      "execution_time": 1.0013580322265625e-05,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    },
+    "Error Handling & Recovery": {
+      "status": "FAILED",
+      "execution_time": 8.106231689453125e-06,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    },
+    "Performance Requirements": {
+      "status": "FAILED",
+      "execution_time": 8.106231689453125e-06,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    },
+    "Real-World Scenarios": {
+      "status": "PASSED",
+      "execution_time": 1.3082058429718018,
+      "details": {
+        "success": true,
+        "scenarios_tested": 3,
+        "scenarios_successful": 3,
+        "scenario_details": [
+          {
+            "success": true,
+            "scenario": "code_review_pipeline",
+            "stages_completed": 3,
+            "total_time": 0.37322187423706055,
+            "realistic_simulation": true
+          },
+          {
+            "success": true,
+            "scenario": "bug_fix_workflow",
+            "stages_completed": 3,
+            "total_time": 0.38248205184936523,
+            "fix_validated": true
+          },
+          {
+            "success": true,
+            "scenario": "feature_development",
+            "stages_completed": 4,
+            "total_time": 0.5524890422821045,
+            "feature_ready": true
+          }
+        ]
+      }
+    },
+    "System Integration": {
+      "status": "FAILED",
+      "execution_time": 3.62396240234375e-05,
+      "details": {
+        "success": false,
+        "error": "Can't instantiate abstract class MockCLIAdapter without an implementation for abstract methods 'initialize', 'shutdown'"
+      }
+    }
+  },
+  "recommendations": [
+    "\u274c Address 7 validation failure(s):",
+    "  \u2022 Fix issues in: System Architecture Validation",
+    "  \u2022 Fix issues in: Agent Registration & Discovery",
+    "  \u2022 Fix issues in: Task Routing & Execution",
+    "  \u2022 Fix issues in: Multi-Agent Coordination",
+    "  \u2022 Fix issues in: Error Handling & Recovery",
+    "  \u2022 Fix issues in: Performance Requirements",
+    "  \u2022 Fix issues in: System Integration"
+  ],
+  "next_steps": [
+    "\ud83d\udee0\ufe0f Significant issues require attention",
+    "\ud83d\udd0d Perform detailed debugging of failed validations",
+    "\ud83c\udfaf Focus on core architecture components first",
+    "\ud83d\udcde Consider additional development resources"
+  ]
+}
