@@ -1,567 +1,628 @@
-# 📚 OPERATIONAL RUNBOOK
-## LeanVibe Agent Hive 2.0 - Day-to-Day Operations Guide
+# LeanVibe Agent Hive 2.0 - Operational Runbook
 
-**Version**: 2.0.0  
-**Last Updated**: August 18, 2025  
-**Status**: ✅ Production Active  
+## 📋 Production Operations Guide
 
----
+This runbook provides comprehensive guidance for deploying, monitoring, and maintaining LeanVibe Agent Hive 2.0 in production environments.
 
-## 🎯 QUICK REFERENCE
+**Status**: ✅ Production-ready unified architecture  
+**Last Updated**: 2024 (Configuration consolidation complete)
 
-### **Emergency Contacts**
-- **Critical Issues**: emergency@leanvibe.com
-- **Operations**: ops-team@leanvibe.com  
-- **On-Call**: +1-555-LEANVIBE
+## 🎯 Quick Reference
 
-### **Key System URLs**
-- **System Health**: https://your-domain/health
-- **Grafana Dashboard**: https://monitoring.your-domain:3000
-- **Prometheus Metrics**: https://monitoring.your-domain:9090
-- **Admin Interface**: https://admin.your-domain
+| Environment | Purpose | Performance Target | Security Level |
+|-------------|---------|------------------|----------------|
+| **Production** | Live system | 99.9% uptime, <200ms response | Maximum security |
+| **Staging** | Pre-production testing | 95% uptime, <300ms response | Production-like |
+| **Development** | Local development | N/A | Minimal security |
+| **Testing** | Automated testing | Fast startup | Isolated |
 
-### **Critical Commands**
+## 🚀 Production Deployment
+
+### Prerequisites
+- Docker & Docker Compose
+- PostgreSQL 14+ (with pgvector extension)
+- Redis 7.0+
+- Nginx (for reverse proxy)
+- SSL certificates
+- Monitoring infrastructure (Prometheus/Grafana)
+
+### 1. Environment Configuration
+
+#### Production Environment Variables
 ```bash
-# System status
-docker ps --format "table {{.Names}}\t{{.Status}}"
+# Core application
+export ENVIRONMENT=production
+export DEBUG=false
+export LOG_LEVEL=INFO
+export SECRET_KEY=$(openssl rand -hex 32)
+export JWT_SECRET_KEY=$(openssl rand -hex 64)
 
-# Emergency restart
-docker-compose -f deploy/production/docker-compose.production.yml restart
+# Database configuration
+export DATABASE_URL=postgresql://user:pass@prod-postgres:5432/leanvibe_prod
+export DATABASE_POOL_SIZE=50
+export DATABASE_MAX_OVERFLOW=100
 
-# Emergency rollback (if legacy available)
-deploy/migration/zero-downtime-migration.sh rollback
+# Redis configuration  
+export REDIS_URL=redis://prod-redis:6379/0
+export REDIS_CONNECTION_POOL_SIZE=100
+export REDIS_MAX_CONNECTIONS=500
 
-# System health check
-python scripts/production_readiness_check.py --environment production
+# Security settings
+export API_KEY_REQUIRED=true
+export RATE_LIMITING_ENABLED=true
+export SECURITY_ENABLED=true
+export MFA_ENABLED=true
+export THREAT_DETECTION_ENABLED=true
+
+# Performance settings
+export MAX_CONCURRENT_AGENTS=100
+export TARGET_RESPONSE_TIME_MS=150
+export TARGET_THROUGHPUT_RPS=20000
+export AUTO_SCALING_ENABLED=true
+
+# Monitoring
+export METRICS_ENABLED=true
+export PROMETHEUS_PORT=9090
+export AUDIT_LOGGING_ENABLED=true
 ```
 
----
-
-## 🚨 INCIDENT RESPONSE PROCEDURES
-
-### **Severity Levels**
-
-| Level | Impact | Response Time | Examples |
-|-------|--------|---------------|----------|
-| **P0 - Critical** | System down | <15 minutes | Complete system failure |
-| **P1 - High** | Degraded performance | <1 hour | >50% performance degradation |
-| **P2 - Medium** | Minor impact | <4 hours | Single component issues |
-| **P3 - Low** | No user impact | <24 hours | Monitoring alerts, logs |
-
-### **P0 - Critical Incident Response**
-
-#### **Step 1: Immediate Assessment** (0-2 minutes)
+#### Unified Configuration Migration
 ```bash
-# Check system status
-curl -s https://your-domain/health
+# Validate production configuration
+python scripts/migrate_configurations.py --environment production --validate-only
 
-# Quick system overview
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.RunningFor}}"
+# Migrate to unified configuration with backup
+python scripts/migrate_configurations.py --environment production --backup
 
-# Check recent logs
-docker logs --tail 20 leanvibe-universal-orchestrator
+# Verify migration success
+python -c "from app.config.unified_config import get_unified_config; print('✅ Configuration loaded successfully')"
 ```
 
-#### **Step 2: Incident Declaration** (2-5 minutes)
-1. **Notify**: Send alert to emergency channel
-2. **Document**: Create incident ticket
-3. **Escalate**: Contact on-call engineer
-4. **Communicate**: Update status page
+### 2. Infrastructure Deployment
 
-#### **Step 3: Immediate Response** (5-15 minutes)
+#### Docker Compose Production Setup
 ```bash
-# Option 1: Quick restart
-docker-compose -f deploy/production/docker-compose.production.yml restart
+# Use production compose configuration
+docker compose -f docker-compose.production.yml up -d
 
-# Option 2: Emergency rollback (if available)
-deploy/migration/zero-downtime-migration.sh rollback
-
-# Option 3: Scale critical components
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale universal-orchestrator=3
+# Verify all services are healthy
+docker compose -f docker-compose.production.yml ps
 ```
 
-#### **Step 4: Root Cause Analysis** (Post-resolution)
-1. Collect all logs and metrics
-2. Timeline reconstruction
-3. Impact assessment
-4. Prevention measures
-5. Post-mortem documentation
-
-### **P1 - Performance Degradation Response**
-
-#### **Diagnosis Steps**
-```bash
-# Check performance metrics
-curl -s http://localhost:9090/api/v1/query?query=leanvibe_task_assignment_duration_ms
-
-# Monitor resource usage
-docker stats --no-stream
-
-# Check database performance
-psql -d leanvibe_production -c "SELECT * FROM pg_stat_activity WHERE state = 'active';"
-
-# Review error rates
-curl -s http://localhost:9090/api/v1/query?query=rate(leanvibe_errors_total[5m])
+#### Database Setup
+```sql
+-- Create database with required extensions
+CREATE DATABASE leanvibe_prod;
+\c leanvibe_prod;
+CREATE EXTENSION IF NOT EXISTS pgvector;
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 ```
 
-#### **Common Solutions**
+#### Application Deployment
 ```bash
-# Scale orchestrator components
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale universal-orchestrator=3
+# Build production image
+docker build -t leanvibe-hive:production .
 
-# Restart high-memory components
-docker restart leanvibe-specialized-engines
+# Deploy with configuration
+docker run -d \
+  --name leanvibe-production \
+  --env-file .env.production \
+  -p 8000:8000 \
+  --restart unless-stopped \
+  leanvibe-hive:production
 
-# Clear Redis cache if needed
-docker exec redis-cluster-node1 redis-cli FLUSHDB
-
-# Database connection reset
-docker restart leanvibe-postgres-primary
+# Initialize unified configuration system
+docker exec leanvibe-production python -c "
+from app.config.unified_config import initialize_unified_config, Environment
+initialize_unified_config(environment=Environment.PRODUCTION)
+"
 ```
 
----
+### 3. Production Validation
 
-## 📊 DAILY OPERATIONS CHECKLIST
-
-### **Morning Health Check** (9:00 AM)
-
-#### **System Status Validation**
-- [ ] All containers running: `docker ps | grep leanvibe | wc -l` should be 8+
-- [ ] Health endpoints responding: `curl -s https://your-domain/health`
-- [ ] No critical alerts: Check Grafana dashboard
-- [ ] Resource usage normal: CPU <50%, Memory <300MB per component
-
-#### **Performance Verification**
+#### Health Checks
 ```bash
-# Task assignment performance (target: <0.1ms)
-curl -s http://localhost:9090/api/v1/query?query=leanvibe_task_assignment_duration_ms
+# Core system health
+curl -f http://localhost:8000/health || exit 1
 
-# Message throughput (target: >15K/sec)
-curl -s http://localhost:9090/api/v1/query?query=rate(leanvibe_messages_total[5m])
+# Component health verification
+curl -f http://localhost:8000/api/observability/health
 
-# Error rate (target: <0.1%)
-curl -s http://localhost:9090/api/v1/query?query=rate(leanvibe_errors_total[5m])
+# Configuration system health
+curl -f http://localhost:8000/api/admin/config/status
+
+# Database connectivity
+curl -f http://localhost:8000/api/observability/database
+
+# Redis connectivity  
+curl -f http://localhost:8000/api/observability/redis
 ```
 
-#### **Database Health Check**
+#### Performance Validation
 ```bash
-# Connection count
-psql -d leanvibe_production -c "SELECT count(*) FROM pg_stat_activity;"
+# Load test critical endpoints
+ab -n 1000 -c 10 http://localhost:8000/health
+ab -n 500 -c 5 http://localhost:8000/api/agents/
 
-# Database size
-psql -d leanvibe_production -c "SELECT pg_size_pretty(pg_database_size('leanvibe_production'));"
-
-# Long-running queries
-psql -d leanvibe_production -c "SELECT query, state, query_start FROM pg_stat_activity WHERE state = 'active' AND query_start < now() - interval '1 minute';"
+# WebSocket connection test
+wscat -c ws://localhost:8000/api/dashboard/ws/dashboard
 ```
 
-### **Evening Review** (6:00 PM)
+## 📊 Monitoring & Observability
 
-#### **Daily Metrics Review**
-- [ ] Peak performance during business hours
-- [ ] No unresolved alerts
-- [ ] Backup completion verification
-- [ ] Log rotation status
+### Key Metrics to Monitor
 
-#### **Capacity Planning**
-```bash
-# Daily traffic analysis
-python scripts/daily_traffic_analysis.py --date $(date +%Y-%m-%d)
+#### System Performance
+- **Response Time**: P95 < 200ms, P99 < 500ms
+- **Throughput**: > 10,000 RPS capacity
+- **Error Rate**: < 0.1% (99.9% success rate)
+- **Uptime**: > 99.9% availability
 
-# Resource utilization trends
-python scripts/resource_utilization_report.py --last 24h
+#### Resource Utilization
+- **CPU Usage**: < 80% average
+- **Memory Usage**: < 8GB per instance
+- **Database Connections**: < 80% of pool
+- **Redis Connections**: < 80% of pool
+
+#### Component Health
+- **Universal Orchestrator**: Agent spawn time < 100ms
+- **Domain Managers**: Processing time < 100ms
+- **Specialized Engines**: Queue depth < 1000
+- **Communication Hub**: Connection success rate > 99%
+
+### Monitoring Setup
+
+#### Prometheus Configuration
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'leanvibe-hive'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: /metrics
+    
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:9187']
+      
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
 ```
 
----
-
-## 🔧 ROUTINE MAINTENANCE PROCEDURES
-
-### **Weekly Maintenance** (Sunday 2:00 AM)
-
-#### **System Updates**
+#### Grafana Dashboards
 ```bash
-# 1. Pull latest images (if using rolling updates)
-docker-compose -f deploy/production/docker-compose.production.yml pull
-
-# 2. Restart with new images (zero-downtime rolling restart)
-docker-compose -f deploy/production/docker-compose.production.yml up -d --no-deps universal-orchestrator
-sleep 30
-docker-compose -f deploy/production/docker-compose.production.yml up -d --no-deps communication-hub
-sleep 30
-# Continue for other services...
-
-# 3. Verify system health
-python scripts/production_readiness_check.py --environment production
+# Import pre-configured dashboards
+curl -X POST http://admin:admin@grafana:3000/api/dashboards/db \
+  -H "Content-Type: application/json" \
+  -d @monitoring/grafana/leanvibe-dashboard.json
 ```
 
-#### **Database Maintenance**
-```bash
-# Vacuum and analyze
-psql -d leanvibe_production -c "VACUUM ANALYZE;"
-
-# Reindex if needed
-psql -d leanvibe_production -c "REINDEX DATABASE leanvibe_production;"
-
-# Update statistics
-psql -d leanvibe_production -c "ANALYZE;"
-
-# Check database bloat
-psql -d leanvibe_production -c "SELECT schemaname, tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size FROM pg_tables ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC LIMIT 10;"
+#### Alert Rules
+```yaml
+# alerts.yml
+groups:
+  - name: leanvibe-hive-alerts
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, http_request_duration_seconds) > 0.2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.01
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: database_connections_active / database_connections_max > 0.9
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool nearly exhausted"
 ```
 
-#### **Log Management**
-```bash
-# Compress old logs
-find logs/ -name "*.log" -mtime +7 -exec gzip {} \;
+### Log Management
 
-# Remove old compressed logs
-find logs/ -name "*.log.gz" -mtime +30 -delete
-
-# Docker log cleanup
-docker system prune -f --filter "until=168h"
+#### Structured Logging Configuration
+```python
+# Logging configuration in unified config
+config.monitoring.structured_logging = True
+config.monitoring.log_format = "json"
+config.monitoring.log_level = "INFO"
 ```
 
-### **Monthly Maintenance** (First Sunday 1:00 AM)
-
-#### **Full Backup Procedure**
+#### Log Aggregation
 ```bash
-# Database backup with compression
-pg_dump leanvibe_production | gzip > backups/monthly/db-$(date +%Y%m).sql.gz
+# ELK Stack configuration
+docker run -d \
+  --name elasticsearch \
+  -p 9200:9200 \
+  -e "discovery.type=single-node" \
+  elasticsearch:7.17.0
 
-# Configuration backup
-tar -czf backups/monthly/config-$(date +%Y%m).tar.gz deploy/production/config/ deploy/production/ssl/
+docker run -d \
+  --name logstash \
+  -p 5044:5044 \
+  logstash:7.17.0
 
-# Application data backup
-docker run --rm -v leanvibe_orchestrator_data:/data -v $(pwd)/backups/monthly:/backup alpine tar czf /backup/app-data-$(date +%Y%m).tar.gz -C /data .
-
-# Verify backups
-python scripts/verify_backups.py --path backups/monthly/ --date $(date +%Y%m)
+docker run -d \
+  --name kibana \
+  -p 5601:5601 \
+  kibana:7.17.0
 ```
 
-#### **Security Updates**
+## 🔐 Security Operations
+
+### Security Hardening Checklist
+
+#### Application Security
+- [ ] JWT secrets are properly secured (64+ characters)
+- [ ] API key authentication enabled in production
+- [ ] Rate limiting configured and active
+- [ ] CORS origins properly restricted
+- [ ] Input validation enabled on all endpoints
+- [ ] SQL injection protection active
+- [ ] XSS protection headers configured
+
+#### Infrastructure Security
+- [ ] TLS/SSL certificates installed and valid
+- [ ] Database connections encrypted
+- [ ] Redis AUTH enabled
+- [ ] Network segmentation implemented
+- [ ] Firewall rules configured
+- [ ] Regular security updates applied
+
+#### Compliance Verification
 ```bash
-# Update base images
-docker pull postgres:15-alpine
-docker pull redis:7-alpine
-docker pull nginx:alpine
+# SOC2 compliance check
+curl -f http://localhost:8000/api/security/compliance/soc2
+
+# GDPR compliance check
+curl -f http://localhost:8000/api/security/compliance/gdpr
+
+# Security audit
+curl -f http://localhost:8000/api/security/audit/status
+```
+
+### Security Monitoring
+```bash
+# Security events monitoring
+tail -f logs/security_audit.log | grep -i "threat\|alert\|violation"
+
+# Failed authentication attempts
+grep "authentication_failed" logs/app.log | tail -20
+
+# Suspicious activity detection
+curl http://localhost:8000/api/security/threats/recent
+```
+
+## 🚨 Incident Response
+
+### Incident Response Procedures
+
+#### High Severity Incidents (System Down)
+
+1. **Immediate Response (0-5 minutes)**
+   ```bash
+   # Check system health
+   curl -f http://localhost:8000/health || echo "SYSTEM DOWN"
+   
+   # Check all components
+   docker compose -f docker-compose.production.yml ps
+   
+   # Check logs for errors
+   docker logs leanvibe-production --tail 100
+   ```
+
+2. **Diagnosis (5-15 minutes)**
+   ```bash
+   # Check resource utilization
+   docker stats leanvibe-production
+   
+   # Database connectivity
+   psql $DATABASE_URL -c "SELECT 1;"
+   
+   # Redis connectivity
+   redis-cli -u $REDIS_URL ping
+   
+   # Configuration status
+   curl http://localhost:8000/api/admin/config/status
+   ```
+
+3. **Recovery Actions**
+   ```bash
+   # Restart application if needed
+   docker restart leanvibe-production
+   
+   # Rollback configuration if needed
+   python scripts/migrate_configurations.py --rollback config_backup_*.json
+   
+   # Scale up if resource constrained
+   docker compose -f docker-compose.production.yml up -d --scale app=3
+   ```
+
+#### Medium Severity Incidents (Performance Degradation)
+
+1. **Performance Analysis**
+   ```bash
+   # Check response times
+   curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/health
+   
+   # Monitor system resources
+   htop
+   
+   # Database performance
+   psql $DATABASE_URL -c "SELECT * FROM pg_stat_activity WHERE state = 'active';"
+   ```
+
+2. **Optimization Actions**
+   ```bash
+   # Enable auto-scaling
+   export AUTO_SCALING_ENABLED=true
+   
+   # Restart unified configuration hot-reload
+   curl -X POST http://localhost:8000/api/admin/config/reload
+   
+   # Clear Redis cache if needed
+   redis-cli -u $REDIS_URL FLUSHDB
+   ```
+
+#### Low Severity Incidents (Minor Issues)
+
+1. **Investigation**
+   ```bash
+   # Review error logs
+   grep ERROR logs/app.log | tail -50
+   
+   # Check configuration drift
+   python scripts/migrate_configurations.py --validate-only
+   
+   # Monitor trends
+   curl http://localhost:8000/api/observability/metrics
+   ```
+
+### Escalation Procedures
+
+| Severity | Response Time | Escalation Path |
+|----------|--------------|----------------|
+| **Critical** (System Down) | 5 minutes | On-call engineer → Engineering manager → CTO |
+| **High** (Major Feature Down) | 15 minutes | On-call engineer → Engineering manager |
+| **Medium** (Performance Issues) | 30 minutes | Engineering team → Team lead |
+| **Low** (Minor Issues) | 2 hours | Engineering team |
+
+## 🔄 Maintenance Operations
+
+### Regular Maintenance Tasks
+
+#### Daily Operations
+```bash
+# Health check verification
+./scripts/health_check.sh
+
+# Log rotation
+logrotate /etc/logrotate.d/leanvibe-hive
+
+# Configuration validation
+python scripts/migrate_configurations.py --validate-only
 
 # Security scan
-docker scan leanvibe/agent-hive:orchestrator-2.0
-
-# SSL certificate check
-openssl x509 -in deploy/production/ssl/your-domain.crt -noout -dates
-
-# Certificate renewal (if needed)
-certbot renew --nginx --dry-run
+./scripts/security_scan.sh
 ```
 
-#### **Performance Analysis**
+#### Weekly Operations
 ```bash
-# Generate monthly performance report
-python scripts/generate_performance_report.py --month $(date +%Y-%m) --output reports/monthly/
+# Database maintenance
+psql $DATABASE_URL -c "VACUUM ANALYZE;"
 
-# Capacity planning analysis
-python scripts/capacity_analysis.py --forecast 3months --output reports/monthly/
+# Redis memory optimization
+redis-cli -u $REDIS_URL MEMORY PURGE
 
-# Resource optimization recommendations
-python scripts/optimization_recommendations.py --period month
+# Performance baseline
+python scripts/performance_validation.py --baseline
+
+# Configuration backup
+python scripts/migrate_configurations.py --environment production --backup
 ```
 
----
-
-## 🔍 MONITORING & ALERTING
-
-### **Real-Time Monitoring Dashboard**
-
-#### **Critical Metrics to Watch**
-1. **System Availability**: Should be >99.9%
-2. **Task Assignment Latency**: Should be <0.1ms (targeting 0.01ms)
-3. **Message Throughput**: Should be >15,000/sec
-4. **Memory Usage**: Should be <300MB total
-5. **Error Rate**: Should be <0.1%
-
-#### **Grafana Dashboard URLs**
-- **Main Dashboard**: `https://monitoring.your-domain:3000/d/leanvibe-main`
-- **Performance**: `https://monitoring.your-domain:3000/d/leanvibe-performance`
-- **Infrastructure**: `https://monitoring.your-domain:3000/d/leanvibe-infrastructure`
-- **Security**: `https://monitoring.your-domain:3000/d/leanvibe-security`
-
-### **Alert Response Procedures**
-
-#### **"High Task Assignment Latency" Alert**
+#### Monthly Operations
 ```bash
-# 1. Check orchestrator status
-docker logs --tail 50 leanvibe-universal-orchestrator
+# Security updates
+apt update && apt upgrade -y
+docker pull leanvibe-hive:latest
 
-# 2. Check database connections
-psql -d leanvibe_production -c "SELECT count(*) FROM pg_stat_activity;"
+# Database optimization
+psql $DATABASE_URL -c "REINDEX DATABASE leanvibe_prod;"
 
-# 3. Scale if needed
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale universal-orchestrator=3
+# SSL certificate renewal
+certbot renew
 
-# 4. Verify resolution
-curl -s http://localhost:9090/api/v1/query?query=leanvibe_task_assignment_duration_ms
+# Disaster recovery test
+./scripts/dr_test.sh
 ```
 
-#### **"Message Throughput Below Target" Alert**
-```bash
-# 1. Check communication hub
-docker logs --tail 50 leanvibe-communication-hub
+### Configuration Management
 
-# 2. Verify Redis cluster
-docker exec redis-cluster-node1 redis-cli cluster nodes
+#### Hot Configuration Reload
+```python
+# Enable hot-reload in production (use with caution)
+from app.config.unified_config import get_config_manager
 
-# 3. Scale communication components
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale communication-hub=4
-
-# 4. Check network connectivity
-docker exec leanvibe-communication-hub netstat -tuln
+config_manager = get_config_manager()
+await config_manager.start_hot_reload()
 ```
 
-#### **"High Memory Usage" Alert**
+#### Configuration Rollback
 ```bash
-# 1. Identify high-memory containers
-docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.MemPerc}}"
+# List available backups
+ls -la config_backups/
 
-# 2. Check for memory leaks
-docker exec leanvibe-universal-orchestrator curl localhost:8081/metrics | grep memory
+# Rollback to specific backup
+python scripts/migrate_configurations.py --rollback config_backup_20240101_120000.json
 
-# 3. Restart high-memory components if needed
-docker restart leanvibe-specialized-engines
-
-# 4. Analyze memory patterns
-python scripts/memory_analysis.py --container leanvibe-universal-orchestrator
+# Verify rollback success
+python scripts/migrate_configurations.py --validate-only
 ```
 
----
+### Database Operations
 
-## 🛠️ TROUBLESHOOTING PLAYBOOKS
-
-### **Playbook 1: System Won't Start**
-
-#### **Symptoms**
-- Containers fail to start
-- Health checks failing
-- Database connection errors
-
-#### **Investigation Steps**
+#### Backup and Restore
 ```bash
-# 1. Check container status
-docker ps -a | grep leanvibe
+# Create backup
+pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
 
-# 2. Check logs for failed containers
-docker logs leanvibe-universal-orchestrator
+# Restore from backup
+psql $DATABASE_URL < backup_20240101_120000.sql
 
-# 3. Check resource availability
-df -h
-free -m
-docker system df
-
-# 4. Check network connectivity
-docker network ls
-docker exec leanvibe-universal-orchestrator ping leanvibe-postgres-primary
+# Point-in-time recovery
+pg_restore --clean --if-exists -d $DATABASE_URL backup.dump
 ```
 
-#### **Resolution Steps**
-```bash
-# 1. Clean restart
-docker-compose -f deploy/production/docker-compose.production.yml down
-docker system prune -f
-docker-compose -f deploy/production/docker-compose.production.yml up -d
+#### Performance Tuning
+```sql
+-- Monitor slow queries
+SELECT query, mean_time, calls 
+FROM pg_stat_statements 
+ORDER BY mean_time DESC 
+LIMIT 10;
 
-# 2. If database issues
-docker restart leanvibe-postgres-primary
+-- Monitor connection usage
+SELECT count(*), state 
+FROM pg_stat_activity 
+GROUP BY state;
+```
+
+## 📈 Scaling Operations
+
+### Horizontal Scaling
+
+#### Application Scaling
+```bash
+# Scale up application instances
+docker compose -f docker-compose.production.yml up -d --scale app=5
+
+# Load balancer configuration
+nginx -s reload
+```
+
+#### Database Scaling
+```bash
+# Read replica setup
+pg_basebackup -h primary-db -D /var/lib/postgresql/replica -U replicator -v -P
+
+# Connection pooling with PgBouncer
+docker run -d --name pgbouncer -p 5432:5432 pgbouncer/pgbouncer
+```
+
+### Auto-scaling Configuration
+```python
+# Auto-scaling settings in unified config
+config.performance.auto_scaling_enabled = True
+config.performance.max_concurrent_agents = 200  # Scale limit
+config.performance.target_response_time_ms = 150
+```
+
+## 🔍 Troubleshooting Guide
+
+### Common Issues and Solutions
+
+#### Configuration Issues
+```bash
+# Problem: Configuration validation fails
+# Solution: Check environment variables and migrate
+python scripts/migrate_configurations.py --validate-only
+export MISSING_VAR=value
+python scripts/migrate_configurations.py --environment production --backup
+
+# Problem: Hot-reload not working
+# Solution: Restart config manager
+curl -X POST http://localhost:8000/api/admin/config/reload
+```
+
+#### Performance Issues
+```bash
+# Problem: High response times
+# Solution: Check resource usage and scale
+docker stats
+docker compose -f docker-compose.production.yml up -d --scale app=3
+
+# Problem: Database connection pool exhaustion
+# Solution: Increase pool size
+export DATABASE_POOL_SIZE=100
+python scripts/migrate_configurations.py --environment production
+```
+
+#### Security Issues
+```bash
+# Problem: Authentication failures
+# Solution: Check JWT configuration
+curl http://localhost:8000/api/security/jwt/validate
+
+# Problem: Rate limiting too aggressive
+# Solution: Adjust rate limits
+export RATE_LIMIT_REQUESTS_PER_MINUTE=2000
+curl -X POST http://localhost:8000/api/admin/config/reload
+```
+
+### Emergency Procedures
+
+#### Complete System Recovery
+```bash
+#!/bin/bash
+# emergency_recovery.sh
+
+echo "🚨 Starting emergency recovery..."
+
+# 1. Stop all services
+docker compose -f docker-compose.production.yml down
+
+# 2. Backup current state
+python scripts/migrate_configurations.py --environment production --backup
+
+# 3. Reset to known good configuration
+python scripts/migrate_configurations.py --rollback config_backup_known_good.json
+
+# 4. Restart services
+docker compose -f docker-compose.production.yml up -d
+
+# 5. Verify health
 sleep 30
-psql -h localhost -U leanvibe -d leanvibe_production -c "SELECT 1;"
+curl -f http://localhost:8000/health || echo "❌ Recovery failed"
 
-# 3. If network issues
-docker network prune -f
-docker-compose -f deploy/production/docker-compose.production.yml up -d
+echo "✅ Emergency recovery completed"
 ```
 
-### **Playbook 2: Performance Degradation**
+## 📚 Additional Resources
 
-#### **Symptoms**
-- Response times >100ms
-- Throughput <10,000 msg/sec
-- High CPU or memory usage
+### Documentation
+- `docs/ARCHITECTURE.md` - System architecture overview
+- `docs/GETTING_STARTED.md` - 2-day developer onboarding
+- `docs/TECHNICAL_DEBT_ANALYSIS.md` - Known issues and improvements
+- `app/config/unified_config.py` - Configuration system source
 
-#### **Investigation Steps**
-```bash
-# 1. Check current performance
-python scripts/performance_snapshot.py
+### Monitoring Dashboards
+- Grafana: http://localhost:3000
+- Prometheus: http://localhost:9090
+- Application metrics: http://localhost:8000/metrics
 
-# 2. Analyze resource bottlenecks
-docker stats --no-stream
-
-# 3. Check database performance
-psql -d leanvibe_production -c "SELECT * FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;"
-
-# 4. Review error logs
-tail -f logs/application.log | grep -E "(ERROR|WARN)"
-```
-
-#### **Resolution Steps**
-```bash
-# 1. Scale critical components
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale universal-orchestrator=3
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale communication-hub=3
-
-# 2. Optimize database
-psql -d leanvibe_production -c "REINDEX DATABASE leanvibe_production;"
-psql -d leanvibe_production -c "VACUUM ANALYZE;"
-
-# 3. Clear caches if appropriate
-docker exec redis-cluster-node1 redis-cli FLUSHDB
-
-# 4. Verify improvement
-python scripts/performance_snapshot.py
-```
-
-### **Playbook 3: Communication Issues**
-
-#### **Symptoms**
-- Message delivery failures
-- High latency in inter-component communication
-- WebSocket connection issues
-
-#### **Investigation Steps**
-```bash
-# 1. Check CommunicationHub logs
-docker logs --tail 100 leanvibe-communication-hub
-
-# 2. Verify Redis cluster health
-docker exec redis-cluster-node1 redis-cli cluster info
-
-# 3. Check network connectivity
-docker exec leanvibe-universal-orchestrator telnet leanvibe-communication-hub 8082
-
-# 4. Monitor message flow
-curl -s http://localhost:9090/api/v1/query?query=rate(leanvibe_messages_total[1m])
-```
-
-#### **Resolution Steps**
-```bash
-# 1. Restart communication components
-docker restart leanvibe-communication-hub
-
-# 2. Fix Redis cluster if needed
-docker exec redis-cluster-node1 redis-cli cluster reset soft
-# Re-create cluster as in setup procedures
-
-# 3. Scale communication layer
-docker-compose -f deploy/production/docker-compose.production.yml up -d --scale communication-hub=4
-
-# 4. Verify resolution
-python scripts/communication_test.py
-```
+### Support Contacts
+- **Engineering Team**: engineering@leanvibe.com
+- **DevOps Team**: devops@leanvibe.com
+- **Security Team**: security@leanvibe.com
+- **On-call**: +1-XXX-XXX-XXXX
 
 ---
 
-## 📋 ESCALATION MATRIX
+**🎯 This runbook is maintained by the DevOps team and updated with each major release.**
 
-### **Issue Escalation Flow**
-
-```
-Level 1 (Operations) → Level 2 (Engineering) → Level 3 (Architecture) → Emergency Response Team
-```
-
-#### **Level 1 - Operations Team**
-- **Scope**: Routine issues, standard procedures
-- **Response Time**: <15 minutes
-- **Authority**: Restart services, scale components, basic troubleshooting
-- **Escalation**: If issue not resolved in 30 minutes
-
-#### **Level 2 - Engineering Team**
-- **Scope**: Complex technical issues, performance problems
-- **Response Time**: <1 hour
-- **Authority**: Configuration changes, code hotfixes, advanced troubleshooting
-- **Escalation**: If issue not resolved in 2 hours or impacts >50% of system
-
-#### **Level 3 - Architecture Team**
-- **Scope**: System design issues, major architectural problems
-- **Response Time**: <4 hours
-- **Authority**: Architectural changes, major system modifications
-- **Escalation**: If system-wide impact or data integrity concerns
-
-### **Communication Protocols**
-
-#### **Internal Communication**
-- **Slack**: #leanvibe-operations (real-time updates)
-- **Email**: ops-team@leanvibe.com (formal notifications)
-- **Phone**: Emergency hotline for P0 incidents
-
-#### **External Communication**
-- **Status Page**: https://status.leanvibe.com
-- **Customer Updates**: Via support ticket system
-- **Public Communications**: Via marketing team for major incidents
-
----
-
-## 📊 PERFORMANCE BASELINES
-
-### **Normal Operating Ranges**
-
-| Metric | Excellent | Good | Warning | Critical |
-|--------|-----------|------|---------|----------|
-| **Task Assignment** | <0.01ms | <0.1ms | <1ms | >10ms |
-| **Message Throughput** | >18K/sec | >15K/sec | >10K/sec | <8K/sec |
-| **Memory Usage** | <200MB | <300MB | <400MB | >500MB |
-| **CPU Usage** | <30% | <50% | <70% | >85% |
-| **Error Rate** | <0.01% | <0.1% | <1% | >2% |
-| **Response Time** | <50ms | <100ms | <200ms | >500ms |
-
-### **Historical Performance Data**
-
-#### **Peak Performance Achievements** (Validated)
-- **Task Assignment**: 0.01ms (39,092x improvement)
-- **Throughput**: 18,483 msg/sec (23% above target)
-- **Memory Efficiency**: 285MB (21x improvement)
-- **Error Rate**: 0.005% (4x improvement)
-
-#### **Seasonal Patterns**
-- **Business Hours**: 150-200% of baseline load
-- **Weekend**: 60-80% of baseline load
-- **Month-end**: 120-150% increase in processing
-- **Holiday Periods**: 30-50% of baseline load
-
----
-
-## 📞 CONTACT DIRECTORY
-
-### **Primary Contacts**
-
-| Role | Name | Phone | Email | Timezone |
-|------|------|-------|-------|----------|
-| **Operations Lead** | [Name] | +1-555-0001 | ops-lead@leanvibe.com | PST |
-| **Engineering Lead** | [Name] | +1-555-0002 | eng-lead@leanvibe.com | EST |
-| **Architecture Lead** | [Name] | +1-555-0003 | arch-lead@leanvibe.com | PST |
-| **On-Call Coordinator** | [Name] | +1-555-0000 | oncall@leanvibe.com | 24/7 |
-
-### **Vendor Contacts**
-
-| Service | Contact | Phone | Email | SLA |
-|---------|---------|-------|-------|-----|
-| **Cloud Provider** | AWS Support | +1-206-266-4064 | support@aws.com | 24/7 |
-| **Database** | PostgreSQL Support | Support Portal | support@postgresql.com | Business Hours |
-| **Monitoring** | Grafana Support | Support Portal | support@grafana.com | Business Hours |
-
----
-
-## 🎯 CONCLUSION
-
-This operational runbook provides comprehensive procedures for day-to-day operations of LeanVibe Agent Hive 2.0. The system's extraordinary performance and reliability are maintained through diligent monitoring, proactive maintenance, and rapid incident response.
-
-**Key Operational Principles:**
-- ✅ **Proactive Monitoring**: Prevent issues before they impact users
-- ✅ **Rapid Response**: <15 minute response time for critical issues
-- ✅ **Continuous Improvement**: Learn from every incident and optimize
-- ✅ **Documentation First**: Keep procedures updated and accessible
-
-The system is designed for operational excellence and this runbook ensures that excellence is maintained 24/7/365.
-
----
-
-**Operations Team**  
-*LeanVibe Agent Hive 2.0*  
-August 18, 2025
+Last Updated: Configuration & Documentation Consolidation Phase Complete
