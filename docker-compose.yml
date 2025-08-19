@@ -6,25 +6,36 @@ services:
     image: pgvector/pgvector:pg15
     container_name: leanvibe_postgres
     environment:
-      POSTGRES_DB: leanvibe_agent_hive
-      POSTGRES_USER: leanvibe_user
+      POSTGRES_DB: ${POSTGRES_DB:-leanvibe_agent_hive}
+      POSTGRES_USER: ${POSTGRES_USER:-leanvibe_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leanvibe_secure_pass}
       POSTGRES_HOST_AUTH_METHOD: md5
+      # Performance optimizations for development
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/migrations:/docker-entrypoint-initdb.d
       - ./database/backups:/backups
+      # PostgreSQL configuration optimizations
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     networks:
       - leanvibe_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U leanvibe_user -d leanvibe_agent_hive"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-leanvibe_user} -d ${POSTGRES_DB:-leanvibe_agent_hive}"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    # Development-friendly resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   # Redis for Caching and Message Broker
   redis:
@@ -51,21 +62,60 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION:-3.12}
+        - BUILD_DATE=${BUILD_DATE}
+        - VCS_REF=${VCS_REF}
+        - VERSION=${APP_VERSION:-2.0.0}
     container_name: leanvibe_api
     environment:
-      - DATABASE_URL=postgresql://leanvibe_user:${POSTGRES_PASSWORD:-leanvibe_secure_pass}@postgres:5432/leanvibe_agent_hive
+      # Database Configuration
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-leanvibe_user}:${POSTGRES_PASSWORD:-leanvibe_secure_pass}@postgres:5432/${POSTGRES_DB:-leanvibe_agent_hive}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-leanvibe_redis_pass}@redis:6379/0
+      # AI Service Configuration
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
+      # Security Configuration
       - SECRET_KEY=${SECRET_KEY:-leanvibe_super_secret_key_change_in_production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-CHANGE_THIS_TO_SECURE_RANDOM_KEY_MINIMUM_64_CHARS}
+      # Application Configuration
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - DEBUG=${DEBUG:-true}
+      - APP_NAME=${APP_NAME:-LeanVibe Agent Hive}
+      - APP_VERSION=${APP_VERSION:-2.0.0}
+      # CORS Configuration
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3001,http://localhost:8080,http://localhost:3000}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,api}
+      # Development Features
+      - ENABLE_HOT_RELOAD=${ENABLE_HOT_RELOAD:-true}
+      - ENABLE_DEBUG_TOOLBAR=${ENABLE_DEBUG_TOOLBAR:-true}
+      - SKIP_STARTUP_INIT=${SKIP_STARTUP_INIT:-false}
+      # WebSocket Configuration
+      - WS_AUTH_REQUIRED=${WS_AUTH_REQUIRED:-false}
+      - WS_AUTH_MODE=${WS_AUTH_MODE:-token}
+      - WS_AUTH_TOKEN=${WS_AUTH_TOKEN:-dev-token-change-me}
+      # Feature Flags
+      - ENABLE_WEBAUTHN=${ENABLE_WEBAUTHN:-true}
+      - ENABLE_GITHUB_INTEGRATION=${ENABLE_GITHUB_INTEGRATION:-true}
+      - ENABLE_ENTERPRISE_TEMPLATES=${ENABLE_ENTERPRISE_TEMPLATES:-false}
+      # Monitoring
+      - PROMETHEUS_ENABLED=${PROMETHEUS_ENABLED:-true}
+      - PERFORMANCE_MONITORING_ENABLED=${PERFORMANCE_MONITORING_ENABLED:-true}
     ports:
       - "${MAIN_API_PORT:-8100}:8000"
+      - "${API_DEBUG_PORT:-5678}:5678"  # Debug port for IDE attachment
     volumes:
-      - .:/app
+      # Source code hot-reload for development
+      - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock  # For tmux session management
       - agent_workspaces:/app/workspaces
+      - ./logs:/app/logs  # Development log persistence
+      # Exclude node_modules and other cache directories for performance
+      - /app/node_modules
+      - /app/.pytest_cache
+      - /app/__pycache__
+      - /app/.mypy_cache
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,38 +124,79 @@ services:
     networks:
       - leanvibe_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "-H", "User-Agent: Docker-Healthcheck", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 45s
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 2G
-          cpus: '1.0'
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    # Development command with hot reload and debugging
+    command: >
+      sh -c "
+        echo 'Starting LeanVibe Agent Hive API in development mode...' &&
+        python -m pip install --no-deps -e . &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+      "
 
-  # Frontend PWA Development Server (for development)
+  # Frontend PWA Development Server
   frontend:
     build:
-      context: ./frontend
+      context: ./mobile-pwa
       dockerfile: Dockerfile.dev
     container_name: leanvibe_frontend_dev
     environment:
+      # API Configuration
       - API_BASE_URL=http://api:8000
+      - VITE_API_BASE_URL=http://localhost:${MAIN_API_PORT:-8100}
+      - VITE_WS_URL=ws://localhost:${MAIN_API_PORT:-8100}/api/dashboard/ws/dashboard
+      # Development Configuration
       - NODE_ENV=development
+      - VITE_APP_TITLE=LeanVibe Agent Hive - Dev
+      - VITE_APP_VERSION=${APP_VERSION:-2.0.0}
+      # Feature Flags
+      - VITE_ENABLE_MOCK_DATA=${ENABLE_MOCK_DATA:-false}
+      - VITE_ENABLE_DEBUG=${DEBUG:-true}
+      # Authentication
+      - VITE_AUTH_REQUIRED=${WS_AUTH_REQUIRED:-false}
+      - VITE_AUTH_TOKEN=${WS_AUTH_TOKEN:-dev-token-change-me}
     ports:
       - "${DASHBOARD_PORT:-3001}:3000"
+      - "${FRONTEND_HMR_PORT:-24678}:24678"  # Vite HMR port
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      # Source code hot-reload for development
+      - ./mobile-pwa:/app:cached
+      - /app/node_modules  # Prevent host node_modules from overriding container's
+      - /app/dist
+      - /app/.vite
     depends_on:
       - api
     networks:
       - leanvibe_network
-    command: npm run dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     profiles:
       - development
+    # Development command with HMR
+    command: >
+      sh -c "
+        echo 'Installing dependencies...' &&
+        npm ci --silent &&
+        echo 'Starting Vite development server...' &&
+        npm run dev -- --host 0.0.0.0 --port 3000
+      "
 
   # Nginx Reverse Proxy (for production)
   nginx:
@@ -126,18 +217,39 @@ services:
       - production
     restart: unless-stopped
 
-  # Redis Insight for Redis Management (Development)
+  # Redis Commander for Redis Management (Development)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: leanvibe_redis_commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASSWORD:-leanvibe_redis_pass}
+      - HTTP_USER=${REDIS_COMMANDER_USER:-admin}
+      - HTTP_PASSWORD=${REDIS_COMMANDER_PASSWORD:-admin}
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8201}:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network
+    profiles:
+      - development
+      - tools
+    restart: unless-stopped
+
+  # Redis Insight for Advanced Redis Management (Development)
   redis-insight:
     image: redislabs/redisinsight:latest
     container_name: leanvibe_redis_insight
     ports:
-      - "${REDIS_INSIGHT_PORT:-8201}:8001"
+      - "${REDIS_INSIGHT_PORT:-8202}:8001"
     depends_on:
       - redis
     networks:
       - leanvibe_network
     profiles:
       - development
+      - tools
     restart: unless-stopped
 
   # pgAdmin for PostgreSQL Management (Development)
@@ -145,12 +257,15 @@ services:
     image: dpage/pgadmin4:latest
     container_name: leanvibe_pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@leanvibe.dev
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@leanvibe.dev}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin_password}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
     ports:
       - "${PGADMIN_PORT:-5150}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+      - ./config/servers.json:/pgadmin4/servers.json:ro  # Pre-configured server connections
     depends_on:
       postgres:
         condition: service_healthy
@@ -158,6 +273,31 @@ services:
       - leanvibe_network
     profiles:
       - development
+      - tools
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/misc/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Adminer - Lightweight Database Management Alternative
+  adminer:
+    image: adminer:latest
+    container_name: leanvibe_adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: hydra
+    ports:
+      - "${ADMINER_PORT:-8203}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - leanvibe_network
+    profiles:
+      - development
+      - tools
     restart: unless-stopped
 
   # Prometheus for Metrics Collection
@@ -415,14 +555,57 @@ services:
       - "${JUPYTER_PORT:-8888}:8888"
     environment:
       - JUPYTER_TOKEN=${JUPYTER_TOKEN:-leanvibe_jupyter_token}
+      - JUPYTER_ENABLE_LAB=yes
     volumes:
       - ./notebooks:/home/jovyan/work
+      - ./analysis:/home/jovyan/analysis:ro  # Analysis scripts
       - jupyter_data:/home/jovyan
     networks:
       - leanvibe_network
     profiles:
       - development
+      - analysis
     restart: unless-stopped
+    command: start-notebook.sh --NotebookApp.token='${JUPYTER_TOKEN:-leanvibe_jupyter_token}' --NotebookApp.password=''
+
+  # Testing Environment
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: leanvibe_test_runner
+    environment:
+      # Test Database Configuration
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-leanvibe_user}:${POSTGRES_PASSWORD:-leanvibe_secure_pass}@postgres:5432/${POSTGRES_DB:-leanvibe_agent_hive}_test
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-leanvibe_redis_pass}@redis:6379/1
+      # Test Configuration
+      - ENVIRONMENT=testing
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - SKIP_STARTUP_INIT=true
+      # Performance
+      - PYTEST_XDIST_WORKERS=${PYTEST_WORKERS:-4}
+    volumes:
+      - .:/app:cached
+      - ./test-results:/app/test-results
+      - /app/.pytest_cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - leanvibe_network
+    profiles:
+      - testing
+    command: >
+      sh -c "
+        echo 'Setting up test environment...' &&
+        python -m pip install --no-deps -e . &&
+        echo 'Running tests...' &&
+        pytest --cov=app --cov-report=html --cov-report=xml --junitxml=test-results/junit.xml -v
+      "
 
 networks:
   leanvibe_network:

@@ -1,0 +1,36 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "LeanVibe Agent Hive - Docker",
+      "Group": "Development",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "leanvibe_agent_hive",
+      "Username": "leanvibe_user",
+      "UseSSHTunnel": 0,
+      "TunnelPort": "22",
+      "TunnelAuthentication": 0,
+      "KerberosAuthentication": false,
+      "ConnectionParameters": {
+        "sslmode": "prefer",
+        "connect_timeout": "30"
+      }
+    },
+    "2": {
+      "Name": "LeanVibe Test Database",
+      "Group": "Development", 
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "leanvibe_agent_hive_test",
+      "Username": "leanvibe_user",
+      "UseSSHTunnel": 0,
+      "TunnelPort": "22",
+      "TunnelAuthentication": 0,
+      "KerberosAuthentication": false,
+      "ConnectionParameters": {
+        "sslmode": "prefer",
+        "connect_timeout": "30"
+      }
+    }
+  }
+}

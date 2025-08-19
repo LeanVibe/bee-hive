@@ -12,7 +12,11 @@
 	frontend-install frontend-dev frontend-build frontend-test \
 	pwa-dev pwa-build pwa-generate-schemas \
 	docs-generate-nav docs-validate-links \
-	pre-commit ci release dev-container emergency-reset env-info
+	pre-commit ci release dev-container emergency-reset env-info \
+	docker-help docker-setup docker-dev docker-dev-bg docker-dev-full docker-dev-minimal \
+	docker-stop docker-restart docker-logs docker-shell docker-db-shell docker-redis-shell \
+	docker-build docker-build-no-cache docker-clean docker-clean-all docker-test \
+	docker-health docker-ps docker-top docker-stats
 
 # Default target
 .DEFAULT_GOAL := help
@@ -405,3 +409,166 @@ env-info: ## Show environment information
 	@echo "$(YELLOW)Node.js:$(NC) $(shell node --version 2>/dev/null || echo 'Not installed')"
 	@echo "$(YELLOW)Virtual Env:$(NC) $(if $(wildcard $(VENV_DIR)),✅ Exists,❌ Missing)"
 	@echo "$(YELLOW)Config File:$(NC) $(if $(wildcard .env.local),✅ Exists,❌ Missing)"
+
+# ==============================================
+# 🐳 DOCKER DEVELOPMENT COMMANDS
+# ==============================================
+
+# Docker configuration
+DOCKER_COMPOSE := docker compose
+DOCKER_COMPOSE_FILE := docker-compose.yml
+DOCKER_ENV_FILE := .env.docker
+
+docker-help: ## Show Docker-specific commands
+	@echo "$(BLUE)🐳 Docker Development Commands$(NC)"
+	@echo "================================="
+	@echo "$(YELLOW)Setup:$(NC)"
+	@echo "  $(GREEN)docker-setup$(NC)      - Set up Docker environment with .env.docker"
+	@echo ""
+	@echo "$(YELLOW)Development:$(NC)"
+	@echo "  $(GREEN)docker-dev$(NC)        - Start full development stack (API + Frontend + Tools)"
+	@echo "  $(GREEN)docker-dev-bg$(NC)     - Start development stack in background"
+	@echo "  $(GREEN)docker-dev-minimal$(NC) - Start minimal stack (API + DB + Redis only)"
+	@echo "  $(GREEN)docker-dev-full$(NC)    - Start everything including monitoring & tools"
+	@echo ""
+	@echo "$(YELLOW)Management:$(NC)"
+	@echo "  $(GREEN)docker-stop$(NC)       - Stop all Docker services"
+	@echo "  $(GREEN)docker-restart$(NC)    - Restart Docker services"
+	@echo "  $(GREEN)docker-logs$(NC)       - Show logs from all services"
+	@echo "  $(GREEN)docker-shell$(NC)      - Open shell in API container"
+	@echo "  $(GREEN)docker-db-shell$(NC)   - Open PostgreSQL shell"
+	@echo "  $(GREEN)docker-redis-shell$(NC) - Open Redis CLI"
+	@echo ""
+	@echo "$(YELLOW)Building & Testing:$(NC)"
+	@echo "  $(GREEN)docker-build$(NC)      - Build all Docker images"
+	@echo "  $(GREEN)docker-build-no-cache$(NC) - Build without cache"
+	@echo "  $(GREEN)docker-test$(NC)       - Run tests in Docker environment"
+	@echo ""
+	@echo "$(YELLOW)Monitoring:$(NC)"
+	@echo "  $(GREEN)docker-health$(NC)     - Check health of all services"
+	@echo "  $(GREEN)docker-ps$(NC)         - Show running containers"
+	@echo "  $(GREEN)docker-stats$(NC)      - Show container resource usage"
+	@echo "  $(GREEN)docker-top$(NC)        - Show running processes in containers"
+	@echo ""
+	@echo "$(YELLOW)Cleanup:$(NC)"
+	@echo "  $(GREEN)docker-clean$(NC)      - Clean up stopped containers and images"
+	@echo "  $(GREEN)docker-clean-all$(NC)  - Clean up everything (DESTRUCTIVE)"
+	@echo ""
+	@echo "$(YELLOW)Access URLs:$(NC)"
+	@echo "  • API:          http://localhost:8100"
+	@echo "  • Frontend PWA: http://localhost:3001"
+	@echo "  • pgAdmin:      http://localhost:5150"
+	@echo "  • Redis Cmd:    http://localhost:8201"
+	@echo "  • Prometheus:   http://localhost:9090"
+	@echo "  • Grafana:      http://localhost:3101"
+
+docker-setup: ## Set up Docker development environment
+	@echo "$(BLUE)🐳 Setting up Docker development environment...$(NC)"
+	@if [ \! -f "$(DOCKER_ENV_FILE)" ]; then \
+		echo "$(YELLOW)📝 Creating .env.docker from template...$(NC)"; \
+		cp .env.docker.example .env.docker; \
+		echo "$(GREEN)✅ Created .env.docker - please review and update as needed$(NC)"; \
+	else \
+		echo "$(GREEN)✅ .env.docker already exists$(NC)"; \
+	fi
+	@echo "$(BLUE)🔧 Ensuring Docker networks and volumes...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) create
+	@echo "$(GREEN)✅ Docker setup complete\!$(NC)"
+	@echo "$(YELLOW)💡 Next steps:$(NC)"
+	@echo "  1. Review .env.docker and add your API keys"
+	@echo "  2. Run 'make docker-dev' to start development environment"
+
+docker-dev: ## Start full Docker development environment
+	@echo "$(BLUE)🚀 Starting Docker development environment...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) --profile development up --remove-orphans
+
+docker-dev-bg: ## Start Docker development environment in background
+	@echo "$(BLUE)🚀 Starting Docker development environment in background...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) --profile development up -d --remove-orphans
+	@echo "$(GREEN)✅ Services started in background$(NC)"
+	@echo "$(YELLOW)💡 Use 'make docker-logs' to see logs or 'make docker-ps' to check status$(NC)"
+
+docker-dev-minimal: ## Start minimal Docker development stack
+	@echo "$(BLUE)🚀 Starting minimal Docker development stack...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) up postgres redis api --remove-orphans
+
+docker-dev-full: ## Start full Docker stack with all services
+	@echo "$(BLUE)🚀 Starting full Docker stack with monitoring...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) --profile development --profile tools --profile monitoring up --remove-orphans
+
+docker-stop: ## Stop all Docker services
+	@echo "$(BLUE)🛑 Stopping Docker services...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) down
+	@echo "$(GREEN)✅ Docker services stopped$(NC)"
+
+docker-restart: ## Restart Docker services
+	@echo "$(BLUE)🔄 Restarting Docker services...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) restart
+	@echo "$(GREEN)✅ Docker services restarted$(NC)"
+
+docker-logs: ## Show logs from all Docker services
+	@echo "$(BLUE)📋 Showing Docker service logs...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) logs -f --tail=100
+
+docker-shell: ## Open shell in API container
+	@echo "$(BLUE)🐚 Opening shell in API container...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) exec api /bin/bash
+
+docker-db-shell: ## Open PostgreSQL shell
+	@echo "$(BLUE)🐘 Opening PostgreSQL shell...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) exec postgres psql -U leanvibe_user -d leanvibe_agent_hive
+
+docker-redis-shell: ## Open Redis CLI
+	@echo "$(BLUE)🔴 Opening Redis CLI...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) exec redis redis-cli -a leanvibe_redis_pass_docker
+
+docker-build: ## Build all Docker images
+	@echo "$(BLUE)🔨 Building Docker images...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) build
+	@echo "$(GREEN)✅ Docker images built$(NC)"
+
+docker-build-no-cache: ## Build Docker images without cache
+	@echo "$(BLUE)🔨 Building Docker images without cache...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) build --no-cache
+	@echo "$(GREEN)✅ Docker images built without cache$(NC)"
+
+docker-test: ## Run tests in Docker environment
+	@echo "$(BLUE)🧪 Running tests in Docker...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) --profile testing run --rm test-runner
+	@echo "$(GREEN)✅ Docker tests completed$(NC)"
+
+docker-health: ## Check health of all Docker services
+	@echo "$(BLUE)💗 Checking Docker service health...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) ps --format table
+	@echo ""
+	@echo "$(YELLOW)API Health Check:$(NC)"
+	@curl -s http://localhost:8100/health | python3 -m json.tool 2>/dev/null || echo "API not accessible"
+
+docker-ps: ## Show running Docker containers
+	@echo "$(BLUE)📋 Docker container status:$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) ps
+
+docker-stats: ## Show Docker container resource usage
+	@echo "$(BLUE)📊 Docker container resource usage:$(NC)"
+	@docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
+
+docker-top: ## Show running processes in Docker containers
+	@echo "$(BLUE)⚡ Processes in Docker containers:$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) top
+
+docker-clean: ## Clean up Docker resources (containers, networks, images)
+	@echo "$(YELLOW)🧹 Cleaning up Docker resources...$(NC)"
+	@docker container prune -f
+	@docker network prune -f
+	@docker image prune -f
+	@echo "$(GREEN)✅ Docker cleanup completed$(NC)"
+
+docker-clean-all: ## Clean up ALL Docker resources (DESTRUCTIVE - removes volumes)
+	@echo "$(RED)⚠️  WARNING: This will remove ALL Docker data including volumes\!$(NC)"
+	@echo "$(RED)Press Ctrl+C within 5 seconds to cancel...$(NC)"
+	@sleep 5
+	@echo "$(YELLOW)🧹 Cleaning up ALL Docker resources...$(NC)"
+	@$(DOCKER_COMPOSE) --env-file=$(DOCKER_ENV_FILE) down -v --remove-orphans
+	@docker system prune -af --volumes
+	@echo "$(GREEN)✅ Complete Docker cleanup completed$(NC)"
+
