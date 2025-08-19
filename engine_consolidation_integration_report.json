@@ -1,0 +1,226 @@
+{
+  "summary": {
+    "total_tests": 17,
+    "passed_tests": 17,
+    "failed_tests": 0,
+    "success_rate": 100.0,
+    "total_time_seconds": 0.011768102645874023,
+    "test_date": "2025-08-19T17:27:04.489673",
+    "consolidation_validated": true
+  },
+  "test_results": {
+    "engine_creation": {
+      "status": "passed",
+      "creation_time_ms": 0.052928924560546875,
+      "engine_id": "test_enhanced_dp"
+    },
+    "engine_initialization": {
+      "status": "passed",
+      "init_time_ms": 0.6399154663085938,
+      "modules_count": 2,
+      "modules": [
+        "semantic_memory",
+        "context_compression"
+      ],
+      "operations_routed": 6
+    },
+    "module_health_checks": {
+      "status": "passed",
+      "engine_healthy": true,
+      "modules_healthy": 2,
+      "health_details": {
+        "engine_status": "healthy",
+        "total_modules": 2,
+        "modules": {
+          "semantic_memory": {
+            "status": "healthy",
+            "memory_count": 0,
+            "cache_size": 0,
+            "max_memories": 1000,
+            "memory_usage_percent": 0.0
+          },
+          "context_compression": {
+            "status": "healthy",
+            "strategies_available": 4,
+            "default_compression_ratio": 0.75
+          }
+        }
+      }
+    },
+    "semantic_memory_operations": {
+      "status": "passed",
+      "storage_success": true,
+      "retrieval_by_id_success": true,
+      "retrieval_by_query_success": true,
+      "storage_time_ms": 0.09083747863769531,
+      "retrieval_time_ms": 0.03314018249511719
+    },
+    "semantic_search_functionality": {
+      "status": "passed",
+      "search_success": true,
+      "results_count": 5,
+      "search_time_ms": 0.1537799835205078,
+      "performance_target_met": true
+    },
+    "embedding_generation": {
+      "status": "passed",
+      "generation_success": true,
+      "embedding_dimension": 384,
+      "generation_time_ms": 0.030279159545898438
+    },
+    "context_compression_strategies": {
+      "status": "passed",
+      "strategies_tested": 4,
+      "all_strategies_working": true,
+      "results": {
+        "semantic": {
+          "success": true,
+          "original_length": 590,
+          "compressed_length": 197,
+          "compression_ratio": 0.6661016949152543,
+          "processing_time_ms": 0.11086463928222656
+        },
+        "extractive": {
+          "success": true,
+          "original_length": 590,
+          "compressed_length": 197,
+          "compression_ratio": 0.6661016949152543,
+          "processing_time_ms": 0.0171661376953125
+        },
+        "abstractive": {
+          "success": true,
+          "original_length": 590,
+          "compressed_length": 197,
+          "compression_ratio": 0.6661016949152543,
+          "processing_time_ms": 0.017881393432617188
+        },
+        "keyword": {
+          "success": true,
+          "original_length": 590,
+          "compressed_length": 155,
+          "compression_ratio": 0.7372881355932204,
+          "processing_time_ms": 0.1590251922607422
+        }
+      }
+    },
+    "compression_performance": {
+      "status": "passed",
+      "processing_time_ms": 0.05507469177246094,
+      "total_time_ms": 0.09226799011230469,
+      "compression_ratio": 0.76,
+      "performance_target_met": true,
+      "compression_target_met": true,
+      "content_length": 2500
+    },
+    "context_expansion": {
+      "status": "passed",
+      "expansion_success": true,
+      "original_length": 37,
+      "expanded_length": 125,
+      "expansion_ratio": 3.3783783783783785,
+      "processing_time_ms": 0.0362396240234375
+    },
+    "operation_routing": {
+      "status": "passed",
+      "total_operations_routed": 6,
+      "memory_operations": 3,
+      "compression_operations": 2,
+      "routing_correct": true,
+      "routing_map": {
+        "memory_storage": "semantic_memory",
+        "memory_retrieval": "semantic_memory",
+        "semantic_search": "semantic_memory",
+        "context_compression": "context_compression",
+        "context_expansion": "context_compression"
+      }
+    },
+    "module_integration": {
+      "status": "passed",
+      "storage_success": true,
+      "compression_success": true,
+      "search_success": true,
+      "integration_working": true,
+      "compression_ratio": 0.5100671140939597,
+      "search_results_count": 5
+    },
+    "error_handling": {
+      "status": "passed",
+      "invalid_operation_handled": true,
+      "missing_data_handled": true,
+      "engine_healthy_after_errors": true,
+      "error_recovery": true
+    },
+    "performance_targets": {
+      "status": "passed",
+      "all_targets_met": true,
+      "results": {
+        "semantic_search": {
+          "avg_time_ms": 0.10781288146972656,
+          "target_ms": 50,
+          "target_met": true,
+          "samples": 5
+        },
+        "memory_storage": {
+          "avg_time_ms": 0.026273727416992188,
+          "target_ms": 20,
+          "target_met": true,
+          "samples": 5
+        },
+        "context_compression": {
+          "avg_time_ms": 0.02841949462890625,
+          "target_ms": 100,
+          "target_met": true,
+          "samples": 5
+        }
+      }
+    },
+    "concurrent_operations": {
+      "status": "passed",
+      "total_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "success_rate_percent": 100.0,
+      "total_time_ms": 3.8199424743652344,
+      "avg_response_time_ms": 0.09094476699829102,
+      "throughput_ops_per_sec": 5235.680938709274
+    },
+    "memory_management": {
+      "status": "passed",
+      "initial_memory_count": 8,
+      "after_storage_count": 58,
+      "memory_increased": true,
+      "memory_usage_percent": 5.800000000000001,
+      "within_limits": true
+    },
+    "consolidation_benefits": {
+      "status": "passed",
+      "original_engines": 8,
+      "consolidated_engines": 1,
+      "consolidation_ratio": 0.875,
+      "original_loc": 8635,
+      "consolidated_loc": 1200,
+      "loc_reduction": 0.8610306890561668,
+      "functional_tests_passed": 15,
+      "total_test_time_s": 0.011483192443847656,
+      "benefits_realized": [
+        "86.1% LOC reduction achieved",
+        "87.5% engine consolidation",
+        "Modular architecture prevents monolithic design",
+        "Performance targets met",
+        "All functionality preserved"
+      ]
+    },
+    "engine_shutdown": {
+      "status": "passed",
+      "shutdown_time_ms": 0.26917457580566406,
+      "modules_cleared": true,
+      "routing_cleared": true
+    }
+  },
+  "consolidation_summary": {
+    "engines_consolidated": "8 \u2192 1",
+    "loc_reduction": "~86%",
+    "architecture": "Modular with plugin pattern",
+    "performance_targets_met": true
+  }
+}
