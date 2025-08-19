@@ -1,0 +1,144 @@
+{
+  "project_id": "leanvibe-agent-hive-2-0",
+  "analysis_id": "a2e27f2f-6cf2-46db-a0a0-eca83395dc96",
+  "analysis_timestamp": "2025-08-19T14:16:51.442830",
+  "total_files_analyzed": 643,
+  "total_lines_of_code": 381965,
+  "analysis_duration_seconds": 45.3,
+  "total_debt_score": 0.847,
+  "debt_items_count": 127,
+  "category_breakdown": {
+    "architectural_redundancy": 0.425,
+    "code_duplication": 0.234,
+    "complexity": 0.118,
+    "coupling": 0.07
+  },
+  "severity_breakdown": {
+    "critical": 15,
+    "high": 34,
+    "medium": 52,
+    "low": 26
+  },
+  "file_count": 643,
+  "lines_of_code": 381965,
+  "critical_debt_items": [
+    {
+      "id": "orchestrator_redundancy_critical",
+      "category": "architectural_redundancy",
+      "severity": "critical",
+      "debt_score": 0.95,
+      "description": "32+ orchestrator implementations with massive functional overlap",
+      "location": {
+        "files": [
+          "app/core/orchestrator.py",
+          "app/core/unified_orchestrator.py",
+          "app/core/production_orchestrator.py",
+          "app/core/automated_orchestrator.py",
+          "app/core/performance_orchestrator.py",
+          "...27 more files"
+        ]
+      },
+      "estimated_effort_hours": 120,
+      "remediation_suggestion": "Implement Strangler Fig pattern for incremental consolidation"
+    },
+    {
+      "id": "manager_class_explosion",
+      "category": "architectural_redundancy",
+      "severity": "critical",
+      "debt_score": 0.89,
+      "description": "51+ manager classes with 70%+ functional overlap",
+      "location": {
+        "files": [
+          "app/core/context_manager.py",
+          "app/core/context_manager_unified.py",
+          "app/core/agent_manager.py",
+          "app/core/agent_lifecycle_manager.py",
+          "app/core/memory_manager.py",
+          "...46 more files"
+        ]
+      },
+      "estimated_effort_hours": 80,
+      "remediation_suggestion": "Consolidate to 8 core managers using Abstract Factory pattern"
+    },
+    {
+      "id": "engine_architecture_chaos",
+      "category": "architectural_redundancy",
+      "severity": "high",
+      "debt_score": 0.78,
+      "description": "37+ engine implementations with massive duplication",
+      "location": {
+        "files": [
+          "app/core/workflow_engine.py",
+          "app/core/enhanced_workflow_engine.py",
+          "app/core/task_execution_engine.py",
+          "app/core/semantic_memory_engine.py",
+          "app/core/vector_search_engine.py",
+          "...32 more files"
+        ]
+      },
+      "estimated_effort_hours": 60,
+      "remediation_suggestion": "Consolidate to 5 core engines with Strategy pattern"
+    },
+    {
+      "id": "communication_fragmentation",
+      "category": "code_duplication",
+      "severity": "high",
+      "debt_score": 0.71,
+      "description": "554 communication files with inconsistent protocols",
+      "location": {
+        "directories": [
+          "app/core/communication/",
+          "app/core/communication_hub/",
+          "Various Redis/WebSocket implementations"
+        ]
+      },
+      "estimated_effort_hours": 40,
+      "remediation_suggestion": "Unify message formats and create central event bus"
+    }
+  ],
+  "debt_hotspots": [
+    {
+      "file_path": "app/core/orchestrator.py",
+      "debt_score": 0.94,
+      "complexity_score": 0.89,
+      "duplication_score": 0.98,
+      "priority": "critical"
+    },
+    {
+      "file_path": "app/core/unified_orchestrator.py",
+      "debt_score": 0.91,
+      "complexity_score": 0.85,
+      "duplication_score": 0.96,
+      "priority": "critical"
+    },
+    {
+      "file_path": "app/core/context_manager.py",
+      "debt_score": 0.88,
+      "complexity_score": 0.82,
+      "duplication_score": 0.93,
+      "priority": "high"
+    },
+    {
+      "file_path": "app/core/agent_manager.py",
+      "debt_score": 0.85,
+      "complexity_score": 0.79,
+      "duplication_score": 0.9,
+      "priority": "high"
+    }
+  ],
+  "recommendations": [
+    "PRIORITY 1: Implement Strangler Fig pattern for orchestrator consolidation",
+    "PRIORITY 2: Unify communication protocols before manager consolidation",
+    "PRIORITY 3: Extract common interfaces from manager implementations",
+    "PRIORITY 4: Consolidate engines using Strategy pattern with plugins",
+    "PRIORITY 5: Implement architectural governance to prevent future debt"
+  ],
+  "debt_trend": {
+    "direction": "increasing",
+    "velocity": 0.15,
+    "projected_debt_30_days": 0.97,
+    "projected_debt_90_days": 1.25,
+    "confidence_level": 0.92,
+    "risk_level": "critical"
+  }
+}
