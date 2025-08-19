@@ -223,21 +223,26 @@ integration_contexts:
 # Context exclusion patterns
 exclude_from_context:
   # Patterns that should generally be excluded
-  - "**/__pycache__/**"
-  - "**/.git/**"
-  - "**/node_modules/**"
-  - "**/*.pyc"
-  - "**/*.log"
-  - "**/htmlcov/**"
-  - "**/coverage/**"
-  - "**/.pytest_cache/**"
+  patterns:
+    - "**/__pycache__/**"
+    - "**/.git/**"
+    - "**/node_modules/**"
+    - "**/*.pyc"
+    - "**/*.log"
+    - "**/htmlcov/**"
+    - "**/coverage/**"
+    - "**/.pytest_cache/**"
   
   # Exclude unless specifically needed
   conditionally_exclude:
-    - "logs/**/*": "unless debugging or monitoring work"
-    - "venv/**/*": "unless environment issues"
-    - "build/**/*": "unless deployment work"
-    - "dist/**/*": "unless deployment work"
+    - pattern: "logs/**/*"
+      reason: "unless debugging or monitoring work"
+    - pattern: "venv/**/*"
+      reason: "unless environment issues"
+    - pattern: "build/**/*"
+      reason: "unless deployment work"
+    - pattern: "dist/**/*"
+      reason: "unless deployment work"
 
 # Context refresh triggers
 refresh_triggers:
