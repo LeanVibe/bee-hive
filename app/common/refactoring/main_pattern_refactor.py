@@ -105,7 +105,7 @@ class MainPatternDetector:
                 )
                 
             # Analyze the main pattern and generate refactoring plan
-            proposed_refactoring = self._generate_refactoring(main_pattern, content)
+            proposed_refactoring = self._generate_refactoring(main_pattern, file_path)
             imports_analysis = self._analyze_imports(tree)
             
             return RefactoringPlan(
@@ -194,13 +194,19 @@ class MainPatternDetector:
                     
         return len(lines)
         
-    def _generate_refactoring(self, main_pattern: Dict[str, Any], content: str) -> str:
+    def _generate_refactoring(self, main_pattern: Dict[str, Any], file_path: Path) -> str:
         """Generate refactored code using script_base pattern."""
-        # Extract the main function content
         main_code = main_pattern['code']
         
-        # Parse the main function logic
-        class_name = self._extract_class_name(content)
+        # Check if already using script_base pattern
+        if 'script_base' in main_code and 'BaseScript' in main_code:
+            # Already refactored, return as-is
+            return main_code
+            
+        # Extract class name from file path
+        class_name = self._extract_class_name_from_path(file_path)
+        
+        # Extract and clean the main logic
         main_logic = self._extract_main_logic(main_code)
         
         # Generate refactored version
@@ -220,13 +226,16 @@ class MainPatternDetector:
     
         return refactored
         
-    def _extract_class_name(self, content: str) -> str:
-        """Extract appropriate class name from file content."""
-        file_name = Path(content).stem if hasattr(content, 'stem') else "Script"
+    def _extract_class_name_from_path(self, file_path: Path) -> str:
+        """Extract appropriate class name from file path."""
+        file_name = file_path.stem
         
         # Convert file name to class name
-        class_name = ''.join(word.capitalize() for word in file_name.replace('_', ' ').split())
-        if not class_name.endswith('Script'):
+        words = file_name.replace('_', ' ').split()
+        class_name = ''.join(word.capitalize() for word in words)
+        
+        # Ensure it ends with Script if not already descriptive
+        if not any(suffix in class_name.lower() for suffix in ['test', 'script', 'service', 'runner']):
             class_name += 'Script'
             
         return class_name
@@ -235,21 +244,43 @@ class MainPatternDetector:
         """Extract the main logic and convert to method body."""
         lines = main_code.splitlines()
         
-        # Skip the if __name__ line and find the actual logic
+        # Find the content inside the if __name__ == "__main__": block
         logic_lines = []
         in_main_block = False
+        base_indent = None
         
         for line in lines:
-            if 'if __name__' in line:
+            if 'if __name__' in line and '__main__' in line:
                 in_main_block = True
                 continue
                 
-            if in_main_block and line.strip():
-                # Convert prints to logger calls and adjust indentation
-                adjusted_line = self._convert_to_method_body(line)
-                logic_lines.append(f"            {adjusted_line}")
-                
-        return '\n'.join(logic_lines) if logic_lines else '            pass'
+            if in_main_block:
+                if line.strip():
+                    # Determine base indentation from first content line
+                    if base_indent is None:
+                        base_indent = len(line) - len(line.lstrip())
+                    
+                    # Remove base indentation and add method indentation
+                    if len(line) >= base_indent:
+                        content = line[base_indent:]
+                        adjusted_line = self._convert_to_method_body(content)
+                        logic_lines.append(f"            {adjusted_line}")
+                    else:
+                        # Handle lines with less indentation (shouldn't happen in well-formed code)
+                        adjusted_line = self._convert_to_method_body(line.strip())
+                        logic_lines.append(f"            {adjusted_line}")
+                else:
+                    # Preserve empty lines
+                    logic_lines.append("")
+                    
+        # Clean up and ensure we have content
+        cleaned_lines = [line.rstrip() for line in logic_lines]
+        
+        # Remove trailing empty lines
+        while cleaned_lines and not cleaned_lines[-1].strip():
+            cleaned_lines.pop()
+            
+        return '\n'.join(cleaned_lines) if cleaned_lines else '            pass'
         
     def _convert_to_method_body(self, line: str) -> str:
         """Convert line to fit method body format."""
@@ -257,13 +288,29 @@ class MainPatternDetector:
         
         # Convert print statements to logger calls
         if stripped.startswith('print('):
-            content = stripped[6:-1]  # Remove 'print(' and ')'
+            # Extract content between print( and )
+            content = stripped[6:-1]
             return f'self.logger.info({content})'
             
         # Convert asyncio.run calls to direct await
         if 'asyncio.run(' in stripped:
-            func_call = stripped.replace('asyncio.run(', '').rstrip(')')
-            return f'await {func_call}'
+            # Extract the function call from asyncio.run()
+            start = stripped.find('asyncio.run(') + 12
+            # Find matching closing parenthesis
+            paren_count = 1
+            end = start
+            for i, char in enumerate(stripped[start:], start):
+                if char == '(':
+                    paren_count += 1
+                elif char == ')':
+                    paren_count -= 1
+                    if paren_count == 0:
+                        end = i
+                        break
+            
+            if end > start:
+                func_call = stripped[start:end]
+                return f'await {func_call}'
             
         return stripped
         

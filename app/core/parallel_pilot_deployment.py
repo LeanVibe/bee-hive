@@ -17,15 +17,14 @@ from enum import Enum
 import structlog
 import json
 
-from .pilot_infrastructure_orchestrator import (
-    PilotInfrastructureOrchestrator, 
-    PilotOnboardingRequest, 
-    PilotTier,
-    ComplianceFramework
-)
-from .enterprise_pilot_manager import EnterprisePilotManager
-from .enterprise_demo_orchestrator import EnterpriseDemoOrchestrator
+from .specialized_orchestrator_plugin import SpecializedOrchestratorPlugin
+from .enterprise_pilot_manager import EnterprisePilotManager, PilotTier
 from .enterprise_roi_tracker import EnterpriseROITracker
+from .compliance_framework import ComplianceFramework
+from .unified_production_orchestrator import IntegrationRequest
+
+# Use consolidated specialized orchestrator plugin for all environment operations
+# Epic 1 Phase 2.2B consolidation: 4 files → 1 unified plugin
 
 logger = structlog.get_logger()
 
@@ -135,9 +134,10 @@ class ParallelPilotDeploymentOrchestrator:
     """
     
     def __init__(self):
-        self.infrastructure_orchestrator = PilotInfrastructureOrchestrator()
+        # Use consolidated specialized orchestrator plugin for all environment operations
+        # Epic 1 Phase 2.2B consolidation: 4 files → 1 unified plugin
+        self.specialized_orchestrator = SpecializedOrchestratorPlugin()
         self.pilot_manager = EnterprisePilotManager()
-        self.demo_orchestrator = EnterpriseDemoOrchestrator()
         self.roi_tracker = EnterpriseROITracker()
         
         self.max_concurrent_deployments = 8
@@ -394,8 +394,14 @@ class ParallelPilotDeploymentOrchestrator:
                 success_criteria=pilot_profile.success_criteria
             )
             
-            # Step 2: Submit to infrastructure orchestrator
-            onboarding_result = await self.infrastructure_orchestrator.submit_pilot_onboarding_request(onboarding_request)
+            # Step 2: Submit to specialized orchestrator plugin (Epic 1 Phase 2.2B consolidation)
+            onboarding_result = await self.specialized_orchestrator.process_request(
+                IntegrationRequest(
+                    request_id=str(uuid.uuid4()),
+                    operation="submit_pilot_onboarding",
+                    parameters=onboarding_request.__dict__ if hasattr(onboarding_request, '__dict__') else onboarding_request
+                )
+            )
             
             if not onboarding_result["success"]:
                 raise Exception(f"Infrastructure onboarding failed: {onboarding_result.get('error')}")

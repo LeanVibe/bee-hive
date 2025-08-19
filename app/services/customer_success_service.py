@@ -987,80 +987,91 @@ async def get_success_service() -> CustomerSuccessService:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_customer_success_service():
-        """Test the customer success service."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class CustomerSuccessService(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        service = await get_success_service()
-        
-        # Sample service configuration
-        service_config = {
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_customer_success_service():
+            """Test the customer success service."""
+
+            service = await get_success_service()
+
+            # Sample service configuration
+            service_config = {
             "service_type": "mvp_development",
             "customer_name": "TechCorp Inc.",
             "success_manager_id": "sm_001",
             "communication_preferences": {
-                "email": "stakeholder@techcorp.com",
-                "slack_channel": "#project-updates",
-                "reporting_frequency": "daily"
+            "email": "stakeholder@techcorp.com",
+            "slack_channel": "#project-updates",
+            "reporting_frequency": "daily"
             },
             "business_objectives": [
-                "Launch MVP within 6 weeks",
-                "Achieve 95% test coverage",
-                "Maintain development velocity > 20x baseline"
+            "Launch MVP within 6 weeks",
+            "Achieve 95% test coverage",
+            "Maintain development velocity > 20x baseline"
             ]
-        }
-        
-        # Guarantee configuration
-        guarantee_config = {
+            }
+
+            # Guarantee configuration
+            guarantee_config = {
             "guarantee_amount": 150000,  # $150K guarantee
             "minimum_success_threshold": 80.0,  # 80% of criteria must be met
             "target_velocity_improvement": 2000.0,  # 20x improvement
             "target_test_coverage": 95.0,
             "target_timeline_adherence": 90.0,
             "target_satisfaction_score": 8.5
-        }
-        
-        # Create success guarantee
-        guarantee_result = await service.create_success_guarantee(
+            }
+
+            # Create success guarantee
+            guarantee_result = await service.create_success_guarantee(
             "customer_techcorp", service_config, guarantee_config
-        )
-        print("Guarantee creation result:", json.dumps(guarantee_result, indent=2, default=str))
-        
-        if guarantee_result["status"] == "success":
+            )
+            self.logger.info("Guarantee creation result:", json.dumps(guarantee_result, indent=2, default=str))
+
+            if guarantee_result["status"] == "success":
             guarantee_id = guarantee_result["guarantee_id"]
-            
+
             # Simulate metrics updates
             metrics_data = {
-                "velocity_data": {
-                    "baseline_velocity": 1.0,
-                    "completed_tasks": [
-                        {"story_points": 8, "type": "feature", "started_at": "2025-08-01T09:00:00", "completed_at": "2025-08-01T17:00:00"},
-                        {"story_points": 5, "type": "bug", "started_at": "2025-08-01T10:00:00", "completed_at": "2025-08-01T14:00:00"},
-                        {"story_points": 13, "type": "feature", "started_at": "2025-08-02T09:00:00", "completed_at": "2025-08-02T16:00:00"}
-                    ],
-                    "measurement_period_days": 7
-                },
-                "quality_data": {
-                    "test_coverage_percentage": 92.0,
-                    "defects_reported": 2,
-                    "defects_resolved": 2,
-                    "total_deliverables": 3,
-                    "code_quality_score": 8.5,
-                    "security_vulnerabilities": {"high": 0, "medium": 1, "low": 3}
-                },
-                "satisfaction_data": {
-                    "overall_satisfaction": 8.2,
-                    "nps_scores": [9, 8, 9],
-                    "communication_scores": [8.5, 9.0, 8.0]
-                }
+            "velocity_data": {
+            "baseline_velocity": 1.0,
+            "completed_tasks": [
+            {"story_points": 8, "type": "feature", "started_at": "2025-08-01T09:00:00", "completed_at": "2025-08-01T17:00:00"},
+            {"story_points": 5, "type": "bug", "started_at": "2025-08-01T10:00:00", "completed_at": "2025-08-01T14:00:00"},
+            {"story_points": 13, "type": "feature", "started_at": "2025-08-02T09:00:00", "completed_at": "2025-08-02T16:00:00"}
+            ],
+            "measurement_period_days": 7
+            },
+            "quality_data": {
+            "test_coverage_percentage": 92.0,
+            "defects_reported": 2,
+            "defects_resolved": 2,
+            "total_deliverables": 3,
+            "code_quality_score": 8.5,
+            "security_vulnerabilities": {"high": 0, "medium": 1, "low": 3}
+            },
+            "satisfaction_data": {
+            "overall_satisfaction": 8.2,
+            "nps_scores": [9, 8, 9],
+            "communication_scores": [8.5, 9.0, 8.0]
             }
-            
+            }
+
             # Update metrics
             update_result = await service.update_success_metrics(guarantee_id, metrics_data)
-            print("Metrics update result:", json.dumps(update_result, indent=2, default=str))
-            
+            self.logger.info("Metrics update result:", json.dumps(update_result, indent=2, default=str))
+
             # Get guarantee status
             status = await service.get_guarantee_status(guarantee_id)
-            print("Guarantee status:", json.dumps(status, indent=2, default=str))
+            self.logger.info("Guarantee status:", json.dumps(status, indent=2, default=str))
+
+            # Run test
+            await test_customer_success_service()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_customer_success_service())
+    script_main(CustomerSuccessService)

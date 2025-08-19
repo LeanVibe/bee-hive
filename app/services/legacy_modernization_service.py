@@ -840,43 +840,54 @@ async def get_modernization_service() -> LegacyModernizationService:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_modernization_service():
-        """Test the legacy modernization service."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class LegacyModernizationService(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        service = await get_modernization_service()
-        
-        # Sample project configuration
-        project_config = {
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_modernization_service():
+            """Test the legacy modernization service."""
+
+            service = await get_modernization_service()
+
+            # Sample project configuration
+            project_config = {
             "system_name": "Legacy ERP System",
             "codebase_path": "/path/to/legacy/erp",
             "target_requirements": {
-                "technology_stack": ["python_django", "react_frontend", "postgresql"],
-                "microservices": True,
-                "cloud_native": True,
-                "performance_requirements": {
-                    "max_response_time": 200,
-                    "min_throughput": 5000
-                },
-                "compliance_requirements": ["SOX", "PCI_DSS"]
+            "technology_stack": ["python_django", "react_frontend", "postgresql"],
+            "microservices": True,
+            "cloud_native": True,
+            "performance_requirements": {
+            "max_response_time": 200,
+            "min_throughput": 5000
+            },
+            "compliance_requirements": ["SOX", "PCI_DSS"]
             },
             "compliance_requirements": ["SOX", "PCI_DSS"],
             "database_schema": {"tables": 150, "size_gb": 500}
-        }
-        
-        # Start modernization project
-        result = await service.start_modernization_project(project_config, "customer_123")
-        print("Project start result:", json.dumps(result, indent=2, default=str))
-        
-        if result["status"] == "success":
+            }
+
+            # Start modernization project
+            result = await service.start_modernization_project(project_config, "customer_123")
+            self.logger.info("Project start result:", json.dumps(result, indent=2, default=str))
+
+            if result["status"] == "success":
             project_id = result["project_id"]
-            
+
             # Execute first phase
             phase_result = await service.execute_modernization_phase(project_id, 1)
-            print("Phase execution result:", json.dumps(phase_result, indent=2, default=str))
-            
+            self.logger.info("Phase execution result:", json.dumps(phase_result, indent=2, default=str))
+
             # Get project status
             status = await service.get_project_status(project_id)
-            print("Project status:", json.dumps(status, indent=2, default=str))
+            self.logger.info("Project status:", json.dumps(status, indent=2, default=str))
+
+            # Run test
+            await test_modernization_service()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_modernization_service())
+    script_main(LegacyModernizationService)

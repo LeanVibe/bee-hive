@@ -20,7 +20,10 @@ import structlog
 # Add parent directory for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from app.core.container_orchestrator import get_container_orchestrator
+from app.core.specialized_orchestrator_plugin import SpecializedOrchestratorPlugin
+from app.core.unified_production_orchestrator import IntegrationRequest
+
+# Epic 1 Phase 2.2B consolidation: Use consolidated specialized orchestrator plugin
 from app.core.config import settings
 
 logger = structlog.get_logger()
@@ -39,7 +42,8 @@ class MigrationManager:
     
     def __init__(self):
         self.docker_client = docker.from_env()
-        self.container_orchestrator = get_container_orchestrator()
+        # Epic 1 Phase 2.2B consolidation: Use consolidated specialized orchestrator plugin
+        self.specialized_orchestrator = SpecializedOrchestratorPlugin()
         self.migration_state = {
             "phase": "not_started",
             "tmux_agents": [],
@@ -130,7 +134,15 @@ class MigrationManager:
         
         for agent_type in agent_types:
             try:
-                agent_id = await self.container_orchestrator.spawn_agent(agent_type)
+                # Epic 1 Phase 2.2B consolidation: Use specialized orchestrator plugin
+                response = await self.specialized_orchestrator.process_request(
+                    IntegrationRequest(
+                        request_id=str(uuid.uuid4()),
+                        operation="deploy_container_agent",
+                        parameters={"agent_type": agent_type, "agent_id": str(uuid.uuid4())}
+                    )
+                )
+                agent_id = response.result.get("agent_id")
                 test_agents.append(agent_id)
                 logger.info(f"Deployed test {agent_type} agent", agent_id=agent_id)
                 
@@ -326,7 +338,15 @@ class MigrationManager:
         for agent_id in agent_ids:
             max_attempts = 10
             for attempt in range(max_attempts):
-                status = await self.container_orchestrator.get_agent_status(agent_id)
+                # Epic 1 Phase 2.2B consolidation: Use specialized orchestrator plugin
+                response = await self.specialized_orchestrator.process_request(
+                    IntegrationRequest(
+                        request_id=str(uuid.uuid4()),
+                        operation="health_check_containers",
+                        parameters={"agent_id": agent_id}
+                    )
+                )
+                status = response.result
                 
                 if status.get("status") == "running":
                     logger.info(f"Agent {agent_id} is healthy")
@@ -358,7 +378,15 @@ class MigrationManager:
     
     async def _check_container_agent_health(self) -> Dict[str, int]:
         """Check health of container agents."""
-        agents = await self.container_orchestrator.list_agents()
+        # Epic 1 Phase 2.2B consolidation: Use specialized orchestrator plugin
+        response = await self.specialized_orchestrator.process_request(
+            IntegrationRequest(
+                request_id=str(uuid.uuid4()),
+                operation="health_check_containers",
+                parameters={}
+            )
+        )
+        agents = response.result.get("agents", [])
         healthy = 0
         
         for agent in agents:
@@ -452,7 +480,14 @@ class MigrationManager:
         }
         
         for agent_type, target_count in scaling_config.items():
-            await self.container_orchestrator.scale_agents(agent_type, target_count)
+            # Epic 1 Phase 2.2B consolidation: Use specialized orchestrator plugin
+            await self.specialized_orchestrator.process_request(
+                IntegrationRequest(
+                    request_id=str(uuid.uuid4()),
+                    operation="scale_container_agents",
+                    parameters={"agent_type": agent_type, "target_count": target_count}
+                )
+            )
     
     async def _shutdown_tmux_agents(self):
         """Gracefully shutdown tmux agents."""
@@ -490,7 +525,9 @@ class MigrationManager:
         
         # Stop container agents
         try:
-            await self.container_orchestrator.shutdown_all()
+            # Epic 1 Phase 2.2B consolidation: Use specialized orchestrator plugin
+        # The specialized plugin handles shutdown through its shutdown method
+        await self.specialized_orchestrator.shutdown()
         except Exception as e:
             logger.error("Failed to shutdown container agents", error=str(e))
         

@@ -771,12 +771,23 @@ async def get_event_analytics(request: EventAnalyticsRequest):
 
 
 if __name__ == "__main__":
-    import uvicorn
+    from app.common.utilities.script_base import BaseScript, script_main
     
-    uvicorn.run(
-        "app.services.event_collector_service:event_collector_app",
-        host="0.0.0.0",
-        port=8001,
-        reload=False,
-        log_level="info"
-    )
+    class EventCollectorService(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            import uvicorn
+
+            uvicorn.run(
+            "app.services.event_collector_service:event_collector_app",
+            host="0.0.0.0",
+            port=8001,
+            reload=False,
+            log_level="info"
+            )
+            
+            return {"status": "completed"}
+    
+    script_main(EventCollectorService)
