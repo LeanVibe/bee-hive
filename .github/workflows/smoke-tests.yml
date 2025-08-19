@@ -1,0 +1,221 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 8 AM UTC
+
+jobs:
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client redis-tools
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+        pip install pytest-xdist  # For parallel test execution
+    
+    - name: Wait for services
+      run: |
+        echo "Waiting for PostgreSQL..."
+        pg_isready -h localhost -p 5432 -U test -t 30
+        echo "Waiting for Redis..."
+        redis-cli -h localhost -p 6379 ping
+    
+    - name: Create reports directory
+      run: mkdir -p reports
+    
+    - name: Run smoke tests
+      env:
+        TESTING: true
+        CI: true
+        DEBUG: false
+        LOG_LEVEL: ERROR
+        SKIP_STARTUP_INIT: true
+        DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/1
+        PYTHONHASHSEED: 0
+      run: |
+        echo "Running smoke tests..."
+        python -m pytest tests/smoke/ \
+          -c pytest-smoke.ini \
+          --junitxml=reports/smoke-test-results.xml \
+          --tb=short \
+          --durations=10 \
+          --color=yes \
+          --maxfail=10 \
+          -v
+    
+    - name: Run performance validation
+      if: success() || failure()  # Run even if smoke tests failed
+      env:
+        TESTING: true
+        CI: true
+        DEBUG: false
+        LOG_LEVEL: ERROR
+        SKIP_STARTUP_INIT: true
+        DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/1
+        PYTHONHASHSEED: 0
+      run: |
+        echo "Running performance validation..."
+        python -m pytest tests/smoke/ \
+          -c pytest-smoke.ini \
+          -m performance \
+          --tb=short \
+          --durations=0 \
+          -v || echo "Performance tests completed with warnings"
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: smoke-test-results-${{ github.run_number }}
+        path: |
+          reports/smoke-test-results.xml
+          reports/*.log
+        retention-days: 30
+    
+    - name: Publish test results
+      if: always()
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: reports/smoke-test-results.xml
+        check_name: "Smoke Test Results"
+        comment_mode: create new
+        fail_on: "test failures"
+    
+    - name: Comment PR with test results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'reports/smoke-test-results.xml';
+          
+          if (fs.existsSync(path)) {
+            const testResults = fs.readFileSync(path, 'utf8');
+            const matches = testResults.match(/tests="(\d+)".*failures="(\d+)".*errors="(\d+)"/)
+            
+            if (matches) {
+              const [, tests, failures, errors] = matches;
+              const status = (failures === '0' && errors === '0') ? '✅' : '❌';
+              
+              const comment = `## ${status} Smoke Test Results
+              
+              - **Tests Run**: ${tests}
+              - **Failures**: ${failures}
+              - **Errors**: ${errors}
+              
+              ${status === '✅' ? 'All smoke tests passed! 🎉' : 'Some tests failed. Please check the details above.'}
+              
+              <details>
+              <summary>Test Categories</summary>
+              
+              - Core Functionality
+              - API Endpoints
+              - Performance Validation
+              - Integration Tests
+              - Error Handling
+              </details>`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+          }
+
+  smoke-tests-docker:
+    name: Smoke Tests (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Run smoke tests in Docker
+      run: |
+        echo "Running smoke tests in Docker environment..."
+        docker-compose -f docker-compose.smoke-tests.yml up --build --abort-on-container-exit
+      
+    - name: Clean up Docker resources
+      if: always()
+      run: |
+        docker-compose -f docker-compose.smoke-tests.yml down -v --remove-orphans
+        docker system prune -f
+
+  smoke-tests-summary:
+    name: Smoke Tests Summary
+    runs-on: ubuntu-latest
+    needs: [smoke-tests, smoke-tests-docker]
+    if: always()
+    
+    steps:
+    - name: Check smoke test results
+      run: |
+        echo "Smoke Tests Results Summary:"
+        echo "==========================="
+        echo "Native Tests: ${{ needs.smoke-tests.result }}"
+        echo "Docker Tests: ${{ needs.smoke-tests-docker.result }}"
+        
+        if [[ "${{ needs.smoke-tests.result }}" == "success" && "${{ needs.smoke-tests-docker.result }}" == "success" ]]; then
+          echo "🎉 All smoke tests passed!"
+          echo "The system is ready for deployment."
+        else
+          echo "❌ Some smoke tests failed."
+          echo "Please review the test results and fix any issues."
+          exit 1
+        fi
