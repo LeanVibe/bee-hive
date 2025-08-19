@@ -875,76 +875,89 @@ async def get_augmentation_service() -> TeamAugmentationService:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_team_augmentation_service():
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class TeamAugmentationTest(BaseScript):
         """Test the team augmentation service."""
         
-        service = await get_augmentation_service()
-        
-        # Sample team configuration
-        team_config = {
-            "team_id": "dev_team_alpha",
-            "team_name": "Alpha Development Team",
-            "team_size": 8,
-            "tools_used": {
-                "project_management": "Jira",
-                "version_control": "GitHub",
-                "communication": "Slack",
-                "ci_cd": "GitHub Actions"
-            },
-            "communication_channels": {
-                "slack": "#dev-team-alpha",
-                "email": "dev-alpha@company.com"
-            },
-            "github_config": {
-                "access_token": "github_token_here",
-                "repositories": ["company/frontend-app", "company/backend-api"]
-            },
-            "jira_config": {
-                "server": "https://company.atlassian.net",
-                "username": "api@company.com",
-                "api_token": "jira_token_here",
-                "project_key": "DEV"
-            }
-        }
-        
-        # Augmentation requirements
-        augmentation_requirements = {
-            "additional_capacity": "40%",
-            "specializations_needed": ["frontend_developer", "backend_developer"],
-            "timeline": "3 months",
-            "initial_tasks": [
-                {
-                    "id": "DEV-123",
-                    "title": "Implement user authentication",
-                    "priority": "high",
-                    "estimated_hours": 16,
-                    "completion_criteria": [
-                        "JWT authentication implemented",
-                        "User registration and login flows",
-                        "Password reset functionality",
-                        "Comprehensive test coverage"
-                    ]
+        async def execute(self):
+            """Execute team augmentation service test."""
+            service = await get_augmentation_service()
+            
+            # Sample team configuration
+            team_config = {
+                "team_id": "dev_team_alpha",
+                "team_name": "Alpha Development Team",
+                "team_size": 8,
+                "tools_used": {
+                    "project_management": "Jira",
+                    "version_control": "GitHub",
+                    "communication": "Slack",
+                    "ci_cd": "GitHub Actions"
+                },
+                "communication_channels": {
+                    "slack": "#dev-team-alpha",
+                    "email": "dev-alpha@company.com"
+                },
+                "github_config": {
+                    "access_token": "github_token_here",
+                    "repositories": ["company/frontend-app", "company/backend-api"]
+                },
+                "jira_config": {
+                    "server": "https://company.atlassian.net",
+                    "username": "api@company.com",
+                    "api_token": "jira_token_here",
+                    "project_key": "DEV"
                 }
-            ]
-        }
-        
-        # Start team integration
-        integration_result = await service.start_team_integration(
-            team_config, augmentation_requirements
-        )
-        print("Integration result:", json.dumps(integration_result, indent=2, default=str))
-        
-        if integration_result["status"] == "success":
-            integration_id = integration_result["integration_id"]
+            }
             
-            # Assign a task
-            task_data = augmentation_requirements["initial_tasks"][0]
-            assignment_result = await service.assign_task_to_agent(integration_id, task_data)
-            print("Assignment result:", json.dumps(assignment_result, indent=2, default=str))
+            # Augmentation requirements
+            augmentation_requirements = {
+                "additional_capacity": "40%",
+                "specializations_needed": ["frontend_developer", "backend_developer"],
+                "timeline": "3 months",
+                "initial_tasks": [
+                    {
+                        "id": "DEV-123",
+                        "title": "Implement user authentication",
+                        "priority": "high",
+                        "estimated_hours": 16,
+                        "completion_criteria": [
+                            "JWT authentication implemented",
+                            "User registration and login flows",
+                            "Password reset functionality",
+                            "Comprehensive test coverage"
+                        ]
+                    }
+                ]
+            }
             
-            # Get integration status
-            status = await service.get_integration_status(integration_id)
-            print("Integration status:", json.dumps(status, indent=2, default=str))
+            # Start team integration
+            integration_result = await service.start_team_integration(
+                team_config, augmentation_requirements
+            )
+            self.logger.info("Team integration started", result=integration_result)
+            
+            results = {"integration_status": integration_result.get("status")}
+            
+            if integration_result["status"] == "success":
+                integration_id = integration_result["integration_id"]
+                
+                # Assign a task
+                task_data = augmentation_requirements["initial_tasks"][0]
+                assignment_result = await service.assign_task_to_agent(integration_id, task_data)
+                self.logger.info("Task assigned to agent", result=assignment_result)
+                
+                # Get integration status
+                status = await service.get_integration_status(integration_id)
+                self.logger.info("Integration status checked", status=status)
+                
+                results.update({
+                    "integration_id": integration_id,
+                    "task_assigned": assignment_result.get("status") == "success",
+                    "agents_active": len(status.get("agents", []))
+                })
+            
+            return results
     
-    # Run test
-    asyncio.run(test_team_augmentation_service())
+    script_main(TeamAugmentationTest)

@@ -1073,38 +1073,47 @@ async def get_monitoring_service() -> ComprehensiveMonitoringService:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_monitoring_service():
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class MonitoringServiceTest(BaseScript):
         """Test the comprehensive monitoring service."""
         
-        service = await get_monitoring_service()
-        
-        # Start monitoring for a tenant
-        monitoring_result = await service.start_monitoring(
-            "tenant_techcorp",
-            "project_mvp_001",
-            {
-                "alert_rules": [
-                    {
-                        "metric_id": "custom.deployment_success_rate",
-                        "threshold": 95.0,
-                        "operator": "lt",
-                        "severity": "warning",
-                        "message": "Deployment success rate is below 95%"
-                    }
-                ]
+        async def execute(self):
+            """Execute monitoring service test."""
+            service = await get_monitoring_service()
+            
+            # Start monitoring for a tenant
+            monitoring_result = await service.start_monitoring(
+                "tenant_techcorp",
+                "project_mvp_001",
+                {
+                    "alert_rules": [
+                        {
+                            "metric_id": "custom.deployment_success_rate",
+                            "threshold": 95.0,
+                            "operator": "lt",
+                            "severity": "warning",
+                            "message": "Deployment success rate is below 95%"
+                        }
+                    ]
+                }
+            )
+            self.logger.info("Monitoring start result", result=monitoring_result)
+            
+            # Get real-time metrics
+            metrics_result = await service.get_real_time_metrics("tenant_techcorp", "project_mvp_001")
+            self.logger.info("Real-time metrics", metrics=metrics_result)
+            
+            # Generate analytics report
+            report_result = await service.generate_analytics_report(
+                "tenant_techcorp", "performance", "project_mvp_001", 7
+            )
+            self.logger.info("Analytics report", report=report_result)
+            
+            return {
+                "monitoring_status": monitoring_result.get("status"),
+                "metrics_count": len(metrics_result.get("metrics", [])),
+                "report_generated": bool(report_result.get("report_id"))
             }
-        )
-        print("Monitoring start result:", json.dumps(monitoring_result, indent=2, default=str))
-        
-        # Get real-time metrics
-        metrics_result = await service.get_real_time_metrics("tenant_techcorp", "project_mvp_001")
-        print("Real-time metrics:", json.dumps(metrics_result, indent=2, default=str))
-        
-        # Generate analytics report
-        report_result = await service.generate_analytics_report(
-            "tenant_techcorp", "performance", "project_mvp_001", 7
-        )
-        print("Analytics report:", json.dumps(report_result, indent=2, default=str))
     
-    # Run test
-    asyncio.run(test_monitoring_service())
+    script_main(MonitoringServiceTest)
