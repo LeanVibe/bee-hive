@@ -1,0 +1,826 @@
+{
+  "batch_id": "init_batch_069",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/clap/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_clap import *",
+        "    from .feature_extraction_clap import *",
+        "    from .modeling_clap import *",
+        "    from .processing_clap import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/mobilevit/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_mobilevit import *",
+        "    from .feature_extraction_mobilevit import *",
+        "    from .image_processing_mobilevit import *",
+        "    from .image_processing_mobilevit_fast import *",
+        "    from .modeling_mobilevit import *",
+        "    from .modeling_tf_mobilevit import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/idefics/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_idefics import *",
+        "    from .image_processing_idefics import *",
+        "    from .modeling_idefics import *",
+        "    from .modeling_tf_idefics import *",
+        "    from .processing_idefics import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/convbert/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_convbert import *",
+        "    from .modeling_convbert import *",
+        "    from .modeling_tf_convbert import *",
+        "    from .tokenization_convbert import *",
+        "    from .tokenization_convbert_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/moshi/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_moshi import *",
+        "    from .modeling_moshi import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/hiera/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_hiera import *",
+        "    from .modeling_hiera import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/mobilenet_v2/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_mobilenet_v2 import *",
+        "    from .feature_extraction_mobilenet_v2 import *",
+        "    from .image_processing_mobilenet_v2 import *",
+        "    from .image_processing_mobilenet_v2_fast import *",
+        "    from .modeling_mobilenet_v2 import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/vision_encoder_decoder/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_vision_encoder_decoder import *",
+        "    from .modeling_flax_vision_encoder_decoder import *",
+        "    from .modeling_tf_vision_encoder_decoder import *",
+        "    from .modeling_vision_encoder_decoder import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/chinese_clip/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_chinese_clip import *",
+        "    from .feature_extraction_chinese_clip import *",
+        "    from .image_processing_chinese_clip import *",
+        "    from .image_processing_chinese_clip_fast import *",
+        "    from .modeling_chinese_clip import *",
+        "    from .processing_chinese_clip import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/vivit/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_vivit import *",
+        "    from .image_processing_vivit import *",
+        "    from .modeling_vivit import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/csm/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_csm import *",
+        "    from .modeling_csm import *",
+        "    from .processing_csm import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/megatron_gpt2/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/upernet/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_upernet import *",
+        "    from .modeling_upernet import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/trocr/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_trocr import *",
+        "    from .modeling_trocr import *",
+        "    from .processing_trocr import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/efficientloftr/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_efficientloftr import *",
+        "    from .image_processing_efficientloftr import *",
+        "    from .modeling_efficientloftr import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/smolvlm/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_smolvlm import *",
+        "    from .image_processing_smolvlm import *",
+        "    from .image_processing_smolvlm_fast import *",
+        "    from .modeling_smolvlm import *",
+        "    from .processing_smolvlm import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/unispeech/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_unispeech import *",
+        "    from .modeling_unispeech import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/idefics2/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_idefics2 import *",
+        "    from .image_processing_idefics2 import *",
+        "    from .image_processing_idefics2_fast import *",
+        "    from .modeling_idefics2 import *",
+        "    from .processing_idefics2 import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/xlm_roberta_xl/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_xlm_roberta_xl import *",
+        "    from .modeling_xlm_roberta_xl import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/llava_next/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_llava_next import *",
+        "    from .image_processing_llava_next import *",
+        "    from .image_processing_llava_next_fast import *",
+        "    from .modeling_llava_next import *",
+        "    from .processing_llava_next import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/byt5/__init__.py",
+      "current_size_lines": 22,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .tokenization_byt5 import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/altclip/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_altclip import *",
+        "    from .modeling_altclip import *",
+        "    from .processing_altclip import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/imagegpt/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_imagegpt import *",
+        "    from .feature_extraction_imagegpt import *",
+        "    from .image_processing_imagegpt import *",
+        "    from .modeling_imagegpt import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/dia/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_dia import *",
+        "    from .feature_extraction_dia import *",
+        "    from .generation_dia import *",
+        "    from .modeling_dia import *",
+        "    from .processing_dia import *",
+        "    from .tokenization_dia import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/splinter/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_splinter import *",
+        "    from .modeling_splinter import *",
+        "    from .tokenization_splinter import *",
+        "    from .tokenization_splinter_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/longformer/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_longformer import *",
+        "    from .modeling_longformer import *",
+        "    from .modeling_tf_longformer import *",
+        "    from .tokenization_longformer import *",
+        "    from .tokenization_longformer_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/layoutxlm/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .processing_layoutxlm import *",
+        "    from .tokenization_layoutxlm import *",
+        "    from .tokenization_layoutxlm_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/dit/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/yolos/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_yolos import *",
+        "    from .feature_extraction_yolos import *",
+        "    from .image_processing_yolos import *",
+        "    from .image_processing_yolos_fast import *",
+        "    from .modeling_yolos import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/opt/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_opt import *",
+        "    from .modeling_flax_opt import *",
+        "    from .modeling_opt import *",
+        "    from .modeling_tf_opt import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/nystromformer/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_nystromformer import *",
+        "    from .modeling_nystromformer import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/decision_transformer/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_decision_transformer import *",
+        "    from .modeling_decision_transformer import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/beit/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_beit import *",
+        "    from .feature_extraction_beit import *",
+        "    from .image_processing_beit import *",
+        "    from .image_processing_beit_fast import *",
+        "    from .modeling_beit import *",
+        "    from .modeling_flax_beit import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/bamba/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_bamba import *",
+        "    from .modeling_bamba import *",
+        "    from .processing_bamba import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/timm_backbone/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_timm_backbone import *",
+        "    from .modeling_timm_backbone import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/x_clip/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_x_clip import *",
+        "    from .modeling_x_clip import *",
+        "    from .processing_x_clip import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/cvt/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_cvt import *",
+        "    from .modeling_cvt import *",
+        "    from .modeling_tf_cvt import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/cpm/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .tokenization_cpm import *",
+        "    from .tokenization_cpm_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/depth_anything/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_depth_anything import *",
+        "    from .modeling_depth_anything import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/siglip2/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_siglip2 import *",
+        "    from .image_processing_siglip2 import *",
+        "    from .image_processing_siglip2_fast import *",
+        "    from .modeling_siglip2 import *",
+        "    from .processing_siglip2 import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/roberta/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_roberta import *",
+        "    from .modeling_flax_roberta import *",
+        "    from .modeling_roberta import *",
+        "    from .modeling_tf_roberta import *",
+        "    from .tokenization_roberta import *",
+        "    from .tokenization_roberta_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/vitdet/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_vitdet import *",
+        "    from .modeling_vitdet import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/prompt_depth_anything/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_prompt_depth_anything import PromptDepthAnythingConfig",
+        "    from .image_processing_prompt_depth_anything import PromptDepthAnythingImageProcessor",
+        "    from .modeling_prompt_depth_anything import ("
+      ],
+      "estimated_loc_savings": 17,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/tvp/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_tvp import *",
+        "    from .image_processing_tvp import *",
+        "    from .modeling_tvp import *",
+        "    from .processing_tvp import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/aya_vision/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_aya_vision import *",
+        "    from .modeling_aya_vision import *",
+        "    from .processing_aya_vision import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/audio_spectrogram_transformer/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_audio_spectrogram_transformer import *",
+        "    from .feature_extraction_audio_spectrogram_transformer import *",
+        "    from .modeling_audio_spectrogram_transformer import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/fuyu/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_fuyu import *",
+        "    from .image_processing_fuyu import *",
+        "    from .modeling_fuyu import *",
+        "    from .processing_fuyu import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/gptj/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_gptj import *",
+        "    from .modeling_flax_gptj import *",
+        "    from .modeling_gptj import *",
+        "    from .modeling_tf_gptj import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/distilbert/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_distilbert import *",
+        "    from .modeling_distilbert import *",
+        "    from .modeling_flax_distilbert import *",
+        "    from .modeling_tf_distilbert import *",
+        "    from .tokenization_distilbert import *",
+        "    from .tokenization_distilbert_fast import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/transformers/models/dac/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ...utils import _LazyModule",
+        "from ...utils.import_utils import define_import_structure",
+        "    from .configuration_dac import *",
+        "    from .feature_extraction_dac import *",
+        "    from .modeling_dac import *"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 675,
+  "file_count": 50
+}

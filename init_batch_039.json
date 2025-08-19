@@ -1,0 +1,727 @@
+{
+  "batch_id": "init_batch_039",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_subclasses/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 9,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/futures/__init__.py",
+      "current_size_lines": 278,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"Future\", \"collect_all\", \"wait_all\"]"
+      ],
+      "estimated_loc_savings": 272,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/linalg/__init__.py",
+      "current_size_lines": 2306,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 2301,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_custom_op/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/nn/__init__.py",
+      "current_size_lines": 53,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 48,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/mps/__init__.py",
+      "current_size_lines": 145,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import profiler",
+        "from .event import Event",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 137,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/onnx/__init__.py",
+      "current_size_lines": 486,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from ._internal._exporter_legacy import enable_fake_mode",
+        "from ._internal.exporter._onnx_program import ONNXProgram",
+        "from ._internal.onnxruntime import (",
+        "from ._type_utils import JitScalarType",
+        "from .errors import OnnxExporterError",
+        "from .utils import (",
+        "from . import (  # usort: skip. Keep the order instead of sorting lexicographically"
+      ],
+      "estimated_loc_savings": 473,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_vendor/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/cpu/__init__.py",
+      "current_size_lines": 133,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .. import device as _device",
+        "from . import amp",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 125,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/__init__.py",
+      "current_size_lines": 135,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "    from .device_mesh import DeviceMesh, init_device_mesh",
+        "    from .distributed_c10d import *  # noqa: F403",
+        "    from .distributed_c10d import (",
+        "    from .remote_device import _remote_device",
+        "    from .rendezvous import ("
+      ],
+      "estimated_loc_savings": 125,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/autograd/__init__.py",
+      "current_size_lines": 539,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import forward_ad, functional, graph",
+        "from .anomaly_mode import detect_anomaly, set_detect_anomaly",
+        "from .function import Function, NestedIOFunction",
+        "from .grad_mode import (",
+        "from .gradcheck import gradcheck, gradgradcheck",
+        "from .graph import _engine_run_backward",
+        "from .variable import Variable",
+        "__all__ = [",
+        "from . import profiler"
+      ],
+      "estimated_loc_savings": 525,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/__init__.py",
+      "current_size_lines": 97,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 91,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_prims_common/__init__.py",
+      "current_size_lines": 1664,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 1659,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/multiprocessing/__init__.py",
+      "current_size_lines": 83,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .reductions import init_reductions",
+        "__all__ = [\"set_sharing_strategy\", \"get_sharing_strategy\", \"get_all_sharing_strategies\"]",
+        "__all__ += multiprocessing.__all__  # noqa: PLE0605 type: ignore[attr-defined]",
+        "from .spawn import ("
+      ],
+      "estimated_loc_savings": 74,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/cuda/__init__.py",
+      "current_size_lines": 1578,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import gds",
+        "from ._utils import _get_device_index",
+        "from .graphs import (",
+        "from .streams import Event, ExternalStream, Stream",
+        "from .memory import *  # noqa: F403",
+        "from .random import *  # noqa: F403",
+        "from . import amp, jiterator, nvtx, profiler, sparse, tunable",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 1565,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/backends/__init__.py",
+      "current_size_lines": 56,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 51,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_decomp/__init__.py",
+      "current_size_lines": 487,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 481,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/xpu/__init__.py",
+      "current_size_lines": 450,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._utils import _get_device_index",
+        "from .streams import Event, Stream",
+        "from .memory import (",
+        "from .random import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 440,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/masked/__init__.py",
+      "current_size_lines": 55,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 49,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/optim/__init__.py",
+      "current_size_lines": 56,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 50,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_inductor/__init__.py",
+      "current_size_lines": 329,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .standalone_compile import CompiledArtifact  # noqa: TC001",
+        "__all__ = [",
+        "    from .compile_fx import compile_fx",
+        "    from .debug import aot_inductor_minifier_wrapper",
+        "    from .package import package_aoti",
+        "    from .compile_fx import _aoti_flatten_inputs, compile_fx_aot",
+        "    from .cudagraph_trees import mark_step_begin",
+        "    from .standalone_compile import standalone_compile"
+      ],
+      "estimated_loc_savings": 316,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/utils/__init__.py",
+      "current_size_lines": 96,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 91,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/contrib/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/quantization/__init__.py",
+      "current_size_lines": 82,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .fake_quantize import *  # noqa: F403",
+        "from .fuse_modules import fuse_modules",
+        "from .fuser_method_mappings import *  # noqa: F403",
+        "from .observer import *  # noqa: F403",
+        "from .qconfig import *  # noqa: F403",
+        "from .quant_type import *  # noqa: F403",
+        "from .quantization_mappings import *  # noqa: F403",
+        "from .quantize import *  # noqa: F403",
+        "from .quantize_jit import *  # noqa: F403",
+        "from .stubs import *  # noqa: F403",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 66,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/special/__init__.py",
+      "current_size_lines": 1218,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 1212,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/testing/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from . import _utils",
+        "from ._comparison import assert_allclose, assert_close as assert_close",
+        "from ._creation import make_tensor as make_tensor"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_library/__init__.py",
+      "current_size_lines": 6,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/accelerator/__init__.py",
+      "current_size_lines": 172,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._utils import _device_t, _get_device_index",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 165,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/amp/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .autocast_mode import (",
+        "from .grad_scaler import GradScaler"
+      ],
+      "estimated_loc_savings": 2,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/jit/__init__.py",
+      "current_size_lines": 236,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 230,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_dynamo/__init__.py",
+      "current_size_lines": 145,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import config, convert_frame, eval_frame, resume_execution",
+        "from .backends.registry import list_backends, lookup_backend, register_backend",
+        "from .callback import callback_handler, on_compile_end, on_compile_start",
+        "from .code_context import code_context",
+        "from .convert_frame import replay",
+        "from .decorators import (",
+        "from .eval_frame import (",
+        "from .external_utils import is_compiling",
+        "from .mutation_guard import GenerationTracker",
+        "from .pgo import reset_code_state",
+        "from .symbolic_convert import TensorifyState",
+        "from .utils import graph_break_reasons, guard_failures, orig_code_map, reset_frame_count",
+        "from .polyfills import loader as _  # usort: skip # noqa: F401",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 126,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_lazy/__init__.py",
+      "current_size_lines": 39,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .closure import add_step_closure, run_step_closures"
+      ],
+      "estimated_loc_savings": 33,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/ao/__init__.py",
+      "current_size_lines": 22,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "    if name in __all__:"
+      ],
+      "estimated_loc_savings": 15,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/mtia/__init__.py",
+      "current_size_lines": 312,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._utils import _get_device_index",
+        "from .memory import *  # noqa: F403",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 304,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_refs/__init__.py",
+      "current_size_lines": 5699,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "    _all = getmodule(fn).__all__  # type: ignore[union-attr]"
+      ],
+      "estimated_loc_savings": 5692,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fft/__init__.py",
+      "current_size_lines": 1111,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 1105,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/profiler/__init__.py",
+      "current_size_lines": 42,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .profiler import (",
+        "__all__ = [",
+        "from . import itt"
+      ],
+      "estimated_loc_savings": 34,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/sparse/__init__.py",
+      "current_size_lines": 570,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .semi_structured import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 563,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_awaits/__init__.py",
+      "current_size_lines": 37,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ['Await']"
+      ],
+      "estimated_loc_savings": 31,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/export/__init__.py",
+      "current_size_lines": 485,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from .decomp_utils import CustomDecompTable",
+        "from .dynamic_shapes import AdditionalInputs, Constraint, Dim, dims, ShapesCollection",
+        "from .exported_program import (",
+        "from .graph_signature import ExportBackwardSignature, ExportGraphSignature",
+        "from .unflatten import FlatArgsAdapter, unflatten, UnflattenedModule",
+        "    from ._trace import _export_for_training",
+        "    from ._trace import _export",
+        "    from ._draft_export import draft_export"
+      ],
+      "estimated_loc_savings": 471,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/nested/__init__.py",
+      "current_size_lines": 435,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from ._internal.nested_tensor import _rebuild_njt, NestedTensor as _NestedTensor"
+      ],
+      "estimated_loc_savings": 428,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_strobelight/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/compiler/__init__.py",
+      "current_size_lines": 482,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import config",
+        "    from ._cache import CacheInfo",
+        "__all__ = [",
+        "    from ._cache import CacheArtifactManager, CacheInfo",
+        "    from ._cache import CacheArtifactManager, CacheInfo"
+      ],
+      "estimated_loc_savings": 472,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/signal/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import windows",
+        "__all__ = [\"windows\"]"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributions/__init__.py",
+      "current_size_lines": 157,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import transforms",
+        "from .bernoulli import Bernoulli",
+        "from .beta import Beta",
+        "from .binomial import Binomial",
+        "from .categorical import Categorical",
+        "from .cauchy import Cauchy",
+        "from .chi2 import Chi2",
+        "from .constraint_registry import biject_to, transform_to",
+        "from .continuous_bernoulli import ContinuousBernoulli",
+        "from .dirichlet import Dirichlet",
+        "from .distribution import Distribution",
+        "from .exp_family import ExponentialFamily",
+        "from .exponential import Exponential",
+        "from .fishersnedecor import FisherSnedecor",
+        "from .gamma import Gamma",
+        "from .generalized_pareto import GeneralizedPareto",
+        "from .geometric import Geometric",
+        "from .gumbel import Gumbel",
+        "from .half_cauchy import HalfCauchy",
+        "from .half_normal import HalfNormal",
+        "from .independent import Independent",
+        "from .inverse_gamma import InverseGamma",
+        "from .kl import _add_kl_info, kl_divergence, register_kl",
+        "from .kumaraswamy import Kumaraswamy",
+        "from .laplace import Laplace",
+        "from .lkj_cholesky import LKJCholesky",
+        "from .log_normal import LogNormal",
+        "from .logistic_normal import LogisticNormal",
+        "from .lowrank_multivariate_normal import LowRankMultivariateNormal",
+        "from .mixture_same_family import MixtureSameFamily",
+        "from .multinomial import Multinomial",
+        "from .multivariate_normal import MultivariateNormal",
+        "from .negative_binomial import NegativeBinomial",
+        "from .normal import Normal",
+        "from .one_hot_categorical import OneHotCategorical, OneHotCategoricalStraightThrough",
+        "from .pareto import Pareto",
+        "from .poisson import Poisson",
+        "from .relaxed_bernoulli import RelaxedBernoulli",
+        "from .relaxed_categorical import RelaxedOneHotCategorical",
+        "from .studentT import StudentT",
+        "from .transformed_distribution import TransformedDistribution",
+        "from .transforms import *  # noqa: F403",
+        "from .uniform import Uniform",
+        "from .von_mises import VonMises",
+        "from .weibull import Weibull",
+        "from .wishart import Wishart",
+        "__all__ = [",
+        "__all__.extend(transforms.__all__)"
+      ],
+      "estimated_loc_savings": 104,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/package/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .analyze.is_from_package import is_from_package",
+        "from .file_structure_representation import Directory",
+        "from .glob_group import GlobGroup",
+        "from .importer import (",
+        "from .package_exporter import EmptyMatchError, PackageExporter, PackagingError",
+        "from .package_importer import PackageImporter"
+      ],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/func/__init__.py",
+      "current_size_lines": 29,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 23,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_functorch/_activation_checkpointing/__init__.py",
+      "current_size_lines": 5,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/__init__.py",
+      "current_size_lines": 5,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/_numpy/testing/__init__.py",
+      "current_size_lines": 17,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .utils import ("
+      ],
+      "estimated_loc_savings": 11,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 19971,
+  "file_count": 50
+}

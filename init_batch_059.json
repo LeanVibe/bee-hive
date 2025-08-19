@@ -1,0 +1,787 @@
+{
+  "batch_id": "init_batch_059",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/embeddings/__init__.py",
+      "current_size_lines": 22,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (\"DeterministicFakeEmbedding\", \"Embeddings\", \"FakeEmbeddings\")",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 15,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/example_selectors/__init__.py",
+      "current_size_lines": 37,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 30,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/callbacks/__init__.py",
+      "current_size_lines": 127,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 120,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/_api/__init__.py",
+      "current_size_lines": 56,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "    from .beta_decorator import (",
+        "    from .deprecation import (",
+        "    from .path import as_import_path, get_relative_path",
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 46,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/utils/__init__.py",
+      "current_size_lines": 104,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 97,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/runnables/__init__.py",
+      "current_size_lines": 120,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 113,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/vectorstores/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 18,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/load/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (\"Serializable\", \"dumpd\", \"dumps\", \"load\", \"loads\")",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 19,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/output_parsers/__init__.py",
+      "current_size_lines": 83,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "    return __all__"
+      ],
+      "estimated_loc_savings": 76,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/prompts/__init__.py",
+      "current_size_lines": 108,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 101,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/document_loaders/__init__.py",
+      "current_size_lines": 30,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 23,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/documents/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "    from .base import Document",
+        "    from .compressor import BaseDocumentCompressor",
+        "    from .transformers import BaseDocumentTransformer",
+        "__all__ = (\"BaseDocumentCompressor\", \"BaseDocumentTransformer\", \"Document\")",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 13,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/indexing/__init__.py",
+      "current_size_lines": 43,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 36,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/pydantic_v1/__init__.py",
+      "current_size_lines": 25,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 20,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/tracers/__init__.py",
+      "current_size_lines": 46,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 39,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/langchain_core/outputs/__init__.py",
+      "current_size_lines": 51,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = (",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 44,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/_utils/__init__.py",
+      "current_size_lines": 79,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._convertions import asbytes, asunicode"
+      ],
+      "estimated_loc_savings": 73,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/strings/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from numpy._core.strings import __all__, __doc__"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/char/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from numpy._core.defchararray import __all__, __doc__"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/core/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._utils import _raise_warning",
+        "__all__ = [\"arrayprint\", \"defchararray\", \"_dtype_ctypes\", \"_dtype\",  # noqa: F822"
+      ],
+      "estimated_loc_savings": 19,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/linalg/__init__.py",
+      "current_size_lines": 75,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import (",
+        "from ._linalg import *",
+        "__all__ = _linalg.__all__.copy()  # noqa: PLE0605"
+      ],
+      "estimated_loc_savings": 67,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/ctypeslib/__init__.py",
+      "current_size_lines": 13,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._ctypeslib import (",
+        "    __all__,"
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/ma/__init__.py",
+      "current_size_lines": 38,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import core, extras",
+        "from .core import *",
+        "from .extras import *",
+        "__all__ = ['core', 'extras']",
+        "__all__ += core.__all__",
+        "__all__ += extras.__all__"
+      ],
+      "estimated_loc_savings": 27,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/_core/__init__.py",
+      "current_size_lines": 148,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from numpy.version import version as __version__",
+        "    from . import multiarray",
+        "        __version__, exc)",
+        "from . import umath",
+        "from . import numerictypes as nt",
+        "from .numerictypes import sctypeDict, sctypes",
+        "from . import (",
+        "from .einsumfunc import *",
+        "from .fromnumeric import *",
+        "from .function_base import *",
+        "from .getlimits import *",
+        "from .memmap import *",
+        "from .numeric import *",
+        "from .records import recarray, record",
+        "from .shape_base import *",
+        "from . import (",
+        "from .numeric import absolute as abs",
+        "__all__ = [",
+        "__all__ += numeric.__all__",
+        "__all__ += function_base.__all__",
+        "__all__ += getlimits.__all__",
+        "__all__ += shape_base.__all__",
+        "__all__ += einsumfunc.__all__"
+      ],
+      "estimated_loc_savings": 120,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/_typing/__init__.py",
+      "current_size_lines": 139,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._array_like import ArrayLike as ArrayLike",
+        "from ._array_like import NDArray as NDArray",
+        "from ._array_like import _ArrayLike as _ArrayLike",
+        "from ._array_like import _ArrayLikeAnyString_co as _ArrayLikeAnyString_co",
+        "from ._array_like import _ArrayLikeBool_co as _ArrayLikeBool_co",
+        "from ._array_like import _ArrayLikeBytes_co as _ArrayLikeBytes_co",
+        "from ._array_like import _ArrayLikeComplex128_co as _ArrayLikeComplex128_co",
+        "from ._array_like import _ArrayLikeComplex_co as _ArrayLikeComplex_co",
+        "from ._array_like import _ArrayLikeDT64_co as _ArrayLikeDT64_co",
+        "from ._array_like import _ArrayLikeFloat64_co as _ArrayLikeFloat64_co",
+        "from ._array_like import _ArrayLikeFloat_co as _ArrayLikeFloat_co",
+        "from ._array_like import _ArrayLikeInt as _ArrayLikeInt",
+        "from ._array_like import _ArrayLikeInt_co as _ArrayLikeInt_co",
+        "from ._array_like import _ArrayLikeNumber_co as _ArrayLikeNumber_co",
+        "from ._array_like import _ArrayLikeObject_co as _ArrayLikeObject_co",
+        "from ._array_like import _ArrayLikeStr_co as _ArrayLikeStr_co",
+        "from ._array_like import _ArrayLikeString_co as _ArrayLikeString_co",
+        "from ._array_like import _ArrayLikeTD64_co as _ArrayLikeTD64_co",
+        "from ._array_like import _ArrayLikeUInt_co as _ArrayLikeUInt_co",
+        "from ._array_like import _ArrayLikeVoid_co as _ArrayLikeVoid_co",
+        "from ._array_like import _FiniteNestedSequence as _FiniteNestedSequence",
+        "from ._array_like import _SupportsArray as _SupportsArray",
+        "from ._array_like import _SupportsArrayFunc as _SupportsArrayFunc",
+        "from ._char_codes import _BoolCodes as _BoolCodes",
+        "from ._char_codes import _ByteCodes as _ByteCodes",
+        "from ._char_codes import _BytesCodes as _BytesCodes",
+        "from ._char_codes import _CDoubleCodes as _CDoubleCodes",
+        "from ._char_codes import _CharacterCodes as _CharacterCodes",
+        "from ._char_codes import _CLongDoubleCodes as _CLongDoubleCodes",
+        "from ._char_codes import _Complex64Codes as _Complex64Codes",
+        "from ._char_codes import _Complex128Codes as _Complex128Codes",
+        "from ._char_codes import _ComplexFloatingCodes as _ComplexFloatingCodes",
+        "from ._char_codes import _CSingleCodes as _CSingleCodes",
+        "from ._char_codes import _DoubleCodes as _DoubleCodes",
+        "from ._char_codes import _DT64Codes as _DT64Codes",
+        "from ._char_codes import _FlexibleCodes as _FlexibleCodes",
+        "from ._char_codes import _Float16Codes as _Float16Codes",
+        "from ._char_codes import _Float32Codes as _Float32Codes",
+        "from ._char_codes import _Float64Codes as _Float64Codes",
+        "from ._char_codes import _FloatingCodes as _FloatingCodes",
+        "from ._char_codes import _GenericCodes as _GenericCodes",
+        "from ._char_codes import _HalfCodes as _HalfCodes",
+        "from ._char_codes import _InexactCodes as _InexactCodes",
+        "from ._char_codes import _Int8Codes as _Int8Codes",
+        "from ._char_codes import _Int16Codes as _Int16Codes",
+        "from ._char_codes import _Int32Codes as _Int32Codes",
+        "from ._char_codes import _Int64Codes as _Int64Codes",
+        "from ._char_codes import _IntCCodes as _IntCCodes",
+        "from ._char_codes import _IntCodes as _IntCodes",
+        "from ._char_codes import _IntegerCodes as _IntegerCodes",
+        "from ._char_codes import _IntPCodes as _IntPCodes",
+        "from ._char_codes import _LongCodes as _LongCodes",
+        "from ._char_codes import _LongDoubleCodes as _LongDoubleCodes",
+        "from ._char_codes import _LongLongCodes as _LongLongCodes",
+        "from ._char_codes import _NumberCodes as _NumberCodes",
+        "from ._char_codes import _ObjectCodes as _ObjectCodes",
+        "from ._char_codes import _ShortCodes as _ShortCodes",
+        "from ._char_codes import _SignedIntegerCodes as _SignedIntegerCodes",
+        "from ._char_codes import _SingleCodes as _SingleCodes",
+        "from ._char_codes import _StrCodes as _StrCodes",
+        "from ._char_codes import _StringCodes as _StringCodes",
+        "from ._char_codes import _TD64Codes as _TD64Codes",
+        "from ._char_codes import _UByteCodes as _UByteCodes",
+        "from ._char_codes import _UInt8Codes as _UInt8Codes",
+        "from ._char_codes import _UInt16Codes as _UInt16Codes",
+        "from ._char_codes import _UInt32Codes as _UInt32Codes",
+        "from ._char_codes import _UInt64Codes as _UInt64Codes",
+        "from ._char_codes import _UIntCCodes as _UIntCCodes",
+        "from ._char_codes import _UIntCodes as _UIntCodes",
+        "from ._char_codes import _UIntPCodes as _UIntPCodes",
+        "from ._char_codes import _ULongCodes as _ULongCodes",
+        "from ._char_codes import _ULongLongCodes as _ULongLongCodes",
+        "from ._char_codes import _UnsignedIntegerCodes as _UnsignedIntegerCodes",
+        "from ._char_codes import _UShortCodes as _UShortCodes",
+        "from ._char_codes import _VoidCodes as _VoidCodes",
+        "from ._dtype_like import DTypeLike as DTypeLike",
+        "from ._dtype_like import _DTypeLike as _DTypeLike",
+        "from ._dtype_like import _DTypeLikeBool as _DTypeLikeBool",
+        "from ._dtype_like import _DTypeLikeBytes as _DTypeLikeBytes",
+        "from ._dtype_like import _DTypeLikeComplex as _DTypeLikeComplex",
+        "from ._dtype_like import _DTypeLikeComplex_co as _DTypeLikeComplex_co",
+        "from ._dtype_like import _DTypeLikeDT64 as _DTypeLikeDT64",
+        "from ._dtype_like import _DTypeLikeFloat as _DTypeLikeFloat",
+        "from ._dtype_like import _DTypeLikeInt as _DTypeLikeInt",
+        "from ._dtype_like import _DTypeLikeObject as _DTypeLikeObject",
+        "from ._dtype_like import _DTypeLikeStr as _DTypeLikeStr",
+        "from ._dtype_like import _DTypeLikeTD64 as _DTypeLikeTD64",
+        "from ._dtype_like import _DTypeLikeUInt as _DTypeLikeUInt",
+        "from ._dtype_like import _DTypeLikeVoid as _DTypeLikeVoid",
+        "from ._dtype_like import _SupportsDType as _SupportsDType",
+        "from ._dtype_like import _VoidDTypeLike as _VoidDTypeLike",
+        "from ._nbit import _NBitByte as _NBitByte",
+        "from ._nbit import _NBitDouble as _NBitDouble",
+        "from ._nbit import _NBitHalf as _NBitHalf",
+        "from ._nbit import _NBitInt as _NBitInt",
+        "from ._nbit import _NBitIntC as _NBitIntC",
+        "from ._nbit import _NBitIntP as _NBitIntP",
+        "from ._nbit import _NBitLong as _NBitLong",
+        "from ._nbit import _NBitLongDouble as _NBitLongDouble",
+        "from ._nbit import _NBitLongLong as _NBitLongLong",
+        "from ._nbit import _NBitShort as _NBitShort",
+        "from ._nbit import _NBitSingle as _NBitSingle",
+        "from ._nbit_base import (",
+        "from ._nbit_base import _8Bit as _8Bit",
+        "from ._nbit_base import _16Bit as _16Bit",
+        "from ._nbit_base import _32Bit as _32Bit",
+        "from ._nbit_base import _64Bit as _64Bit",
+        "from ._nbit_base import _96Bit as _96Bit",
+        "from ._nbit_base import _128Bit as _128Bit",
+        "from ._nested_sequence import _NestedSequence as _NestedSequence",
+        "from ._scalars import _BoolLike_co as _BoolLike_co",
+        "from ._scalars import _CharLike_co as _CharLike_co",
+        "from ._scalars import _ComplexLike_co as _ComplexLike_co",
+        "from ._scalars import _FloatLike_co as _FloatLike_co",
+        "from ._scalars import _IntLike_co as _IntLike_co",
+        "from ._scalars import _NumberLike_co as _NumberLike_co",
+        "from ._scalars import _ScalarLike_co as _ScalarLike_co",
+        "from ._scalars import _TD64Like_co as _TD64Like_co",
+        "from ._scalars import _UIntLike_co as _UIntLike_co",
+        "from ._scalars import _VoidLike_co as _VoidLike_co",
+        "from ._shape import _AnyShape as _AnyShape",
+        "from ._shape import _Shape as _Shape",
+        "from ._shape import _ShapeLike as _ShapeLike",
+        "from ._ufunc import _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1",
+        "from ._ufunc import _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1",
+        "from ._ufunc import _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2",
+        "from ._ufunc import _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1",
+        "from ._ufunc import _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2"
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/_pyinstaller/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/rec/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from numpy._core.records import __all__, __doc__"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/typing/__init__.py",
+      "current_size_lines": 139,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"ArrayLike\", \"DTypeLike\", \"NBitBase\", \"NDArray\"]",
+        "__DIR = __all__ + [k for k in globals() if k.startswith(\"__\") and k.endswith(\"__\")]"
+      ],
+      "estimated_loc_savings": 132,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/f2py/__init__.py",
+      "current_size_lines": 62,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ['run_main', 'get_include']",
+        "from . import diagnose, f2py2e"
+      ],
+      "estimated_loc_savings": 55,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/testing/__init__.py",
+      "current_size_lines": 16,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import _private, overrides",
+        "from ._private import extbuild",
+        "from ._private.utils import *",
+        "from ._private.utils import _assert_valid_refcount, _gen_alignment_data",
+        "__all__ = (",
+        "    _private.utils.__all__ + ['TestCase', 'overrides']"
+      ],
+      "estimated_loc_savings": 5,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/lib/__init__.py",
+      "current_size_lines": 86,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import (",
+        "from ._arrayterator_impl import Arrayterator",
+        "from ._version import NumpyVersion",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 77,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/fft/__init__.py",
+      "current_size_lines": 166,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import _helper, _pocketfft, helper",
+        "from ._helper import *",
+        "from ._pocketfft import *",
+        "__all__ = _pocketfft.__all__.copy()  # noqa: PLE0605",
+        "__all__ += _helper.__all__"
+      ],
+      "estimated_loc_savings": 156,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/random/__init__.py",
+      "current_size_lines": 187,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from . import _bounded_integers, _common, _pickle",
+        "from ._generator import Generator, default_rng",
+        "from ._mt19937 import MT19937",
+        "from ._pcg64 import PCG64, PCG64DXSM",
+        "from ._philox import Philox",
+        "from ._sfc64 import SFC64",
+        "from .bit_generator import BitGenerator, SeedSequence",
+        "from .mtrand import *",
+        "__all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',"
+      ],
+      "estimated_loc_savings": 172,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/matrixlib/__init__.py",
+      "current_size_lines": 8,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import defmatrix",
+        "from .defmatrix import *",
+        "__all__ = defmatrix.__all__"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/polynomial/__init__.py",
+      "current_size_lines": 155,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .chebyshev import Chebyshev",
+        "from .hermite import Hermite",
+        "from .hermite_e import HermiteE",
+        "from .laguerre import Laguerre",
+        "from .legendre import Legendre",
+        "from .polynomial import Polynomial",
+        "__all__ = [  # noqa: F822",
+        "    from ._polybase import ABCPolyBase"
+      ],
+      "estimated_loc_savings": 142,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/linalg/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/ma/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/_pyinstaller/tests/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/typing/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/f2py/_backends/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "        from ._meson import MesonBackend",
+        "        from ._distutils import DistutilsBackend"
+      ],
+      "estimated_loc_savings": 2,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/f2py/tests/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/testing/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/testing/_private/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/lib/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/fft/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/random/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/random/tests/data/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/matrixlib/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/numpy/polynomial/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 1883,
+  "file_count": 50
+}

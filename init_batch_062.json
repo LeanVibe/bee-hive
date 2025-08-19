@@ -1,0 +1,561 @@
+{
+  "batch_id": "init_batch_062",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/decomposition/__init__.py",
+      "current_size_lines": 50,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ..utils.extmath import randomized_svd",
+        "from ._dict_learning import (",
+        "from ._factor_analysis import FactorAnalysis",
+        "from ._fastica import FastICA, fastica",
+        "from ._incremental_pca import IncrementalPCA",
+        "from ._kernel_pca import KernelPCA",
+        "from ._lda import LatentDirichletAllocation",
+        "from ._nmf import (",
+        "from ._pca import PCA",
+        "from ._sparse_pca import MiniBatchSparsePCA, SparsePCA",
+        "from ._truncated_svd import TruncatedSVD",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 33,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/neighbors/__init__.py",
+      "current_size_lines": 39,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._ball_tree import BallTree",
+        "from ._base import VALID_METRICS, VALID_METRICS_SPARSE, sort_graph_by_row_values",
+        "from ._classification import KNeighborsClassifier, RadiusNeighborsClassifier",
+        "from ._graph import (",
+        "from ._kd_tree import KDTree",
+        "from ._kde import KernelDensity",
+        "from ._lof import LocalOutlierFactor",
+        "from ._nca import NeighborhoodComponentsAnalysis",
+        "from ._nearest_centroid import NearestCentroid",
+        "from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor",
+        "from ._unsupervised import NearestNeighbors",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 22,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/tree/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/metrics/cluster/__init__.py",
+      "current_size_lines": 51,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._bicluster import consensus_score",
+        "from ._supervised import (",
+        "from ._unsupervised import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 42,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/metrics/_plot/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/metrics/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/metrics/_pairwise_distances_reduction/__init__.py",
+      "current_size_lines": 108,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._dispatcher import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 101,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/metrics/cluster/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/metrics/_plot/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/ensemble/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/experimental/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/cluster/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/cluster/_hdbscan/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/cluster/_hdbscan/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/feature_extraction/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/_loss/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/semi_supervised/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/gaussian_process/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/compose/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/images/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/descr/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/data/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_561/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_62/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_42074/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_40589/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_40675/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_1/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_42585/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_292/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_1590/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_61/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_40945/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_1119/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_2/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_3/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/datasets/tests/data/openml/id_40966/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/__init__.py",
+      "current_size_lines": 17,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = '1.12.0'",
+        "from .common import *  # noqa: F401, F403"
+      ],
+      "estimated_loc_savings": 10,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/_scipy/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_extra/__init__.py",
+      "current_size_lines": 35,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from ._delegation import isclose, pad",
+        "from ._lib._at import at",
+        "from ._lib._funcs import (",
+        "from ._lib._lazy import lazy_apply",
+        "__version__ = \"0.7.1\"",
+        "__all__ = [",
+        "    \"__version__\","
+      ],
+      "estimated_loc_savings": 23,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/_packaging/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/dask/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/cupy/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._aliases import * # noqa: F403"
+      ],
+      "estimated_loc_savings": 3,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/torch/__init__.py",
+      "current_size_lines": 18,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._aliases import * # noqa: F403"
+      ],
+      "estimated_loc_savings": 12,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/numpy/__init__.py",
+      "current_size_lines": 21,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._aliases import *  # noqa: F403",
+        "from .linalg import matrix_transpose, vecdot  # type: ignore[no-redef]  # noqa: F401"
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/common/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._helpers import *  # noqa: F403"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 260,
+  "file_count": 50
+}

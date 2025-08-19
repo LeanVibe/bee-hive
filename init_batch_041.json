@@ -1,0 +1,642 @@
+{
+  "batch_id": "init_batch_041",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .join import Join, Joinable, JoinHook"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/optim/__init__.py",
+      "current_size_lines": 36,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .apply_optimizer_in_backward import (",
+        "from .functional_adadelta import _FunctionalAdadelta",
+        "from .functional_adagrad import _FunctionalAdagrad",
+        "from .functional_adam import _FunctionalAdam",
+        "from .functional_adamax import _FunctionalAdamax",
+        "from .functional_adamw import _FunctionalAdamW",
+        "from .functional_rmsprop import _FunctionalRMSprop",
+        "from .functional_rprop import _FunctionalRprop",
+        "from .functional_sgd import _FunctionalSGD",
+        "from .named_optimizer import _NamedOptimizer",
+        "from .utils import as_functional_optim",
+        "    from .optimizer import DistributedOptimizer",
+        "from .post_localSGD_optimizer import PostLocalSGDOptimizer",
+        "from .zero_redundancy_optimizer import ZeroRedundancyOptimizer",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 16,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_composable/__init__.py",
+      "current_size_lines": 3,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .checkpoint_activation import checkpoint",
+        "from .contract import _get_registry, contract",
+        "from .replicate import replicate"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_tools/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .fsdp2_mem_tracker import FSDPMemTracker",
+        "from .mem_tracker import MemTracker",
+        "from .memory_tracker import MemoryTracker",
+        "from .mod_tracker import ModTracker",
+        "from .runtime_estimator import RuntimeEstimator",
+        "from .sac_estimator import ("
+      ],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/fsdp/__init__.py",
+      "current_size_lines": 63,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._flat_param import FlatParameter as FlatParameter",
+        "from ._fully_shard import (",
+        "from .fully_sharded_data_parallel import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 54,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import _shard_tensor, load_with_process_group, shard_module, shard_parameter"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_symmetric_memory/__init__.py",
+      "current_size_lines": 1498,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"empty\", \"rendezvous\", \"is_nvshmem_available\"]"
+      ],
+      "estimated_loc_savings": 1492,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/tensor/__init__.py",
+      "current_size_lines": 72,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from ._dtensor_spec import DTensorSpec as _DTensorSpec, TensorMeta as _TensorMeta"
+      ],
+      "estimated_loc_savings": 65,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/rpc/__init__.py",
+      "current_size_lines": 222,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"is_available\"]",
+        "    from . import api, backend_registry, functions",
+        "    from .api import *  # noqa: F401,F403",
+        "    from .backend_registry import BackendType",
+        "    from .options import TensorPipeRpcBackendOptions  # noqa: F401",
+        "    from .server_process_global_profiler import _server_process_global_profile",
+        "    __all__ += [\"init_rpc\", \"BackendType\", \"TensorPipeRpcBackendOptions\"]",
+        "    __all__ = __all__ + api.__all__ + backend_registry.__all__  # noqa: PLE0605"
+      ],
+      "estimated_loc_savings": 209,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/nn/jit/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/nn/api/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/nn/jit/templates/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/metrics/__init__.py",
+      "current_size_lines": 116,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import (  # noqa: F401"
+      ],
+      "estimated_loc_savings": 110,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/rendezvous/__init__.py",
+      "current_size_lines": 126,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .api import (",
+        "from .registry import _register_default_handlers, _register_out_of_tree_handlers",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 118,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/__init__.py",
+      "current_size_lines": 193,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 187,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/timer/__init__.py",
+      "current_size_lines": 46,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import (  # noqa: F401",
+        "from .file_based_local_timer import (  # noqa: F401",
+        "from .local_timer import LocalTimerClient, LocalTimerServer  # noqa: F401"
+      ],
+      "estimated_loc_savings": 38,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/utils/__init__.py",
+      "current_size_lines": 7,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import get_env_variable_or_raise, get_socket_with_port, macros  # noqa: F401"
+      ],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/events/__init__.py",
+      "current_size_lines": 140,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import (  # noqa: F401"
+      ],
+      "estimated_loc_savings": 134,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/subprocess_handler/__init__.py",
+      "current_size_lines": 13,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"SubprocessHandler\", \"get_subprocess_handler\"]"
+      ],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py",
+      "current_size_lines": 320,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .error_handler import ErrorHandler  # noqa: F401",
+        "from .handlers import get_error_handler  # noqa: F401",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 312,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/utils/data/__init__.py",
+      "current_size_lines": 8,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .cycling_iterator import CyclingIterator  # noqa: F401",
+        "from .elastic_distributed_sampler import ElasticDistributedSampler  # noqa: F401"
+      ],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/__init__.py",
+      "current_size_lines": 33,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import (  # noqa: F401",
+        "from .local_elastic_agent import TORCHELASTIC_ENABLE_FILE_TIMER, TORCHELASTIC_TIMER_FILE"
+      ],
+      "estimated_loc_savings": 26,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/_comm_hooks/__init__.py",
+      "current_size_lines": 5,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from . import default_hooks as default"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/_checkpoint/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/model_averaging/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/ddp_comm_hooks/__init__.py",
+      "current_size_lines": 93,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import (",
+        "__all__ = [\"DDPCommHookType\", \"register_ddp_comm_hook\"]"
+      ],
+      "estimated_loc_savings": 86,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/_optimizer_overlap/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .optimizer_overlap import _as_overlapped_optim"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/algorithms/_quantization/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_composable/fsdp/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .fully_shard import FSDPModule, fully_shard, register_fsdp_forward_method"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/fsdp/_fully_shard/__init__.py",
+      "current_size_lines": 16,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._fsdp_api import CPUOffloadPolicy, MixedPrecisionPolicy, OffloadPolicy",
+        "from ._fully_shard import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/checkpoint/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 10,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/sharded_tensor/__init__.py",
+      "current_size_lines": 437,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import (",
+        "from .metadata import ShardMetadata  # noqa: F401",
+        "from ._ops import *  # noqa: F403"
+      ],
+      "estimated_loc_savings": 429,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/sharding_plan/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import ShardingPlan, ShardingPlanner"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/sharding_spec/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import (",
+        "from .chunk_sharding_spec import ChunkShardingSpec as ChunkShardingSpec"
+      ],
+      "estimated_loc_savings": 2,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/sharded_optim/__init__.py",
+      "current_size_lines": 42,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .api import ShardedOptimizer"
+      ],
+      "estimated_loc_savings": 36,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/sharded_tensor/_ops/__init__.py",
+      "current_size_lines": 11,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .binary_cmp import allclose, equal",
+        "from .init import constant_, kaiming_uniform_, normal_, uniform_"
+      ],
+      "estimated_loc_savings": 4,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/_shard/sharding_spec/chunk_sharding_spec_ops/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/tensor/experimental/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"context_parallel\", \"implicit_replication\", \"local_map\", \"register_sharding\"]"
+      ],
+      "estimated_loc_savings": 20,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/tensor/parallel/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 17,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/tensor/_ops/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._conv_ops import *  # noqa: F403",
+        "from ._embedding_ops import *  # noqa: F403",
+        "from ._math_ops import *  # noqa: F403",
+        "from ._matrix_ops import *  # noqa: F403",
+        "from ._pointwise_ops import *  # noqa: F403",
+        "from ._random_ops import *  # noqa: F403",
+        "from ._tensor_ops import *  # noqa: F403",
+        "from ._view_ops import *  # noqa: F403"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/tensor/debug/__init__.py",
+      "current_size_lines": 17,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [\"CommDebugMode\", \"visualize_sharding\"]"
+      ],
+      "estimated_loc_savings": 11,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/distributed/rpc/_testing/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "    from . import faulty_agent_backend_registry"
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/autograd/_functions/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .tensor import *  # noqa: F403"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/experimental/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/passes/__init__.py",
+      "current_size_lines": 14,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from . import ("
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/experimental/unification/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .core import reify, unify  # noqa: F403",
+        "from .more import unifiable  # noqa: F403",
+        "from .variable import isvar, Var, var, variables, vars  # noqa: F403"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/experimental/migrate_gradual_types/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/experimental/unification/multipledispatch/__init__.py",
+      "current_size_lines": 7,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .core import dispatch",
+        "from .dispatcher import ("
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/torch/fx/passes/infra/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from . import pass_manager"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 3408,
+  "file_count": 50
+}

@@ -1,0 +1,607 @@
+{
+  "batch_id": "init_batch_055",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/pt_BR/__init__.py",
+      "current_size_lines": 916,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 910,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/ko_KR/__init__.py",
+      "current_size_lines": 599,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 593,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/es_CO/__init__.py",
+      "current_size_lines": 1313,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..es import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 1307,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/it_IT/__init__.py",
+      "current_size_lines": 17645,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 17639,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/zh_TW/__init__.py",
+      "current_size_lines": 374,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 368,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/tl_PH/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en_PH import Provider as EnPhAddressProvider"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en_CA/__init__.py",
+      "current_size_lines": 391,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 385,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/pt_PT/__init__.py",
+      "current_size_lines": 1572,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 1566,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/hr_HR/__init__.py",
+      "current_size_lines": 574,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 568,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/cs_CZ/__init__.py",
+      "current_size_lines": 1185,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 1179,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/fr_CH/__init__.py",
+      "current_size_lines": 351,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 345,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/he_IL/__init__.py",
+      "current_size_lines": 616,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 610,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/fr_CA/__init__.py",
+      "current_size_lines": 70,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en_CA import Provider as EnCaProvider"
+      ],
+      "estimated_loc_savings": 64,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/hi_IN/__init__.py",
+      "current_size_lines": 231,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 225,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/sl_SI/__init__.py",
+      "current_size_lines": 1588,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 1582,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en_IN/__init__.py",
+      "current_size_lines": 528,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 523,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/ro_RO/__init__.py",
+      "current_size_lines": 427,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 421,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/ja_JP/__init__.py",
+      "current_size_lines": 631,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 625,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/zh_CN/__init__.py",
+      "current_size_lines": 437,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 431,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/zu_ZA/__init__.py",
+      "current_size_lines": 211,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 205,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/nl_NL/__init__.py",
+      "current_size_lines": 2723,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 2717,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/hy_AM/__init__.py",
+      "current_size_lines": 659,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 653,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/hu_HU/__init__.py",
+      "current_size_lines": 452,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 446,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en_AU/__init__.py",
+      "current_size_lines": 324,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 318,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en_GB/__init__.py",
+      "current_size_lines": 537,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 531,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/es_MX/__init__.py",
+      "current_size_lines": 149,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..es import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 143,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en_PH/__init__.py",
+      "current_size_lines": 1754,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ... import ElementsType",
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 1747,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/es_AR/__init__.py",
+      "current_size_lines": 206,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..es import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 200,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/de/__init__.py",
+      "current_size_lines": 251,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 245,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/ru_RU/__init__.py",
+      "current_size_lines": 1575,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 1569,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/es_CL/__init__.py",
+      "current_size_lines": 614,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ... import ElementsType",
+        "from ..es import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 607,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/es/__init__.py",
+      "current_size_lines": 198,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 192,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en/__init__.py",
+      "current_size_lines": 249,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 243,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/es_ES/__init__.py",
+      "current_size_lines": 127,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..es import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 121,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/el_GR/__init__.py",
+      "current_size_lines": 4931,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 4925,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/vi_VN/__init__.py",
+      "current_size_lines": 278,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 272,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/da_DK/__init__.py",
+      "current_size_lines": 2506,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 2500,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/no_NO/__init__.py",
+      "current_size_lines": 108,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 102,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/en_IE/__init__.py",
+      "current_size_lines": 54,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 48,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/pl_PL/__init__.py",
+      "current_size_lines": 681,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 675,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/th/__init__.py",
+      "current_size_lines": 249,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 243,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/fr_FR/__init__.py",
+      "current_size_lines": 462,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 456,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/de_AT/__init__.py",
+      "current_size_lines": 264,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..de import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 258,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/address/de_DE/__init__.py",
+      "current_size_lines": 455,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..de import Provider as AddressProvider"
+      ],
+      "estimated_loc_savings": 449,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/job/fa_IR/__init__.py",
+      "current_size_lines": 99,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as BaseProvider"
+      ],
+      "estimated_loc_savings": 93,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/job/fi_FI/__init__.py",
+      "current_size_lines": 200,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as BaseProvider"
+      ],
+      "estimated_loc_savings": 194,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/job/ka_GE/__init__.py",
+      "current_size_lines": 390,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as BaseProvider"
+      ],
+      "estimated_loc_savings": 384,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/job/sk_SK/__init__.py",
+      "current_size_lines": 507,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as JobProvider"
+      ],
+      "estimated_loc_savings": 501,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/job/bn_BD/__init__.py",
+      "current_size_lines": 646,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as JobProvider"
+      ],
+      "estimated_loc_savings": 640,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/job/uk_UA/__init__.py",
+      "current_size_lines": 183,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as BaseProvider"
+      ],
+      "estimated_loc_savings": 177,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 51195,
+  "file_count": 50
+}

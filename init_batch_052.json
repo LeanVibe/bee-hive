@@ -1,0 +1,610 @@
+{
+  "batch_id": "init_batch_052",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/he_IL/__init__.py",
+      "current_size_lines": 151,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 145,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/ja_JP/__init__.py",
+      "current_size_lines": 227,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 221,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/zh_CN/__init__.py",
+      "current_size_lines": 354,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 348,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/nl_NL/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider",
+        "from ..nl_BE import Provider as LoremProviderNL_BE"
+      ],
+      "estimated_loc_savings": 2,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/hy_AM/__init__.py",
+      "current_size_lines": 223,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 217,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/es_MX/__init__.py",
+      "current_size_lines": 5,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..es_ES import Provider as SpanishProvider"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/ar_AA/__init__.py",
+      "current_size_lines": 700,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 694,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/en_PH/__init__.py",
+      "current_size_lines": 61,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en_US import Provider as EnUsProvider",
+        "from ..la import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 54,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/es_AR/__init__.py",
+      "current_size_lines": 5,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..es_ES import Provider as SpanishProvider"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/ru_RU/__init__.py",
+      "current_size_lines": 507,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 501,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/es_ES/__init__.py",
+      "current_size_lines": 1009,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 1003,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/la/__init__.py",
+      "current_size_lines": 189,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 183,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/el_GR/__init__.py",
+      "current_size_lines": 389,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 383,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/vi_VN/__init__.py",
+      "current_size_lines": 187,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 181,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/da_DK/__init__.py",
+      "current_size_lines": 1007,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 1001,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/pl_PL/__init__.py",
+      "current_size_lines": 2008,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 2002,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/fr_FR/__init__.py",
+      "current_size_lines": 1474,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 1468,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/de_AT/__init__.py",
+      "current_size_lines": 6,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..de_DE import Provider as GermanProvider"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/lorem/de_DE/__init__.py",
+      "current_size_lines": 519,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as LoremProvider"
+      ],
+      "estimated_loc_savings": 513,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/fa_IR/__init__.py",
+      "current_size_lines": 99,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 93,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/en_NZ/__init__.py",
+      "current_size_lines": 41,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 35,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/tw_GH/__init__.py",
+      "current_size_lines": 24,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 18,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/bg_BG/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 9,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/fi_FI/__init__.py",
+      "current_size_lines": 10,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 4,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/ka_GE/__init__.py",
+      "current_size_lines": 14,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/nl_BE/__init__.py",
+      "current_size_lines": 22,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 16,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/sk_SK/__init__.py",
+      "current_size_lines": 27,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 21,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/fil_PH/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en_PH import Provider as EnPhPhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/de_CH/__init__.py",
+      "current_size_lines": 65,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 59,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/bn_BD/__init__.py",
+      "current_size_lines": 327,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 321,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/uk_UA/__init__.py",
+      "current_size_lines": 65,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import ElementsType",
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 58,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/en_US/__init__.py",
+      "current_size_lines": 46,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 40,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/ne_NP/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 3,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/ar_AE/__init__.py",
+      "current_size_lines": 79,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 73,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/sv_SE/__init__.py",
+      "current_size_lines": 14,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/th_TH/__init__.py",
+      "current_size_lines": 70,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 64,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/ta_IN/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 3,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/az_AZ/__init__.py",
+      "current_size_lines": 44,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 38,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/id_ID/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 17,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/it_CH/__init__.py",
+      "current_size_lines": 35,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 29,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/pt_BR/__init__.py",
+      "current_size_lines": 133,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 127,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/ko_KR/__init__.py",
+      "current_size_lines": 28,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 22,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/es_CO/__init__.py",
+      "current_size_lines": 40,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 34,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/it_IT/__init__.py",
+      "current_size_lines": 265,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 259,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/zh_TW/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/ar_JO/__init__.py",
+      "current_size_lines": 53,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 47,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/tl_PH/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ..en_PH import Provider as EnPhPhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/en_CA/__init__.py",
+      "current_size_lines": 13,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/pt_PT/__init__.py",
+      "current_size_lines": 39,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 33,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/providers/phone_number/hr_HR/__init__.py",
+      "current_size_lines": 34,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .. import Provider as PhoneNumberProvider"
+      ],
+      "estimated_loc_savings": 28,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 10396,
+  "file_count": 50
+}

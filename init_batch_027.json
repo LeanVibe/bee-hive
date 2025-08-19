@@ -1,0 +1,848 @@
+{
+  "batch_id": "init_batch_027",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/docker/credentials/__init__.py",
+      "current_size_lines": 8,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .constants import (",
+        "from .errors import CredentialsNotFound, StoreError",
+        "from .store import Store"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/serialization/__init__.py",
+      "current_size_lines": 26,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._base import StateDictSplit, split_state_dict_into_shards_factory",
+        "from ._tensorflow import get_tf_storage_size, split_tf_state_dict_into_shards",
+        "from ._torch import ("
+      ],
+      "estimated_loc_savings": 18,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/utils/__init__.py",
+      "current_size_lines": 115,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from . import tqdm as _tqdm  # _tqdm is the module",
+        "from ._auth import get_stored_tokens, get_token",
+        "from ._cache_assets import cached_assets_path",
+        "from ._cache_manager import (",
+        "from ._chunk_utils import chunk_iterable",
+        "from ._datetime import parse_datetime",
+        "from ._experimental import experimental",
+        "from ._fixes import SoftTemporaryDirectory, WeakFileLock, yaml_dump",
+        "from ._git_credential import list_credential_helpers, set_git_credential, unset_git_credential",
+        "from ._headers import build_hf_headers, get_token_to_send",
+        "from ._hf_folder import HfFolder",
+        "from ._http import (",
+        "from ._pagination import paginate",
+        "from ._paths import DEFAULT_IGNORE_PATTERNS, FORBIDDEN_FOLDERS, filter_repo_objects",
+        "from ._runtime import (",
+        "from ._safetensors import SafetensorsFileMetadata, SafetensorsRepoMetadata, TensorInfo",
+        "from ._subprocess import capture_output, run_interactive_subprocess, run_subprocess",
+        "from ._telemetry import send_telemetry",
+        "from ._typing import is_jsonable, is_simple_optional_type, unwrap_simple_optional_type",
+        "from ._validators import smoothly_deprecate_use_auth_token, validate_hf_hub_args, validate_repo_id",
+        "from ._xet import (",
+        "from .tqdm import are_progress_bars_disabled, disable_progress_bars, enable_progress_bars, tqdm, tqdm_stream_file"
+      ],
+      "estimated_loc_savings": 88,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/cli/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 18,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/inference/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/commands/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 18,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/inference/_providers/__init__.py",
+      "current_size_lines": 191,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._common import TaskProviderHelper, _fetch_inference_provider_mapping",
+        "from .black_forest_labs import BlackForestLabsTextToImageTask",
+        "from .cerebras import CerebrasConversationalTask",
+        "from .cohere import CohereConversationalTask",
+        "from .fal_ai import (",
+        "from .fireworks_ai import FireworksAIConversationalTask",
+        "from .groq import GroqConversationalTask",
+        "from .hf_inference import (",
+        "from .hyperbolic import HyperbolicTextGenerationTask, HyperbolicTextToImageTask",
+        "from .nebius import (",
+        "from .novita import NovitaConversationalTask, NovitaTextGenerationTask, NovitaTextToVideoTask",
+        "from .nscale import NscaleConversationalTask, NscaleTextToImageTask",
+        "from .openai import OpenAIConversationalTask",
+        "from .replicate import ReplicateImageToImageTask, ReplicateTask, ReplicateTextToImageTask, ReplicateTextToSpeechTask",
+        "from .sambanova import SambanovaConversationalTask, SambanovaFeatureExtractionTask",
+        "from .together import TogetherConversationalTask, TogetherTextGenerationTask, TogetherTextToImageTask"
+      ],
+      "estimated_loc_savings": 170,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/inference/_mcp/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/inference/_generated/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/inference/_generated/types/__init__.py",
+      "current_size_lines": 191,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .audio_classification import (",
+        "from .audio_to_audio import AudioToAudioInput, AudioToAudioOutputElement",
+        "from .automatic_speech_recognition import (",
+        "from .base import BaseInferenceType",
+        "from .chat_completion import (",
+        "from .depth_estimation import DepthEstimationInput, DepthEstimationOutput",
+        "from .document_question_answering import (",
+        "from .feature_extraction import FeatureExtractionInput, FeatureExtractionInputTruncationDirection",
+        "from .fill_mask import FillMaskInput, FillMaskOutputElement, FillMaskParameters",
+        "from .image_classification import (",
+        "from .image_segmentation import (",
+        "from .image_to_image import ImageToImageInput, ImageToImageOutput, ImageToImageParameters, ImageToImageTargetSize",
+        "from .image_to_text import (",
+        "from .image_to_video import ImageToVideoInput, ImageToVideoOutput, ImageToVideoParameters, ImageToVideoTargetSize",
+        "from .object_detection import (",
+        "from .question_answering import (",
+        "from .sentence_similarity import SentenceSimilarityInput, SentenceSimilarityInputData",
+        "from .summarization import (",
+        "from .table_question_answering import (",
+        "from .text2text_generation import (",
+        "from .text_classification import (",
+        "from .text_generation import (",
+        "from .text_to_audio import (",
+        "from .text_to_image import TextToImageInput, TextToImageOutput, TextToImageParameters",
+        "from .text_to_speech import (",
+        "from .text_to_video import TextToVideoInput, TextToVideoOutput, TextToVideoParameters",
+        "from .token_classification import (",
+        "from .translation import TranslationInput, TranslationOutput, TranslationParameters, TranslationTruncationStrategy",
+        "from .video_classification import (",
+        "from .visual_question_answering import (",
+        "from .zero_shot_classification import (",
+        "from .zero_shot_image_classification import (",
+        "from .zero_shot_object_detection import ("
+      ],
+      "estimated_loc_savings": 153,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/series/__init__.py",
+      "current_size_lines": 20,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .order import Order",
+        "from .limits import limit, Limit",
+        "from .gruntz import gruntz",
+        "from .series import series",
+        "from .approximants import approximants",
+        "from .residues import residue",
+        "from .sequences import SeqPer, SeqFormula, sequence, SeqAdd, SeqMul",
+        "from .fourier import fourier_series",
+        "from .formal import fps",
+        "from .limitseq import difference_delta, limit_seq",
+        "__all__ = ['Order', 'O', 'limit', 'Limit', 'gruntz', 'series', 'approximants',"
+      ],
+      "estimated_loc_savings": 4,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/crypto/__init__.py",
+      "current_size_lines": 34,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 28,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/core/__init__.py",
+      "current_size_lines": 76,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .sympify import sympify, SympifyError",
+        "from .cache import cacheit",
+        "from .assumptions import assumptions, check_assumptions, failing_assumptions, common_assumptions",
+        "from .basic import Basic, Atom",
+        "from .singleton import S",
+        "from .expr import Expr, AtomicExpr, UnevaluatedExpr",
+        "from .symbol import Symbol, Wild, Dummy, symbols, var",
+        "from .numbers import Number, Float, Rational, Integer, NumberSymbol, \\",
+        "from .power import Pow",
+        "from .intfunc import integer_nthroot, integer_log, num_digits, trailing",
+        "from .mul import Mul, prod",
+        "from .add import Add",
+        "from .mod import Mod",
+        "from .relational import ( Rel, Eq, Ne, Lt, Le, Gt, Ge,",
+        "from .multidimensional import vectorize",
+        "from .function import Lambda, WildFunction, Derivative, diff, FunctionClass, \\",
+        "from .evalf import PrecisionExhausted, N",
+        "from .containers import Tuple, Dict",
+        "from .exprtools import gcd_terms, factor_terms, factor_nc",
+        "from .parameters import evaluate",
+        "from .kind import UndefinedKind, NumberKind, BooleanKind",
+        "from .traversal import preorder_traversal, bottom_up, use, postorder_traversal",
+        "from .sorting import default_sort_key, ordered",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 47,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/unify/__init__.py",
+      "current_size_lines": 10,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .usympy import unify, rebuild",
+        "from .rewrite import rewriterule",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 2,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/polys/__init__.py",
+      "current_size_lines": 94,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from .polytools import (Poly, PurePoly, poly_from_expr,",
+        "from .polyfuncs import (symmetrize, horner, interpolate,",
+        "from .rationaltools import together",
+        "from .polyerrors import (BasePolynomialError, ExactQuotientFailed,",
+        "from .numberfields import (minpoly, minimal_polynomial, primitive_element,",
+        "from .monomials import itermonomials, Monomial",
+        "from .orderings import lex, grlex, grevlex, ilex, igrlex, igrevlex",
+        "from .rootoftools import CRootOf, rootof, RootOf, ComplexRootOf, RootSum",
+        "from .polyroots import roots",
+        "from .domains import (Domain, FiniteField, IntegerRing, RationalField,",
+        "from .constructor import construct_domain",
+        "from .specialpolys import (swinnerton_dyer_poly, cyclotomic_poly,",
+        "from .orthopolys import (jacobi_poly, chebyshevt_poly, chebyshevu_poly,",
+        "from .appellseqs import (bernoulli_poly, bernoulli_c_poly, genocchi_poly,",
+        "from .partfrac import apart, apart_list, assemble_partfrac_list",
+        "from .polyoptions import Options",
+        "from .rings import ring, xring, vring, sring",
+        "from .fields import field, xfield, vfield, sfield"
+      ],
+      "estimated_loc_savings": 70,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/concrete/__init__.py",
+      "current_size_lines": 6,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .products import product, Product",
+        "from .summations import summation, Sum",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/holonomic/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .holonomic import (DifferentialOperator, HolonomicFunction, DifferentialOperators,",
+        "from .recurrence import RecurrenceOperators, RecurrenceOperator, HolonomicSequence",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/strategies/__init__.py",
+      "current_size_lines": 34,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import rl",
+        "from . import traverse",
+        "from .rl import rm_id, unpack, flatten, sort, glom, distribute, rebuild",
+        "from .util import new",
+        "from .core import (",
+        "from .tools import canon, typed",
+        "from . import branch",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 21,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/ntheory/__init__.py",
+      "current_size_lines": 54,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .generate import nextprime, prevprime, prime, primepi, primerange, \\",
+        "from .primetest import isprime, is_gaussian_prime, is_mersenne_prime",
+        "from .factor_ import divisors, proper_divisors, factorint, multiplicity, \\",
+        "from .partitions_ import npartitions",
+        "from .residue_ntheory import is_primitive_root, is_quad_residue, \\",
+        "from .multinomial import binomial_coefficients, binomial_coefficients_list, \\",
+        "from .continued_fraction import continued_fraction_periodic, \\",
+        "from .digits import count_digits, digits, is_palindromic",
+        "from .egyptian_fraction import egyptian_fraction",
+        "from .ecm import ecm",
+        "from .qs import qs, qs_factor",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 37,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/discrete/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .transforms import (fft, ifft, ntt, intt, fwht, ifwht,",
+        "from .convolutions import convolution, covering_product, intersecting_product",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/printing/__init__.py",
+      "current_size_lines": 68,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .pretty import pager_print, pretty, pretty_print, pprint, pprint_use_unicode, pprint_try_use_unicode",
+        "from .latex import latex, print_latex, multiline_latex",
+        "from .mathml import mathml, print_mathml",
+        "from .python import python, print_python",
+        "from .pycode import pycode",
+        "from .codeprinter import print_ccode, print_fcode",
+        "from .codeprinter import ccode, fcode, cxxcode, rust_code # noqa:F811",
+        "from .smtlib import smtlib_code",
+        "from .glsl import glsl_code, print_glsl",
+        "from .rcode import rcode, print_rcode",
+        "from .jscode import jscode, print_jscode",
+        "from .julia import julia_code",
+        "from .mathematica import mathematica_code",
+        "from .octave import octave_code",
+        "from .gtk import print_gtk",
+        "from .preview import preview",
+        "from .repr import srepr",
+        "from .tree import print_tree",
+        "from .str import StrPrinter, sstr, sstrrepr",
+        "from .tableform import TableForm",
+        "from .dot import dotprint",
+        "from .maple import maple_code, print_maple_code",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 40,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/algebras/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .quaternion import Quaternion",
+        "__all__ = [\"Quaternion\",]"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/logic/__init__.py",
+      "current_size_lines": 10,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .boolalg import (to_cnf, to_dnf, to_nnf, And, Or, Not, Xor, Nand, Nor, Implies,",
+        "from .inference import satisfiable",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 2,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/solvers/__init__.py",
+      "current_size_lines": 49,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .solvers import solve, solve_linear_system, solve_linear_system_LU, \\",
+        "from .recurr import rsolve, rsolve_poly, rsolve_ratio, rsolve_hyper",
+        "from .ode import checkodesol, classify_ode, dsolve, \\",
+        "from .polysys import solve_poly_system, solve_triangulated, factor_system",
+        "from .pde import pde_separate, pde_separate_add, pde_separate_mul, \\",
+        "from .deutils import ode_order",
+        "from .inequalities import reduce_inequalities, reduce_abs_inequality, \\",
+        "from .decompogen import decompogen",
+        "from .solveset import solveset, linsolve, linear_eq_to_matrix, nonlinsolve, substitution",
+        "from .simplex import lpmin, lpmax, linprog",
+        "from ..core.singleton import S",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 32,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/codegen/__init__.py",
+      "current_size_lines": 19,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .ast import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 12,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/multipledispatch/__init__.py",
+      "current_size_lines": 8,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .core import dispatch",
+        "from .dispatcher import (Dispatcher, halt_ordering, restart_ordering,",
+        "__version__ = '0.4.9'",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/liealgebras/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ['CartanType']"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/utilities/__init__.py",
+      "current_size_lines": 21,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .iterables import (flatten, group, take, subsets,",
+        "from .misc import filldedent",
+        "from .lambdify import lambdify",
+        "from .decorator import threaded, xthreaded, public, memoize_property",
+        "from .timeutils import timed",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 10,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/integrals/__init__.py",
+      "current_size_lines": 40,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .integrals import integrate, Integral, line_integrate",
+        "from .transforms import (mellin_transform, inverse_mellin_transform,",
+        "from .singularityfunctions import singularityintegrate",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 31,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/assumptions/__init__.py",
+      "current_size_lines": 16,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .assume import (",
+        "from .ask import Q, ask, register_handler, remove_handler",
+        "from .refine import refine",
+        "from .relation import BinaryRelation, AppliedBinaryRelation",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/plotting/__init__.py",
+      "current_size_lines": 16,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .plot import plot_backends",
+        "from .plot_implicit import plot_implicit",
+        "from .textplot import textplot",
+        "from .pygletplot import PygletPlot",
+        "from .plot import PlotGrid",
+        "from .plot import (plot, plot_parametric, plot3d, plot3d_parametric_surface,",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 4,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/sets/__init__.py",
+      "current_size_lines": 28,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .sets import (Set, Interval, Union, FiniteSet, ProductSet,",
+        "from .fancysets import ImageSet, Range, ComplexRegion",
+        "from .contains import Contains",
+        "from .conditionset import ConditionSet",
+        "from .ordinals import Ordinal, OmegaPower, ord0",
+        "from .powerset import PowerSet",
+        "from ..core.singleton import S",
+        "from .handlers.comparison import _eval_is_eq  # noqa:F401",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/benchmarks/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/combinatorics/__init__.py",
+      "current_size_lines": 31,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 25,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/functions/__init__.py",
+      "current_size_lines": 90,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 84,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/tensor/__init__.py",
+      "current_size_lines": 18,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .indexed import IndexedBase, Idx, Indexed",
+        "from .index_methods import get_contraction_structure, get_indices",
+        "from .functions import shape",
+        "from .array import (MutableDenseNDimArray, ImmutableDenseNDimArray,",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/geometry/__init__.py",
+      "current_size_lines": 33,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 27,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/physics/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import units",
+        "from .matrices import mgamma, msigma, minkowski_tensor, mdft",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/external/__init__.py",
+      "current_size_lines": 13,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ['import_module']"
+      ],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/calculus/__init__.py",
+      "current_size_lines": 19,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .euler import euler_equations",
+        "from .singularities import (singularities, is_increasing,",
+        "from .finite_diff import finite_diff_weights, apply_finite_diff, differentiate_finite",
+        "from .util import (periodicity, not_empty_in, is_convex,",
+        "from .accumulationbounds import AccumBounds",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/simplify/__init__.py",
+      "current_size_lines": 36,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .simplify import (simplify, hypersimp, hypersimilar,",
+        "from .fu import FU, fu",
+        "from .sqrtdenest import sqrtdenest",
+        "from .cse_main import cse",
+        "from .epathtools import epath, EPath",
+        "from .hyperexpand import hyperexpand",
+        "from .radsimp import collect, rcollect, radsimp, collect_const, fraction, numer, denom",
+        "from .trigsimp import trigsimp, exptrigsimp",
+        "from .powsimp import powsimp, powdenest",
+        "from .combsimp import combsimp",
+        "from .gammasimp import gammasimp",
+        "from .ratsimp import ratsimp, ratsimpmodprime",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 18,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/vector/__init__.py",
+      "current_size_lines": 38,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 32,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/categories/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .baseclasses import (Object, Morphism, IdentityMorphism,",
+        "from .diagram_drawing import (DiagramGrid, XypicDiagramDrawer,",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 15,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/diffgeom/__init__.py",
+      "current_size_lines": 18,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .diffgeom import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 11,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/stats/__init__.py",
+      "current_size_lines": 162,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from .rv_interface import (P, E, H, density, where, given, sample, cdf, median,",
+        "from .frv_types import (FiniteRV, DiscreteUniform, Die, Bernoulli, Coin,",
+        "from .crv_types import (ContinuousRV, Arcsin, Benini, Beta, BetaNoncentral,",
+        "from .drv_types import (FlorySchulz, Geometric, Hermite, Logarithmic, NegativeBinomial, Poisson,",
+        "from .joint_rv_types import (JointRV, Dirichlet,",
+        "from .stochastic_process_types import (StochasticProcess,",
+        "from .random_matrix_models import (CircularEnsemble, CircularUnitaryEnsemble,",
+        "from .matrix_distributions import MatrixGamma, Wishart, MatrixNormal, MatrixStudentT",
+        "from .symbolic_probability import (Probability, Expectation, Variance,",
+        "from .symbolic_multivariate_probability import (ExpectationMatrix, VarianceMatrix,"
+      ],
+      "estimated_loc_savings": 146,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/matrices/__init__.py",
+      "current_size_lines": 55,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .exceptions import ShapeError, NonSquareMatrixError",
+        "from .kind import MatrixKind",
+        "from .dense import (",
+        "from .dense import MutableDenseMatrix",
+        "from .matrixbase import DeferredVector, MatrixBase",
+        "from .sparse import MutableSparseMatrix",
+        "from .sparsetools import banded",
+        "from .immutable import ImmutableDenseMatrix, ImmutableSparseMatrix",
+        "from .expressions import (",
+        "from .utilities import dotprodsimp",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 39,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/series/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/series/benchmarks/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/crypto/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/sympy/core/tests/__init__.py",
+      "current_size_lines": 0,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 1260,
+  "file_count": 50
+}

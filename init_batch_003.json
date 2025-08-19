@@ -1,0 +1,978 @@
+{
+  "batch_id": "init_batch_003",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/botocore/__init__.py",
+      "current_size_lines": 185,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = '1.40.10'"
+      ],
+      "estimated_loc_savings": 179,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/httptools/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import parser",
+        "from .parser import *  # NOQA",
+        "from ._version import __version__  # NOQA",
+        "__all__ = parser.__all__ + ('__version__',)  # NOQA"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/PIL/__init__.py",
+      "current_size_lines": 73,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "Use PIL.__version__ for this Pillow version.",
+        "from . import _version",
+        "__version__ = _version.__version__"
+      ],
+      "estimated_loc_savings": 65,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/requests/__init__.py",
+      "current_size_lines": 151,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from .exceptions import RequestsDependencyWarning",
+        "    from charset_normalizer import __version__ as charset_normalizer_version",
+        "    from chardet import __version__ as chardet_version",
+        "        urllib3.__version__, chardet_version, charset_normalizer_version",
+        "            urllib3.__version__, chardet_version, charset_normalizer_version",
+        "        from cryptography import __version__ as cryptography_version",
+        "from . import packages, utils",
+        "from .__version__ import (",
+        "    __author__,",
+        "    __version__,",
+        "from .api import delete, get, head, options, patch, post, put, request",
+        "from .exceptions import (",
+        "from .models import PreparedRequest, Request, Response",
+        "from .sessions import Session, session",
+        "from .status_codes import codes"
+      ],
+      "estimated_loc_savings": 131,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/mando/__init__.py",
+      "current_size_lines": 12,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = '0.7.1'",
+        "    e.version = __version__"
+      ],
+      "estimated_loc_savings": 5,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/cbor2/__init__.py",
+      "current_size_lines": 76,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._decoder import CBORDecoder as CBORDecoder",
+        "from ._decoder import load as load",
+        "from ._decoder import loads as loads",
+        "from ._encoder import CBOREncoder as CBOREncoder",
+        "from ._encoder import dump as dump",
+        "from ._encoder import dumps as dumps",
+        "from ._encoder import shareable_encoder as shareable_encoder",
+        "from ._types import CBORDecodeEOF as CBORDecodeEOF",
+        "from ._types import CBORDecodeError as CBORDecodeError",
+        "from ._types import CBORDecodeValueError as CBORDecodeValueError",
+        "from ._types import CBOREncodeError as CBOREncodeError",
+        "from ._types import CBOREncodeTypeError as CBOREncodeTypeError",
+        "from ._types import CBOREncodeValueError as CBOREncodeValueError",
+        "from ._types import CBORError as CBORError",
+        "from ._types import CBORSimpleValue as CBORSimpleValue",
+        "from ._types import CBORTag as CBORTag",
+        "from ._types import FrozenDict as FrozenDict",
+        "from ._types import undefined as undefined",
+        "        from ._encoder import canonical_encoders, default_encoders",
+        "        from ._types import CBORSimpleValue, CBORTag, undefined"
+      ],
+      "estimated_loc_savings": 51,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/multidict/__init__.py",
+      "current_size_lines": 48,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from ._abc import MultiMapping, MutableMultiMapping",
+        "from ._compat import USE_EXTENSIONS",
+        "__all__ = (",
+        "__version__ = \"6.6.4\"",
+        "    from ._multidict_py import (",
+        "    from ._multidict import ("
+      ],
+      "estimated_loc_savings": 37,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/anyio/__init__.py",
+      "current_size_lines": 100,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from ._core._contextmanagers import AsyncContextManagerMixin as AsyncContextManagerMixin",
+        "from ._core._contextmanagers import ContextManagerMixin as ContextManagerMixin",
+        "from ._core._eventloop import current_time as current_time",
+        "from ._core._eventloop import get_all_backends as get_all_backends",
+        "from ._core._eventloop import get_cancelled_exc_class as get_cancelled_exc_class",
+        "from ._core._eventloop import run as run",
+        "from ._core._eventloop import sleep as sleep",
+        "from ._core._eventloop import sleep_forever as sleep_forever",
+        "from ._core._eventloop import sleep_until as sleep_until",
+        "from ._core._exceptions import BrokenResourceError as BrokenResourceError",
+        "from ._core._exceptions import BrokenWorkerInterpreter as BrokenWorkerInterpreter",
+        "from ._core._exceptions import BrokenWorkerProcess as BrokenWorkerProcess",
+        "from ._core._exceptions import BusyResourceError as BusyResourceError",
+        "from ._core._exceptions import ClosedResourceError as ClosedResourceError",
+        "from ._core._exceptions import ConnectionFailed as ConnectionFailed",
+        "from ._core._exceptions import DelimiterNotFound as DelimiterNotFound",
+        "from ._core._exceptions import EndOfStream as EndOfStream",
+        "from ._core._exceptions import IncompleteRead as IncompleteRead",
+        "from ._core._exceptions import TypedAttributeLookupError as TypedAttributeLookupError",
+        "from ._core._exceptions import WouldBlock as WouldBlock",
+        "from ._core._fileio import AsyncFile as AsyncFile",
+        "from ._core._fileio import Path as Path",
+        "from ._core._fileio import open_file as open_file",
+        "from ._core._fileio import wrap_file as wrap_file",
+        "from ._core._resources import aclose_forcefully as aclose_forcefully",
+        "from ._core._signals import open_signal_receiver as open_signal_receiver",
+        "from ._core._sockets import TCPConnectable as TCPConnectable",
+        "from ._core._sockets import UNIXConnectable as UNIXConnectable",
+        "from ._core._sockets import as_connectable as as_connectable",
+        "from ._core._sockets import connect_tcp as connect_tcp",
+        "from ._core._sockets import connect_unix as connect_unix",
+        "from ._core._sockets import create_connected_udp_socket as create_connected_udp_socket",
+        "from ._core._sockets import (",
+        "from ._core._sockets import create_tcp_listener as create_tcp_listener",
+        "from ._core._sockets import create_udp_socket as create_udp_socket",
+        "from ._core._sockets import create_unix_datagram_socket as create_unix_datagram_socket",
+        "from ._core._sockets import create_unix_listener as create_unix_listener",
+        "from ._core._sockets import getaddrinfo as getaddrinfo",
+        "from ._core._sockets import getnameinfo as getnameinfo",
+        "from ._core._sockets import notify_closing as notify_closing",
+        "from ._core._sockets import wait_readable as wait_readable",
+        "from ._core._sockets import wait_socket_readable as wait_socket_readable",
+        "from ._core._sockets import wait_socket_writable as wait_socket_writable",
+        "from ._core._sockets import wait_writable as wait_writable",
+        "from ._core._streams import create_memory_object_stream as create_memory_object_stream",
+        "from ._core._subprocesses import open_process as open_process",
+        "from ._core._subprocesses import run_process as run_process",
+        "from ._core._synchronization import CapacityLimiter as CapacityLimiter",
+        "from ._core._synchronization import (",
+        "from ._core._synchronization import Condition as Condition",
+        "from ._core._synchronization import ConditionStatistics as ConditionStatistics",
+        "from ._core._synchronization import Event as Event",
+        "from ._core._synchronization import EventStatistics as EventStatistics",
+        "from ._core._synchronization import Lock as Lock",
+        "from ._core._synchronization import LockStatistics as LockStatistics",
+        "from ._core._synchronization import ResourceGuard as ResourceGuard",
+        "from ._core._synchronization import Semaphore as Semaphore",
+        "from ._core._synchronization import SemaphoreStatistics as SemaphoreStatistics",
+        "from ._core._tasks import TASK_STATUS_IGNORED as TASK_STATUS_IGNORED",
+        "from ._core._tasks import CancelScope as CancelScope",
+        "from ._core._tasks import create_task_group as create_task_group",
+        "from ._core._tasks import current_effective_deadline as current_effective_deadline",
+        "from ._core._tasks import fail_after as fail_after",
+        "from ._core._tasks import move_on_after as move_on_after",
+        "from ._core._tempfile import NamedTemporaryFile as NamedTemporaryFile",
+        "from ._core._tempfile import SpooledTemporaryFile as SpooledTemporaryFile",
+        "from ._core._tempfile import TemporaryDirectory as TemporaryDirectory",
+        "from ._core._tempfile import TemporaryFile as TemporaryFile",
+        "from ._core._tempfile import gettempdir as gettempdir",
+        "from ._core._tempfile import gettempdirb as gettempdirb",
+        "from ._core._tempfile import mkdtemp as mkdtemp",
+        "from ._core._tempfile import mkstemp as mkstemp",
+        "from ._core._testing import TaskInfo as TaskInfo",
+        "from ._core._testing import get_current_task as get_current_task",
+        "from ._core._testing import get_running_tasks as get_running_tasks",
+        "from ._core._testing import wait_all_tasks_blocked as wait_all_tasks_blocked",
+        "from ._core._typedattr import TypedAttributeProvider as TypedAttributeProvider",
+        "from ._core._typedattr import TypedAttributeSet as TypedAttributeSet",
+        "from ._core._typedattr import typed_attribute as typed_attribute"
+      ],
+      "estimated_loc_savings": 16,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/aiohttp_retry/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from .client import *  # noqa: F403",
+        "from .retry_options import *  # noqa: F403"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/smmap/__init__.py",
+      "current_size_lines": 9,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__author__ = \"Sebastian Thiel\"",
+        "__version__ = '.'.join(str(i) for i in version_info)",
+        "from .mman import *",
+        "from .buf import *"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/asn1crypto/__init__.py",
+      "current_size_lines": 41,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .version import __version__, __version_info__",
+        "__all__ = [",
+        "    '__version__',"
+      ],
+      "estimated_loc_savings": 33,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/httpx/__init__.py",
+      "current_size_lines": 98,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .__version__ import __description__, __title__, __version__",
+        "from ._api import *",
+        "from ._auth import *",
+        "from ._client import *",
+        "from ._config import *",
+        "from ._content import *",
+        "from ._exceptions import *",
+        "from ._models import *",
+        "from ._status_codes import *",
+        "from ._transports import *",
+        "from ._types import *",
+        "from ._urls import *",
+        "    from ._main import main",
+        "__all__ = [",
+        "    \"__version__\",",
+        "for __name in __all__:"
+      ],
+      "estimated_loc_savings": 77,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/certifi/__init__.py",
+      "current_size_lines": 3,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .core import contents, where",
+        "__all__ = [\"contents\", \"where\"]",
+        "__version__ = \"2025.08.03\""
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/prompt_toolkit/__init__.py",
+      "current_size_lines": 41,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .application import Application",
+        "from .formatted_text import ANSI, HTML",
+        "from .shortcuts import PromptSession, print_formatted_text, prompt",
+        "__version__ = metadata.version(\"prompt_toolkit\")",
+        "assert pep440.match(__version__)",
+        "VERSION = tuple(int(v.rstrip(\"abrc\")) for v in __version__.split(\".\")[:3])",
+        "__all__ = [",
+        "    \"__version__\","
+      ],
+      "estimated_loc_savings": 28,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/github/__init__.py",
+      "current_size_lines": 101,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import Auth",
+        "from .AppAuthentication import AppAuthentication",
+        "from .GithubException import (",
+        "from .GithubIntegration import GithubIntegration",
+        "from .GithubRetry import GithubRetry",
+        "from .InputFileContent import InputFileContent",
+        "from .InputGitAuthor import InputGitAuthor",
+        "from .InputGitTreeElement import InputGitTreeElement",
+        "from .MainClass import Github",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 86,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/sniffio/__init__.py",
+      "current_size_lines": 14,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "from ._version import __version__",
+        "from ._impl import ("
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/attr/__init__.py",
+      "current_size_lines": 84,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import converters, exceptions, filters, setters, validators",
+        "from ._cmp import cmp_using",
+        "from ._config import get_run_validators, set_run_validators",
+        "from ._funcs import asdict, assoc, astuple, has, resolve_types",
+        "from ._make import (",
+        "from ._next_gen import define, field, frozen, mutable",
+        "from ._version_info import VersionInfo",
+        "__all__ = [",
+        "        if name not in (\"__version__\", \"__version_info__\"):"
+      ],
+      "estimated_loc_savings": 70,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/tiktoken/__init__.py",
+      "current_size_lines": 7,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from .core import Encoding as Encoding",
+        "from .model import encoding_for_model as encoding_for_model",
+        "from .model import encoding_name_for_model as encoding_name_for_model",
+        "from .registry import get_encoding as get_encoding",
+        "from .registry import list_encoding_names as list_encoding_names",
+        "__version__ = \"0.11.0\""
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/multipart/__init__.py",
+      "current_size_lines": 22,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "    from python_multipart import __all__, __author__, __copyright__, __license__, __version__"
+      ],
+      "estimated_loc_savings": 16,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/tqdm/__init__.py",
+      "current_size_lines": 31,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from ._monitor import TMonitor, TqdmSynchronisationWarning",
+        "from ._tqdm_pandas import tqdm_pandas",
+        "from .cli import main  # TODO: remove in v5.0.0",
+        "from .gui import tqdm as tqdm_gui  # TODO: remove in v5.0.0",
+        "from .gui import trange as tgrange  # TODO: remove in v5.0.0",
+        "from .std import (",
+        "from .version import __version__",
+        "__all__ = ['tqdm', 'tqdm_gui', 'trange', 'tgrange', 'tqdm_pandas',",
+        "           '__version__']",
+        "    from .notebook import tqdm as _tqdm_notebook",
+        "    from .notebook import trange as _tnrange"
+      ],
+      "estimated_loc_savings": 15,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/radon/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = '6.0.1'"
+      ],
+      "estimated_loc_savings": 9,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/python_multipart/__init__.py",
+      "current_size_lines": 23,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__author__ = \"Andrew Dunham\"",
+        "__version__ = \"0.0.20\"",
+        "from .multipart import (",
+        "__all__ = ("
+      ],
+      "estimated_loc_savings": 14,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/aioredis/__init__.py",
+      "current_size_lines": 54,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__version__ = \"2.0.1\"",
+        "VERSION = tuple(map(int_or_str, __version__.split(\".\")))",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 46,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/fastapi/__init__.py",
+      "current_size_lines": 22,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = \"0.116.1\"",
+        "from .applications import FastAPI as FastAPI",
+        "from .background import BackgroundTasks as BackgroundTasks",
+        "from .datastructures import UploadFile as UploadFile",
+        "from .exceptions import HTTPException as HTTPException",
+        "from .exceptions import WebSocketException as WebSocketException",
+        "from .param_functions import Body as Body",
+        "from .param_functions import Cookie as Cookie",
+        "from .param_functions import Depends as Depends",
+        "from .param_functions import File as File",
+        "from .param_functions import Form as Form",
+        "from .param_functions import Header as Header",
+        "from .param_functions import Path as Path",
+        "from .param_functions import Query as Query",
+        "from .param_functions import Security as Security",
+        "from .requests import Request as Request",
+        "from .responses import Response as Response",
+        "from .routing import APIRouter as APIRouter",
+        "from .websockets import WebSocket as WebSocket",
+        "from .websockets import WebSocketDisconnect as WebSocketDisconnect"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/nacl/__init__.py",
+      "current_size_lines": 33,
+      "has_imports": false,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "    \"__version__\",",
+        "    \"__author__\",",
+        "    \"__email__\",",
+        "__version__ = \"1.5.0\"",
+        "__author__ = \"The PyNaCl developers\"",
+        "__email__ = \"cryptography-dev@python.org\"",
+        "__copyright__ = \"Copyright 2013-2018 {}\".format(__author__)"
+      ],
+      "estimated_loc_savings": 20,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/webauthn/__init__.py",
+      "current_size_lines": 18,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .registration.generate_registration_options import generate_registration_options",
+        "from .registration.verify_registration_response import verify_registration_response",
+        "from .authentication.generate_authentication_options import (",
+        "from .authentication.verify_authentication_response import (",
+        "from .helpers import base64url_to_bytes, options_to_json",
+        "__version__ = \"2.6.0\"",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 6,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/_yaml/__init__.py",
+      "current_size_lines": 30,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 25,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/rich/__init__.py",
+      "current_size_lines": 145,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from ._extension import load_ipython_extension  # noqa: F401",
+        "__all__ = [\"get_console\", \"reconfigure\", \"print\", \"inspect\", \"print_json\"]",
+        "    from .console import Console",
+        "        from .console import Console",
+        "    from .console import Console"
+      ],
+      "estimated_loc_savings": 135,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/uvloop/__init__.py",
+      "current_size_lines": 132,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import includes as __includes  # NOQA",
+        "from .loop import Loop as __BaseLoop  # NOQA",
+        "from ._version import __version__  # NOQA",
+        "__all__ = ('new_event_loop', 'install', 'EventLoopPolicy')"
+      ],
+      "estimated_loc_savings": 123,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/yaml/__init__.py",
+      "current_size_lines": 344,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from .error import *",
+        "from .tokens import *",
+        "from .events import *",
+        "from .nodes import *",
+        "from .loader import *",
+        "from .dumper import *",
+        "__version__ = '6.0.2'",
+        "    from .cyaml import *"
+      ],
+      "estimated_loc_savings": 331,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/prometheus_client/__init__.py",
+      "current_size_lines": 64,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from . import (",
+        "from .exposition import (",
+        "from .gc_collector import GC_COLLECTOR, GCCollector",
+        "from .metrics import (",
+        "from .metrics_core import Metric",
+        "from .platform_collector import PLATFORM_COLLECTOR, PlatformCollector",
+        "from .process_collector import PROCESS_COLLECTOR, ProcessCollector",
+        "from .registry import CollectorRegistry, REGISTRY",
+        "__all__ = ("
+      ],
+      "estimated_loc_savings": 50,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/rich_toolkit/__init__.py",
+      "current_size_lines": 2,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .toolkit import RichToolkit, RichToolkitTheme",
+        "__all__ = [\"RichToolkit\", \"RichToolkitTheme\"]"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/jmespath/__init__.py",
+      "current_size_lines": 7,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = '1.0.1'"
+      ],
+      "estimated_loc_savings": 1,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/anthropic/__init__.py",
+      "current_size_lines": 105,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import types",
+        "from ._types import NOT_GIVEN, Omit, NoneType, NotGiven, Transport, ProxiesTypes",
+        "from ._utils import file_from_path",
+        "from ._client import (",
+        "from ._models import BaseModel",
+        "from ._version import __title__, __version__",
+        "from ._response import APIResponse as APIResponse, AsyncAPIResponse as AsyncAPIResponse",
+        "from ._constants import (",
+        "from ._exceptions import (",
+        "from ._base_client import DefaultHttpxClient, DefaultAioHttpClient, DefaultAsyncHttpxClient",
+        "from ._utils._logs import setup_logging as _setup_logging",
+        "__all__ = [",
+        "    \"__version__\",",
+        "    from ._utils._resources_proxy import resources as resources",
+        "from .lib.vertex import *",
+        "from .lib.bedrock import *",
+        "from .lib.streaming import *",
+        "for __name in __all__:"
+      ],
+      "estimated_loc_savings": 82,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/uvicorn/__init__.py",
+      "current_size_lines": 4,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__version__ = \"0.35.0\"",
+        "__all__ = [\"main\", \"run\", \"Config\", \"Server\"]"
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/alembic/__init__.py",
+      "current_size_lines": 3,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from . import context",
+        "from . import op",
+        "__version__ = \"1.16.4\""
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/pydantic_settings/__init__.py",
+      "current_size_lines": 61,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .exceptions import SettingsError",
+        "from .main import BaseSettings, CliApp, SettingsConfigDict",
+        "from .sources import (",
+        "from .version import VERSION",
+        "__all__ = (",
+        "    '__version__',",
+        "__version__ = VERSION"
+      ],
+      "estimated_loc_savings": 49,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/urllib3/__init__.py",
+      "current_size_lines": 173,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import exceptions",
+        "from ._base_connection import _TYPE_BODY",
+        "from ._collections import HTTPHeaderDict",
+        "from ._version import __version__",
+        "from .connectionpool import HTTPConnectionPool, HTTPSConnectionPool, connection_from_url",
+        "from .filepost import _TYPE_FIELDS, encode_multipart_formdata",
+        "from .poolmanager import PoolManager, ProxyManager, proxy_from_url",
+        "from .response import BaseHTTPResponse, HTTPResponse",
+        "from .util.request import make_headers",
+        "from .util.retry import Retry",
+        "from .util.timeout import Timeout",
+        "__author__ = \"Andrey Petrov (andrey.petrov@shazow.net)\"",
+        "__version__ = __version__",
+        "__all__ = (",
+        "    from .contrib.emscripten import inject_into_urllib3  # noqa: 401"
+      ],
+      "estimated_loc_savings": 153,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/pyotp/__init__.py",
+      "current_size_lines": 88,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [
+        "from . import contrib  # noqa:F401",
+        "from .compat import random",
+        "from .hotp import HOTP as HOTP",
+        "from .otp import OTP as OTP",
+        "from .totp import TOTP as TOTP"
+      ],
+      "estimated_loc_savings": 78,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/celery/__init__.py",
+      "current_size_lines": 144,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import local",
+        "__version__ = '5.5.3'",
+        "__author__ = 'Ask Solem'",
+        "__all__ = (",
+        "VERSION_BANNER = f'{__version__} ({SERIES})'",
+        "    r'(\\d+)\\.(\\d+).(\\d+)(.+)?', __version__).groups()",
+        "    __path__=__path__, __doc__=__doc__, __version__=__version__,",
+        "    __author__=__author__, __contact__=__contact__,"
+      ],
+      "estimated_loc_savings": 131,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/click_plugins/__init__.py",
+      "current_size_lines": 45,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "__version__ = '1.1.1.2'",
+        "__author__ = 'Kevin Wurster, Sean Gillies'",
+        "__email__ = 'wursterk@gmail.com, sean.gillies@gmail.com'"
+      ],
+      "estimated_loc_savings": 37,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/click_repl/__init__.py",
+      "current_size_lines": 10,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from ._completer import ClickCompleter as ClickCompleter  # noqa: F401",
+        "from ._repl import register_repl as register_repl  # noqa: F401",
+        "from ._repl import repl as repl  # noqa: F401",
+        "from .exceptions import CommandLineParserError as CommandLineParserError  # noqa: F401",
+        "from .exceptions import ExitReplException as ExitReplException  # noqa: F401",
+        "from .exceptions import (  # noqa: F401",
+        "from .utils import exit as exit  # noqa: F401",
+        "__version__ = \"0.3.0\""
+      ],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/setuptools/__init__.py",
+      "current_size_lines": 202,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from . import logging, monkey",
+        "from .depends import Require",
+        "from .discovery import PackageFinder, PEP420PackageFinder",
+        "from .dist import Distribution",
+        "from .extension import Extension",
+        "from .version import __version__ as __version__",
+        "from .warnings import SetuptoolsDeprecationWarning",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 189,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/pkg_resources/__init__.py",
+      "current_size_lines": 3049,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 3043,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/_distutils_hack/__init__.py",
+      "current_size_lines": 186,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 181,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/psycopg2/__init__.py",
+      "current_size_lines": 96,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "    __version__, __libpq_version__,"
+      ],
+      "estimated_loc_savings": 90,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/authlib/__init__.py",
+      "current_size_lines": 15,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from .consts import author",
+        "from .consts import homepage",
+        "from .consts import version",
+        "__version__ = version",
+        "__author__ = author"
+      ],
+      "estimated_loc_savings": 5,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/greenlet/__init__.py",
+      "current_size_lines": 59,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__all__ = [",
+        "    '__version__',",
+        "__version__ = '3.2.4'",
+        "from ._greenlet import _C_API # pylint:disable=no-name-in-module",
+        "from ._greenlet import GreenletExit",
+        "from ._greenlet import error",
+        "from ._greenlet import getcurrent",
+        "from ._greenlet import greenlet",
+        "    from ._greenlet import gettrace",
+        "    from ._greenlet import settrace",
+        "from ._greenlet import GREENLET_USE_CONTEXT_VARS # pylint:disable=unused-import",
+        "from ._greenlet import GREENLET_USE_GC # pylint:disable=unused-import",
+        "from ._greenlet import GREENLET_USE_TRACING # pylint:disable=unused-import",
+        "from ._greenlet import CLOCKS_PER_SEC # pylint:disable=unused-import",
+        "from ._greenlet import enable_optional_cleanup # pylint:disable=unused-import",
+        "from ._greenlet import get_clocks_used_doing_optional_cleanup # pylint:disable=unused-import"
+      ],
+      "estimated_loc_savings": 38,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/itsdangerous/__init__.py",
+      "current_size_lines": 32,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": false,
+      "preserved_content": [
+        "from .encoding import base64_decode as base64_decode",
+        "from .encoding import base64_encode as base64_encode",
+        "from .encoding import want_bytes as want_bytes",
+        "from .exc import BadData as BadData",
+        "from .exc import BadHeader as BadHeader",
+        "from .exc import BadPayload as BadPayload",
+        "from .exc import BadSignature as BadSignature",
+        "from .exc import BadTimeSignature as BadTimeSignature",
+        "from .exc import SignatureExpired as SignatureExpired",
+        "from .serializer import Serializer as Serializer",
+        "from .signer import HMACAlgorithm as HMACAlgorithm",
+        "from .signer import NoneAlgorithm as NoneAlgorithm",
+        "from .signer import Signer as Signer",
+        "from .timed import TimedSerializer as TimedSerializer",
+        "from .timed import TimestampSigner as TimestampSigner",
+        "from .url_safe import URLSafeSerializer as URLSafeSerializer",
+        "from .url_safe import URLSafeTimedSerializer as URLSafeTimedSerializer",
+        "    if name == \"__version__\":",
+        "            \"The '__version__' attribute is deprecated and will be removed in\""
+      ],
+      "estimated_loc_savings": 8,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/.venv/lib/python3.13/site-packages/pydantic/__init__.py",
+      "current_size_lines": 408,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from ._migration import getattr_migration",
+        "from .version import VERSION",
+        "    from . import dataclasses",
+        "    from ._internal._generate_schema import GenerateSchema as GenerateSchema",
+        "    from .aliases import AliasChoices, AliasGenerator, AliasPath",
+        "    from .annotated_handlers import GetCoreSchemaHandler, GetJsonSchemaHandler",
+        "    from .config import ConfigDict, with_config",
+        "    from .errors import *",
+        "    from .fields import Field, PrivateAttr, computed_field",
+        "    from .functional_serializers import (",
+        "    from .functional_validators import (",
+        "    from .json_schema import WithJsonSchema",
+        "    from .main import *",
+        "    from .networks import *",
+        "    from .type_adapter import TypeAdapter",
+        "    from .types import *",
+        "    from .validate_call_decorator import validate_call",
+        "    from .warnings import (",
+        "    from .deprecated.class_validators import root_validator, validator",
+        "    from .deprecated.config import BaseConfig, Extra",
+        "    from .deprecated.tools import *",
+        "    from .root_model import RootModel",
+        "__version__ = VERSION",
+        "__all__ = (",
+        "    '__version__',",
+        "    return list(__all__)"
+      ],
+      "estimated_loc_savings": 377,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 6036,
+  "file_count": 50
+}
