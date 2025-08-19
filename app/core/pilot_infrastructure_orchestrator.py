@@ -1,6 +1,10 @@
 """
 Fortune 500 Pilot Infrastructure Orchestrator for LeanVibe Agent Hive 2.0
 
+⚠️ DEPRECATED: Pilot infrastructure functionality has been consolidated into SpecializedOrchestratorPlugin.
+   This large file contains complex enterprise features that need careful migration.
+   This file will be removed in a future release after migration completion.
+
 Manages simultaneous Fortune 500 enterprise pilot programs with automated onboarding,
 multi-tenant deployment, real-time success tracking, and enterprise support operations.
 

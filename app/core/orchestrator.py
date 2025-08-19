@@ -34,7 +34,8 @@ from .messaging_migration import MessagingServiceAdapter, mark_migration_complet
 from .intelligent_task_router import IntelligentTaskRouter, TaskRoutingContext, RoutingStrategy, AgentSuitabilityScore
 from .capability_matcher import CapabilityMatcher
 from .agent_persona_system import AgentPersonaSystem, PersonaAssignment, get_agent_persona_system
-from .container_orchestrator import get_container_orchestrator, ContainerAgentOrchestrator
+# Container orchestration consolidated into SpecializedOrchestratorPlugin
+# from .container_orchestrator import get_container_orchestrator, ContainerAgentOrchestrator
 from .logging_service import get_component_logger
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.session import Session, SessionStatus
@@ -125,8 +126,8 @@ class AgentOrchestrator:
         # Agent persona system for role-based assignment
         self.persona_system: Optional[AgentPersonaSystem] = None
         
-        # Container orchestrator for production deployment
-        self.container_orchestrator: Optional[ContainerAgentOrchestrator] = None
+        # Container orchestrator for production deployment - now part of SpecializedOrchestratorPlugin
+        # self.container_orchestrator: Optional[ContainerAgentOrchestrator] = None
         self.orchestrator_mode = os.getenv("ORCHESTRATOR_MODE", "hybrid")  # hybrid, tmux, container
         
         # Multi-agent coordination state

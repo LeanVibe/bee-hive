@@ -1,11 +1,15 @@
 """
 Development Orchestrator for LeanVibe Agent Hive 2.0
 
+⚠️ DEPRECATED: This module has been consolidated into SpecializedOrchestratorPlugin.
+   New code should use: from .specialized_orchestrator_plugin import DevelopmentToolsModule  
+   This file will be removed in a future release after migration completion.
+
 A specialized orchestrator for development and testing scenarios.
 Extends the unified orchestrator with development-specific features:
 
 - Enhanced debugging and logging
-- Test agent simulation
+- Test agent simulation  
 - Development workflow shortcuts
 - Sandbox mode support
 - Mock services integration

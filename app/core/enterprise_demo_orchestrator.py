@@ -1,6 +1,10 @@
 """
 Enterprise Demo Orchestrator for LeanVibe Agent Hive 2.0
 
+⚠️ DEPRECATED: This module has been consolidated into SpecializedOrchestratorPlugin.
+   New code should use: from .specialized_orchestrator_plugin import EnterpriseDemoModule
+   This file will be removed in a future release after migration completion.
+
 Orchestrates live Fortune 500 demonstrations of autonomous development capabilities.
 Provides scripted, reliable, and impressive showcases of the 42x velocity improvement
 and end-to-end autonomous development workflows.

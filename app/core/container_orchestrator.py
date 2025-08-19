@@ -1,6 +1,10 @@
 """
 Container-based Agent Orchestrator
 
+⚠️ DEPRECATED: This module has been consolidated into SpecializedOrchestratorPlugin.
+   New code should use: from .specialized_orchestrator_plugin import ContainerManagementModule
+   This file will be removed in a future release after migration completion.
+
 Replaces tmux-based agent management with Docker containers.
 Provides scalable, production-ready agent lifecycle management.
 """
