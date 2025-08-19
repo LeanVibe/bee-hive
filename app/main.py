@@ -63,7 +63,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             initialize_error_handling_integration,
         )
         # Epic 1, Phase 2 Week 3: Migrate to unified production orchestrator
-        from .core.orchestrator_migration_adapter import AgentOrchestrator
+        # Updated to use SimpleOrchestrator for better reliability and performance
+        from .core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
         
         # Initialize core infrastructure
         await init_database()
@@ -121,18 +122,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if _settings.DEBUG:
             await error_config_manager.start_hot_reload()
         
-        # Start agent orchestrator
-        orchestrator = AgentOrchestrator()
-        await orchestrator.start()
-        app.state.orchestrator = orchestrator
+        # Start orchestrator based on configuration
+        if _settings.USE_SIMPLE_ORCHESTRATOR and _settings.ORCHESTRATOR_TYPE == "simple":
+            orchestrator = create_simple_orchestrator()
+            app.state.orchestrator = orchestrator
+            app.state.orchestrator_type = "SimpleOrchestrator"
+            logger.info("✅ SimpleOrchestrator initialized successfully")
+        else:
+            # Fallback to legacy orchestrator if needed
+            from .core.orchestrator_migration_adapter import AgentOrchestrator
+            orchestrator = AgentOrchestrator()
+            await orchestrator.start()
+            app.state.orchestrator = orchestrator
+            app.state.orchestrator_type = "LegacyOrchestrator"
+            logger.info("✅ LegacyOrchestrator initialized successfully")
         
-        # 🚀 COMPOUNDING IMPACT: Enhanced orchestrator with SharedWorldState for 5-10x coordination performance
-        from .core.orchestrator_shared_state_integration import (
-            enhance_orchestrator_with_shared_state,
-        )
-        shared_state_integration = await enhance_orchestrator_with_shared_state(orchestrator)
-        app.state.shared_state_integration = shared_state_integration
-        logger.info("🚀 SharedWorldState integration enabled - Agent coordination performance multiplied!")
+        # Log orchestrator readiness
+        orchestrator_type = getattr(app.state, 'orchestrator_type', 'Unknown')
+        logger.info(f"🚀 {orchestrator_type} ready - agent coordination enabled!")
         
         # Start performance metrics publisher for real-time monitoring
         performance_publisher = await get_performance_publisher()
@@ -150,7 +157,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         # Graceful shutdown
         if hasattr(app.state, 'orchestrator'):
-            await app.state.orchestrator.shutdown()
+            orchestrator_type = getattr(app.state, 'orchestrator_type', 'Unknown')
+            logger.info(f"🛑 Shutting down {orchestrator_type}...")
+            
+            try:
+                orchestrator = app.state.orchestrator
+                
+                if orchestrator_type == "SimpleOrchestrator":
+                    # SimpleOrchestrator graceful shutdown
+                    status = await orchestrator.get_system_status()
+                    agent_ids = list(status.get("agents", {}).get("details", {}).keys())
+                    for agent_id in agent_ids:
+                        await orchestrator.shutdown_agent(agent_id, graceful=True)
+                    logger.info(f"✅ Gracefully shutdown {len(agent_ids)} agents")
+                else:
+                    # Legacy orchestrator shutdown
+                    await orchestrator.shutdown()
+                    logger.info("✅ Legacy orchestrator shutdown complete")
+                    
+            except Exception as e:
+                logger.warning(f"Warning during {orchestrator_type} shutdown: {e}")
         
         # Stop error handling hot-reload
         if hasattr(app.state, 'error_config_manager'):
@@ -390,23 +416,30 @@ def create_app() -> FastAPI:
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
         
-        # Check Agent System (using real agent spawner data - FIXED)
+        # Check SimpleOrchestrator System
         try:
-            from .core.agent_spawner import get_active_agents_status
-            active_agents = await get_active_agents_status()
-            active_agent_count = len(active_agents) if active_agents else 0
-            
-            health_status["components"]["orchestrator"] = {
-                "status": "healthy", 
-                "details": "Agent Orchestrator running",
-                "active_agents": active_agent_count
-            }
-            health_status["summary"]["healthy"] += 1
+            # Get orchestrator from app state
+            orchestrator = getattr(app.state, 'orchestrator', None)
+            if orchestrator:
+                orchestrator_status = await orchestrator.get_system_status()
+                agent_count = orchestrator_status.get("agents", {}).get("total", 0)
+                orchestrator_health = orchestrator_status.get("health", "unknown")
+                
+                health_status["components"]["orchestrator"] = {
+                    "status": "healthy" if orchestrator_health in ["healthy", "no_agents"] else "degraded",
+                    "details": f"SimpleOrchestrator running ({orchestrator_health})",
+                    "active_agents": agent_count,
+                    "orchestrator_type": "SimpleOrchestrator",
+                    "response_time_ms": orchestrator_status.get("performance", {}).get("response_time_ms", "unknown")
+                }
+                health_status["summary"]["healthy"] += 1
+            else:
+                raise Exception("Orchestrator not initialized")
         except Exception as e:
             health_status["components"]["orchestrator"] = {
                 "status": "unhealthy",
                 "error": str(e),
-                "details": f"Agent System error: {str(e)}"
+                "details": f"SimpleOrchestrator error: {str(e)}"
             }
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"

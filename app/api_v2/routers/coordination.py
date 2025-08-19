@@ -20,15 +20,13 @@ from sqlalchemy import select, update, delete, and_
 from sqlalchemy.orm import selectinload
 
 from ...core.database import get_session_dependency
-from ...core.coordination import CoordinationEngine
-from ...models.coordination import CoordinationSession, SessionStatus, CoordinationType
+from ...core.coordination import coordination_engine
+from ...models.coordination import EnhancedCoordinationEvent, CoordinationEventType, CoordinationPattern
 from ...models.agent import Agent, AgentStatus
-from ...schemas.coordination import (
-    CoordinationSessionCreateRequest,
-    CoordinationSessionResponse,
-    CoordinationSessionListResponse,
-    CoordinationEventRequest,
-    CoordinationStatsResponse
+from ...schemas.team_coordination import (
+    CoordinationMode,
+    CoordinationSessionRequest,
+    CoordinationSessionResponse
 )
 from ..middleware import (
     get_current_user_from_request
@@ -38,16 +36,16 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 # Coordination engine dependency
-async def get_coordination_engine() -> CoordinationEngine:
+async def get_coordination_engine() -> coordination_engine:
     """Get coordination engine instance."""
-    return CoordinationEngine()
+    return coordination_engine()
 
 @router.post("/sessions", response_model=CoordinationSessionResponse, status_code=201)
 async def create_coordination_session(
     request: Request,
     session_data: CoordinationSessionCreateRequest,
     db: AsyncSession = Depends(get_session_dependency),
-    coordination_engine: CoordinationEngine = Depends(get_coordination_engine)
+    coordination_engine: coordination_engine = Depends(get_coordination_engine)
 ) -> CoordinationSessionResponse:
     """
     Create a new multi-agent coordination session.
@@ -225,7 +223,7 @@ async def start_coordination_session(
     request: Request,
     session_id: str,
     db: AsyncSession = Depends(get_session_dependency),
-    coordination_engine: CoordinationEngine = Depends(get_coordination_engine)
+    coordination_engine: coordination_engine = Depends(get_coordination_engine)
 ):
     """
     Start a coordination session.
@@ -295,7 +293,7 @@ async def stop_coordination_session(
     request: Request,
     session_id: str,
     db: AsyncSession = Depends(get_session_dependency),
-    coordination_engine: CoordinationEngine = Depends(get_coordination_engine)
+    coordination_engine: coordination_engine = Depends(get_coordination_engine)
 ):
     """
     Stop a coordination session.
@@ -365,7 +363,7 @@ async def send_coordination_event(
     request: Request,
     session_id: str,
     event_data: CoordinationEventRequest,
-    coordination_engine: CoordinationEngine = Depends(get_coordination_engine),
+    coordination_engine: coordination_engine = Depends(get_coordination_engine),
     db: AsyncSession = Depends(get_session_dependency)
 ):
     """
@@ -434,7 +432,7 @@ async def list_coordination_events(
     limit: int = Query(100, ge=1, le=1000),
     event_type: Optional[str] = Query(None, description="Filter by event type"),
     source_agent_id: Optional[str] = Query(None, description="Filter by source agent"),
-    coordination_engine: CoordinationEngine = Depends(get_coordination_engine),
+    coordination_engine: coordination_engine = Depends(get_coordination_engine),
     db: AsyncSession = Depends(get_session_dependency)
 ):
     """

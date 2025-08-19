@@ -16,7 +16,7 @@ from ..core.agent_manager import (
     AgentManager,
     AgentSpec
 )
-from ..core.orchestrator import AgentRole
+from ..core.simple_orchestrator import SimpleOrchestrator, AgentRole, get_simple_orchestrator
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -53,11 +53,13 @@ async def activate_agent_system(
                    team_size=request.team_size,
                    auto_start=request.auto_start_tasks)
         
-        # Spawn the development team
-        team_composition = await spawn_development_team()
+        # Use SimpleOrchestrator to spawn development team
+        orchestrator = get_simple_orchestrator()
+        team_composition = await spawn_development_team_simple(orchestrator)
         
-        # Get current agent status
-        active_agents = await get_active_agents_status()
+        # Get current agent status from SimpleOrchestrator
+        orchestrator_status = await orchestrator.get_system_status()
+        active_agents = orchestrator_status.get("agents", {}).get("details", {})
         
         # Start background task monitoring if requested
         if request.auto_start_tasks:
@@ -83,37 +85,38 @@ async def activate_agent_system(
 
 @router.get("/status")
 async def get_agent_system_status():
-    """Get current status of the agent system with hybrid orchestrator integration."""
+    """Get current status of the agent system using SimpleOrchestrator."""
     try:
-        # Get spawner agents
-        manager = await get_agent_manager()
-        spawner_agents = await get_active_agents_status()
-        spawner_count = len(spawner_agents) if spawner_agents else 0
+        # Get SimpleOrchestrator status
+        orchestrator = get_simple_orchestrator()
+        system_status = await orchestrator.get_system_status()
         
-        # Get orchestrator agents (if available)
-        orchestrator_count = 0
-        orchestrator_agents = {}
+        agent_count = system_status.get("agents", {}).get("total", 0)
+        agents_detail = system_status.get("agents", {}).get("details", {})
+        
+        # Also check legacy spawner agents for backward compatibility
+        spawner_count = 0
+        spawner_agents = {}
         try:
-            from ..main import app
-            if hasattr(app.state, 'orchestrator'):
-                orchestrator = app.state.orchestrator
-                system_status = await orchestrator.get_system_status()
-                orchestrator_count = system_status.get("orchestrator_agents", 0)
-                orchestrator_agents = system_status.get("agents", {})
+            manager = await get_agent_manager()
+            spawner_agents = await get_active_agents_status()
+            spawner_count = len(spawner_agents) if spawner_agents else 0
         except Exception as e:
-            logger.debug(f"Could not get orchestrator status: {e}")
+            logger.debug(f"Could not get spawner agents: {e}")
         
-        total_agents = spawner_count + orchestrator_count
+        total_agents = agent_count + spawner_count
         
         return {
             "active": total_agents > 0,
             "agent_count": total_agents,
+            "simple_orchestrator_agents": agent_count,
             "spawner_agents": spawner_count,
-            "orchestrator_agents": orchestrator_count,
-            "agents": spawner_agents or {},
-            "orchestrator_agents_detail": orchestrator_agents,
-            "system_ready": total_agents >= 3,  # Minimum viable team
-            "hybrid_integration": True
+            "agents": agents_detail,
+            "spawner_agents_detail": spawner_agents,
+            "system_ready": total_agents >= 2,  # Minimum viable team
+            "orchestrator_type": "SimpleOrchestrator",
+            "orchestrator_health": system_status.get("health", "unknown"),
+            "performance": system_status.get("performance", {})
         }
         
     except Exception as e:
@@ -121,17 +124,18 @@ async def get_agent_system_status():
         return {
             "active": False,
             "agent_count": 0,
+            "simple_orchestrator_agents": 0,
             "spawner_agents": 0,
-            "orchestrator_agents": 0,
             "agents": {},
             "system_ready": False,
+            "orchestrator_type": "SimpleOrchestrator",
             "error": str(e)
         }
 
 
 @router.post("/spawn/{role}")
 async def spawn_specific_agent(role: str):
-    """Spawn a specific agent with the given role."""
+    """Spawn a specific agent with the given role using SimpleOrchestrator."""
     try:
         # Validate role
         try:
@@ -142,30 +146,15 @@ async def spawn_specific_agent(role: str):
                 detail=f"Invalid role: {role}. Valid roles: {[r.value for r in AgentRole]}"
             )
         
-        manager = await get_agent_manager()
-        
-        # Define capabilities based on role
-        role_capabilities = {
-            AgentRole.PRODUCT_MANAGER: ["requirements_analysis", "project_planning", "documentation"],
-            AgentRole.ARCHITECT: ["system_design", "architecture_planning", "technology_selection"],
-            AgentRole.BACKEND_DEVELOPER: ["api_development", "database_design", "server_logic"],
-            AgentRole.FRONTEND_DEVELOPER: ["ui_development", "react", "typescript"],
-            AgentRole.QA_ENGINEER: ["test_creation", "quality_assurance", "validation"],
-            AgentRole.DEVOPS_ENGINEER: ["deployment", "infrastructure", "monitoring"]
-        }
-        
-        config = AgentSpawnConfig(
-            role=agent_role,
-            capabilities=role_capabilities.get(agent_role, ["general_development"])
-        )
-        
-        agent_id = await manager.spawn_agent(config)
+        # Use SimpleOrchestrator to spawn agent
+        orchestrator = get_simple_orchestrator()
+        agent_id = await orchestrator.spawn_agent(role=agent_role)
         
         return {
             "success": True,
             "agent_id": agent_id,
             "role": agent_role.value,
-            "message": f"Successfully spawned {agent_role.value} agent"
+            "message": f"Successfully spawned {agent_role.value} agent using SimpleOrchestrator"
         }
         
     except HTTPException:
@@ -182,12 +171,30 @@ async def spawn_specific_agent(role: str):
 async def deactivate_agent_system():
     """Deactivate all agents and stop the agent system."""
     try:
-        manager = await get_agent_manager()
-        await manager.stop()
+        # Use SimpleOrchestrator to shutdown all agents
+        orchestrator = get_simple_orchestrator()
+        status = await orchestrator.get_system_status()
+        agent_ids = list(status.get("agents", {}).get("details", {}).keys())
+        
+        shutdown_count = 0
+        for agent_id in agent_ids:
+            try:
+                await orchestrator.shutdown_agent(agent_id, graceful=True)
+                shutdown_count += 1
+            except Exception as e:
+                logger.warning(f"Failed to shutdown agent {agent_id}: {e}")
+        
+        # Also try to stop legacy agent manager for backward compatibility
+        try:
+            manager = await get_agent_manager()
+            await manager.stop()
+        except Exception as e:
+            logger.debug(f"Legacy agent manager stop failed: {e}")
         
         return {
             "success": True,
-            "message": "Agent system deactivated successfully"
+            "message": f"Agent system deactivated successfully - shutdown {shutdown_count} agents",
+            "agents_shutdown": shutdown_count
         }
         
     except Exception as e:
@@ -318,3 +325,27 @@ def _get_system_wide_capabilities(capabilities_summary: Dict[str, Any]) -> List[
         all_capabilities.update(role_info["capabilities"])
     
     return list(all_capabilities)
+
+
+async def spawn_development_team_simple(orchestrator: SimpleOrchestrator) -> Dict[str, str]:
+    """Spawn a development team using SimpleOrchestrator."""
+    team_composition = {}
+    
+    # Define the core development team
+    core_roles = [
+        AgentRole.BACKEND_DEVELOPER,
+        AgentRole.FRONTEND_DEVELOPER,
+        AgentRole.QA_ENGINEER,
+        AgentRole.DEVOPS_ENGINEER
+    ]
+    
+    for role in core_roles:
+        try:
+            agent_id = await orchestrator.spawn_agent(role=role)
+            team_composition[role.value] = agent_id
+            logger.info(f"Spawned {role.value}: {agent_id}")
+        except Exception as e:
+            logger.warning(f"Failed to spawn {role.value}: {e}")
+            team_composition[role.value] = f"failed: {str(e)}"
+    
+    return team_composition

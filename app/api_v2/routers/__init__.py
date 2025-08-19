@@ -11,7 +11,7 @@ from . import (
     workflows,
     tasks, 
     projects,
-    coordination,
+    # coordination,  # Temporarily disabled due to missing schemas
     observability,
     security,
     resources,
@@ -29,7 +29,7 @@ __all__ = [
     "workflows", 
     "tasks",
     "projects",
-    "coordination",
+    # "coordination",  # Temporarily disabled
     "observability",
     "security",
     "resources",

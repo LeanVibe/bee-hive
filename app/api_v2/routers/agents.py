@@ -20,7 +20,7 @@ from sqlalchemy import select, update, delete, and_
 from sqlalchemy.orm import selectinload
 
 from ...core.database import get_session_dependency
-from ...core.orchestrator import AgentOrchestrator
+from ...core.simple_orchestrator import SimpleOrchestrator, get_simple_orchestrator
 from ...models.agent import Agent, AgentStatus, AgentType
 from ...models.task import Task, TaskStatus
 from ...schemas.agent import (
@@ -42,17 +42,17 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 # Agent orchestrator dependency
-async def get_agent_orchestrator() -> AgentOrchestrator:
-    """Get agent orchestrator instance."""
-    # In production, this would be dependency-injected
-    return AgentOrchestrator()
+async def get_agent_orchestrator() -> SimpleOrchestrator:
+    """Get SimpleOrchestrator instance."""
+    # Use the global instance from the simple orchestrator module
+    return get_simple_orchestrator()
 
 @router.post("/", response_model=AgentResponse, status_code=201)
 async def create_agent(
     request: Request,
     agent_data: AgentCreate,
     db: AsyncSession = Depends(get_session_dependency),
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    orchestrator: SimpleOrchestrator = Depends(get_agent_orchestrator)
 ) -> AgentResponse:
     """
     Create a new AI agent in the multi-agent system.
@@ -85,12 +85,28 @@ async def create_agent(
         await db.commit()
         await db.refresh(agent)
         
-        # Initialize agent in orchestrator
-        await orchestrator.register_agent(
-            agent_id=agent.id,
-            agent_type=agent.type,
-            capabilities=agent.capabilities
-        )
+        # Initialize agent in orchestrator 
+        # SimpleOrchestrator uses a different interface - spawn agent with role
+        from ...core.simple_orchestrator import AgentRole
+        
+        # Map AgentType to AgentRole (simplified mapping)
+        role_mapping = {
+            AgentType.CLAUDE_CODE: AgentRole.BACKEND_DEVELOPER,
+            AgentType.AUTONOMOUS_AGENT: AgentRole.BACKEND_DEVELOPER,
+            # Add more mappings as needed
+        }
+        role = role_mapping.get(agent.type, AgentRole.BACKEND_DEVELOPER)
+        
+        try:
+            # Spawn agent in SimpleOrchestrator
+            orchestrator_agent_id = await orchestrator.spawn_agent(
+                role=role,
+                agent_id=agent.id
+            )
+            logger.info(f"Agent spawned in SimpleOrchestrator: {orchestrator_agent_id}")
+        except Exception as e:
+            logger.warning(f"Could not spawn agent in orchestrator: {e}")
+            # Continue without orchestrator registration - agent still exists in DB
         
         logger.info(
             "agent_created",
@@ -203,7 +219,7 @@ async def update_agent(
     agent_id: str,
     agent_data: AgentUpdate,
     db: AsyncSession = Depends(get_session_dependency),
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    orchestrator: SimpleOrchestrator = Depends(get_agent_orchestrator)
 ) -> AgentResponse:
     """
     Update an existing agent.
@@ -240,12 +256,11 @@ async def update_agent(
             )
             await db.commit()
             
-            # Update in orchestrator if capabilities changed
+            # Note: SimpleOrchestrator doesn't have update_agent_capabilities
+            # For significant capability changes, would need to shutdown and respawn
             if "capabilities" in update_data:
-                await orchestrator.update_agent_capabilities(
-                    agent_id=agent_id,
-                    capabilities=update_data["capabilities"]
-                )
+                logger.info(f"Agent capabilities updated in DB for {agent_id}")
+                # Could implement respawn logic here if needed
         
         # Get updated agent
         result = await db.execute(query)
@@ -275,7 +290,7 @@ async def delete_agent(
     request: Request,
     agent_id: str,
     db: AsyncSession = Depends(get_session_dependency),
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    orchestrator: SimpleOrchestrator = Depends(get_agent_orchestrator)
 ):
     """
     Delete an agent from the system.
@@ -313,8 +328,13 @@ async def delete_agent(
                 detail=f"Cannot delete agent with {len(active_tasks)} active tasks"
             )
         
-        # Deregister from orchestrator
-        await orchestrator.deregister_agent(agent_id)
+        # Shutdown agent in orchestrator
+        try:
+            await orchestrator.shutdown_agent(agent_id, graceful=True)
+            logger.info(f"Agent shutdown from SimpleOrchestrator: {agent_id}")
+        except Exception as e:
+            logger.warning(f"Could not shutdown agent from orchestrator: {e}")
+            # Continue with database deletion
         
         # Delete from database
         await db.execute(delete(Agent).where(Agent.id == agent_id))
@@ -342,7 +362,7 @@ async def activate_agent(
     agent_id: str,
     activation_data: AgentActivationRequest,
     db: AsyncSession = Depends(get_session_dependency),
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    orchestrator: SimpleOrchestrator = Depends(get_agent_orchestrator)
 ) -> AgentResponse:
     """
     Activate an agent for task execution.
@@ -363,11 +383,29 @@ async def activate_agent(
                 detail=f"Agent {agent_id} not found"
             )
         
-        # Activate in orchestrator
-        await orchestrator.activate_agent(
-            agent_id=agent_id,
-            configuration=activation_data.configuration
-        )
+        # Note: SimpleOrchestrator agents are active when spawned
+        # If not already in orchestrator, spawn it now
+        try:
+            status = await orchestrator.get_system_status()
+            agents_in_orchestrator = status.get("agents", {}).get("details", {})
+            
+            if agent_id not in agents_in_orchestrator:
+                # Spawn agent in orchestrator
+                from ...core.simple_orchestrator import AgentRole
+                role_mapping = {
+                    AgentType.CLAUDE_CODE: AgentRole.BACKEND_DEVELOPER,
+                    AgentType.AUTONOMOUS_AGENT: AgentRole.BACKEND_DEVELOPER,
+                }
+                role = role_mapping.get(agent.type, AgentRole.BACKEND_DEVELOPER)
+                
+                await orchestrator.spawn_agent(role=role, agent_id=agent_id)
+                logger.info(f"Agent spawned during activation: {agent_id}")
+            else:
+                logger.info(f"Agent already active in orchestrator: {agent_id}")
+                
+        except Exception as e:
+            logger.warning(f"Could not activate agent in orchestrator: {e}")
+            # Continue with database update
         
         # Update status in database
         await db.execute(
@@ -408,7 +446,7 @@ async def deactivate_agent(
     request: Request,
     agent_id: str,
     db: AsyncSession = Depends(get_session_dependency),
-    orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
+    orchestrator: SimpleOrchestrator = Depends(get_agent_orchestrator)
 ) -> AgentResponse:
     """
     Deactivate an agent from task execution.
@@ -429,8 +467,13 @@ async def deactivate_agent(
                 detail=f"Agent {agent_id} not found"
             )
         
-        # Deactivate in orchestrator
-        await orchestrator.deactivate_agent(agent_id)
+        # Shutdown agent in orchestrator
+        try:
+            await orchestrator.shutdown_agent(agent_id, graceful=True)
+            logger.info(f"Agent deactivated in SimpleOrchestrator: {agent_id}")
+        except Exception as e:
+            logger.warning(f"Could not deactivate agent in orchestrator: {e}")
+            # Continue with database update
         
         # Update status in database
         await db.execute(

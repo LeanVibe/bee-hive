@@ -15,7 +15,7 @@ from .routers import (
     workflows, 
     tasks,
     projects,
-    coordination,
+    # coordination,  # Temporarily disabled due to missing schemas
     observability,
     security,
     resources,
@@ -31,17 +31,15 @@ from .routers import (
 # Create main API router
 api_router = APIRouter(prefix="/api/v2")
 
-# Apply middleware
-api_router.middleware("http")(performance_middleware)
-api_router.middleware("http")(error_middleware)
-api_router.middleware("http")(auth_middleware)
+# Note: APIRouter doesn't support middleware directly
+# Middleware will be applied at the FastAPI app level in main.py
 
 # Include all resource routers
 api_router.include_router(agents.router, prefix="/agents", tags=["Agents"])
 api_router.include_router(workflows.router, prefix="/workflows", tags=["Workflows"])
 api_router.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 api_router.include_router(projects.router, prefix="/projects", tags=["Projects"])
-api_router.include_router(coordination.router, prefix="/coordination", tags=["Coordination"])
+# api_router.include_router(coordination.router, prefix="/coordination", tags=["Coordination"])  # Temporarily disabled
 api_router.include_router(observability.router, prefix="/observability", tags=["Observability"])
 api_router.include_router(security.router, prefix="/security", tags=["Security"])
 api_router.include_router(resources.router, prefix="/resources", tags=["Resources"])
@@ -61,7 +59,7 @@ async def api_root():
         "version": "2.0.0",
         "modules_consolidated": "96 → 15 (84% reduction)",
         "resources": [
-            "agents", "workflows", "tasks", "projects", "coordination",
+            "agents", "workflows", "tasks", "projects",  # "coordination" temporarily disabled
             "observability", "security", "resources", "contexts", "enterprise",
             "websocket", "health", "admin", "integrations", "dashboard"
         ],
