@@ -121,6 +121,9 @@ class ProjectIndex(Base):
     dependency_relationships = relationship("DependencyRelationship", back_populates="project", cascade="all, delete-orphan")
     snapshots = relationship("IndexSnapshot", back_populates="project", cascade="all, delete-orphan")
     analysis_sessions = relationship("AnalysisSession", back_populates="project", cascade="all, delete-orphan")
+    debt_snapshots = relationship("DebtSnapshot", back_populates="project", cascade="all, delete-orphan")
+    debt_items = relationship("DebtItem", back_populates="project", cascade="all, delete-orphan")
+    debt_remediation_plans = relationship("DebtRemediationPlan", back_populates="project", cascade="all, delete-orphan")
     
     def __init__(self, **kwargs):
         """Initialize project index with proper defaults."""
@@ -221,6 +224,7 @@ class FileEntry(Base):
     project = relationship("ProjectIndex", back_populates="file_entries")
     outgoing_dependencies = relationship("DependencyRelationship", foreign_keys="[DependencyRelationship.source_file_id]", back_populates="source_file", cascade="all, delete-orphan")
     incoming_dependencies = relationship("DependencyRelationship", foreign_keys="[DependencyRelationship.target_file_id]", back_populates="target_file")
+    debt_items = relationship("DebtItem", back_populates="file", cascade="all, delete-orphan")
     
     def __init__(self, **kwargs):
         """Initialize file entry with proper defaults."""
@@ -581,3 +585,312 @@ class AnalysisSession(Base):
             self.errors_count += 1
         elif level == "warning":
             self.warnings_count += 1
+
+
+class DebtSeverity(Enum):
+    """Technical debt severity levels."""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class DebtCategory(Enum):
+    """Categories of technical debt."""
+    CODE_DUPLICATION = "code_duplication"
+    COMPLEXITY = "complexity"
+    CODE_SMELLS = "code_smells"
+    ARCHITECTURE = "architecture"
+    MAINTAINABILITY = "maintainability"
+    SECURITY = "security"
+    PERFORMANCE = "performance"
+    DOCUMENTATION = "documentation"
+
+
+class DebtStatus(Enum):
+    """Status of debt items."""
+    ACTIVE = "active"
+    RESOLVED = "resolved"
+    ACKNOWLEDGED = "acknowledged"
+    IGNORED = "ignored"
+    FALSE_POSITIVE = "false_positive"
+
+
+class DebtSnapshot(Base):
+    """
+    Snapshot of technical debt at a specific point in time.
+    
+    Captures the overall debt metrics for a project to track
+    debt accumulation and reduction trends over time.
+    """
+    
+    __tablename__ = "debt_snapshots"
+    
+    # Primary identification
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    project_id = Column(DatabaseAgnosticUUID(), ForeignKey("project_indexes.id", ondelete="CASCADE"), 
+                       nullable=False, index=True)
+    
+    # Snapshot metadata
+    snapshot_date = Column(DateTime(timezone=True), nullable=False, 
+                          server_default=func.now(), index=True)
+    
+    # Debt metrics
+    total_debt_score = Column(Float, nullable=False, server_default='0.0')
+    category_scores = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    debt_trend = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    
+    # Analysis scope
+    file_count_analyzed = Column(Integer, nullable=False, server_default='0')
+    lines_of_code_analyzed = Column(Integer, nullable=False, server_default='0')
+    
+    # Additional metadata
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    # Relationships
+    project = relationship("ProjectIndex", back_populates="debt_snapshots")
+    
+    def __init__(self, **kwargs):
+        """Initialize debt snapshot with proper defaults."""
+        if 'category_scores' not in kwargs:
+            kwargs['category_scores'] = {}
+        if 'debt_trend' not in kwargs:
+            kwargs['debt_trend'] = {}
+        if 'meta_data' not in kwargs:
+            kwargs['meta_data'] = {}
+        if 'file_count_analyzed' not in kwargs:
+            kwargs['file_count_analyzed'] = 0
+        if 'lines_of_code_analyzed' not in kwargs:
+            kwargs['lines_of_code_analyzed'] = 0
+        if 'total_debt_score' not in kwargs:
+            kwargs['total_debt_score'] = 0.0
+        
+        super().__init__(**kwargs)
+    
+    def __repr__(self) -> str:
+        return f"<DebtSnapshot(id={self.id}, project_id={self.project_id}, score={self.total_debt_score})>"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert debt snapshot to dictionary for serialization."""
+        return {
+            "id": str(self.id),
+            "project_id": str(self.project_id),
+            "snapshot_date": self.snapshot_date.isoformat() if self.snapshot_date else None,
+            "total_debt_score": self.total_debt_score,
+            "category_scores": self.category_scores,
+            "debt_trend": self.debt_trend,
+            "file_count_analyzed": self.file_count_analyzed,
+            "lines_of_code_analyzed": self.lines_of_code_analyzed,
+            "metadata": self.meta_data,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class DebtItem(Base):
+    """
+    Individual technical debt item tracking.
+    
+    Represents a specific technical debt issue within a file,
+    with detailed information for tracking and remediation.
+    """
+    
+    __tablename__ = "debt_items"
+    
+    # Primary identification
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    project_id = Column(DatabaseAgnosticUUID(), ForeignKey("project_indexes.id", ondelete="CASCADE"), 
+                       nullable=False, index=True)
+    file_id = Column(DatabaseAgnosticUUID(), ForeignKey("file_entries.id", ondelete="CASCADE"), 
+                    nullable=False, index=True)
+    
+    # Debt classification
+    debt_type = Column(String(100), nullable=False, index=True)
+    debt_category = Column(ENUM(DebtCategory, name='debt_category'), nullable=False, index=True)
+    severity = Column(ENUM(DebtSeverity, name='debt_severity'), nullable=False, index=True)
+    status = Column(ENUM(DebtStatus, name='debt_status'), nullable=False, 
+                   server_default='active', index=True)
+    
+    # Debt details
+    description = Column(Text, nullable=False)
+    evidence = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    location = Column(DatabaseAgnosticJSON(), nullable=True, default=dict)
+    remediation_suggestion = Column(Text, nullable=True)
+    
+    # Effort and scoring
+    estimated_effort_hours = Column(Integer, nullable=True)
+    debt_score = Column(Float, nullable=False, server_default='0.0')
+    confidence_score = Column(Float, nullable=False, server_default='1.0')
+    
+    # Tracking timestamps
+    first_detected_at = Column(DateTime(timezone=True), nullable=False, 
+                              server_default=func.now(), index=True)
+    last_detected_at = Column(DateTime(timezone=True), nullable=False, 
+                             server_default=func.now(), index=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    
+    # Resolution tracking
+    resolved_by = Column(String(255), nullable=True)
+    resolution_notes = Column(Text, nullable=True)
+    
+    # Additional metadata
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
+                       onupdate=func.now(), nullable=False)
+    
+    # Relationships
+    project = relationship("ProjectIndex", back_populates="debt_items")
+    file = relationship("FileEntry", back_populates="debt_items")
+    
+    def __init__(self, **kwargs):
+        """Initialize debt item with proper defaults."""
+        if 'evidence' not in kwargs:
+            kwargs['evidence'] = {}
+        if 'location' not in kwargs:
+            kwargs['location'] = {}
+        if 'meta_data' not in kwargs:
+            kwargs['meta_data'] = {}
+        if 'debt_score' not in kwargs:
+            kwargs['debt_score'] = 0.0
+        if 'confidence_score' not in kwargs:
+            kwargs['confidence_score'] = 1.0
+        if 'status' not in kwargs:
+            kwargs['status'] = DebtStatus.ACTIVE
+        
+        super().__init__(**kwargs)
+    
+    def __repr__(self) -> str:
+        return f"<DebtItem(id={self.id}, type={self.debt_type}, severity={self.severity})>"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert debt item to dictionary for serialization."""
+        return {
+            "id": str(self.id),
+            "project_id": str(self.project_id),
+            "file_id": str(self.file_id),
+            "debt_type": self.debt_type,
+            "debt_category": self.debt_category.value,
+            "severity": self.severity.value,
+            "status": self.status.value,
+            "description": self.description,
+            "evidence": self.evidence,
+            "location": self.location,
+            "remediation_suggestion": self.remediation_suggestion,
+            "estimated_effort_hours": self.estimated_effort_hours,
+            "debt_score": self.debt_score,
+            "confidence_score": self.confidence_score,
+            "first_detected_at": self.first_detected_at.isoformat() if self.first_detected_at else None,
+            "last_detected_at": self.last_detected_at.isoformat() if self.last_detected_at else None,
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+            "resolved_by": self.resolved_by,
+            "resolution_notes": self.resolution_notes,
+            "metadata": self.meta_data,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def mark_resolved(self, resolved_by: str, resolution_notes: str = None) -> None:
+        """Mark debt item as resolved."""
+        self.status = DebtStatus.RESOLVED
+        self.resolved_at = datetime.utcnow()
+        self.resolved_by = resolved_by
+        if resolution_notes:
+            self.resolution_notes = resolution_notes
+
+
+class DebtRemediationPlan(Base):
+    """
+    Remediation plan for addressing technical debt.
+    
+    Represents a structured plan for reducing technical debt
+    with prioritized actions and progress tracking.
+    """
+    
+    __tablename__ = "debt_remediation_plans"
+    
+    # Primary identification
+    id = Column(DatabaseAgnosticUUID(), primary_key=True, default=uuid.uuid4)
+    project_id = Column(DatabaseAgnosticUUID(), ForeignKey("project_indexes.id", ondelete="CASCADE"), 
+                       nullable=False, index=True)
+    
+    # Plan details
+    plan_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    
+    # Plan metrics
+    target_debt_reduction = Column(Float, nullable=False)  # 0-1 scale
+    estimated_effort_hours = Column(Integer, nullable=False)
+    priority_level = Column(Integer, nullable=False, server_default='1')  # 1-5 scale
+    
+    # Plan structure
+    debt_items = Column(DatabaseAgnosticJSON(), nullable=False, default=list)  # Array of debt item IDs
+    remediation_steps = Column(DatabaseAgnosticJSON(), nullable=False, default=list)
+    
+    # Plan status and assignment
+    status = Column(String(50), nullable=False, server_default='draft')
+    assigned_to = Column(String(255), nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    completion_percentage = Column(Float, nullable=False, server_default='0.0')
+    
+    # Additional metadata
+    meta_data = Column("metadata", DatabaseAgnosticJSON(), nullable=True, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
+                       onupdate=func.now(), nullable=False)
+    
+    # Relationships
+    project = relationship("ProjectIndex", back_populates="debt_remediation_plans")
+    
+    def __init__(self, **kwargs):
+        """Initialize remediation plan with proper defaults."""
+        if 'debt_items' not in kwargs:
+            kwargs['debt_items'] = []
+        if 'remediation_steps' not in kwargs:
+            kwargs['remediation_steps'] = []
+        if 'meta_data' not in kwargs:
+            kwargs['meta_data'] = {}
+        if 'target_debt_reduction' not in kwargs:
+            kwargs['target_debt_reduction'] = 0.0
+        if 'estimated_effort_hours' not in kwargs:
+            kwargs['estimated_effort_hours'] = 0
+        if 'priority_level' not in kwargs:
+            kwargs['priority_level'] = 1
+        if 'completion_percentage' not in kwargs:
+            kwargs['completion_percentage'] = 0.0
+        if 'status' not in kwargs:
+            kwargs['status'] = 'draft'
+        
+        super().__init__(**kwargs)
+    
+    def __repr__(self) -> str:
+        return f"<DebtRemediationPlan(id={self.id}, name='{self.plan_name}', status='{self.status}')>"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert remediation plan to dictionary for serialization."""
+        return {
+            "id": str(self.id),
+            "project_id": str(self.project_id),
+            "plan_name": self.plan_name,
+            "description": self.description,
+            "target_debt_reduction": self.target_debt_reduction,
+            "estimated_effort_hours": self.estimated_effort_hours,
+            "priority_level": self.priority_level,
+            "debt_items": self.debt_items,
+            "remediation_steps": self.remediation_steps,
+            "status": self.status,
+            "assigned_to": self.assigned_to,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "completion_percentage": self.completion_percentage,
+            "metadata": self.meta_data,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def update_progress(self, percentage: float) -> None:
+        """Update completion percentage."""
+        self.completion_percentage = min(100.0, max(0.0, percentage))
+        if self.completion_percentage == 100.0:
+            self.status = 'completed'
+        elif self.completion_percentage > 0.0 and self.status == 'draft':
+            self.status = 'in_progress'
