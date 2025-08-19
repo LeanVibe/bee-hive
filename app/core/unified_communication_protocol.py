@@ -182,10 +182,10 @@ class RedisConfig:
     retry_attempts: int = 3
     connection_timeout: int = 10
     socket_keepalive: bool = True
-    socket_keepalive_options: Dict[str, int] = field(default_factory=lambda: {
-        "TCP_KEEPINTVL": 1,
-        "TCP_KEEPCNT": 3,
-        "TCP_KEEPIDLE": 1
+    socket_keepalive_options: Dict[int, int] = field(default_factory=lambda: {
+        1: 1,   # TCP_KEEPIDLE
+        2: 3,   # TCP_KEEPCNT  
+        3: 1    # TCP_KEEPINTVL
     })
 
 class UnifiedRedisClient:
