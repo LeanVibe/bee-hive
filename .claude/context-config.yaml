@@ -1,0 +1,261 @@
+# Context Optimization Configuration for Claude Code
+# LeanVibe Agent Hive 2.0
+
+context_optimization:
+  # High-priority files that should always be considered for context
+  always_include:
+    - "docs/CLAUDE.md"
+    - "README.md"
+    - ".claude/project-index.json"
+    - ".claude/structure-map.md"
+    - "bee-hive-config.json"
+
+  # Context groups for different types of tasks
+  task_contexts:
+    orchestration_work:
+      description: "Working with agent orchestration and coordination"
+      files:
+        - "app/core/orchestrator*.py"
+        - "app/core/unified_orchestrator.py"
+        - "app/core/agent_manager.py"
+        - "app/core/coordination.py"
+        - "app/agents/**/*.py"
+        - "app/models/agent.py"
+        - "docs/ARCHITECTURE.md"
+      
+    project_index_work:
+      description: "Working with project indexing and analysis"
+      files:
+        - "app/project_index/**/*.py"
+        - "app/api/project_index*.py"
+        - "app/models/project_index.py"
+        - "app/schemas/project_index.py"
+        - "docs/PROJECT_INDEX_DEPLOYMENT_SUMMARY.md"
+        - "create_project_index_tables.sql"
+      
+    api_development:
+      description: "API development and WebSocket work"
+      files:
+        - "app/api/**/*.py"
+        - "app/schemas/**/*.py"
+        - "app/main.py"
+        - "tests/test_api*.py"
+        - "mobile-pwa/src/services/**/*.ts"
+      
+    database_work:
+      description: "Database models and migrations"
+      files:
+        - "app/models/**/*.py"
+        - "migrations/**/*.py"
+        - "app/core/database*.py"
+        - "create_project_index_tables.sql"
+        - "alembic.ini"
+      
+    frontend_work:
+      description: "Frontend development"
+      files:
+        - "mobile-pwa/src/**/*.ts"
+        - "mobile-pwa/src/**/*.js"
+        - "mobile-pwa/**/*.json"
+        - "frontend/**/*"
+        - "app/api/dashboard_websockets.py"
+      
+    testing_work:
+      description: "Testing and quality assurance"
+      files:
+        - "tests/**/*.py"
+        - "pytest.ini"
+        - "conftest.py"
+        - "tests/conftest*.py"
+        - "pyproject.toml"
+      
+    deployment_work:
+      description: "Deployment and infrastructure"
+      files:
+        - "docker-compose*.yml"
+        - "Dockerfile*"
+        - "scripts/deploy*.py"
+        - "k8s/**/*"
+        - "helm/**/*"
+        - "terraform/**/*"
+      
+    monitoring_work:
+      description: "Observability and monitoring"
+      files:
+        - "app/observability/**/*.py"
+        - "monitoring/**/*.py"
+        - "app/core/performance_*.py"
+        - "grafana/**/*"
+        - "prometheus.yml"
+
+# Smart context selection based on file patterns
+pattern_context:
+  # When working with these patterns, include related files
+  "**orchestrator*.py":
+    related:
+      - "app/agents/**/*.py"
+      - "app/models/agent.py"
+      - "app/core/coordination.py"
+  
+  "**project_index*.py":
+    related:
+      - "app/project_index/core.py"
+      - "app/models/project_index.py"
+      - "app/api/project_index*.py"
+  
+  "**websocket*.py":
+    related:
+      - "mobile-pwa/src/services/**/*.ts"
+      - "app/api/dashboard_websockets.py"
+      - "examples/websocket_client_example.py"
+  
+  "**test_*.py":
+    related:
+      - "tests/conftest*.py"
+      - "pytest.ini"
+      - "pyproject.toml"
+
+# Context relevance scoring
+relevance_weights:
+  # Files that are more likely to be relevant
+  high_relevance:
+    - "app/core/**/*.py": 1.0
+    - "app/project_index/**/*.py": 1.0
+    - "app/api/**/*.py": 0.9
+    - "app/models/**/*.py": 0.9
+    - "docs/**/*.md": 0.8
+    
+  medium_relevance:
+    - "app/agents/**/*.py": 0.7
+    - "app/schemas/**/*.py": 0.7
+    - "tests/**/*.py": 0.6
+    - "scripts/**/*.py": 0.6
+    
+  low_relevance:
+    - "logs/**/*": 0.1
+    - "**/__pycache__/**": 0.0
+    - "**/.git/**": 0.0
+
+# Context size management
+size_limits:
+  max_files_per_context: 50
+  max_total_lines: 10000
+  priority_boost_for_recent_changes: true
+  include_file_summaries: true
+
+# Special handling for different file types
+file_type_handling:
+  python:
+    include_docstrings: true
+    include_type_hints: true
+    include_imports: true
+    context_lines_around_functions: 3
+    
+  typescript:
+    include_interfaces: true
+    include_types: true
+    include_imports: true
+    
+  markdown:
+    include_full_content: true
+    priority_boost: true
+    
+  json:
+    include_structure_summary: true
+    max_depth: 3
+
+# Development workflow optimization
+workflow_contexts:
+  debugging:
+    description: "When debugging issues"
+    additional_files:
+      - "logs/api.log"
+      - "app/core/error_handling*.py"
+      - "tests/test_error_*.py"
+    
+  performance_optimization:
+    description: "When optimizing performance"
+    additional_files:
+      - "app/core/performance_*.py"
+      - "monitoring/**/*.py"
+      - "tests/performance/**/*.py"
+    
+  security_review:
+    description: "When reviewing security"
+    additional_files:
+      - "app/core/security*.py"
+      - "app/core/auth*.py"
+      - "tests/security/**/*.py"
+    
+  documentation_update:
+    description: "When updating documentation"
+    additional_files:
+      - "docs/**/*.md"
+      - "README.md"
+      - "CONTRIBUTING.md"
+
+# Integration-specific contexts
+integration_contexts:
+  github_integration:
+    files:
+      - "app/core/github_*.py"
+      - "app/api/github_*.py"
+      - "tests/test_github_*.py"
+    
+  redis_work:
+    files:
+      - "app/core/redis*.py"
+      - "app/core/*pubsub*.py"
+      - "tests/test_redis*.py"
+    
+  database_optimization:
+    files:
+      - "app/core/database*.py"
+      - "app/models/**/*.py"
+      - "migrations/**/*.py"
+    
+  websocket_development:
+    files:
+      - "app/api/dashboard_websockets.py"
+      - "app/project_index/websocket_*.py"
+      - "mobile-pwa/src/services/**/*.ts"
+
+# Context exclusion patterns
+exclude_from_context:
+  # Patterns that should generally be excluded
+  - "**/__pycache__/**"
+  - "**/.git/**"
+  - "**/node_modules/**"
+  - "**/*.pyc"
+  - "**/*.log"
+  - "**/htmlcov/**"
+  - "**/coverage/**"
+  - "**/.pytest_cache/**"
+  
+  # Exclude unless specifically needed
+  conditionally_exclude:
+    - "logs/**/*": "unless debugging or monitoring work"
+    - "venv/**/*": "unless environment issues"
+    - "build/**/*": "unless deployment work"
+    - "dist/**/*": "unless deployment work"
+
+# Context refresh triggers
+refresh_triggers:
+  file_changes:
+    - "**/*.py"
+    - "**/*.ts"
+    - "**/*.js"
+    - "**/*.md"
+    - "**/*.json"
+    - "**/*.yml"
+    - "**/*.yaml"
+  
+  structure_changes:
+    - "New directories created"
+    - "Files moved or renamed"
+    - "New integration points added"
+  
+  dependency_changes:
+    - "requirements*.txt"
+    - "package*.json"
+    - "pyproject.toml"

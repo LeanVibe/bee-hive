@@ -1,0 +1,405 @@
+{
+  "project": {
+    "name": "LeanVibe Agent Hive 2.0",
+    "description": "Multi-agent orchestration system with advanced project indexing, context optimization, and autonomous collaboration capabilities",
+    "path": "/Users/bogdan/work/leanvibe-dev/bee-hive",
+    "type": "enterprise_ai_system",
+    "primary_language": "python",
+    "languages": {
+      "python": 0.605,
+      "html": 0.246,
+      "typescript": 0.114,
+      "shell": 0.024,
+      "javascript": 0.009,
+      "css": 0.003,
+      "sql": 0.0005
+    },
+    "frameworks": [
+      "FastAPI",
+      "SQLAlchemy", 
+      "PostgreSQL",
+      "Redis",
+      "WebSockets",
+      "Docker",
+      "Kubernetes",
+      "Pytest",
+      "Playwright"
+    ],
+    "complexity": "enterprise",
+    "file_count": 3225,
+    "line_count": 1472303
+  },
+  
+  "architecture": {
+    "pattern": "microservices",
+    "style": "event_driven_multi_agent",
+    "core_components": {
+      "orchestration": "app/core/orchestrator*.py",
+      "agents": "app/agents/",
+      "api": "app/api/",
+      "project_index": "app/project_index/",
+      "models": "app/models/",
+      "observability": "app/observability/",
+      "core_infrastructure": "app/core/",
+      "mobile_pwa": "mobile-pwa/",
+      "database": "migrations/",
+      "deployment": "docker*/",
+      "monitoring": "monitoring/",
+      "scripts": "scripts/"
+    },
+    "integration_points": [
+      "WebSocket real-time communication",
+      "Redis pub/sub messaging",
+      "PostgreSQL with pgvector for embeddings",
+      "GitHub API integration",
+      "Project index WebSocket events",
+      "Multi-agent coordination protocols"
+    ]
+  },
+  
+  "key_directories": {
+    "app/": {
+      "description": "Main application code",
+      "priority": "critical",
+      "subdirectories": {
+        "core/": "Core orchestration and infrastructure services",
+        "api/": "FastAPI REST endpoints and WebSocket handlers",
+        "agents/": "Agent implementations and coordination logic",
+        "project_index/": "Advanced project analysis and indexing system",
+        "models/": "SQLAlchemy database models",
+        "observability/": "Monitoring, logging, and observability components",
+        "schemas/": "Pydantic schemas for API validation"
+      }
+    },
+    "mobile-pwa/": {
+      "description": "Progressive Web App for mobile dashboard",
+      "priority": "high",
+      "technology": "TypeScript + Vite + Lit"
+    },
+    "docs/": {
+      "description": "Comprehensive documentation and architectural guides",
+      "priority": "high",
+      "key_files": [
+        "ARCHITECTURE.md",
+        "DEVELOPER_GUIDE.md", 
+        "PROJECT_INDEX_DEPLOYMENT_SUMMARY.md",
+        "CLAUDE.md"
+      ]
+    },
+    "tests/": {
+      "description": "Comprehensive test suite",
+      "priority": "high",
+      "types": ["unit", "integration", "performance", "security", "e2e"]
+    },
+    "scripts/": {
+      "description": "Automation and deployment scripts",
+      "priority": "medium"
+    },
+    "config/": {
+      "description": "Configuration files and templates",
+      "priority": "medium"
+    }
+  },
+  
+  "critical_files": {
+    "configuration": [
+      "bee-hive-config.json",
+      "project-index-installation-*/project-index-config.json",
+      "pyproject.toml",
+      "docker-compose.yml"
+    ],
+    "entry_points": [
+      "app/main.py",
+      "app/cli.py", 
+      "project_index_server.py",
+      "start_hive.py"
+    ],
+    "core_models": [
+      "app/models/project_index.py",
+      "app/models/agent.py",
+      "app/models/session.py",
+      "app/models/task.py"
+    ],
+    "orchestration": [
+      "app/core/orchestrator.py",
+      "app/core/unified_orchestrator.py",
+      "app/core/simple_orchestrator_enhanced.py"
+    ],
+    "project_index_core": [
+      "app/project_index/core.py",
+      "app/project_index/analyzer.py",
+      "app/project_index/context_optimizer.py",
+      "app/project_index/debt_analyzer.py"
+    ]
+  },
+  
+  "file_patterns": {
+    "include": [
+      "**/*.py",
+      "**/*.ts",
+      "**/*.js",
+      "**/*.md",
+      "**/*.json",
+      "**/*.yml",
+      "**/*.yaml",
+      "**/*.sql",
+      "**/*.sh",
+      "Dockerfile*",
+      "docker-compose*",
+      "requirements*.txt",
+      "pyproject.toml",
+      "Makefile"
+    ],
+    "exclude": [
+      "**/__pycache__/**",
+      "**/.git/**",
+      "**/node_modules/**",
+      "**/.venv/**",
+      "**/venv/**",
+      "**/env/**",
+      "**/*.pyc",
+      "**/*.pyo",
+      "**/*.egg-info/**",
+      "**/build/**",
+      "**/dist/**",
+      "**/target/**",
+      "**/.pytest_cache/**",
+      "**/htmlcov/**",
+      "**/coverage/**",
+      "**/*.log",
+      "**/logs/**"
+    ]
+  },
+  
+  "context_optimization": {
+    "high_priority_patterns": [
+      "app/core/orchestrator*.py",
+      "app/project_index/**/*.py",
+      "app/api/project_index*.py",
+      "app/models/project_index.py",
+      "docs/ARCHITECTURE.md",
+      "docs/CLAUDE.md",
+      "README.md"
+    ],
+    "context_groups": {
+      "orchestration": [
+        "app/core/orchestrator*.py",
+        "app/core/unified_*.py", 
+        "app/agents/**/*.py"
+      ],
+      "project_indexing": [
+        "app/project_index/**/*.py",
+        "app/api/project_index*.py",
+        "app/models/project_index.py"
+      ],
+      "api_layer": [
+        "app/api/**/*.py",
+        "app/schemas/**/*.py"
+      ],
+      "database": [
+        "app/models/**/*.py",
+        "migrations/**/*.py",
+        "create_project_index_tables.sql"
+      ],
+      "frontend": [
+        "mobile-pwa/src/**/*.ts",
+        "mobile-pwa/src/**/*.js",
+        "frontend/**/*"
+      ],
+      "deployment": [
+        "docker-compose*.yml",
+        "Dockerfile*",
+        "scripts/deploy*.py",
+        "k8s/**/*"
+      ]
+    }
+  },
+  
+  "intelligent_features": {
+    "dependency_tracking": {
+      "enabled": true,
+      "track_imports": true,
+      "track_function_calls": true,
+      "track_class_inheritance": true
+    },
+    "technical_debt_analysis": {
+      "enabled": true,
+      "categories": [
+        "code_duplication",
+        "complexity",
+        "code_smells",
+        "architecture", 
+        "maintainability",
+        "security",
+        "performance",
+        "documentation"
+      ]
+    },
+    "semantic_search": {
+      "enabled": true,
+      "embedding_model": "sentence-transformers",
+      "index_docstrings": true,
+      "index_comments": true
+    },
+    "real_time_monitoring": {
+      "enabled": true,
+      "file_watching": true,
+      "incremental_updates": true,
+      "websocket_events": true
+    }
+  },
+  
+  "development_patterns": {
+    "async_patterns": [
+      "FastAPI async endpoints",
+      "SQLAlchemy async sessions",
+      "WebSocket async handlers",
+      "Redis async pub/sub"
+    ],
+    "architectural_patterns": [
+      "Repository pattern for data access",
+      "Factory pattern for agent creation", 
+      "Observer pattern for event handling",
+      "Strategy pattern for orchestration algorithms"
+    ],
+    "naming_conventions": {
+      "classes": "PascalCase",
+      "functions": "snake_case", 
+      "constants": "UPPER_SNAKE_CASE",
+      "files": "snake_case.py"
+    }
+  },
+  
+  "testing_strategy": {
+    "test_types": {
+      "unit": "tests/test_*.py",
+      "integration": "tests/integration/",
+      "performance": "tests/performance/",
+      "security": "tests/security/",
+      "e2e": "tests/e2e/"
+    },
+    "test_patterns": [
+      "pytest fixtures in conftest.py",
+      "Factory pattern for test data",
+      "Mocking external dependencies",
+      "Database rollback after tests"
+    ]
+  },
+  
+  "performance_considerations": {
+    "critical_paths": [
+      "Project indexing pipeline",
+      "Agent orchestration loops", 
+      "WebSocket message handling",
+      "Database query optimization",
+      "Redis pub/sub performance"
+    ],
+    "optimization_targets": {
+      "context_retrieval": "<200ms",
+      "index_updates": "<500ms", 
+      "agent_spawning": "<1s",
+      "websocket_latency": "<100ms"
+    }
+  },
+  
+  "security_considerations": {
+    "authentication": [
+      "JWT tokens",
+      "API key management",
+      "OAuth integration"
+    ],
+    "authorization": [
+      "Role-based access control",
+      "Resource-level permissions",
+      "Agent capability restrictions"
+    ],
+    "data_protection": [
+      "Encryption at rest",
+      "Secure communication channels",
+      "Input validation and sanitization"
+    ]
+  },
+  
+  "claude_specific": {
+    "preferred_context_files": [
+      "docs/CLAUDE.md",
+      "docs/ARCHITECTURE.md", 
+      "app/project_index/core.py",
+      "app/core/orchestrator.py",
+      "README.md"
+    ],
+    "common_workflows": [
+      "Adding new agent types",
+      "Extending project index analyzers",
+      "Creating new API endpoints",
+      "Implementing WebSocket handlers",
+      "Adding database migrations"
+    ],
+    "development_shortcuts": {
+      "start_system": "python start_hive.py",
+      "run_tests": "pytest tests/",
+      "check_project_index": "python project_index_server.py",
+      "validate_system": "python scripts/validate_system_integration.py"
+    }
+  },
+  
+  "integration_apis": {
+    "internal": {
+      "project_index_api": "app/api/project_index.py",
+      "websocket_api": "app/api/dashboard_websockets.py",
+      "agent_coordination": "app/api/agent_coordination.py"
+    },
+    "external": {
+      "github": "app/core/github_integration.py",
+      "openai": "app/core/ai_gateway.py",
+      "redis": "app/core/redis.py",
+      "postgres": "app/core/database.py"
+    }
+  },
+  
+  "monitoring_and_observability": {
+    "metrics": [
+      "Agent performance metrics",
+      "Project index update rates",
+      "WebSocket connection health",
+      "Database query performance",
+      "Memory usage patterns"
+    ],
+    "logging": [
+      "Structured JSON logging",
+      "Agent activity logs",
+      "Performance trace logs",
+      "Error and exception logs"
+    ],
+    "dashboards": [
+      "Mobile PWA dashboard",
+      "Grafana performance dashboards",
+      "Real-time WebSocket monitoring"
+    ]
+  },
+  
+  "deployment_environments": {
+    "development": {
+      "docker_compose": "docker-compose.yml",
+      "startup": "start-fast.sh"
+    },
+    "production": {
+      "docker_compose": "docker-compose.production.yml", 
+      "kubernetes": "k8s/",
+      "monitoring": "monitoring/"
+    },
+    "enterprise": {
+      "docker_compose": "docker-compose.enterprise-demo.yml",
+      "scalability": "helm/"
+    }
+  },
+  
+  "metadata": {
+    "created": "2025-08-19",
+    "version": "2.0.0",
+    "last_updated": "2025-08-19",
+    "index_version": "1.0.0",
+    "total_analysis_time": "comprehensive",
+    "confidence_score": 0.95
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "manifest": {
+    "name": "LeanVibe Agent Hive 2.0 - Claude Index System",
+    "version": "1.0.0",
+    "created": "2025-08-19",
+    "description": "Comprehensive project indexing and context optimization system for Claude Code",
+    "last_updated": "2025-08-19"
+  },
+  
+  "index_files": {
+    "primary_index": {
+      "file": ".claude/project-index.json",
+      "description": "Main project index with comprehensive metadata, architecture overview, and intelligent features configuration",
+      "priority": "critical"
+    },
+    
+    "structure_map": {
+      "file": ".claude/structure-map.md",
+      "description": "Visual project navigation guide with directory priorities and development workflows",
+      "priority": "critical"
+    },
+    
+    "context_config": {
+      "file": ".claude/context-config.yaml",
+      "description": "Context optimization configuration for smart file selection and relevance scoring",
+      "priority": "high"
+    },
+    
+    "quick_reference": {
+      "file": ".claude/quick-reference.md",
+      "description": "Quick reference guide for common tasks, commands, and code patterns",
+      "priority": "high"
+    }
+  },
+  
+  "integration_status": {
+    "existing_project_index": {
+      "status": "integrated",
+      "description": "Successfully integrated with existing LeanVibe project index system",
+      "components": [
+        "app/project_index/ - Core indexing system",
+        "app/api/project_index*.py - API endpoints", 
+        "app/models/project_index.py - Database models",
+        "project-index-installation-*/ - Configuration"
+      ]
+    },
+    
+    "configuration_files": {
+      "status": "extended",
+      "description": "Extended existing configuration files with Claude-specific optimizations",
+      "files": [
+        "bee-hive-config.json - Main project config",
+        "project-index-config.json - Index-specific config"
+      ]
+    },
+    
+    "database_integration": {
+      "status": "compatible",
+      "description": "Compatible with existing PostgreSQL project index tables and models",
+      "tables": [
+        "project_indexes",
+        "file_entries", 
+        "dependency_relationships",
+        "index_snapshots",
+        "analysis_sessions"
+      ]
+    }
+  },
+  
+  "features_enabled": {
+    "intelligent_context_selection": {
+      "enabled": true,
+      "description": "Smart context optimization based on task type and file relationships"
+    },
+    
+    "real_time_indexing": {
+      "enabled": true,
+      "description": "Real-time project analysis and index updates via WebSocket integration"
+    },
+    
+    "technical_debt_analysis": {
+      "enabled": true,  
+      "description": "Automated technical debt detection and remediation planning"
+    },
+    
+    "semantic_search": {
+      "enabled": true,
+      "description": "AI-powered semantic search across codebase with embedding-based matching"
+    },
+    
+    "dependency_tracking": {
+      "enabled": true,
+      "description": "Comprehensive dependency analysis including imports, function calls, and inheritance"
+    },
+    
+    "context_compression": {
+      "enabled": true,
+      "description": "Smart context compression to maximize relevant information within token limits"
+    }
+  },
+  
+  "usage_guidelines": {
+    "startup_sequence": [
+      "1. Load .claude/project-index.json for project overview",
+      "2. Reference .claude/structure-map.md for navigation", 
+      "3. Use .claude/context-config.yaml for context optimization",
+      "4. Consult .claude/quick-reference.md for specific tasks"
+    ],
+    
+    "context_optimization": [
+      "Always include docs/CLAUDE.md for development guidelines",
+      "Use task-specific context groups from context-config.yaml",
+      "Prioritize files based on relevance weights",
+      "Leverage existing project index system for code intelligence"
+    ],
+    
+    "best_practices": [
+      "Utilize existing project index APIs for code analysis",
+      "Integrate with WebSocket system for real-time updates",
+      "Follow established patterns in app/core/ for consistency",
+      "Add comprehensive tests following existing patterns",
+      "Use provided database models and avoid duplicating schemas"
+    ]
+  },
+  
+  "system_integration": {
+    "project_index_api": {
+      "endpoint": "http://localhost:8000/api/project-index",
+      "websocket": "ws://localhost:8000/ws/project-index",
+      "description": "REST API and WebSocket for project index operations"
+    },
+    
+    "database_connection": {
+      "models": "app.models.project_index",
+      "migrations": "migrations/versions/*project_index*",
+      "description": "PostgreSQL integration with comprehensive project analysis data"
+    },
+    
+    "real_time_updates": {
+      "websocket_manager": "app.api.dashboard_websockets",
+      "event_system": "app.project_index.websocket_events",
+      "description": "Real-time project index updates via WebSocket events"
+    }
+  },
+  
+  "performance_optimization": {
+    "context_limits": {
+      "max_files_per_context": 50,
+      "max_total_lines": 10000,
+      "priority_boost_recent_changes": true
+    },
+    
+    "caching_strategy": {
+      "file_content_cache": "Redis-backed with TTL",
+      "dependency_graph_cache": "In-memory with invalidation",
+      "analysis_results_cache": "Database-persisted"
+    },
+    
+    "indexing_performance": {
+      "incremental_updates": "File change detection",
+      "batch_processing": "500 files per batch",
+      "concurrent_analysis": "8 worker threads"
+    }
+  },
+  
+  "monitoring_capabilities": {
+    "index_health": {
+      "freshness_monitoring": "Track last index update times",
+      "completeness_tracking": "Monitor indexed vs total files",
+      "error_reporting": "WebSocket-based error notifications"
+    },
+    
+    "performance_metrics": {
+      "context_retrieval_time": "Target <200ms",
+      "index_update_latency": "Target <500ms", 
+      "memory_usage": "Monitor cache size and growth"
+    },
+    
+    "quality_metrics": {
+      "context_relevance_score": "Measure context quality",
+      "task_completion_rate": "Track successful task outcomes",
+      "code_intelligence_accuracy": "Monitor analysis precision"
+    }
+  },
+  
+  "maintenance_procedures": {
+    "index_refresh": {
+      "command": "python project_index_server.py --refresh",
+      "frequency": "On significant project changes",
+      "triggers": ["New file patterns", "Dependency updates", "Structure changes"]
+    },
+    
+    "cache_cleanup": {
+      "command": "python scripts/cleanup_index_cache.py",
+      "frequency": "Weekly",
+      "automatic": true
+    },
+    
+    "health_validation": {
+      "command": "python scripts/validate_project_index.py", 
+      "frequency": "Daily",
+      "alerts": "On validation failures"
+    }
+  },
+  
+  "future_enhancements": {
+    "planned_features": [
+      "ML-powered code pattern recognition",
+      "Advanced context similarity scoring",
+      "Multi-repository index federation",
+      "Enhanced semantic search with transformers"
+    ],
+    
+    "integration_opportunities": [
+      "GitHub Copilot integration for enhanced suggestions",
+      "IDE plugin development for real-time context",
+      "CI/CD integration for automated analysis",
+      "Team collaboration features for shared context"
+    ]
+  }
+}
