@@ -126,6 +126,16 @@ export type {
   CompressionHistory 
 } from './context-compression';
 
+// Technical Debt Service
+export { default as TechnicalDebtService } from './technical-debt-service';
+export type {
+  DebtAnalysisRequest,
+  DebtAnalysisResponse,
+  HistoricalAnalysisResponse,
+  RemediationPlanResponse,
+  MonitoringStatusResponse
+} from './technical-debt-service';
+
 // API Types (re-export for convenience)
 export type {
   // Base API types

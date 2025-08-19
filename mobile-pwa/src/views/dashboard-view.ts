@@ -28,6 +28,9 @@ import '../components/autonomous-development/remote-control-center'
 import '../components/common/enhanced-loading-spinner'
 import '../components/context-compression/CompressionWidget'
 import '../components/context-compression/CompressionDashboard'
+import '../components/dashboard/technical-debt-panel'
+import TechnicalDebtService from '../services/technical-debt-service'
+import type { ProjectDebtStatus } from '../components/dashboard/technical-debt-panel'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
@@ -42,7 +45,7 @@ export class DashboardView extends LitElement {
   @state() private declare isLoading: boolean
   @state() private declare error: string
   @state() private declare lastSync: Date | null
-  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'tools'
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'tools' | 'debt'
   @state() private declare servicesInitialized: boolean
   @state() private declare wsConnected: boolean
   @state() private declare realtimeEnabled: boolean
@@ -52,10 +55,13 @@ export class DashboardView extends LitElement {
   @state() private declare comprehensivePerformanceMetrics: any | null
   @state() private declare securityMetrics: any | null
   @state() private declare securityAlerts: any[]
+  @state() private declare technicalDebtProjects: ProjectDebtStatus[]
+  @state() private declare debtAnalysisInProgress: boolean
   
   private websocketService: WebSocketService
   private offlineService: OfflineService
   private notificationService: NotificationService
+  private technicalDebtService: TechnicalDebtService
   
   // Backend adapter for real data integration
   private backendAdapter = backendAdapter
@@ -606,10 +612,13 @@ export class DashboardView extends LitElement {
     this.comprehensivePerformanceMetrics = null
     this.securityMetrics = null
     this.securityAlerts = []
+    this.technicalDebtProjects = []
+    this.debtAnalysisInProgress = false
     
     this.websocketService = WebSocketService.getInstance()
     this.offlineService = OfflineService.getInstance()
     this.notificationService = NotificationService.getInstance()
+    this.technicalDebtService = TechnicalDebtService.getInstance()
     
     // Backend adapter handles all data integration
     
@@ -1081,7 +1090,7 @@ export class DashboardView extends LitElement {
   }
   
   // Accessibility and keyboard navigation methods
-  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination') {
+  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'debt') {
     this.selectedView = view
     this.announceViewChange(view)
   }
@@ -1142,7 +1151,8 @@ export class DashboardView extends LitElement {
       overview: 'Overview dashboard',
       kanban: 'Task management board',
       agents: 'Agent health and management',
-      events: 'System events timeline'
+      events: 'System events timeline',
+      debt: 'Technical debt analysis and monitoring'
     }
     
     const announcement = `Switched to ${viewNames[view as keyof typeof viewNames] || view} view`
@@ -1564,6 +1574,97 @@ export class DashboardView extends LitElement {
     `
   }
   
+  private renderDebtView() {
+    return html`
+      <div id="debt-panel" role="tabpanel" aria-labelledby="debt-tab" style="height: calc(100vh - 140px); padding: 1rem; overflow-y: auto;">
+        <h2 class="sr-only">Technical Debt Analysis and Monitoring</h2>
+        
+        <div style="max-width: 1200px; margin: 0 auto;">
+          <technical-debt-panel
+            .projects=${this.technicalDebtProjects}
+            .compact=${false}
+            .sortBy=${'debt_score'}
+            .filterSeverity=${'all'}
+            .showRecommendations=${true}
+            @analyze-project=${this.handleAnalyzeProject}
+            @analyze-all-projects=${this.handleAnalyzeAllProjects}
+            role="region"
+            aria-label="Technical debt monitoring and analysis dashboard"
+          ></technical-debt-panel>
+        </div>
+      </div>
+    `
+  }
+  
+  private async handleAnalyzeProject(event: CustomEvent) {
+    const { projectId } = event.detail
+    console.log('Analyzing project:', projectId)
+    
+    try {
+      this.debtAnalysisInProgress = true
+      
+      // Perform debt analysis
+      const analysisResult = await this.technicalDebtService.analyzeProject(projectId, {
+        include_advanced_patterns: true,
+        include_historical_analysis: true,
+        analysis_depth: 'comprehensive'
+      })
+      
+      // Get historical data for trend analysis
+      let historyResult
+      try {
+        historyResult = await this.technicalDebtService.getDebtHistory(projectId, 90, 7)
+      } catch (error) {
+        console.warn('Could not get historical data:', error)
+      }
+      
+      // Update the project in our list
+      const projectIndex = this.technicalDebtProjects.findIndex(p => p.project_id === projectId)
+      const projectName = projectIndex >= 0 ? this.technicalDebtProjects[projectIndex].project_name : `Project ${projectId}`
+      
+      const updatedProject = this.technicalDebtService.convertToProjectStatus(
+        projectId,
+        projectName,
+        analysisResult,
+        historyResult
+      )
+      
+      if (projectIndex >= 0) {
+        this.technicalDebtProjects[projectIndex] = updatedProject
+      } else {
+        this.technicalDebtProjects.push(updatedProject)
+      }
+      
+      this.requestUpdate()
+      this.makeLiveAnnouncement(`Technical debt analysis completed for ${projectName}`)
+      
+    } catch (error) {
+      console.error('Failed to analyze project:', error)
+      this.makeLiveAnnouncement(`Technical debt analysis failed: ${error.message}`)
+    } finally {
+      this.debtAnalysisInProgress = false
+    }
+  }
+  
+  private async handleAnalyzeAllProjects(event: CustomEvent) {
+    console.log('Analyzing all projects')
+    
+    try {
+      this.debtAnalysisInProgress = true
+      
+      // For demo purposes, analyze a sample project
+      // In real implementation, this would get all projects from the project index
+      const sampleProjectId = '550e8400-e29b-41d4-a716-446655440000' // Mock UUID
+      await this.handleAnalyzeProject(new CustomEvent('analyze-project', {
+        detail: { projectId: sampleProjectId }
+      }))
+      
+    } catch (error) {
+      console.error('Failed to analyze all projects:', error)
+      this.makeLiveAnnouncement(`Bulk technical debt analysis failed: ${error.message}`)
+    }
+  }
+  
   private renderCurrentView() {
     switch (this.selectedView) {
       case 'overview':
@@ -1584,6 +1685,8 @@ export class DashboardView extends LitElement {
         return this.renderCoordinationView()
       case 'tools':
         return this.renderToolsView()
+      case 'debt':
+        return this.renderDebtView()
       default:
         return this.renderOverviewView()
     }
@@ -1787,6 +1890,21 @@ export class DashboardView extends LitElement {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             🚨 Coordination
+          </button>
+          
+          <button 
+            class="tab-button ${this.selectedView === 'debt' ? 'active' : ''}"
+            role="tab"
+            aria-selected=${this.selectedView === 'debt'}
+            aria-controls="debt-panel"
+            tabindex=${this.selectedView === 'debt' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('debt')}
+            @keydown=${this.handleTabKeydown}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            📊 Debt Analysis
           </button>
         </div>
       </div>
