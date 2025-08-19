@@ -1010,5 +1010,15 @@ def main():
     cli()
 
 
+# REFACTORED: Import shared patterns to eliminate simple main() duplication  
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from app.common.utilities.shared_patterns import simple_main_wrapper
+
+
 if __name__ == "__main__":
-    main()
+    # REFACTORED: Use shared simple_main_wrapper instead of direct main() call
+    # This replaces: main()
+    # With standardized error handling and script name tracking
+    simple_main_wrapper(main, "agent-hive-cli")

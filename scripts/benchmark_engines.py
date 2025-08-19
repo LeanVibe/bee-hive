@@ -423,7 +423,12 @@ class EngineBenchmarks:
 
 
 async def main():
-    """Run comprehensive engine benchmarks."""
+    """
+    Run comprehensive engine benchmarks.
+    
+    REFACTORED: This function eliminates the duplicated async main() pattern
+    by using the shared async_main_wrapper utility.
+    """
     print("🚀 Engine Consolidation Performance Benchmarks")
     print("="*80)
     
@@ -455,7 +460,15 @@ async def main():
         await benchmarks.cleanup_engines()
 
 
+# REFACTORED: Import shared patterns to eliminate async main() duplication
+sys.path.append(str(Path(__file__).parent.parent))
+from app.common.utilities.shared_patterns import async_main_wrapper
+
+
 if __name__ == "__main__":
-    import sys
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code)
+    # REFACTORED: Use shared async_main_wrapper instead of duplicated pattern
+    # This replaces: 
+    #   import sys
+    #   exit_code = asyncio.run(main())
+    #   sys.exit(exit_code)
+    async_main_wrapper(main, "engine_benchmarks")

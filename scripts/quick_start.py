@@ -2,21 +2,27 @@
 """
 Quick Start Script for LeanVibe Agent Hive 2.0
 Ensures all services are operational with intelligent recovery
+
+REFACTORED: Phase 1.1 Technical Debt Remediation - Using shared patterns to eliminate main() duplication
 """
 
-import asyncio
 import subprocess
 import time
 import sys
 import json
-import logging
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# Import shared patterns to eliminate main() function duplication
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from app.common.utilities.shared_patterns import (
+    BaseScript, ScriptConfig, ExecutionMode, simple_main_wrapper
+)
 
-class HiveQuickStart:
-    def __init__(self):
+class HiveQuickStart(BaseScript):
+    """LeanVibe Agent Hive 2.0 Quick Start - Refactored to use shared patterns."""
+    
+    def __init__(self, config: ScriptConfig):
+        super().__init__(config)
         self.base_path = Path(__file__).parent.parent
         
     def run_command(self, cmd, timeout=30):
@@ -32,15 +38,15 @@ class HiveQuickStart:
             )
             return result.returncode == 0, result.stdout, result.stderr
         except subprocess.TimeoutExpired:
-            logger.error(f"Command timed out: {cmd}")
+            self.logger.error(f"Command timed out: {cmd}")
             return False, "", "Timeout"
         except Exception as e:
-            logger.error(f"Command failed: {cmd} - {e}")
+            self.logger.error(f"Command failed: {cmd} - {e}")
             return False, "", str(e)
     
     def check_docker_services(self):
         """Check if PostgreSQL and Redis containers are running"""
-        logger.info("🐳 Checking Docker services...")
+        self.logger.info("🐳 Checking Docker services...")
         
         success, stdout, stderr = self.run_command(
             "docker ps --format '{{.Names}}\t{{.Status}}' | grep -E '(postgres|redis)'"
@@ -48,17 +54,17 @@ class HiveQuickStart:
         
         if success and stdout:
             services = stdout.strip().split('\n')
-            logger.info(f"✅ Found {len(services)} Docker services running")
+            self.logger.info(f"✅ Found {len(services)} Docker services running")
             for service in services:
-                logger.info(f"  - {service}")
+                self.logger.info(f"  - {service}")
             return len(services) >= 2
         else:
-            logger.warning("❌ Docker services not found or not running")
+            self.logger.warning("❌ Docker services not found or not running")
             return False
     
     def start_docker_services(self):
         """Start required Docker services"""
-        logger.info("🚀 Starting Docker services...")
+        self.logger.info("🚀 Starting Docker services...")
         
         success, stdout, stderr = self.run_command(
             "docker compose up -d postgres redis", 
@@ -66,16 +72,16 @@ class HiveQuickStart:
         )
         
         if success:
-            logger.info("✅ Docker services started")
+            self.logger.info("✅ Docker services started")
             time.sleep(5)  # Wait for services to initialize
             return True
         else:
-            logger.error(f"❌ Failed to start Docker services: {stderr}")
+            self.logger.error(f"❌ Failed to start Docker services: {stderr}")
             return False
     
     def check_api_health(self, timeout=10):
         """Check if API server is responding"""
-        logger.info("🏥 Checking API health...")
+        self.logger.info("🏥 Checking API health...")
         
         success, stdout, stderr = self.run_command(
             f"timeout {timeout} curl -sf http://localhost:8000/health",
@@ -83,15 +89,15 @@ class HiveQuickStart:
         )
         
         if success:
-            logger.info("✅ API server is healthy")
+            self.logger.info("✅ API server is healthy")
             return True
         else:
-            logger.warning("❌ API server not responding")
+            self.logger.warning("❌ API server not responding")
             return False
     
     def start_api_server(self):
         """Start the FastAPI server"""
-        logger.info("🌐 Starting API server...")
+        self.logger.info("🌐 Starting API server...")
         
         # Kill any existing processes
         self.run_command("pkill -f 'uvicorn.*app.main:app' || true")
@@ -103,14 +109,14 @@ class HiveQuickStart:
         )
         
         # Wait for startup
-        logger.info("🔄 Waiting for API server startup...")
+        self.logger.info("🔄 Waiting for API server startup...")
         for i in range(30):
             if self.check_api_health(timeout=5):
-                logger.info("✅ API server started successfully")
+                self.logger.info("✅ API server started successfully")
                 return True
             time.sleep(1)
         
-        logger.error("❌ API server failed to start within 30 seconds")
+        self.logger.error("❌ API server failed to start within 30 seconds")
         return False
     
     def get_system_status(self):
@@ -139,56 +145,96 @@ class HiveQuickStart:
     
     def run_full_startup(self):
         """Run complete system startup sequence"""
-        logger.info("🚀 Starting LeanVibe Agent Hive 2.0...")
+        self.logger.info("🚀 Starting LeanVibe Agent Hive 2.0...")
         
         # Step 1: Check/Start Docker services
         if not self.check_docker_services():
             if not self.start_docker_services():
-                logger.error("❌ Failed to start Docker services")
+                self.logger.error("❌ Failed to start Docker services")
                 return False
         
         # Step 2: Check/Start API server
         if not self.check_api_health():
             if not self.start_api_server():
-                logger.error("❌ Failed to start API server")
+                self.logger.error("❌ Failed to start API server")
                 return False
         
         # Step 3: Final status check
         status = self.get_system_status()
         
-        logger.info("📊 System Status:")
-        logger.info(f"  - Docker Services: {'✅' if status['docker_services'] else '❌'}")
-        logger.info(f"  - API Health: {'✅' if status['api_health'] else '❌'}")
-        logger.info(f"  - Agent Count: {status['agent_count']}")
+        self.logger.info("📊 System Status:")
+        self.logger.info(f"  - Docker Services: {'✅' if status['docker_services'] else '❌'}")
+        self.logger.info(f"  - API Health: {'✅' if status['api_health'] else '❌'}")
+        self.logger.info(f"  - Agent Count: {status['agent_count']}")
         
         if status["docker_services"] and status["api_health"]:
-            logger.info("🎉 LeanVibe Agent Hive 2.0 is fully operational!")
+            self.logger.info("🎉 LeanVibe Agent Hive 2.0 is fully operational!")
             return True
         else:
-            logger.error("❌ System startup incomplete")
+            self.logger.error("❌ System startup incomplete")
             return False
+    
+    def execute(self) -> dict:
+        """
+        Execute the quick start logic based on command line arguments.
+        
+        REFACTORED: Eliminates duplicated main() function pattern using shared utilities.
+        This replaces the old main() function with standardized execution logic.
+        """
+        if len(sys.argv) > 1:
+            command = sys.argv[1].lower()
+        else:
+            command = "start"
+        
+        if command == "status":
+            status = self.get_system_status()
+            print(json.dumps(status, indent=2))
+            return {"command": "status", "status": status, "success": True}
+            
+        elif command == "start":
+            success = self.run_full_startup()
+            return {
+                "command": "start", 
+                "success": success,
+                "exit_code": 0 if success else 1
+            }
+            
+        elif command == "health":
+            healthy = self.check_api_health()
+            return {
+                "command": "health",
+                "healthy": healthy,
+                "success": healthy,
+                "exit_code": 0 if healthy else 1
+            }
+        else:
+            self.logger.info("Usage: python quick_start.py [start|status|health]")
+            return {"command": "invalid", "success": False, "exit_code": 1}
+
 
 def main():
-    """Main entry point"""
-    if len(sys.argv) > 1:
-        command = sys.argv[1].lower()
-    else:
-        command = "start"
+    """Legacy main function - kept for backward compatibility."""
+    # Use simple wrapper for basic compatibility
+    def legacy_main():
+        config = ScriptConfig(
+            name="hive_quick_start",
+            description="LeanVibe Agent Hive 2.0 Quick Start",
+            enable_logging=True,
+            log_level="INFO"
+        )
+        
+        quick_start = HiveQuickStart(config)
+        result = quick_start.run()
+        
+        # Handle exit codes for backward compatibility
+        if result.success:
+            exit_code = result.data.get("exit_code", 0)
+            sys.exit(exit_code)
+        else:
+            sys.exit(1)
     
-    hive = HiveQuickStart()
-    
-    if command == "status":
-        status = hive.get_system_status()
-        print(json.dumps(status, indent=2))
-    elif command == "start":
-        success = hive.run_full_startup()
-        sys.exit(0 if success else 1)
-    elif command == "health":
-        healthy = hive.check_api_health()
-        sys.exit(0 if healthy else 1)
-    else:
-        logger.info("Usage: python quick_start.py [start|status|health]")
-        sys.exit(1)
+    simple_main_wrapper(legacy_main, "hive_quick_start")
+
 
 if __name__ == "__main__":
     main()
