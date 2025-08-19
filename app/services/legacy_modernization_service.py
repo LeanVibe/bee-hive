@@ -848,7 +848,7 @@ if __name__ == "__main__":
         async def execute(self):
             """Execute the main script logic."""
             async def test_modernization_service():
-            """Test the legacy modernization service."""
+                """Test the legacy modernization service."""
 
             service = await get_modernization_service()
 
@@ -875,15 +875,15 @@ if __name__ == "__main__":
             self.logger.info("Project start result:", json.dumps(result, indent=2, default=str))
 
             if result["status"] == "success":
-            project_id = result["project_id"]
+                project_id = result["project_id"]
 
-            # Execute first phase
-            phase_result = await service.execute_modernization_phase(project_id, 1)
-            self.logger.info("Phase execution result:", json.dumps(phase_result, indent=2, default=str))
+                # Execute first phase
+                phase_result = await service.execute_modernization_phase(project_id, 1)
+                self.logger.info("Phase execution result:", json.dumps(phase_result, indent=2, default=str))
 
-            # Get project status
-            status = await service.get_project_status(project_id)
-            self.logger.info("Project status:", json.dumps(status, indent=2, default=str))
+                # Get project status
+                status = await service.get_project_status(project_id)
+                self.logger.info("Project status:", json.dumps(status, indent=2, default=str))
 
             # Run test
             await test_modernization_service()

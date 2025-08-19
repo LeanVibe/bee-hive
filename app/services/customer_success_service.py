@@ -995,7 +995,7 @@ if __name__ == "__main__":
         async def execute(self):
             """Execute the main script logic."""
             async def test_customer_success_service():
-            """Test the customer success service."""
+                """Test the customer success service."""
 
             service = await get_success_service()
 
@@ -1033,41 +1033,41 @@ if __name__ == "__main__":
             self.logger.info("Guarantee creation result:", json.dumps(guarantee_result, indent=2, default=str))
 
             if guarantee_result["status"] == "success":
-            guarantee_id = guarantee_result["guarantee_id"]
+                guarantee_id = guarantee_result["guarantee_id"]
 
-            # Simulate metrics updates
-            metrics_data = {
-            "velocity_data": {
-            "baseline_velocity": 1.0,
-            "completed_tasks": [
-            {"story_points": 8, "type": "feature", "started_at": "2025-08-01T09:00:00", "completed_at": "2025-08-01T17:00:00"},
-            {"story_points": 5, "type": "bug", "started_at": "2025-08-01T10:00:00", "completed_at": "2025-08-01T14:00:00"},
-            {"story_points": 13, "type": "feature", "started_at": "2025-08-02T09:00:00", "completed_at": "2025-08-02T16:00:00"}
-            ],
-            "measurement_period_days": 7
-            },
-            "quality_data": {
-            "test_coverage_percentage": 92.0,
-            "defects_reported": 2,
-            "defects_resolved": 2,
-            "total_deliverables": 3,
-            "code_quality_score": 8.5,
-            "security_vulnerabilities": {"high": 0, "medium": 1, "low": 3}
-            },
-            "satisfaction_data": {
-            "overall_satisfaction": 8.2,
-            "nps_scores": [9, 8, 9],
-            "communication_scores": [8.5, 9.0, 8.0]
-            }
-            }
+                # Simulate metrics updates
+                metrics_data = {
+                "velocity_data": {
+                "baseline_velocity": 1.0,
+                "completed_tasks": [
+                {"story_points": 8, "type": "feature", "started_at": "2025-08-01T09:00:00", "completed_at": "2025-08-01T17:00:00"},
+                {"story_points": 5, "type": "bug", "started_at": "2025-08-01T10:00:00", "completed_at": "2025-08-01T14:00:00"},
+                {"story_points": 13, "type": "feature", "started_at": "2025-08-02T09:00:00", "completed_at": "2025-08-02T16:00:00"}
+                ],
+                "measurement_period_days": 7
+                },
+                "quality_data": {
+                "test_coverage_percentage": 92.0,
+                "defects_reported": 2,
+                "defects_resolved": 2,
+                "total_deliverables": 3,
+                "code_quality_score": 8.5,
+                "security_vulnerabilities": {"high": 0, "medium": 1, "low": 3}
+                },
+                "satisfaction_data": {
+                "overall_satisfaction": 8.2,
+                "nps_scores": [9, 8, 9],
+                "communication_scores": [8.5, 9.0, 8.0]
+                }
+                }
 
-            # Update metrics
-            update_result = await service.update_success_metrics(guarantee_id, metrics_data)
-            self.logger.info("Metrics update result:", json.dumps(update_result, indent=2, default=str))
+                # Update metrics
+                update_result = await service.update_success_metrics(guarantee_id, metrics_data)
+                self.logger.info("Metrics update result:", json.dumps(update_result, indent=2, default=str))
 
-            # Get guarantee status
-            status = await service.get_guarantee_status(guarantee_id)
-            self.logger.info("Guarantee status:", json.dumps(status, indent=2, default=str))
+                # Get guarantee status
+                status = await service.get_guarantee_status(guarantee_id)
+                self.logger.info("Guarantee status:", json.dumps(status, indent=2, default=str))
 
             # Run test
             await test_customer_success_service()
