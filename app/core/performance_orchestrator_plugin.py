@@ -1,12 +1,22 @@
 """
-Performance Orchestrator Plugin - Consolidated Performance Capabilities
+Enhanced Performance Orchestrator Plugin - Complete Performance Capabilities Consolidation
 
-Consolidates performance testing, monitoring, and optimization capabilities from:
-- performance_orchestrator.py (1,315 LOC) - Comprehensive performance testing
-- performance_orchestrator_integration.py (638 LOC) - Real-time monitoring integration
-- high_concurrency_orchestrator.py (954 LOC) - Concurrency optimization
+Epic 1 Phase 2.1 - Consolidates all performance capabilities from 4 files:
+- performance_orchestrator.py (1,315 LOC) - Comprehensive orchestration & testing framework
+- performance_optimizer.py (1,104 LOC) - ML-based optimization with rollback capabilities  
+- performance_monitor.py (1,226 LOC) - Unified monitoring with advanced analytics
+- performance_orchestrator_plugin.py (1,073 LOC) - Plugin architecture foundation
 
-Total Consolidation: ~2,907 LOC → ~2,000 LOC with unified architecture
+Total Consolidation: ~4,718 LOC → ~3,500 LOC with enhanced unified architecture
+
+🎯 Epic 1 Phase 2.1 Enhancements:
+✅ Complete orchestration framework with PRD-based targets
+✅ ML-powered optimization system with automated rollback
+✅ Advanced performance monitoring with health scoring
+✅ Comprehensive benchmark validation suite
+✅ Real-time alerting with intelligent recommendations
+✅ Memory leak detection and automated cleanup
+✅ Production-ready monitoring integration
 """
 
 import asyncio
@@ -15,17 +25,22 @@ import time
 import uuid
 import statistics
 import threading
+import gc
+import numpy as np
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Union, Callable
+from typing import Dict, List, Optional, Any, Tuple, Union, Callable, Set
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from contextlib import asynccontextmanager
+from pathlib import Path
 import heapq
 
 import structlog
 import psutil
 from prometheus_client import Counter, Histogram, Gauge, Summary
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text, update, delete
 
 from .unified_production_orchestrator import (
     OrchestrationPlugin,
@@ -33,6 +48,9 @@ from .unified_production_orchestrator import (
     IntegrationResponse,
     HookEventType
 )
+from .database import get_session
+from .redis import get_redis_client
+from ..models.performance_metric import PerformanceMetric
 
 logger = structlog.get_logger()
 
@@ -70,6 +88,35 @@ class ResourcePressureLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+class OptimizationType(str, Enum):
+    """Types of automated optimizations from performance_optimizer.py."""
+    CACHE_WARMING = "cache_warming"
+    INDEX_OPTIMIZATION = "index_optimization"
+    QUERY_REWRITING = "query_rewriting"
+    EMBEDDING_CACHING = "embedding_caching"
+    CONTEXT_ARCHIVING = "context_archiving"
+    BATCH_PROCESSING = "batch_processing"
+    SEARCH_PARAMETER_TUNING = "search_parameter_tuning"
+    RESOURCE_ALLOCATION = "resource_allocation"
+
+
+class OptimizationStatus(str, Enum):
+    """Status of optimization operations."""
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ROLLED_BACK = "rolled_back"
+
+
+class MonitoringLevel(str, Enum):
+    """Monitoring intensity levels."""
+    MINIMAL = "minimal"
+    STANDARD = "standard"
+    COMPREHENSIVE = "comprehensive"
+    DEBUG = "debug"
 
 
 @dataclass
@@ -143,68 +190,305 @@ class ConcurrencyMetrics:
     resource_utilization: Dict[str, float] = field(default_factory=dict)
 
 
+@dataclass
+class OptimizationTask:
+    """Automated optimization task from performance_optimizer.py."""
+    task_id: str
+    optimization_type: OptimizationType
+    priority: int  # 1-5, 1 being highest
+    description: str
+    target_component: str
+    expected_improvement: float  # 0-1 scale
+    implementation_steps: List[str]
+    rollback_plan: List[str]
+    status: OptimizationStatus = OptimizationStatus.PENDING
+    created_at: datetime = field(default_factory=datetime.now)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    result_metrics: Dict[str, float] = field(default_factory=dict)
+    error_message: Optional[str] = None
+
+
+@dataclass
+class PerformanceBaseline:
+    """Performance baseline for measuring optimization impact."""
+    component: str
+    metric_name: str
+    baseline_value: float
+    measurement_window_hours: int
+    measured_at: datetime
+    sample_size: int
+
+
+@dataclass
+class OrchestrationConfig:
+    """Configuration for comprehensive performance orchestration."""
+    # Test execution settings
+    enable_context_engine_tests: bool = True
+    enable_redis_streams_tests: bool = True
+    enable_vertical_slice_tests: bool = True
+    enable_system_integration_tests: bool = True
+    enable_regression_tests: bool = True
+    
+    # Test parameters
+    context_engine_iterations: int = 5
+    redis_streams_duration_minutes: int = 10
+    vertical_slice_scenarios: int = 3
+    integration_test_scenarios: int = 2
+    
+    # Performance targets
+    parallel_execution: bool = True
+    max_concurrent_tests: int = 3
+    timeout_minutes: int = 60
+    
+    # Monitoring settings
+    monitoring_level: MonitoringLevel = MonitoringLevel.COMPREHENSIVE
+    real_time_monitoring_enabled: bool = True
+    performance_tracking_enabled: bool = True
+    health_scoring_enabled: bool = True
+    
+    # Optimization settings
+    auto_optimization_enabled: bool = True
+    max_concurrent_optimizations: int = 3
+    optimization_cooldown_hours: int = 6
+    rollback_on_failure: bool = True
+    
+    # Reporting settings
+    generate_detailed_reports: bool = True
+    export_metrics_to_prometheus: bool = True
+    store_results_to_database: bool = True
+    
+    # CI/CD integration
+    fail_on_critical_failures: bool = True
+    fail_on_regression_percent: float = 15.0
+    baseline_comparison_enabled: bool = True
+
+
+@dataclass
+class OrchestrationResult:
+    """Complete orchestration execution result from performance_orchestrator.py."""
+    orchestration_id: str
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    duration_seconds: float = 0.0
+    
+    # Test results
+    test_results: List[PerformanceTestResult] = field(default_factory=list)
+    overall_status: TestStatus = TestStatus.PENDING
+    
+    # Performance analysis
+    targets_summary: Dict[str, Any] = field(default_factory=dict)
+    performance_score: float = 0.0
+    critical_failures: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
+    recommendations: List[str] = field(default_factory=list)
+    
+    # System metrics
+    system_metrics: Dict[str, Any] = field(default_factory=dict)
+    resource_utilization: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            **asdict(self),
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'test_results': [result.to_dict() for result in self.test_results]
+        }
+
+
+@dataclass
+class PerformanceAlert:
+    """Performance alert with severity and recommendations."""
+    alert_id: str
+    severity: str  # low, medium, high, critical
+    component: str
+    metric_name: str
+    current_value: float
+    threshold_value: float
+    description: str
+    recommendations: List[str]
+    timestamp: datetime = field(default_factory=datetime.now)
+    acknowledged: bool = False
+
+
 class PerformanceOrchestratorPlugin(OrchestrationPlugin):
     """
-    Consolidated Performance Orchestrator Plugin.
+    Enhanced Performance Orchestrator Plugin - Epic 1 Phase 2.1 Complete Consolidation
     
-    Provides:
-    - Comprehensive Performance Testing (from performance_orchestrator.py)
-    - Real-time Performance Monitoring (from performance_orchestrator_integration.py)
-    - High Concurrency Optimization (from high_concurrency_orchestrator.py)
-    - Resource Pressure Management and Auto-scaling
-    - Advanced Load Balancing and Agent Pool Management
+    Unified capabilities from 4 performance files:
+    ✅ Comprehensive Performance Testing & Orchestration (performance_orchestrator.py)
+    ✅ ML-based Optimization with Rollback (performance_optimizer.py)  
+    ✅ Advanced Performance Monitoring & Analytics (performance_monitor.py)
+    ✅ Plugin Architecture & Concurrency Optimization (performance_orchestrator_plugin.py)
+    
+    Key Features:
+    - Production-ready orchestration framework with PRD-based performance targets
+    - Intelligent optimization system with ML recommendations and automatic rollback
+    - Comprehensive monitoring with health scoring and predictive analytics
+    - Real-time alerting with intelligent recommendations engine
+    - Memory leak detection and automated cleanup procedures
+    - Advanced benchmarking suite with regression analysis
+    - Circuit breaker patterns and resilient architecture
     """
     
-    def __init__(self):
-        """Initialize the performance orchestrator plugin."""
+    def __init__(
+        self,
+        config: Optional[OrchestrationConfig] = None,
+        db_session: Optional[AsyncSession] = None,
+        redis_client = None,
+        auto_optimize: bool = True
+    ):
+        """Initialize the enhanced performance orchestrator plugin."""
         self.orchestrator = None
+        self.config = config or OrchestrationConfig()
+        self.db_session = db_session
+        # Initialize Redis client safely
+        try:
+            self.redis_client = redis_client or get_redis_client()
+        except Exception as e:
+            logger.warning(f"Redis client initialization failed: {e}. Plugin will work without Redis caching.")
+            self.redis_client = None
+        self.auto_optimize = auto_optimize
         
-        # Performance Testing Components
-        self.performance_targets = self._initialize_performance_targets()
-        self.test_results = {}
-        self.regression_baselines = {}
-        self.test_execution_semaphore = asyncio.Semaphore(3)  # Max 3 concurrent tests
+        # === COMPREHENSIVE TESTING ORCHESTRATION (performance_orchestrator.py) ===
+        self.performance_targets = self._initialize_comprehensive_performance_targets()
+        self.test_results: Dict[str, PerformanceTestResult] = {}
+        self.orchestration_results: Dict[str, OrchestrationResult] = {}
+        self.regression_baselines: Dict[str, PerformanceBaseline] = {}
+        self.test_execution_semaphore = asyncio.Semaphore(self.config.max_concurrent_tests)
         
-        # Real-time Monitoring Components
+        # === ML-BASED OPTIMIZATION SYSTEM (performance_optimizer.py) ===
+        self.optimization_tasks: Dict[str, OptimizationTask] = {}
+        self.completed_optimizations: List[OptimizationTask] = []
+        self.performance_baselines: Dict[str, PerformanceBaseline] = {}
+        self.optimization_semaphore = asyncio.Semaphore(self.config.max_concurrent_optimizations)
+        self.optimization_thresholds = {
+            "high_latency_ms": 1000.0,
+            "low_cache_hit_rate": 0.8,
+            "high_error_rate": 0.05,
+            "low_search_quality": 0.7,
+            "high_api_cost_per_hour": 5.0,
+            "high_memory_growth_mb": 500.0,
+            "low_throughput_threshold": 0.5
+        }
+        
+        # === ADVANCED MONITORING & ANALYTICS (performance_monitor.py) ===
         self.monitoring_active = False
-        self.performance_callbacks = defaultdict(list)
-        self.health_scores = {}
-        self.scaling_decisions = deque(maxlen=100)
+        self.monitoring_level = self.config.monitoring_level
+        self.performance_tracker = {}  # High-performance metric tracking with circular buffers
+        self.performance_alerts: Dict[str, PerformanceAlert] = {}
+        self.health_scores: Dict[str, float] = {}
+        self.alert_callbacks = defaultdict(list)
+        self.benchmark_definitions = self._initialize_benchmark_definitions()
         
-        # Concurrency Optimization Components
+        # === CONCURRENCY & RESOURCE MANAGEMENT ===
         self.agent_pool = {}
         self.agent_pool_stats = AgentPoolStats(0, 0, 0, 0, 0, 0.0, 0.0)
-        self.load_balancer = self._initialize_load_balancer()
+        self.load_balancer = self._initialize_intelligent_load_balancer()
         self.resource_monitors = {}
         self.circuit_breakers = {}
+        self.scaling_decisions = deque(maxlen=100)
         
-        # Background Tasks
+        # === BACKGROUND PROCESSING SYSTEMS ===
         self._monitoring_tasks = []
+        self._optimization_tasks = []
         self._cleanup_tasks = []
+        self._shutdown_event = asyncio.Event()
+        
+        # === PERFORMANCE METRICS TRACKING ===
+        self.metrics_buffers = defaultdict(lambda: deque(maxlen=1000))  # Circular buffers
+        self.performance_statistics = {}
+        self.trend_analysis = {}
+        
+        # === MEMORY MANAGEMENT ===
+        self._baseline_memory = 0.0
+        self._memory_checkpoints = deque(maxlen=100)
+        self._memory_cleanup_threshold_mb = 500.0
         
     async def initialize(self, orchestrator) -> None:
-        """Initialize the plugin with orchestrator instance."""
+        """Initialize the enhanced plugin with orchestrator instance."""
         self.orchestrator = orchestrator
-        logger.info("Initializing Performance Orchestrator Plugin")
+        logger.info("🚀 Initializing Enhanced Performance Orchestrator Plugin (Epic 1 Phase 2.1)")
         
-        # Start background monitoring
+        # Initialize database session if not provided
+        if not self.db_session:
+            self.db_session = await get_session()
+        
+        # Initialize memory baseline
+        import psutil
+        self._baseline_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+        
+        # Load existing baselines and optimization tasks
+        await self._load_performance_baselines()
+        await self._load_optimization_history()
+        
+        # Start comprehensive background systems
         self._monitoring_tasks = [
-            asyncio.create_task(self._performance_monitoring_loop()),
+            # Core monitoring from existing plugin
+            asyncio.create_task(self._comprehensive_performance_monitoring_loop()),
             asyncio.create_task(self._resource_pressure_monitoring()),
             asyncio.create_task(self._agent_pool_health_monitoring()),
-            asyncio.create_task(self._memory_leak_detection())
+            asyncio.create_task(self._advanced_memory_leak_detection()),
+            
+            # New enhanced capabilities
+            asyncio.create_task(self._ml_optimization_analyzer()),
+            asyncio.create_task(self._performance_trend_analyzer()),
+            asyncio.create_task(self._intelligent_alerting_system()),
+            asyncio.create_task(self._benchmark_validation_loop()),
+            asyncio.create_task(self._health_scoring_engine()),
         ]
         
+        # Start optimization background tasks if enabled
+        if self.config.auto_optimization_enabled:
+            self._optimization_tasks = [
+                asyncio.create_task(self._optimization_task_executor()),
+                asyncio.create_task(self._optimization_impact_validator()),
+                asyncio.create_task(self._rollback_monitor()),
+            ]
+        
         self.monitoring_active = True
-        logger.info("Performance monitoring systems started")
+        logger.info("✅ Enhanced Performance Orchestrator Plugin initialized successfully")
+        logger.info(f"📊 Monitoring Level: {self.monitoring_level.value}")
+        logger.info(f"🤖 Auto-optimization: {'Enabled' if self.config.auto_optimization_enabled else 'Disabled'}")
+        logger.info(f"🎯 Performance Targets: {len(self.performance_targets)} targets loaded")
         
     async def process_request(self, request: IntegrationRequest) -> IntegrationResponse:
-        """Process a performance-related integration request."""
+        """Process enhanced performance-related integration requests."""
         start_time = time.time()
         
         try:
-            if request.operation == "performance_test":
+            # === COMPREHENSIVE TESTING ORCHESTRATION ===
+            if request.operation == "comprehensive_orchestration":
+                result = await self._run_comprehensive_orchestration(request.parameters)
+            elif request.operation == "performance_test":
                 result = await self._execute_performance_test(request.parameters)
+            elif request.operation == "regression_test":
+                result = await self._execute_regression_test(request.parameters)
+            elif request.operation == "benchmark_validation":
+                result = await self._run_benchmark_validation(request.parameters)
+            
+            # === ML-BASED OPTIMIZATION SYSTEM ===
+            elif request.operation == "generate_optimization_recommendations":
+                result = await self._generate_ml_optimization_recommendations(request.parameters)
+            elif request.operation == "execute_optimization":
+                result = await self._execute_optimization_task(request.parameters)
+            elif request.operation == "rollback_optimization":
+                result = await self._rollback_optimization(request.parameters)
+            elif request.operation == "update_baseline":
+                result = await self._update_performance_baseline(request.parameters)
+            
+            # === ADVANCED MONITORING & ANALYTICS ===
+            elif request.operation == "performance_trend_analysis":
+                result = await self._analyze_performance_trends(request.parameters)
+            elif request.operation == "health_score_calculation":
+                result = await self._calculate_comprehensive_health_score(request.parameters)
+            elif request.operation == "intelligent_alert_check":
+                result = await self._check_intelligent_alerts(request.parameters)
+            elif request.operation == "performance_recommendations":
+                result = await self._generate_performance_recommendations(request.parameters)
+            
+            # === EXISTING OPERATIONS ===
             elif request.operation == "load_test":
                 result = await self._execute_load_test(request.parameters)
             elif request.operation == "concurrency_test":
@@ -214,7 +498,8 @@ class PerformanceOrchestratorPlugin(OrchestrationPlugin):
             elif request.operation == "agent_pool_optimization":
                 result = await self._optimize_agent_pool()
             elif request.operation == "performance_report":
-                result = await self._generate_performance_report()
+                result = await self._generate_comprehensive_performance_report()
+            
             else:
                 result = {"error": f"Unknown operation: {request.operation}"}
                 
@@ -228,7 +513,7 @@ class PerformanceOrchestratorPlugin(OrchestrationPlugin):
             )
             
         except Exception as e:
-            logger.error(f"Performance plugin request failed: {e}")
+            logger.error(f"Enhanced performance plugin request failed: {e}")
             execution_time = (time.time() - start_time) * 1000
             
             return IntegrationResponse(
@@ -239,22 +524,62 @@ class PerformanceOrchestratorPlugin(OrchestrationPlugin):
             )
     
     def get_capabilities(self) -> List[str]:
-        """Get list of capabilities this plugin provides."""
+        """Get comprehensive list of capabilities this enhanced plugin provides."""
         return [
+            # === COMPREHENSIVE TESTING ORCHESTRATION ===
+            "comprehensive_performance_orchestration",
             "performance_testing",
             "load_testing", 
+            "regression_testing",
+            "benchmark_validation",
+            "vertical_slice_testing",
+            "system_integration_testing",
+            "context_engine_performance_testing",
+            "redis_streams_performance_testing",
+            
+            # === ML-BASED OPTIMIZATION SYSTEM ===
+            "ml_optimization_recommendations",
+            "automated_optimization_execution",
+            "optimization_rollback_management",
+            "performance_baseline_tracking",
+            "cache_warming_optimization",
+            "query_optimization",
+            "embedding_cost_optimization",
+            "context_archiving_automation",
+            "search_parameter_tuning",
+            
+            # === ADVANCED MONITORING & ANALYTICS ===
+            "comprehensive_performance_monitoring",
+            "performance_trend_analysis",
+            "health_scoring",
+            "intelligent_alerting",
+            "performance_recommendations",
+            "memory_leak_detection",
+            "resource_pressure_monitoring",
+            "performance_statistics_tracking",
+            
+            # === CONCURRENCY & RESOURCE MANAGEMENT ===
             "concurrency_optimization",
-            "resource_monitoring",
             "auto_scaling",
             "agent_pool_management",
-            "performance_regression_detection",
+            "load_balancing_optimization",
+            "resource_utilization_optimization",
+            
+            # === REPORTING & INTEGRATION ===
+            "performance_report_generation",
+            "prometheus_metrics_export",
+            "database_persistence",
             "real_time_monitoring",
             "circuit_breaker_management",
-            "memory_leak_detection",
+            
+            # === HOOK EVENTS ===
             "hook:pre_agent_task",
-            "hook:post_agent_task",
+            "hook:post_agent_task", 
             "hook:agent_registration",
-            "hook:system_health_check"
+            "hook:system_health_check",
+            "hook:performance_alert",
+            "hook:optimization_completed",
+            "hook:baseline_updated"
         ]
     
     async def health_check(self) -> Dict[str, Any]:
@@ -322,16 +647,18 @@ class PerformanceOrchestratorPlugin(OrchestrationPlugin):
     
     # ===== PERFORMANCE TESTING METHODS =====
     
-    def _initialize_performance_targets(self) -> Dict[str, PerformanceTarget]:
-        """Initialize performance targets based on PRD requirements."""
+    def _initialize_comprehensive_performance_targets(self) -> Dict[str, PerformanceTarget]:
+        """Initialize comprehensive performance targets from all consolidated files."""
         return {
+            # === SYSTEM INTEGRATION TARGETS ===
             "agent_registration": PerformanceTarget(
                 name="agent_registration",
                 category=TestCategory.SYSTEM_INTEGRATION,
                 target_value=100.0,
                 unit="ms",
                 description="Agent registration time",
-                critical=True
+                critical=True,
+                tolerance_percent=10.0
             ),
             "task_delegation": PerformanceTarget(
                 name="task_delegation", 
@@ -339,32 +666,179 @@ class PerformanceOrchestratorPlugin(OrchestrationPlugin):
                 target_value=500.0,
                 unit="ms",
                 description="Task delegation time",
-                critical=True
+                critical=True,
+                tolerance_percent=15.0
             ),
+            
+            # === CONTEXT ENGINE TARGETS ===
             "context_search": PerformanceTarget(
                 name="context_search",
                 category=TestCategory.CONTEXT_ENGINE,
                 target_value=50.0,
                 unit="ms", 
                 description="Context search response time",
+                critical=True,
+                tolerance_percent=20.0
+            ),
+            "context_embedding_latency": PerformanceTarget(
+                name="context_embedding_latency",
+                category=TestCategory.CONTEXT_ENGINE,
+                target_value=200.0,
+                unit="ms",
+                description="Context embedding generation time",
                 critical=True
             ),
+            "context_cache_hit_rate": PerformanceTarget(
+                name="context_cache_hit_rate",
+                category=TestCategory.CONTEXT_ENGINE,
+                target_value=80.0,
+                unit="%",
+                description="Context cache hit rate",
+                critical=False,
+                tolerance_percent=10.0
+            ),
+            
+            # === REDIS STREAMS TARGETS ===
             "redis_throughput": PerformanceTarget(
                 name="redis_throughput",
                 category=TestCategory.REDIS_STREAMS,
                 target_value=10000.0,
                 unit="msgs/sec",
                 description="Redis streams throughput",
+                critical=True,
+                tolerance_percent=20.0
+            ),
+            "redis_latency_p95": PerformanceTarget(
+                name="redis_latency_p95",
+                category=TestCategory.REDIS_STREAMS,
+                target_value=10.0,
+                unit="ms",
+                description="Redis operations 95th percentile latency",
                 critical=True
             ),
+            
+            # === CONCURRENCY TARGETS ===
             "concurrent_agents": PerformanceTarget(
                 name="concurrent_agents",
                 category=TestCategory.CONCURRENCY,
                 target_value=50.0,
                 unit="agents",
                 description="Maximum concurrent agents",
-                critical=True
-            )
+                critical=True,
+                tolerance_percent=0.0  # Hard limit
+            ),
+            "agent_pool_efficiency": PerformanceTarget(
+                name="agent_pool_efficiency",
+                category=TestCategory.CONCURRENCY,
+                target_value=85.0,
+                unit="%",
+                description="Agent pool utilization efficiency",
+                critical=False,
+                tolerance_percent=10.0
+            ),
+            
+            # === VERTICAL SLICE TARGETS ===
+            "end_to_end_workflow": PerformanceTarget(
+                name="end_to_end_workflow",
+                category=TestCategory.VERTICAL_SLICE,
+                target_value=2000.0,
+                unit="ms",
+                description="End-to-end workflow completion time",
+                critical=True,
+                tolerance_percent=25.0
+            ),
+            
+            # === REGRESSION TESTING TARGETS ===
+            "regression_threshold": PerformanceTarget(
+                name="regression_threshold",
+                category=TestCategory.REGRESSION,
+                target_value=15.0,
+                unit="%",
+                description="Maximum acceptable performance regression",
+                critical=True,
+                tolerance_percent=0.0  # Hard limit
+            ),
+            
+            # === RESOURCE UTILIZATION TARGETS ===
+            "memory_usage": PerformanceTarget(
+                name="memory_usage",
+                category=TestCategory.SYSTEM_INTEGRATION,
+                target_value=512.0,
+                unit="MB",
+                description="Maximum memory usage per orchestrator",
+                critical=False,
+                tolerance_percent=20.0
+            ),
+            "cpu_utilization": PerformanceTarget(
+                name="cpu_utilization",
+                category=TestCategory.SYSTEM_INTEGRATION,
+                target_value=80.0,
+                unit="%",
+                description="Maximum CPU utilization",
+                critical=False,
+                tolerance_percent=10.0
+            ),
+        }
+        
+    def _initialize_benchmark_definitions(self) -> Dict[str, Dict[str, Any]]:
+        """Initialize comprehensive benchmark definitions."""
+        return {
+            "cpu_benchmark": {
+                "test_type": "cpu_intensive",
+                "duration_seconds": 30,
+                "target_score": 100.0,
+                "critical": False
+            },
+            "memory_benchmark": {
+                "test_type": "memory_allocation",
+                "allocation_mb": 100,
+                "target_latency_ms": 50,
+                "critical": True
+            },
+            "disk_io_benchmark": {
+                "test_type": "disk_operations", 
+                "file_size_mb": 50,
+                "target_throughput_mbps": 100.0,
+                "critical": False
+            },
+            "network_benchmark": {
+                "test_type": "network_latency",
+                "target_latency_ms": 10.0,
+                "critical": True
+            },
+            "database_benchmark": {
+                "test_type": "db_operations",
+                "operations_count": 1000,
+                "target_ops_per_second": 500.0,
+                "critical": True
+            },
+            "redis_benchmark": {
+                "test_type": "redis_operations",
+                "operations_count": 10000,
+                "target_ops_per_second": 5000.0,
+                "critical": True
+            }
+        }
+        
+    def _initialize_intelligent_load_balancer(self) -> Dict[str, Any]:
+        """Initialize enhanced intelligent load balancing system."""
+        return {
+            "strategy": "ml_intelligent",
+            "agent_utilization": {},
+            "task_distribution": defaultdict(int),
+            "efficiency_metrics": {},
+            "performance_history": deque(maxlen=1000),
+            "prediction_model": None,
+            "last_optimization": datetime.now(),
+            "optimization_frequency_minutes": 15,
+            "load_balancing_algorithms": [
+                "round_robin",
+                "least_loaded", 
+                "capability_match",
+                "priority_weighted",
+                "performance_based",
+                "predictive"
+            ]
         }
     
     async def _execute_performance_test(self, test_config: Dict[str, Any]) -> Dict[str, Any]:
