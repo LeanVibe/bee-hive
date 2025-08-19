@@ -17,6 +17,7 @@ from ..core.agent_manager import (
     AgentSpec
 )
 from ..core.simple_orchestrator import SimpleOrchestrator, AgentRole, get_simple_orchestrator
+from ..core.agent_spawner import get_agent_manager, get_active_agents_status
 
 logger = structlog.get_logger()
 router = APIRouter()
