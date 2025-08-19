@@ -21,10 +21,20 @@ from anthropic import AsyncAnthropic
 from .config import settings
 from .database import get_session
 from .logging_service import get_component_logger
+from .enhanced_logging import (
+    EnhancedLogger, 
+    PerformanceTracker,
+    with_correlation_id,
+    with_performance_logging,
+    operation_context,
+    set_request_context,
+    correlation_context
+)
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.task import Task, TaskStatus, TaskPriority
 
 logger = get_component_logger("simple_orchestrator")
+enhanced_logger = EnhancedLogger("simple_orchestrator")
 
 
 class AgentRole(Enum):
@@ -138,6 +148,7 @@ class SimpleOrchestrator:
         self._operation_count = 0
         self._last_performance_check = datetime.utcnow()
     
+    @with_performance_logging("spawn_agent")
     async def spawn_agent(
         self,
         role: AgentRole,
@@ -156,61 +167,109 @@ class SimpleOrchestrator:
         Raises:
             SimpleOrchestratorError: If spawning fails
         """
-        start_time = datetime.utcnow()
-        
-        try:
-            # Generate ID if not provided
-            if agent_id is None:
-                agent_id = str(uuid.uuid4())
-            
-            # Check if agent already exists
-            if agent_id in self._agents:
-                raise SimpleOrchestratorError(f"Agent {agent_id} already exists")
-            
-            # Check agent limit
-            active_agents = len([a for a in self._agents.values() 
-                               if a.status == AgentStatus.ACTIVE])
-            if active_agents >= getattr(settings, 'MAX_CONCURRENT_AGENTS', 10):
-                raise SimpleOrchestratorError("Maximum concurrent agents reached")
-            
-            # Create agent instance
-            agent = AgentInstance(
-                id=agent_id,
-                role=role,
-                status=AgentStatus.ACTIVE
-            )
-            
-            # Store in memory registry
-            self._agents[agent_id] = agent
-            
-            # Persist to database if available
-            if self._db_session_factory:
-                await self._persist_agent(agent)
-            
-            # Cache for fast access
-            if self._cache:
-                await self._cache.set(f"agent:{agent_id}", agent.to_dict(), ttl=3600)
-            
-            logger.info(
-                "Agent spawned successfully",
-                agent_id=agent_id,
-                role=role.value,
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
-            )
-            
-            self._operation_count += 1
-            return agent_id
-            
-        except Exception as e:
-            logger.error(
-                "Failed to spawn agent",
-                agent_id=agent_id,
-                role=role.value if role else None,
-                error=str(e),
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
-            )
-            raise SimpleOrchestratorError(f"Failed to spawn agent: {e}") from e
+        async with operation_context(
+            enhanced_logger, 
+            "spawn_agent",
+            role=role.value,
+            requested_agent_id=agent_id
+        ) as operation_id:
+            try:
+                # Generate ID if not provided
+                if agent_id is None:
+                    agent_id = str(uuid.uuid4())
+                
+                # Enhanced logging context
+                enhanced_logger.logger = enhanced_logger.logger.bind(
+                    agent_id=agent_id,
+                    role=role.value,
+                    operation_id=operation_id
+                )
+                
+                # Check if agent already exists
+                if agent_id in self._agents:
+                    enhanced_logger.log_error(
+                        ValueError(f"Agent {agent_id} already exists"),
+                        {"validation_error": "duplicate_agent_id", "agent_id": agent_id}
+                    )
+                    raise SimpleOrchestratorError(f"Agent {agent_id} already exists")
+                
+                # Check agent limit
+                active_agents = len([a for a in self._agents.values() 
+                                   if a.status == AgentStatus.ACTIVE])
+                max_agents = getattr(settings, 'MAX_CONCURRENT_AGENTS', 10)
+                
+                enhanced_logger.log_performance_metric(
+                    "active_agents_count", 
+                    active_agents, 
+                    unit="count",
+                    max_agents=max_agents
+                )
+                
+                if active_agents >= max_agents:
+                    enhanced_logger.log_security_event(
+                        "resource_limit_exceeded",
+                        "HIGH",
+                        active_agents=active_agents,
+                        max_agents=max_agents,
+                        attempted_role=role.value
+                    )
+                    raise SimpleOrchestratorError("Maximum concurrent agents reached")
+                
+                # Create agent instance
+                agent = AgentInstance(
+                    id=agent_id,
+                    role=role,
+                    status=AgentStatus.ACTIVE
+                )
+                
+                # Store in memory registry
+                self._agents[agent_id] = agent
+                
+                # Persist to database if available
+                if self._db_session_factory:
+                    await self._persist_agent(agent)
+                
+                # Cache for fast access
+                if self._cache:
+                    await self._cache.set(f"agent:{agent_id}", agent.to_dict(), ttl=3600)
+                
+                # Log successful creation
+                enhanced_logger.log_audit_event(
+                    "agent_created",
+                    f"agent:{agent_id}",
+                    success=True,
+                    agent_role=role.value,
+                    total_active_agents=active_agents + 1
+                )
+                
+                logger.info(
+                    "Agent spawned successfully",
+                    agent_id=agent_id,
+                    role=role.value,
+                    total_agents=len(self._agents)
+                )
+                
+                self._operation_count += 1
+                return agent_id
+                
+            except Exception as e:
+                enhanced_logger.log_error(e, {
+                    "operation": "spawn_agent",
+                    "agent_id": agent_id,
+                    "role": role.value if role else None
+                })
+                
+                enhanced_logger.log_audit_event(
+                    "agent_creation_failed",
+                    f"agent:{agent_id or 'unknown'}",
+                    success=False,
+                    error=str(e),
+                    role=role.value if role else None
+                )
+                
+                raise SimpleOrchestratorError(f"Failed to spawn agent: {e}") from e
     
+    @with_performance_logging("shutdown_agent")
     async def shutdown_agent(self, agent_id: str, graceful: bool = True) -> bool:
         """
         Shutdown a specific agent instance.
@@ -225,60 +284,113 @@ class SimpleOrchestrator:
         Raises:
             SimpleOrchestratorError: If shutdown fails
         """
-        start_time = datetime.utcnow()
-        
-        try:
-            # Check if agent exists
-            if agent_id not in self._agents:
-                logger.warning("Agent not found for shutdown", agent_id=agent_id)
-                return False
-            
-            agent = self._agents[agent_id]
-            
-            # Handle graceful shutdown
-            if graceful and agent.current_task_id:
-                logger.info(
-                    "Graceful shutdown - waiting for task completion",
+        async with operation_context(
+            enhanced_logger,
+            "shutdown_agent", 
+            agent_id=agent_id,
+            graceful=graceful
+        ) as operation_id:
+            try:
+                # Enhanced logging context
+                enhanced_logger.logger = enhanced_logger.logger.bind(
                     agent_id=agent_id,
-                    task_id=agent.current_task_id
+                    graceful=graceful,
+                    operation_id=operation_id
                 )
-                # Wait for current task (simplified - could be enhanced)
-                await asyncio.sleep(1)  # Brief wait
-            
-            # Update agent status
-            agent.status = AgentStatus.INACTIVE
-            agent.last_activity = datetime.utcnow()
-            
-            # Remove from active registry
-            del self._agents[agent_id]
-            
-            # Update database if available
-            if self._db_session_factory:
-                await self._update_agent_status(agent_id, AgentStatus.INACTIVE)
-            
-            # Remove from cache
-            if self._cache:
-                await self._cache.set(f"agent:{agent_id}", None, ttl=1)
-            
-            logger.info(
-                "Agent shutdown successful",
-                agent_id=agent_id,
-                graceful=graceful,
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
-            )
-            
-            self._operation_count += 1
-            return True
-            
-        except Exception as e:
-            logger.error(
-                "Failed to shutdown agent",
-                agent_id=agent_id,
-                error=str(e),
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
-            )
-            raise SimpleOrchestratorError(f"Failed to shutdown agent: {e}") from e
+                
+                # Check if agent exists
+                if agent_id not in self._agents:
+                    enhanced_logger.log_audit_event(
+                        "agent_shutdown_failed",
+                        f"agent:{agent_id}",
+                        success=False,
+                        error="agent_not_found"
+                    )
+                    logger.warning("Agent not found for shutdown", agent_id=agent_id)
+                    return False
+                
+                agent = self._agents[agent_id]
+                
+                # Log current agent state before shutdown
+                enhanced_logger.logger.info(
+                    "agent_shutdown_initiated",
+                    current_status=agent.status.value,
+                    current_task=agent.current_task_id,
+                    last_activity=agent.last_activity.isoformat()
+                )
+                
+                # Handle graceful shutdown with enhanced logging
+                if graceful and agent.current_task_id:
+                    enhanced_logger.logger.info(
+                        "graceful_shutdown_waiting",
+                        task_id=agent.current_task_id,
+                        wait_duration_ms=1000
+                    )
+                    # Wait for current task (simplified - could be enhanced)
+                    await asyncio.sleep(1)  # Brief wait
+                
+                # Update agent status
+                old_status = agent.status
+                agent.status = AgentStatus.INACTIVE
+                agent.last_activity = datetime.utcnow()
+                
+                # Remove from active registry
+                del self._agents[agent_id]
+                
+                # Update database if available
+                if self._db_session_factory:
+                    await self._update_agent_status(agent_id, AgentStatus.INACTIVE)
+                
+                # Remove from cache
+                if self._cache:
+                    await self._cache.set(f"agent:{agent_id}", None, ttl=1)
+                
+                # Log performance metrics
+                remaining_agents = len(self._agents)
+                enhanced_logger.log_performance_metric(
+                    "active_agents_after_shutdown",
+                    remaining_agents,
+                    unit="count"
+                )
+                
+                # Log successful shutdown audit event
+                enhanced_logger.log_audit_event(
+                    "agent_shutdown",
+                    f"agent:{agent_id}",
+                    success=True,
+                    old_status=old_status.value,
+                    graceful=graceful,
+                    remaining_agents=remaining_agents
+                )
+                
+                logger.info(
+                    "Agent shutdown successful",
+                    agent_id=agent_id,
+                    graceful=graceful,
+                    remaining_agents=remaining_agents
+                )
+                
+                self._operation_count += 1
+                return True
+                
+            except Exception as e:
+                enhanced_logger.log_error(e, {
+                    "operation": "shutdown_agent",
+                    "agent_id": agent_id,
+                    "graceful": graceful
+                })
+                
+                enhanced_logger.log_audit_event(
+                    "agent_shutdown_failed",
+                    f"agent:{agent_id}",
+                    success=False,
+                    error=str(e),
+                    graceful=graceful
+                )
+                
+                raise SimpleOrchestratorError(f"Failed to shutdown agent: {e}") from e
     
+    @with_performance_logging("delegate_task")
     async def delegate_task(
         self,
         task_description: str,
@@ -301,61 +413,118 @@ class SimpleOrchestrator:
         Raises:
             TaskDelegationError: If no suitable agent available
         """
-        start_time = datetime.utcnow()
-        
-        try:
-            # Generate task ID
-            task_id = str(uuid.uuid4())
-            
-            # Find suitable agent
-            suitable_agent = await self._find_suitable_agent(
-                preferred_role=preferred_agent_role,
-                task_type=task_type
-            )
-            
-            if not suitable_agent:
-                raise TaskDelegationError("No suitable agent available")
-            
-            # Create task assignment
-            assignment = TaskAssignment(
-                task_id=task_id,
-                agent_id=suitable_agent.id,
-                status=TaskStatus.PENDING
-            )
-            
-            # Update agent with current task
-            suitable_agent.current_task_id = task_id
-            suitable_agent.last_activity = datetime.utcnow()
-            
-            # Store assignment
-            self._task_assignments[task_id] = assignment
-            
-            # Persist to database if available
-            if self._db_session_factory:
-                await self._persist_task(task_id, task_description, task_type, 
-                                       priority, suitable_agent.id)
-            
-            logger.info(
-                "Task delegated successfully",
-                task_id=task_id,
-                agent_id=suitable_agent.id,
-                task_type=task_type,
-                priority=priority.value,
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
-            )
-            
-            self._operation_count += 1
-            return task_id
-            
-        except Exception as e:
-            logger.error(
-                "Failed to delegate task",
-                task_description=task_description[:100],
-                task_type=task_type,
-                error=str(e),
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
-            )
-            raise TaskDelegationError(f"Failed to delegate task: {e}") from e
+        async with operation_context(
+            enhanced_logger,
+            "delegate_task",
+            task_type=task_type,
+            priority=priority.value,
+            preferred_role=preferred_agent_role.value if preferred_agent_role else None
+        ) as operation_id:
+            try:
+                # Generate task ID
+                task_id = str(uuid.uuid4())
+                
+                # Enhanced logging context
+                enhanced_logger.logger = enhanced_logger.logger.bind(
+                    task_id=task_id,
+                    task_type=task_type,
+                    priority=priority.value,
+                    operation_id=operation_id
+                )
+                
+                # Log task delegation request
+                enhanced_logger.logger.info(
+                    "task_delegation_initiated",
+                    task_description_length=len(task_description),
+                    available_agents=len([a for a in self._agents.values() 
+                                        if a.status == AgentStatus.ACTIVE and a.current_task_id is None])
+                )
+                
+                # Find suitable agent
+                suitable_agent = await self._find_suitable_agent(
+                    preferred_role=preferred_agent_role,
+                    task_type=task_type
+                )
+                
+                if not suitable_agent:
+                    enhanced_logger.log_security_event(
+                        "task_delegation_failed_no_agents",
+                        "MEDIUM",
+                        task_type=task_type,
+                        priority=priority.value,
+                        total_agents=len(self._agents),
+                        active_agents=len([a for a in self._agents.values() 
+                                         if a.status == AgentStatus.ACTIVE])
+                    )
+                    raise TaskDelegationError("No suitable agent available")
+                
+                # Create task assignment
+                assignment = TaskAssignment(
+                    task_id=task_id,
+                    agent_id=suitable_agent.id,
+                    status=TaskStatus.PENDING
+                )
+                
+                # Update agent with current task
+                suitable_agent.current_task_id = task_id
+                suitable_agent.last_activity = datetime.utcnow()
+                
+                # Store assignment
+                self._task_assignments[task_id] = assignment
+                
+                # Persist to database if available
+                if self._db_session_factory:
+                    await self._persist_task(task_id, task_description, task_type, 
+                                           priority, suitable_agent.id)
+                
+                # Log performance metrics
+                enhanced_logger.log_performance_metric(
+                    "active_task_assignments",
+                    len(self._task_assignments),
+                    unit="count"
+                )
+                
+                # Log successful task delegation audit event
+                enhanced_logger.log_audit_event(
+                    "task_delegated",
+                    f"task:{task_id}",
+                    success=True,
+                    agent_id=suitable_agent.id,
+                    agent_role=suitable_agent.role.value,
+                    task_type=task_type,
+                    priority=priority.value
+                )
+                
+                logger.info(
+                    "Task delegated successfully",
+                    task_id=task_id,
+                    agent_id=suitable_agent.id,
+                    task_type=task_type,
+                    priority=priority.value,
+                    agent_role=suitable_agent.role.value
+                )
+                
+                self._operation_count += 1
+                return task_id
+                
+            except Exception as e:
+                enhanced_logger.log_error(e, {
+                    "operation": "delegate_task",
+                    "task_type": task_type,
+                    "priority": priority.value,
+                    "task_description_length": len(task_description)
+                })
+                
+                enhanced_logger.log_audit_event(
+                    "task_delegation_failed",
+                    f"task:{task_id if 'task_id' in locals() else 'unknown'}",
+                    success=False,
+                    error=str(e),
+                    task_type=task_type,
+                    priority=priority.value
+                )
+                
+                raise TaskDelegationError(f"Failed to delegate task: {e}") from e
     
     async def get_system_status(self) -> Dict[str, Any]:
         """

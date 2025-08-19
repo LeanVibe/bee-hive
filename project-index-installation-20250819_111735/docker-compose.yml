@@ -1,0 +1,173 @@
+version: '3.8'
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: bee-hive_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bee-hive_db
+      POSTGRES_USER: project_index
+      POSTGRES_PASSWORD: 1anxmODEpUk0%QMH#5fMGIczbAJPjoX6
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+    - bee-hive_postgres_data:/var/lib/postgresql/data
+    - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+    - project-index-network
+    mem_limit: 512m
+    cpus: 0.5
+    ports:
+    - 5432:5432
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U project_index
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  redis:
+    image: redis:7-alpine
+    container_name: bee-hive_redis
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: TezQ&JkB0vJN0Tp3*9e4ByLXOCmyUoC1
+    volumes:
+    - bee-hive_redis_data:/data
+    - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+    - project-index-network
+    mem_limit: 256m
+    cpus: 0.25
+    ports:
+    - 6379:6379
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - --raw
+      - incr
+      - ping
+      interval: 10s
+      timeout: 3s
+      retries: 5
+  project-index-api:
+    image: project-index:latest
+    container_name: bee-hive_project-index-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://project_index:1anxmODEpUk0%QMH#5fMGIczbAJPjoX6@postgres:5432/bee-hive_db
+      REDIS_URL: redis://:TezQ&JkB0vJN0Tp3*9e4ByLXOCmyUoC1@redis:6379/0
+      PROJECT_PATH: /project
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+    volumes:
+    - /Users/bogdan/work/leanvibe-dev/bee-hive:/project:ro
+    - bee-hive_api_logs:/app/logs
+    networks:
+    - project-index-network
+    mem_limit: 1024m
+    cpus: 1.0
+    ports:
+    - 8100:8100
+    depends_on:
+    - postgres
+    - redis
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8100/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+  project-index-dashboard:
+    image: project-index-dashboard:latest
+    container_name: bee-hive_project-index-dashboard
+    restart: unless-stopped
+    environment:
+      API_URL: http://project-index-api:8100
+      ENVIRONMENT: production
+    volumes: []
+    networks:
+    - project-index-network
+    mem_limit: 512m
+    cpus: 0.5
+    ports:
+    - 8101:8080
+    depends_on:
+    - project-index-api
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8080
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bee-hive_prometheus
+    restart: unless-stopped
+    environment: {}
+    volumes:
+    - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    - bee-hive_prometheus_data:/prometheus
+    networks:
+    - project-index-network
+    mem_limit: 256m
+    cpus: 0.25
+    ports:
+    - 9090:9090
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bee-hive_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+    - bee-hive_grafana_data:/var/lib/grafana
+    - ./grafana/dashboards:/var/lib/grafana/dashboards
+    - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+    - project-index-network
+    mem_limit: 256m
+    cpus: 0.25
+    ports:
+    - 3001:3000
+    depends_on:
+    - prometheus
+  docker-dind:
+    image: docker:dind
+    container_name: bee-hive_docker-dind
+    restart: unless-stopped
+    environment:
+      DOCKER_TLS_CERTDIR: ''
+    volumes:
+    - bee-hive_docker_data:/var/lib/docker
+    networks:
+    - project-index-network
+    mem_limit: 512m
+    cpus: 0.5
+networks:
+  project-index-network:
+    driver: bridge
+    attachable: true
+    labels:
+      project: bee-hive
+      component: project-index
+volumes:
+  bee-hive_postgres_data:
+    driver: local
+  bee-hive_redis_data:
+    driver: local
+  bee-hive_api_logs:
+    driver: local
+  bee-hive_prometheus_data:
+    driver: local
+  bee-hive_grafana_data:
+    driver: local
