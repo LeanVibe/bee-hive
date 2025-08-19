@@ -38,6 +38,20 @@ class WorkflowPriority(Enum):
     CRITICAL = 10
 
 
+class WorkflowType(Enum):
+    """Workflow type categories."""
+    DEVELOPMENT = "development"
+    TESTING = "testing"
+    DEPLOYMENT = "deployment"
+    CODE_REVIEW = "code_review"
+    INTEGRATION = "integration"
+    MAINTENANCE = "maintenance"
+    HOTFIX = "hotfix"
+    FEATURE = "feature"
+    BUGFIX = "bugfix"
+    RESEARCH = "research"
+
+
 class Workflow(Base):
     """
     Represents a multi-agent workflow in the development system.
@@ -56,6 +70,7 @@ class Workflow(Base):
     # Workflow classification
     status = Column(SQLEnum(WorkflowStatus), nullable=False, default=WorkflowStatus.CREATED, index=True)
     priority = Column(SQLEnum(WorkflowPriority), nullable=False, default=WorkflowPriority.MEDIUM, index=True)
+    workflow_type = Column(SQLEnum(WorkflowType), nullable=False, default=WorkflowType.DEVELOPMENT, index=True)
     
     # Workflow definition and execution
     definition = Column(JSON, nullable=False, default=dict)
@@ -93,6 +108,8 @@ class Workflow(Base):
             kwargs['status'] = WorkflowStatus.CREATED
         if 'priority' not in kwargs:
             kwargs['priority'] = WorkflowPriority.MEDIUM
+        if 'workflow_type' not in kwargs:
+            kwargs['workflow_type'] = WorkflowType.DEVELOPMENT
         if 'total_tasks' not in kwargs:
             kwargs['total_tasks'] = 0
         if 'completed_tasks' not in kwargs:
@@ -125,6 +142,7 @@ class Workflow(Base):
             "description": self.description,
             "status": self.status.value,
             "priority": self.priority.name.lower(),
+            "workflow_type": self.workflow_type.value,
             "definition": self.definition,
             "task_ids": [str(task_id) for task_id in (self.task_ids or [])],
             "dependencies": self.dependencies,

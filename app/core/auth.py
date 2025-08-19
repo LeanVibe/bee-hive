@@ -641,10 +641,23 @@ async def audit_security_event(entry: SecurityAuditEntry) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail="Failed to record audit log")
 
 
+# Standalone functions for middleware compatibility
+def decode_jwt_token(token: str) -> Optional[TokenData]:
+    """Decode JWT token - compatibility wrapper for middleware."""
+    auth_service = get_auth_service()
+    return auth_service.verify_token(token)
+
+
+def get_user_by_id(user_id: str) -> Optional[User]:
+    """Get user by ID - compatibility wrapper for middleware."""
+    auth_service = get_auth_service()
+    return auth_service.get_user_by_id(user_id)
+
+
 # Export all authentication components
 __all__ = [
     "AuthenticationService", "get_auth_service", "get_current_user",
     "require_permission", "require_pilot_access", "auth_router",
     "UserRole", "Permission", "User", "UserCreate", "UserLogin",
-    "UserResponse", "TokenResponse"
+    "UserResponse", "TokenResponse", "decode_jwt_token", "get_user_by_id"
 ]

@@ -80,3 +80,8 @@ class AgentStatsResponse(BaseModel):
     uptime_hours: float
     last_active: Optional[datetime]
     capabilities_count: int
+
+
+class AgentActivationRequest(BaseModel):
+    """Schema for agent activation requests."""
+    configuration: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Activation configuration")

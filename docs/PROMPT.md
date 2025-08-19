@@ -1,328 +1,443 @@
-# CURSOR AGENT HANDOFF PROMPT
-## LeanVibe Agent Hive 2.0 - Critical System Implementation
+# CLAUDE CODE AGENT HANDOFF PROMPT
+## LeanVibe Agent Hive 2.0 - Epic 1 Implementation
 
 **Date**: August 18, 2025  
-**Handoff From**: Claude Code Analysis Agent  
-**Handoff To**: Cursor Implementation Agent  
-**Priority**: 🚨 **CRITICAL - IMMEDIATE ACTION REQUIRED**
+**Handoff From**: Claude Code Strategic Analysis Agent  
+**Handoff To**: Claude Code Implementation Agent  
+**Priority**: 🚨 **CRITICAL - EPIC 1 SYSTEM STABILIZATION**
 
 ---
 
-## 🎯 **MISSION BRIEFING: REALITY CHECK COMPLETE**
+## 🎯 **MISSION BRIEFING: SYSTEM STABILIZATION REQUIRED**
 
-### **CRITICAL SITUATION DISCOVERED**
-After comprehensive first-principles analysis, I've discovered a **shocking gap between documentation and reality**:
+### **CRITICAL SITUATION ASSESSMENT**
+After comprehensive first-principles analysis, we've identified the real state of the system:
 
-- 📊 **Documentation Claims**: 97.4% consolidation complete, production-ready system
-- 🔧 **Actual Reality**: Core system has critical import failures preventing basic startup
-- 🧪 **Test Infrastructure**: Cannot run due to import errors 
-- 🌐 **API Server**: Missing main entry point (app/api/main.py doesn't exist)
+**✅ What's Actually Working:**
+- **Phase 1 Complete**: Real CLI adapters implemented (Cursor, GitHub Copilot, Gemini)  
+- **Real-time Communication**: Redis/WebSocket integration complete
+- **Production Configuration**: Environment-based configuration system ready
+- **Core Test Infrastructure**: MockCLIAdapter fixed, 100% test success rate
 
-**Bottom Line**: The system is extensively documented as "complete" but fundamental components cannot import or run.
+**❌ Critical Blockers Identified:**
+- **Import Errors**: System cannot start due to `AgentRole` import failures
+- **Over-Engineering**: 3,891-line orchestrator preventing functionality
+- **Database Issues**: Schema and migration problems
+- **Documentation vs Reality Gap**: Claims of 97.4% completion but basic system non-functional
 
-### **YOUR MISSION** 
-You are the **Import Dependency Resolver** and **FastAPI Application Builder** specialized subagent. Your mission is to **get the basic system working** by fixing critical import issues and creating a minimal working API server.
+### **YOUR MISSION**
+You are the **Epic 1 Implementation Agent** responsible for **Core System Stability & Basic Operations**. Your mission is to transform the current non-functional system into a working foundation that can demonstrate multi-agent coordination.
 
-## 📊 Current System Status
+## 📊 **Current System State Analysis**
 
-**Epic 1 - Multi-CLI Agent Coordination: 100% COMPLETE ✅**
+### **What's Been Completed (Previous Work) ✅**
+1. **CLI Adapter Integration** - All real adapters implemented
+2. **Real-time Communication** - Redis/WebSocket hub operational  
+3. **Production Configuration** - Complete environment setup
+4. **Test Infrastructure Fixes** - Core validation tests passing 100%
 
-### ✅ **Fully Implemented & Validated Components**
+### **Epic 1 Critical Blockers to Resolve ❌**
+1. **Import Dependency Failures**: `app/api/agent_activation.py` cannot import `AgentRole`
+2. **Orchestrator Complexity**: 3,891-line file needs reduction to 500-line focused implementation
+3. **Database Schema Issues**: Missing migrations and connection problems
+4. **Docker Environment**: Non-functional development environment setup
 
-1. **Universal Agent Interface** (`app/core/agents/universal_agent_interface.py`)
-   - Complete abstract base class for all CLI agents
-   - Standardized task execution, capability reporting, health monitoring
-   - AgentTask, AgentResult, ExecutionContext, AgentCapability data models
+## 🚀 **Epic 1 Implementation Plan - IMMEDIATE ACTION REQUIRED**
 
-2. **Agent Registry** (`app/core/agents/agent_registry.py`)
-   - Production-ready agent registration and discovery
-   - Capability-based routing and load balancing
-   - Real-time health monitoring and failure detection
+### **Week 1: Core System Repair (Days 1-5)**
+**Sprint Goal**: System starts without errors and passes health checks
 
-3. **Context Preservation System** (`app/core/communication/context_preserver.py`)
-   - Multi-level compression (0-9 levels) with 50MB+ support
-   - SHA256 integrity validation and corruption detection
-   - <1s packaging, <500ms restoration performance
-   - Agent-specific optimization (Claude Code, Cursor, GitHub Copilot)
-
-4. **Claude Code Adapter** (`app/core/agents/adapters/claude_code_adapter.py`)
-   - Complete CLI adapter with security validation
-   - Subprocess execution with resource monitoring
-   - Git worktree isolation and file tracking
-
-5. **Enhanced Orchestration** (`app/core/orchestration/`)
-   - Universal Orchestrator with subagent delegation
-   - Task Router with capability-based routing
-   - Workflow Coordinator for multi-agent workflows
-   - Execution Monitor for real-time tracking
-
-6. **Multi-CLI Communication Protocol** (`app/core/communication/`)
-   - Protocol bridging for different CLI tools
-   - Message translation and routing
-   - Real-time communication with WebSocket/Redis support
-
-7. **Git Worktree Isolation** (`app/core/isolation/worktree_manager.py`)
-   - Secure workspace isolation for concurrent agents
-   - Path validation and security enforcement
-
-### 🧪 **Comprehensive Testing Infrastructure**
-
-- **Core Validation**: `test_multi_cli_core.py` - **ALL TESTS PASSING (100%)**
-- **Integration Tests**: `tests/integration/test_multi_cli_integration.py` - Complete test suite
-- **Performance Validation**: All timing requirements met or exceeded
-- **Mock Framework**: Complete MockCLIAdapter for testing
-
-### 📋 **Performance Benchmarks Achieved**
-
-- **Agent Registration**: <0.1ms (target: <100ms) ✅
-- **Task Execution**: ~51ms (target: <500ms) ✅
-- **Context Packaging**: <0.1ms (target: <1000ms) ✅
-- **Multi-Agent Coordination**: 3-phase workflow successful ✅
-- **Context Preservation**: 1500% improvement with 60+ professional stories
-
-## 🎯 **Your Mission: Production Deployment & Enhancement**
-
-### **Phase 1: Production Integration (Priority: HIGH)**
-
-1. **Real CLI Agent Integration**
-   ```bash
-   # Add real CLI adapters (extend the pattern from claude_code_adapter.py)
-   app/core/agents/adapters/cursor_adapter.py
-   app/core/agents/adapters/github_copilot_adapter.py
-   app/core/agents/adapters/gemini_cli_adapter.py
-   ```
-
-2. **External Service Integration**
-   ```bash
-   # Add Redis/WebSocket real-time communication
-   pip install redis websockets
-   # Configure in app/core/communication/
-   ```
-
-3. **Production Configuration**
-   ```bash
-   # Environment-based configuration
-   app/config/production.py
-   app/config/staging.py
-   ```
-
-### **Phase 2: Advanced Features (Priority: MEDIUM)**
-
-1. **Load Testing & Scalability**
-   ```bash
-   # High-concurrency testing
-   tests/load/test_multi_cli_load.py
-   # Target: 50+ concurrent agents
-   ```
-
-2. **Monitoring & Observability**
-   ```bash
-   # Prometheus/Grafana integration
-   app/observability/metrics_collector.py
-   app/observability/health_dashboard.py
-   ```
-
-3. **Advanced Workflow Patterns**
-   ```bash
-   # Complex multi-agent workflows
-   app/workflows/code_review_pipeline.py
-   app/workflows/feature_development_workflow.py
-   ```
-
-### **Phase 3: Enhancement & Optimization (Priority: LOW)**
-
-1. **AI-Powered Agent Selection**
-2. **Predictive Load Balancing**
-3. **Advanced Context Compression**
-4. **Real-time Collaboration Features**
-
-## 🏗️ **Architecture Overview**
-
-### **Core Design Principles**
-- **Protocol-Agnostic**: Works with any CLI tool via adapters
-- **Context-Preserving**: Maintains state across agent boundaries
-- **Performance-Optimized**: <500ms task routing, <1s context handoffs
-- **Fault-Tolerant**: Comprehensive error handling and recovery
-- **Security-First**: Git worktree isolation, subprocess sandboxing
-
-### **Data Flow Architecture**
-```
-Task Request → Agent Registry → Best Agent Selection → Task Execution
-                    ↓
-Context Packaging → Agent Handoff → Context Restoration → Continue Workflow
-                    ↓
-Result Aggregation → Response → Metrics Collection → Health Monitoring
+#### **Day 1: Environment Setup & Assessment**
+```bash
+# IMMEDIATE FIRST STEPS
+1. git status  # Verify current state
+2. python test_multi_cli_core.py  # Confirm previous fixes work
+3. python -m app.main  # Attempt system startup (will fail)
+4. Identify specific import errors and dependency issues
 ```
 
-### **Key Integration Points**
+**Expected Issues to Fix:**
+- `AgentRole` import error in `app/api/agent_activation.py`
+- Circular import dependencies in core modules
+- Missing database configuration
+- Broken module dependencies
 
-1. **Agent Registry** - Central coordination hub
-2. **Context Preserver** - State management across agents
-3. **Orchestration Layer** - Workflow management
-4. **Communication Bridge** - Multi-protocol connectivity
-5. **Isolation System** - Security and workspace management
+#### **Days 2-3: Import Dependency Resolution**
+**Priority**: 🚨 CRITICAL - Nothing works until this is fixed
+
+**Tasks:**
+1. **Fix AgentRole Import Error**
+   ```python
+   # In app/api/agent_activation.py, line 15
+   # Current: from ..core.agent_manager import AgentRole
+   # Action: Locate correct import path or create missing AgentRole class
+   ```
+
+2. **Resolve Circular Imports**
+   - Analyze dependency graph with: `python -c "import app.core"`
+   - Identify circular dependencies between core modules
+   - Refactor imports to create clean dependency hierarchy
+
+3. **Create Import Validation Suite**
+   ```python
+   # tests/test_imports.py
+   def test_all_core_imports():
+       """Ensure all core modules can be imported without errors"""
+       import app.core.agent_manager
+       import app.api.agent_activation
+       # Add all critical imports
+   ```
+
+#### **Days 4-5: Minimal Orchestrator Implementation**
+**Priority**: 🔥 HIGH - Core functionality depends on this
+
+**Current Problem**: `app/core/orchestrator.py` is 3,891 lines - impossible to maintain
+
+**Solution**: Create `SimpleOrchestrator` with only essential functionality:
+
+```python
+# app/core/simple_orchestrator.py (NEW FILE - <500 lines)
+from typing import Dict, List, Optional
+import asyncio
+from dataclasses import dataclass
+
+@dataclass
+class AgentSpec:
+    name: str
+    type: str
+    capabilities: List[str]
+
+class SimpleOrchestrator:
+    """Minimal orchestrator focused on core functionality only"""
+    
+    def __init__(self):
+        self._agents: Dict[str, AgentSpec] = {}
+        self._tasks = asyncio.Queue()
+    
+    async def spawn_agent(self, spec: AgentSpec) -> str:
+        """Spawn agent with basic lifecycle management"""
+        agent_id = f"{spec.type}_{len(self._agents)}"
+        self._agents[agent_id] = spec
+        return agent_id
+    
+    async def assign_task(self, task: dict, agent_id: str) -> dict:
+        """Assign task to agent with basic tracking"""
+        return {"status": "assigned", "agent_id": agent_id}
+    
+    async def get_agent_status(self, agent_id: str) -> dict:
+        """Get basic agent status"""
+        if agent_id in self._agents:
+            return {"status": "active", "agent": self._agents[agent_id]}
+        return {"status": "not_found"}
+```
+
+**Migration Strategy:**
+1. Create `SimpleOrchestrator` with 20% of current functionality
+2. Update imports to use `SimpleOrchestrator` instead of complex version
+3. Keep original orchestrator as `LegacyOrchestrator` for reference
+4. Validate basic agent lifecycle works
+
+### **Week 2: Development Environment & Testing (Days 6-10)**
+
+#### **Days 6-7: Docker Environment Setup**
+**Goal**: One-command development environment startup
+
+**Create/Fix Docker Infrastructure:**
+```yaml
+# docker-compose.yml (UPDATE EXISTING)
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@db:5432/leanhive
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+  
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: leanhive
+    ports:
+      - "5432:5432"
+  
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+```
+
+**Validation Commands:**
+```bash
+docker-compose up -d
+docker-compose exec app python test_multi_cli_core.py
+docker-compose exec app python -m app.main
+```
+
+#### **Days 8-9: Smoke Test Implementation**
+**Goal**: Automated validation that system works
+
+```python
+# tests/smoke_tests.py (NEW FILE)
+import pytest
+import httpx
+import asyncio
+
+class TestSystemSmokeTests:
+    """Basic system functionality validation"""
+    
+    async def test_system_startup(self):
+        """System starts without import errors"""
+        from app.main import create_app
+        app = create_app()
+        assert app is not None
+    
+    async def test_health_endpoints(self):
+        """Health check endpoints respond correctly"""
+        async with httpx.AsyncClient() as client:
+            response = await client.get("http://localhost:8000/health")
+            assert response.status_code == 200
+    
+    async def test_database_connectivity(self):
+        """Database connection works"""
+        from app.core.database import get_db_connection
+        connection = await get_db_connection()
+        assert connection is not None
+    
+    async def test_redis_connectivity(self):
+        """Redis connection works"""
+        import redis.asyncio as redis
+        r = redis.from_url("redis://localhost:6379/0")
+        await r.ping()
+        
+    async def test_basic_agent_lifecycle(self):
+        """Can create, start, and stop an agent"""
+        from app.core.simple_orchestrator import SimpleOrchestrator, AgentSpec
+        
+        orchestrator = SimpleOrchestrator()
+        spec = AgentSpec(name="test", type="test", capabilities=["testing"])
+        
+        agent_id = await orchestrator.spawn_agent(spec)
+        assert agent_id is not None
+        
+        status = await orchestrator.get_agent_status(agent_id)
+        assert status["status"] == "active"
+```
+
+#### **Day 10: Error Handling & Logging**
+**Goal**: Proper error handling and structured logging
+
+```python
+# app/core/logging_config.py (NEW FILE)
+import logging
+import structlog
+
+def setup_logging():
+    """Configure structured logging for the application"""
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.dev.ConsoleRenderer(colors=True)
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+```
+
+## 🎯 **Success Criteria for Epic 1**
+
+### **Week 1 Completion Criteria:**
+- [ ] System starts without import errors (`python -m app.main` succeeds)
+- [ ] All core modules can be imported successfully
+- [ ] `SimpleOrchestrator` implements basic agent lifecycle
+- [ ] Core test suite passes 100% (`python test_multi_cli_core.py`)
+
+### **Week 2 Completion Criteria:**
+- [ ] Docker Compose brings up full environment (`docker-compose up`)
+- [ ] Health check endpoints return 200 status
+- [ ] Smoke tests pass in clean environment
+- [ ] Can create, start, and monitor basic agent through API
+
+### **Epic 1 Final Success Metrics:**
+- System startup time: < 30 seconds
+- Health check response time: < 100ms  
+- Zero import errors in CI/CD pipeline
+- Docker environment setup time: < 5 minutes
+- Basic CRUD operations work for agents and tasks
 
 ## 📁 **Critical Files & Locations**
 
-### **Core Implementation**
+### **Files You'll Modify:**
 ```
-app/core/agents/
-├── universal_agent_interface.py    # ✅ COMPLETE - Base class for all agents
-├── agent_registry.py              # ✅ COMPLETE - Agent management
-├── models.py                      # ✅ COMPLETE - Data models
-└── adapters/
-    ├── claude_code_adapter.py     # ✅ COMPLETE - Reference implementation
-    ├── cursor_adapter.py          # 🎯 NEXT - Implement using claude_code pattern
-    ├── github_copilot_adapter.py  # 🎯 NEXT - Implement using claude_code pattern
-    └── gemini_cli_adapter.py      # 🎯 NEXT - Implement using claude_code pattern
+app/
+├── api/
+│   └── agent_activation.py          # 🚨 Fix AgentRole import (line 15)
+├── core/
+│   ├── agent_manager.py            # 🔍 Verify AgentRole class exists
+│   ├── simple_orchestrator.py      # 🆕 Create this file (<500 lines)
+│   └── orchestrator.py             # ⚠️ Legacy file (don't delete, just don't use)
+└── main.py                         # 🔧 Update to use SimpleOrchestrator
 
-app/core/orchestration/
-├── universal_orchestrator.py      # ✅ COMPLETE - Main orchestrator
-├── task_router.py                 # ✅ COMPLETE - Intelligent routing
-├── workflow_coordinator.py       # ✅ COMPLETE - Multi-agent workflows
-└── execution_monitor.py          # ✅ COMPLETE - Real-time monitoring
+tests/
+├── smoke_tests.py                  # 🆕 Create comprehensive smoke tests
+├── test_imports.py                 # 🆕 Create import validation tests
+└── test_multi_cli_core.py          # ✅ Already working - don't change
 
-app/core/communication/
-├── context_preserver.py          # ✅ COMPLETE - Context management
-├── multi_cli_protocol.py         # ✅ COMPLETE - Protocol bridge
-└── communication_bridge.py       # ✅ COMPLETE - Multi-protocol connectivity
-
-app/core/isolation/
-└── worktree_manager.py           # ✅ COMPLETE - Security isolation
+docker-compose.yml                  # 🔧 Fix for one-command setup
+requirements.txt                    # 🔍 Add any missing dependencies
 ```
 
-### **Testing Infrastructure**
-```
-test_multi_cli_core.py                    # ✅ COMPLETE - Core validation (100% passing)
-tests/integration/test_multi_cli_integration.py  # ✅ COMPLETE - Full integration tests
-tests/unit/                               # 🎯 NEXT - Expand unit test coverage
-tests/load/                               # 🎯 NEXT - Load testing
-```
+### **Files You MUST NOT Change:**
+- `app/core/agents/universal_agent_interface.py` (stable API)
+- `app/core/communication/context_preserver.py` (performance optimized)
+- `test_multi_cli_core.py` (working 100% - don't break it)
+- Any adapter files (recently implemented and working)
 
-### **Documentation**
-```
-docs/IMPLEMENTATION_PLAN_MULTI_CLI.md    # ✅ COMPLETE - 4-Epic roadmap
-docs/TECHNICAL_SPECIFICATIONS.md        # ✅ COMPLETE - Implementation guide
-scripts/execute_task_*.sh                # ✅ COMPLETE - Automation scripts
-```
+## 🚀 **Development Workflow & Commands**
 
-## 🚀 **Quick Start Commands**
-
-### **Validate Current System**
+### **Initial Assessment Commands:**
 ```bash
-# Run core validation (should be 100% passing)
+# 1. Verify current state
+git status
+git log --oneline -5
+
+# 2. Test what's currently working
 python test_multi_cli_core.py
 
-# Run full integration tests
-python run_integration_tests.py
+# 3. Identify startup failures
+python -m app.main 2>&1 | head -20
 
-# Validate system architecture
-python validate_multi_cli_system.py
+# 4. Test specific imports
+python -c "from app.api.agent_activation import router"
+python -c "from app.core.agent_manager import AgentRole"
 ```
 
-### **Development Workflow**
+### **Development Loop:**
 ```bash
-# 1. Start with real CLI adapter implementation
-cd app/core/agents/adapters/
-# Copy claude_code_adapter.py as template for cursor_adapter.py
+# 1. Fix imports
+python -c "import app.core; import app.api"
 
-# 2. Add configuration for new agent
-# Update app/core/agents/models.py with new agent configurations
+# 2. Create SimpleOrchestrator  
+python -c "from app.core.simple_orchestrator import SimpleOrchestrator"
 
-# 3. Register new adapter in agent_registry.py
-# Add capability mappings and initialization
+# 3. Test smoke tests
+python -m pytest tests/smoke_tests.py -v
 
-# 4. Test integration
-python -c "
-from app.core.agents.adapters.cursor_adapter import CursorAdapter
-from app.core.agents.agent_registry import AgentRegistry
-# Test registration and basic operations
-"
+# 4. Validate with existing tests
+python test_multi_cli_core.py
 
-# 5. Update integration tests
-# Add new agent types to test_multi_cli_core.py
+# 5. Test Docker environment
+docker-compose up --build
 ```
 
-## ⚠️ **Critical Guidelines**
+### **Debugging Commands:**
+```bash
+# If imports fail:
+python -c "import sys; print('\n'.join(sys.path))"
+find . -name "*.py" -exec grep -l "AgentRole" {} \;
 
-### **DO NOT CHANGE** ✋
-- `app/core/agents/universal_agent_interface.py` - Stable API contract
-- `app/core/agents/agent_registry.py` - Production-tested core
-- `app/core/communication/context_preserver.py` - Performance-optimized
-- Core data models in `app/core/agents/models.py` - Breaking changes affect all agents
+# If tests fail:
+python -m pytest tests/ -v --tb=short
 
-### **EXTEND CAREFULLY** 🔍
-- Add new adapters by following `claude_code_adapter.py` pattern exactly
-- New capabilities must be added to `CapabilityType` enum
-- New agent types must be added to `AgentType` enum
-- All new components must include comprehensive error handling
+# If Docker fails:
+docker-compose logs app
+docker-compose exec app python -c "import app.main"
+```
 
-### **TEST FIRST** 🧪
-- Always run `python test_multi_cli_core.py` before and after changes
-- Add unit tests for all new components
-- Update integration tests for new functionality
-- Performance benchmarks must be maintained or improved
+## ⚠️ **Critical Guidelines & Success Principles**
 
-## 🎯 **Success Criteria**
+### **Engineering Approach:**
+1. **Test-Driven Development**: Write failing test → implement minimal code → refactor
+2. **YAGNI Principle**: Only implement what's needed for Epic 1 success criteria
+3. **Fail Fast**: If something doesn't work, fix it immediately
+4. **Simplicity First**: Prefer simple solutions over complex ones
 
-### **Phase 1 Complete When:**
-- [ ] Cursor CLI adapter implemented and tested
-- [ ] GitHub Copilot CLI adapter implemented and tested
-- [ ] Gemini CLI adapter implemented and tested
-- [ ] Real CLI integration tests passing
-- [ ] Production configuration complete
-- [ ] Redis/WebSocket integration working
+### **Risk Mitigation:**
+- **Import Errors**: Test each import individually before integration
+- **Over-Engineering**: Stick to <500 lines for SimpleOrchestrator
+- **Docker Issues**: Test locally before Docker integration
+- **Test Failures**: Never break existing passing tests
 
-### **Phase 2 Complete When:**
-- [ ] Load testing with 50+ concurrent agents successful
-- [ ] Monitoring dashboard operational
-- [ ] Performance metrics collection implemented
-- [ ] Advanced workflow patterns working
+### **Quality Gates:**
+Before considering any task complete:
+1. All imports work without errors
+2. Smoke tests pass in clean environment
+3. Existing tests still pass (don't break what works)
+4. Docker environment starts successfully
+5. Basic agent lifecycle demonstrable
 
-### **System Health Indicators:**
-- Integration tests: 100% passing (currently ✅)
-- Response times: <500ms task routing, <1s context handoffs
-- Memory usage: <50MB base overhead per orchestrator
-- Concurrent agents: 50+ supported
-- Context preservation: <1s packaging, <500ms restoration
+## 🎯 **Immediate Next Actions (Start Here)**
+
+### **First Hour Checklist:**
+1. **Verify Environment**:
+   ```bash
+   cd /Users/bogdan/work/leanvibe-dev/bee-hive
+   python test_multi_cli_core.py  # Should pass 100%
+   python -m app.main             # Will fail - this is expected
+   ```
+
+2. **Identify Import Errors**:
+   ```bash
+   python -c "from app.api.agent_activation import router" 2>&1
+   # Note the specific error message about AgentRole
+   ```
+
+3. **Create Epic 1 Task List**:
+   ```bash
+   # Use TodoWrite tool to create specific task tracking for Epic 1
+   ```
+
+4. **Start with Critical Import Fix**:
+   - Locate where `AgentRole` should be defined
+   - Fix the import in `app/api/agent_activation.py:15`
+   - Test that basic imports work
+
+### **Success Signal:**
+When you can run `python -c "import app.main"` without errors, you've successfully completed the import resolution phase.
 
 ## 📞 **Support & Resources**
 
-### **Architecture Reference**
-- Review `docs/TECHNICAL_SPECIFICATIONS.md` for detailed implementation guidance
-- Check `docs/IMPLEMENTATION_PLAN_MULTI_CLI.md` for 4-Epic roadmap
-- Use existing `claude_code_adapter.py` as the gold standard implementation pattern
+### **Reference Materials:**
+- `docs/PLAN.md` - Complete Epic 1-4 strategic plan
+- `app/config/production_config.py` - Production configuration system (already working)
+- `test_multi_cli_core.py` - Working test suite (100% passing)
 
-### **Testing Strategy**
-- Mock adapters in `test_multi_cli_core.py` show expected behavior
-- Integration tests in `tests/integration/` provide comprehensive validation
-- Performance benchmarks established and must be maintained
+### **Architecture Patterns to Follow:**
+- Use existing adapter patterns for consistency
+- Follow configuration patterns from production_config.py
+- Maintain test patterns from working test suite
 
-### **Emergency Debugging**
-```bash
-# If integration tests start failing:
-git log --oneline -10  # Check recent changes
-python test_multi_cli_core.py -v  # Verbose test output
-python -m pytest tests/ -v --tb=short  # Full test suite
-
-# Performance regression analysis:
-python -c "
-import time
-from app.core.agents.agent_registry import AgentRegistry
-start = time.time()
-registry = AgentRegistry()
-print(f'Registry init: {(time.time() - start) * 1000:.1f}ms')
-"
-```
+### **When to Escalate:**
+- If import errors cannot be resolved within 4 hours
+- If Docker environment cannot be stabilized within 1 day
+- If any existing tests start failing
+- If system cannot startup within Week 1
 
 ## 🎊 **Final Notes**
 
-You're inheriting a **production-ready, fully-tested system** with 100% integration test coverage. The heavy architectural work is complete. Your focus should be on:
+You're inheriting a partially working system with good foundation components but critical stability issues. Your focus should be on:
 
-1. **Real-world integration** with actual CLI tools
-2. **Production deployment** with monitoring and scaling
-3. **Advanced features** that leverage the solid foundation
+1. **Get basic system running** (imports work, system starts)
+2. **Simplify complexity** (reduce 3,891-line orchestrator to essentials)
+3. **Establish reliable development environment** (Docker setup)
+4. **Validate everything works** (comprehensive smoke tests)
 
-The system is designed to be **extended, not modified**. Follow the established patterns, maintain the test coverage, and build upon this robust foundation.
+**The goal is working software, not perfect software.** Make the minimal changes needed to achieve Epic 1 success criteria, then hand off to the next epic implementation.
 
-**The multi-CLI agent coordination dream is now a reality** - take it to production! 🚀
+**Epic 1 success enables all subsequent epics** - this is the foundation everything else builds on.
+
+---
+
+**Ready to proceed? Start with the import error resolution and build from there.** 🚀

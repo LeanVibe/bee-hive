@@ -20,16 +20,16 @@ from sqlalchemy import select, update, delete, and_
 from sqlalchemy.orm import selectinload
 
 from ...core.database import get_session_dependency
-from ...project_index.core import ProjectIndexCore
-from ...project_index.analyzer import ProjectAnalyzer
-from ...models.project_index import ProjectIndex, IndexStatus
+from ...project_index.core import ProjectIndexer
+from ...project_index.analyzer import CodeAnalyzer
+from ...models.project_index import ProjectIndex, ProjectStatus
 from ...schemas.project_index import (
-    ProjectCreateRequest,
-    ProjectUpdateRequest,
-    ProjectResponse,
-    ProjectListResponse,
-    ProjectAnalysisRequest,
-    ProjectStatsResponse
+    ProjectIndexCreate,
+    ProjectIndexUpdate,
+    ProjectIndexResponse,
+    ProjectIndexListResponse,
+    ProjectStatistics,
+    AnalysisSessionCreate
 )
 from ..middleware import (
     get_current_user_from_request
@@ -39,22 +39,22 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 # Project index dependencies
-async def get_project_index_core() -> ProjectIndexCore:
+async def get_project_index_core() -> ProjectIndexer:
     """Get project index core instance."""
-    return ProjectIndexCore()
+    return ProjectIndexer()
 
-async def get_project_analyzer() -> ProjectAnalyzer:
+async def get_project_analyzer() -> CodeAnalyzer:
     """Get project analyzer instance."""
-    return ProjectAnalyzer()
+    return CodeAnalyzer()
 
-@router.post("/", response_model=ProjectResponse, status_code=201)
+@router.post("/", response_model=ProjectIndexResponse, status_code=201)
 async def create_project(
     request: Request,
-    project_data: ProjectCreateRequest,
+    project_data: ProjectIndexCreate,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_session_dependency),
-    project_core: ProjectIndexCore = Depends(get_project_index_core)
-) -> ProjectResponse:
+    project_core: ProjectIndexer = Depends(get_project_index_core)
+) -> ProjectIndexResponse:
     """
     Create and index a new project.
     
@@ -70,7 +70,7 @@ async def create_project(
             description=project_data.description,
             repository_url=project_data.repository_url,
             local_path=project_data.local_path,
-            status=IndexStatus.PENDING,
+            status=ProjectStatus.PENDING,
             configuration=project_data.configuration or {},
             metadata={
                 "created_by": current_user.id,
@@ -101,7 +101,7 @@ async def create_project(
             created_by=current_user.id
         )
         
-        return ProjectResponse.from_orm(project)
+        return ProjectIndexResponse.from_orm(project)
         
     except Exception as e:
         await db.rollback()
@@ -112,7 +112,7 @@ async def create_project(
         )
 
 async def _index_project_background(
-    project_core: ProjectIndexCore,
+    project_core: ProjectIndexer,
     project_id: str,
     repository_url: Optional[str],
     local_path: Optional[str],
@@ -126,7 +126,7 @@ async def _index_project_background(
                 update(ProjectIndex)
                 .where(ProjectIndex.id == project_id)
                 .values(
-                    status=IndexStatus.INDEXING,
+                    status=ProjectStatus.INDEXING,
                     updated_at=datetime.utcnow()
                 )
             )
@@ -145,7 +145,7 @@ async def _index_project_background(
                 update(ProjectIndex)
                 .where(ProjectIndex.id == project_id)
                 .values(
-                    status=IndexStatus.COMPLETED,
+                    status=ProjectStatus.COMPLETED,
                     index_data=result.index_data,
                     file_count=result.file_count,
                     language_breakdown=result.language_breakdown,
@@ -167,7 +167,7 @@ async def _index_project_background(
                 update(ProjectIndex)
                 .where(ProjectIndex.id == project_id)
                 .values(
-                    status=IndexStatus.FAILED,
+                    status=ProjectStatus.FAILED,
                     error_message=str(e),
                     updated_at=datetime.utcnow()
                 )
@@ -180,15 +180,15 @@ async def _index_project_background(
             error=str(e)
         )
 
-@router.get("/", response_model=ProjectListResponse)
+@router.get("/", response_model=ProjectIndexListResponse)
 async def list_projects(
     request: Request,
     skip: int = Query(0, ge=0, description="Number of projects to skip"),
     limit: int = Query(50, ge=1, le=1000, description="Number of projects to return"),
-    status: Optional[IndexStatus] = Query(None, description="Filter by index status"),
+    status: Optional[ProjectStatus] = Query(None, description="Filter by index status"),
     search: Optional[str] = Query(None, description="Search by name or description"),
     db: AsyncSession = Depends(get_session_dependency)
-) -> ProjectListResponse:
+) -> ProjectIndexListResponse:
     """
     List all projects with optional filtering.
     
@@ -228,8 +228,8 @@ async def list_projects(
         total_result = await db.execute(count_query)
         total = len(total_result.scalars().all())
         
-        return ProjectListResponse(
-            projects=[ProjectResponse.from_orm(project) for project in projects],
+        return ProjectIndexListResponse(
+            projects=[ProjectIndexResponse.from_orm(project) for project in projects],
             total=total,
             skip=skip,
             limit=limit
@@ -242,11 +242,11 @@ async def list_projects(
             detail=f"Failed to list projects: {str(e)}"
         )
 
-@router.get("/{project_id}", response_model=ProjectResponse)
+@router.get("/{project_id}", response_model=ProjectIndexResponse)
 async def get_project(
     project_id: str,
     db: AsyncSession = Depends(get_session_dependency)
-) -> ProjectResponse:
+) -> ProjectIndexResponse:
     """
     Get details of a specific project.
     
@@ -264,7 +264,7 @@ async def get_project(
                 detail=f"Project {project_id} not found"
             )
             
-        return ProjectResponse.from_orm(project)
+        return ProjectIndexResponse.from_orm(project)
         
     except HTTPException:
         raise
@@ -275,13 +275,13 @@ async def get_project(
             detail=f"Failed to get project: {str(e)}"
         )
 
-@router.put("/{project_id}", response_model=ProjectResponse)
+@router.put("/{project_id}", response_model=ProjectIndexResponse)
 async def update_project(
     request: Request,
     project_id: str,
-    project_data: ProjectUpdateRequest,
+    project_data: ProjectIndexUpdate,
     db: AsyncSession = Depends(get_session_dependency)
-) -> ProjectResponse:
+) -> ProjectIndexResponse:
     """
     Update an existing project.
     
@@ -327,7 +327,7 @@ async def update_project(
             updated_fields=list(update_data.keys())
         )
         
-        return ProjectResponse.from_orm(updated_project)
+        return ProjectIndexResponse.from_orm(updated_project)
         
     except HTTPException:
         raise
@@ -388,10 +388,10 @@ async def delete_project(
 async def analyze_project(
     request: Request,
     project_id: str,
-    analysis_data: ProjectAnalysisRequest,
+    analysis_data: AnalysisSessionCreate,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_session_dependency),
-    analyzer: ProjectAnalyzer = Depends(get_project_analyzer)
+    analyzer: CodeAnalyzer = Depends(get_project_analyzer)
 ):
     """
     Perform detailed analysis on a project.
@@ -412,7 +412,7 @@ async def analyze_project(
                 detail=f"Project {project_id} not found"
             )
         
-        if project.status != IndexStatus.COMPLETED:
+        if project.status != ProjectStatus.COMPLETED:
             raise HTTPException(
                 status_code=400,
                 detail=f"Project must be indexed before analysis (current status: {project.status.value})"
@@ -458,7 +458,7 @@ async def analyze_project(
         )
 
 async def _analyze_project_background(
-    analyzer: ProjectAnalyzer,
+    analyzer: CodeAnalyzer,
     project_id: str,
     analysis_id: str,
     analysis_type: str,
@@ -496,7 +496,7 @@ async def reindex_project(
     project_id: str,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_session_dependency),
-    project_core: ProjectIndexCore = Depends(get_project_index_core)
+    project_core: ProjectIndexer = Depends(get_project_index_core)
 ):
     """
     Reindex an existing project.
@@ -522,7 +522,7 @@ async def reindex_project(
             update(ProjectIndex)
             .where(ProjectIndex.id == project_id)
             .values(
-                status=IndexStatus.INDEXING,
+                status=ProjectStatus.INDEXING,
                 updated_at=datetime.utcnow(),
                 updated_by=current_user.id
             )
@@ -587,7 +587,7 @@ async def list_project_files(
                 detail=f"Project {project_id} not found"
             )
         
-        if project.status != IndexStatus.COMPLETED:
+        if project.status != ProjectStatus.COMPLETED:
             raise HTTPException(
                 status_code=400,
                 detail="Project must be indexed to list files"
@@ -626,10 +626,10 @@ async def list_project_files(
             detail=f"Failed to list project files: {str(e)}"
         )
 
-@router.get("/stats/overview", response_model=ProjectStatsResponse)
+@router.get("/stats/overview", response_model=ProjectStatistics)
 async def get_project_stats(
     db: AsyncSession = Depends(get_session_dependency)
-) -> ProjectStatsResponse:
+) -> ProjectStatistics:
     """
     Get system-wide project statistics.
     
@@ -645,7 +645,7 @@ async def get_project_stats(
         total_projects = len(projects)
         
         status_counts = {}
-        for status in IndexStatus:
+        for status in ProjectStatus:
             status_counts[status.value] = len([p for p in projects if p.status == status])
         
         # Calculate language breakdown across all projects
@@ -659,7 +659,7 @@ async def get_project_stats(
             if project.file_count:
                 total_files += project.file_count
         
-        return ProjectStatsResponse(
+        return ProjectStatistics(
             total_projects=total_projects,
             status_breakdown=status_counts,
             total_indexed_files=total_files,

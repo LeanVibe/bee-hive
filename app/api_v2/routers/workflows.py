@@ -24,8 +24,8 @@ from ...core.workflow_engine import WorkflowEngine
 from ...models.workflow import Workflow, WorkflowStatus, WorkflowType
 from ...models.task import Task, TaskStatus
 from ...schemas.workflow import (
-    WorkflowCreateRequest,
-    WorkflowUpdateRequest,
+    WorkflowCreate,
+    WorkflowUpdate,
     WorkflowResponse,
     WorkflowListResponse,
     WorkflowExecutionRequest,
@@ -46,7 +46,7 @@ async def get_workflow_engine() -> WorkflowEngine:
 @router.post("/", response_model=WorkflowResponse, status_code=201)
 async def create_workflow(
     request: Request,
-    workflow_data: WorkflowCreateRequest,
+    workflow_data: WorkflowCreate,
     db: AsyncSession = Depends(get_session_dependency),
     workflow_engine: WorkflowEngine = Depends(get_workflow_engine)
 ) -> WorkflowResponse:
@@ -194,7 +194,7 @@ async def get_workflow(
 async def update_workflow(
     request: Request,
     workflow_id: str,
-    workflow_data: WorkflowUpdateRequest,
+    workflow_data: WorkflowUpdate,
     db: AsyncSession = Depends(get_session_dependency),
     workflow_engine: WorkflowEngine = Depends(get_workflow_engine)
 ) -> WorkflowResponse:

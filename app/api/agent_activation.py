@@ -14,8 +14,7 @@ import structlog
 
 from ..core.agent_manager import (
     AgentManager,
-    AgentSpec,
-    AgentRole
+    AgentSpec
 )
 from ..core.orchestrator import AgentRole
 

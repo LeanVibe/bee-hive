@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from ..models.workflow import WorkflowStatus, WorkflowPriority
+from ..models.workflow import WorkflowStatus, WorkflowPriority, WorkflowType
 
 
 class WorkflowCreate(BaseModel):
@@ -16,6 +16,7 @@ class WorkflowCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255, description="Workflow name")
     description: Optional[str] = Field(None, description="Workflow description")
     priority: WorkflowPriority = Field(default=WorkflowPriority.MEDIUM, description="Workflow priority")
+    workflow_type: WorkflowType = Field(default=WorkflowType.DEVELOPMENT, description="Workflow type")
     definition: Dict[str, Any] = Field(default_factory=dict, description="Workflow definition")
     context: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Workflow execution context")
     variables: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Workflow variables")
@@ -28,6 +29,7 @@ class WorkflowUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255, description="Workflow name")
     description: Optional[str] = Field(None, description="Workflow description")
     priority: Optional[WorkflowPriority] = Field(None, description="Workflow priority")
+    workflow_type: Optional[WorkflowType] = Field(None, description="Workflow type")
     definition: Optional[Dict[str, Any]] = Field(None, description="Workflow definition")
     context: Optional[Dict[str, Any]] = Field(None, description="Workflow execution context")
     variables: Optional[Dict[str, Any]] = Field(None, description="Workflow variables")
@@ -57,6 +59,7 @@ class WorkflowResponse(BaseModel):
     description: Optional[str]
     status: WorkflowStatus
     priority: WorkflowPriority
+    workflow_type: WorkflowType
     definition: Dict[str, Any]
     task_ids: List[uuid.UUID]
     dependencies: Dict[str, List[str]]

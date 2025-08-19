@@ -24,8 +24,8 @@ from ...core.orchestrator import AgentOrchestrator
 from ...models.agent import Agent, AgentStatus, AgentType
 from ...models.task import Task, TaskStatus
 from ...schemas.agent import (
-    AgentCreateRequest,
-    AgentUpdateRequest, 
+    AgentCreate,
+    AgentUpdate, 
     AgentResponse,
     AgentListResponse,
     AgentStatsResponse,
@@ -50,7 +50,7 @@ async def get_agent_orchestrator() -> AgentOrchestrator:
 @router.post("/", response_model=AgentResponse, status_code=201)
 async def create_agent(
     request: Request,
-    agent_data: AgentCreateRequest,
+    agent_data: AgentCreate,
     db: AsyncSession = Depends(get_session_dependency),
     orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
 ) -> AgentResponse:
@@ -201,7 +201,7 @@ async def get_agent(
 async def update_agent(
     request: Request,
     agent_id: str,
-    agent_data: AgentUpdateRequest,
+    agent_data: AgentUpdate,
     db: AsyncSession = Depends(get_session_dependency),
     orchestrator: AgentOrchestrator = Depends(get_agent_orchestrator)
 ) -> AgentResponse:

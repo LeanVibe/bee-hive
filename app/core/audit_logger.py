@@ -10,7 +10,12 @@ import json
 import hmac
 import hashlib
 import asyncio
-import geoip2.database
+try:
+    import geoip2.database
+    GEOIP_AVAILABLE = True
+except ImportError:
+    GEOIP_AVAILABLE = False
+    geoip2 = None
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
@@ -173,7 +178,7 @@ class AuditLogger:
         
         # GeoIP database (if available)
         self.geoip_reader = None
-        if self.enable_geo_lookup:
+        if self.enable_geo_lookup and GEOIP_AVAILABLE:
             try:
                 geoip_path = Path("data/GeoLite2-City.mmdb")
                 if geoip_path.exists():
@@ -181,6 +186,9 @@ class AuditLogger:
             except Exception as e:
                 logger.warning(f"GeoIP database not available: {e}")
                 self.enable_geo_lookup = False
+        elif self.enable_geo_lookup and not GEOIP_AVAILABLE:
+            logger.warning("GeoIP functionality disabled: geoip2 module not installed")
+            self.enable_geo_lookup = False
         
         # Start background tasks
         self._start_background_tasks()

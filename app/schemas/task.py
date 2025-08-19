@@ -59,3 +59,22 @@ class TaskListResponse(BaseModel):
     total: int
     offset: int
     limit: int
+
+
+class TaskAssignmentRequest(BaseModel):
+    """Schema for task assignment requests."""
+    agent_id: Optional[str] = Field(None, description="Specific agent ID to assign to")
+    priority_override: Optional[TaskPriority] = Field(None, description="Override task priority")
+    context_override: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Override task context")
+
+
+class TaskStatsResponse(BaseModel):
+    """Schema for task statistics."""
+    total_tasks: int
+    pending_tasks: int
+    running_tasks: int
+    completed_tasks: int
+    failed_tasks: int
+    average_completion_time_minutes: float
+    success_rate: float
+    active_agents: int

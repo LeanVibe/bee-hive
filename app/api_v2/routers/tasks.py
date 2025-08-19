@@ -24,8 +24,8 @@ from ...core.task_execution_engine import TaskExecutionEngine
 from ...models.task import Task, TaskStatus, TaskType, TaskPriority
 from ...models.agent import Agent, AgentStatus
 from ...schemas.task import (
-    TaskCreateRequest,
-    TaskUpdateRequest,
+    TaskCreate,
+    TaskUpdate,
     TaskResponse,
     TaskListResponse,
     TaskAssignmentRequest,
@@ -46,7 +46,7 @@ async def get_task_engine() -> TaskExecutionEngine:
 @router.post("/", response_model=TaskResponse, status_code=201)
 async def create_task(
     request: Request,
-    task_data: TaskCreateRequest,
+    task_data: TaskCreate,
     db: AsyncSession = Depends(get_session_dependency),
     task_engine: TaskExecutionEngine = Depends(get_task_engine)
 ) -> TaskResponse:
@@ -205,7 +205,7 @@ async def get_task(
 async def update_task(
     request: Request,
     task_id: str,
-    task_data: TaskUpdateRequest,
+    task_data: TaskUpdate,
     db: AsyncSession = Depends(get_session_dependency),
     task_engine: TaskExecutionEngine = Depends(get_task_engine)
 ) -> TaskResponse:
