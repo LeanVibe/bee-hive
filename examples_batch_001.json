@@ -1,0 +1,31 @@
+{
+  "batch_id": "examples_batch_001",
+  "plans": [
+    {
+      "file_path": "examples/context_preserver_usage.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Example execution",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ContextPreserverUsageScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original example logic here\n            self.logger.info(\"Example executed successfully\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ContextPreserverUsageScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.0,
+      "test_files": []
+    },
+    {
+      "file_path": "examples/websocket_client_example.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Example execution",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class WebsocketClientExampleScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original example logic here\n            self.logger.info(\"Example executed successfully\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(WebsocketClientExampleScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.0,
+      "test_files": []
+    }
+  ]
+}

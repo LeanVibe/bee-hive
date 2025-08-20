@@ -1,3 +1,4 @@
+import asyncio
 """
 Example WebSocket Client for Project Index Events
 

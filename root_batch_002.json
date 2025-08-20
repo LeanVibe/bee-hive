@@ -1,0 +1,96 @@
+{
+  "batch_id": "root_batch_002",
+  "plans": [
+    {
+      "file_path": "comprehensive_system_validation.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ComprehensiveSystemValidationScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing comprehensive_system_validation.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ComprehensiveSystemValidationScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "comprehensive_validation_suite.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ComprehensiveValidationSuiteScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing comprehensive_validation_suite.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ComprehensiveValidationSuiteScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "demo_context_compression.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DemoContextCompressionScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing demo_context_compression.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DemoContextCompressionScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "demo_enhanced_orchestrator.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DemoEnhancedOrchestratorScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing demo_enhanced_orchestrator.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DemoEnhancedOrchestratorScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "demo_launcher.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DemoLauncherScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing demo_launcher.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DemoLauncherScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "dependency_analyzer.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DependencyAnalyzerScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing dependency_analyzer.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DependencyAnalyzerScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "enhanced_configuration_generator.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Main execution logic",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class EnhancedConfigurationGeneratorScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Execute original main logic\n            self.logger.info(\"Executing enhanced_configuration_generator.py\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(EnhancedConfigurationGeneratorScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -15,
+      "complexity_score": 2.0,
+      "test_files": []
+    }
+  ]
+}
