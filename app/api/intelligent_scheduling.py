@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Path, status
 from pydantic import BaseModel, Field, validator
 
 from ..core.intelligent_sleep_manager import get_intelligent_sleep_manager
-from ..core.automated_orchestrator import get_automated_orchestrator
+from ..core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
 from ..core.sleep_analytics import get_sleep_analytics_engine
 from ..core.security import get_current_user, require_analytics_access
 
@@ -323,7 +323,7 @@ async def resolve_schedule_conflicts(
     try:
         logger.info("Resolving schedule conflicts")
         
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         # Detect existing conflicts
         conflicts = await orchestrator.detect_schedule_conflicts()

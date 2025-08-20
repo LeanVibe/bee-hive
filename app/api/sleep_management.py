@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Path, status
 from pydantic import BaseModel, Field, validator
 
 from ..core.sleep_wake_manager import get_sleep_wake_manager
-from ..core.automated_orchestrator import get_automated_orchestrator
+from ..core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
 from ..core.recovery_manager import get_recovery_manager
 from ..core.sleep_analytics import get_sleep_analytics_engine
 from ..core.security import get_current_user, require_analytics_access
@@ -399,7 +399,7 @@ async def create_schedule(
     try:
         logger.info(f"Creating schedule for {request.operation_type} operation")
         
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         # Create schedule
         schedule_id = await orchestrator.create_schedule(
@@ -434,7 +434,7 @@ async def list_schedules(
 ):
     """List all scheduled operations with filtering options."""
     try:
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         schedules = await orchestrator.get_schedules(
             agent_id=agent_id,
@@ -473,7 +473,7 @@ async def get_system_status(
     """
     try:
         sleep_manager = await get_sleep_wake_manager()
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         # Get base system status
         status = await sleep_manager.get_system_status()
@@ -531,7 +531,7 @@ async def update_system_configuration(
     try:
         logger.info("Updating system configuration")
         
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         # Update configuration
         config_result = await orchestrator.update_configuration({
@@ -614,7 +614,7 @@ async def run_system_optimization(
         logger.info(f"Running system optimization targeting {target_metric}")
         
         sleep_manager = await get_sleep_wake_manager()
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         # Run optimization
         optimization_results = await sleep_manager.optimize_performance()

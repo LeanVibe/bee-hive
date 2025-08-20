@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Path, status, Back
 from pydantic import BaseModel, Field, validator
 
 from ..core.sleep_analytics import get_sleep_analytics_engine
-from ..core.automated_orchestrator import get_automated_orchestrator
+from ..core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
 from ..core.recovery_manager import get_recovery_manager
 from ..core.sleep_wake_manager import get_sleep_wake_manager
 from ..core.security import get_current_user, require_analytics_access
@@ -141,7 +141,7 @@ async def get_realtime_system_status(
     try:
         sleep_manager = await get_sleep_wake_manager()
         analytics_engine = get_sleep_analytics_engine()
-        orchestrator = get_automated_orchestrator()
+        orchestrator = create_simple_orchestrator()
         
         # Get core system status
         system_status = await sleep_manager.get_system_status()

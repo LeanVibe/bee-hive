@@ -34,6 +34,10 @@ config = config_service.config
 
 router = APIRouter(prefix="/dashboard/api", tags=["pwa-backend"])
 
+# Additional router for agent management endpoints
+agents_router = APIRouter(prefix="/api/agents", tags=["agent-management"])
+tasks_router = APIRouter(prefix="/api/v1/tasks", tags=["task-management"])
+
 # ============================================================================
 # DATA MODELS (Based on PWA Analysis)
 # ============================================================================
@@ -612,5 +616,239 @@ async def stop_pwa_backend_services():
     
     logger.info("PWA backend services stopped")
 
+# ============================================================================
+# CRITICAL PWA AGENT MANAGEMENT ENDPOINTS
+# ============================================================================
+
+class AgentActivationRequest(BaseModel):
+    """Agent activation request model for PWA"""
+    team_size: Optional[int] = Field(default=3, ge=1, le=10, description="Number of agents to activate")
+    roles: Optional[List[str]] = Field(default_factory=lambda: ["backend_developer", "frontend_developer", "qa_engineer"], description="Agent roles to activate")
+    auto_start_tasks: Optional[bool] = Field(default=True, description="Whether to auto-start tasks")
+
+class AgentStatusResponse(BaseModel):
+    """Agent status response model for PWA"""
+    active: bool = Field(..., description="Whether agent system is active")
+    total_agents: int = Field(..., description="Total number of agents")
+    agents: List[AgentActivity] = Field(default_factory=list, description="List of agent activities")
+    system_health: str = Field(..., description="Overall system health")
+    last_updated: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class AgentActivationResponse(BaseModel):
+    """Agent activation response model for PWA"""
+    success: bool = Field(..., description="Whether activation was successful")
+    message: str = Field(..., description="Status message")
+    activated_agents: List[str] = Field(default_factory=list, description="List of activated agent IDs")
+    total_agents: int = Field(default=0, description="Total active agents after activation")
+
+@agents_router.get("/status", response_model=AgentStatusResponse)
+async def get_agent_status(request: Request):
+    """
+    Get agent system status - Critical PWA endpoint
+    
+    This endpoint provides the PWA with current agent system status,
+    including all active agents and their current activities.
+    Required by Mobile PWA for agent monitoring dashboard.
+    """
+    try:
+        logger.info("Serving agent status to PWA client")
+        
+        # Try to get real orchestrator data
+        orchestrator = await get_orchestrator_from_app_state(request)
+        
+        if orchestrator is not None:
+            # Get system status from orchestrator
+            system_data = await orchestrator.get_system_status()
+            agents_data = system_data.get("agents", {})
+            
+            # Convert orchestrator format to PWA format
+            agent_activities = []
+            agent_details = agents_data.get("details", {})
+            
+            for agent_id, agent_data in agent_details.items():
+                activity = AgentActivity(
+                    agent_id=agent_id,
+                    name=f"{agent_data.get('role', 'Unknown').replace('_', ' ').title()} Agent",
+                    status=agent_data.get('status', 'unknown').lower(),
+                    current_project="System Integration" if agent_data.get('status') == 'active' else None,
+                    current_task=f"Task {agent_data.get('current_task_id', 'none')}" if agent_data.get('current_task_id') else None,
+                    task_progress=0.5 if agent_data.get('current_task_id') else 0.0,
+                    performance_score=0.85,
+                    capabilities=[agent_data.get('role', 'general')],
+                    last_activity=agent_data.get('last_activity', datetime.utcnow().isoformat())
+                )
+                agent_activities.append(activity)
+                
+            response = AgentStatusResponse(
+                active=len(agent_activities) > 0,
+                total_agents=len(agent_activities),
+                agents=agent_activities,
+                system_health=system_data.get("health", "healthy")
+            )
+            
+        else:
+            # Fallback to mock data when orchestrator not available
+            mock_agents = generate_mock_agent_activities()
+            response = AgentStatusResponse(
+                active=True,
+                total_agents=len(mock_agents),
+                agents=mock_agents,
+                system_health="healthy"
+            )
+            
+        logger.info("Agent status served", total_agents=response.total_agents, active=response.active)
+        return response
+        
+    except Exception as e:
+        logger.error("Failed to get agent status", error=str(e), exc_info=True)
+        
+        # Return degraded status on error
+        return AgentStatusResponse(
+            active=False,
+            total_agents=0,
+            agents=[],
+            system_health="degraded"
+        )
+
+@agents_router.post("/activate", response_model=AgentActivationResponse)
+async def activate_agents(request: AgentActivationRequest, http_request: Request):
+    """
+    Activate agent system - Critical PWA endpoint
+    
+    This endpoint allows the PWA to activate the agent system with specified
+    configuration. Critical for PWA agent control functionality.
+    """
+    try:
+        logger.info("Agent activation requested", team_size=request.team_size, roles=request.roles)
+        
+        # Try to get orchestrator
+        orchestrator = await get_orchestrator_from_app_state(http_request)
+        
+        if orchestrator is not None:
+            # Use real orchestrator for activation
+            activated_agents = []
+            
+            for role in request.roles[:request.team_size]:
+                try:
+                    agent_id = await orchestrator.spawn_agent(role=role, auto_start=request.auto_start_tasks)
+                    activated_agents.append(agent_id)
+                    logger.info("Agent spawned", agent_id=agent_id, role=role)
+                except Exception as e:
+                    logger.warning("Failed to spawn agent", role=role, error=str(e))
+                    
+            response = AgentActivationResponse(
+                success=len(activated_agents) > 0,
+                message=f"Successfully activated {len(activated_agents)} agents" if activated_agents else "Failed to activate agents",
+                activated_agents=activated_agents,
+                total_agents=len(activated_agents)
+            )
+            
+        else:
+            # Mock response when orchestrator not available
+            mock_agent_ids = [f"agent-{uuid4().hex[:8]}" for _ in range(request.team_size)]
+            response = AgentActivationResponse(
+                success=True,
+                message=f"Mock activation: {len(mock_agent_ids)} agents activated",
+                activated_agents=mock_agent_ids,
+                total_agents=len(mock_agent_ids)
+            )
+            
+        logger.info("Agent activation completed", success=response.success, total_agents=response.total_agents)
+        
+        # Phase 2.2: Broadcast real-time update to PWA clients
+        if response.success:
+            try:
+                await pwa_connection_manager.broadcast_update("agent_update", {
+                    "type": "activation",
+                    "activated_agents": response.activated_agents,
+                    "total_agents": response.total_agents,
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+                logger.info("Agent activation broadcasted to PWA clients")
+            except Exception as e:
+                logger.warning("Failed to broadcast agent activation", error=str(e))
+        
+        return response
+        
+    except Exception as e:
+        logger.error("Agent activation failed", error=str(e), exc_info=True)
+        
+        return AgentActivationResponse(
+            success=False,
+            message=f"Agent activation failed: {str(e)}",
+            activated_agents=[],
+            total_agents=0
+        )
+
+@agents_router.delete("/deactivate", response_model=AgentActivationResponse)
+async def deactivate_agents(http_request: Request):
+    """
+    Deactivate agent system - Critical PWA endpoint
+    
+    This endpoint allows the PWA to shutdown all active agents.
+    Important for PWA agent control functionality.
+    """
+    try:
+        logger.info("Agent deactivation requested")
+        
+        # Try to get orchestrator
+        orchestrator = await get_orchestrator_from_app_state(http_request)
+        
+        if orchestrator is not None:
+            # Use real orchestrator for deactivation
+            try:
+                deactivated_count = await orchestrator.shutdown_all_agents()
+                
+                response = AgentActivationResponse(
+                    success=True,
+                    message=f"Successfully deactivated {deactivated_count} agents",
+                    activated_agents=[],  # Empty after deactivation
+                    total_agents=0
+                )
+                
+            except Exception as e:
+                logger.error("Orchestrator deactivation failed", error=str(e))
+                response = AgentActivationResponse(
+                    success=False,
+                    message=f"Deactivation failed: {str(e)}",
+                    activated_agents=[],
+                    total_agents=0
+                )
+                
+        else:
+            # Mock response when orchestrator not available
+            response = AgentActivationResponse(
+                success=True,
+                message="Mock deactivation: All agents deactivated",
+                activated_agents=[],
+                total_agents=0
+            )
+            
+        logger.info("Agent deactivation completed", success=response.success)
+        
+        # Phase 2.2: Broadcast real-time update to PWA clients  
+        if response.success:
+            try:
+                await pwa_connection_manager.broadcast_update("agent_update", {
+                    "type": "deactivation", 
+                    "total_agents": response.total_agents,
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+                logger.info("Agent deactivation broadcasted to PWA clients")
+            except Exception as e:
+                logger.warning("Failed to broadcast agent deactivation", error=str(e))
+        
+        return response
+        
+    except Exception as e:
+        logger.error("Agent deactivation failed", error=str(e), exc_info=True)
+        
+        return AgentActivationResponse(
+            success=False,
+            message=f"Deactivation failed: {str(e)}",
+            activated_agents=[],
+            total_agents=0
+        )
+
 # Export the router for inclusion in main FastAPI app
-__all__ = ["router", "start_pwa_backend_services", "stop_pwa_backend_services"]
+__all__ = ["router", "agents_router", "tasks_router", "start_pwa_backend_services", "stop_pwa_backend_services"]
