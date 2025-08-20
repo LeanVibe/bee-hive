@@ -333,6 +333,10 @@ def create_app() -> FastAPI:
     # Legacy compatibility routes for PWA expecting /dashboard/api/* (no HTML)
     app.include_router(dashboard_compat_router)
     
+    # Phase 2: PWA-Driven Backend - Essential endpoints for Mobile PWA
+    from .api.pwa_backend import router as pwa_backend_router
+    app.include_router(pwa_backend_router, tags=["pwa-backend"])
+    
     # Project Index API for intelligent code analysis and context optimization
     app.include_router(project_index_router, tags=["project-index"])
     
