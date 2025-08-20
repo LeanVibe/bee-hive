@@ -1,0 +1,100 @@
+{
+  "batch_id": "init_canary_001",
+  "files": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/app/__init__.py",
+      "current_size_lines": 16,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "__version__ = \"2.0.0\"",
+        "__author__ = \"LeanVibe Agent Hive Team\"",
+        "__email__ = \"dev@leanvibe.com\"",
+        "__all__: list[str] = []"
+      ],
+      "estimated_loc_savings": 7,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/demo/fallback/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/demo/api/__init__.py",
+      "current_size_lines": 1,
+      "has_imports": false,
+      "has_version": false,
+      "has_all": false,
+      "preserved_content": [],
+      "estimated_loc_savings": 0,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/app/project_index/__init__.py",
+      "current_size_lines": 347,
+      "has_imports": true,
+      "has_version": true,
+      "has_all": true,
+      "preserved_content": [
+        "from .core import ProjectIndexer",
+        "from .analyzer import CodeAnalyzer",
+        "from .file_monitor import (",
+        "from .cache import AdvancedCacheManager, CacheManager, CacheLayer, CacheStatistics, CacheKey",
+        "from .graph import DependencyGraph, GraphNode, GraphEdge, GraphCycle, GraphMetrics",
+        "from .context import ContextOptimizer, ContextType, ContextRelevanceScore, ContextCluster",
+        "from .incremental import IncrementalUpdateEngine, UpdateStrategy, UpdateResult, FileChangeContext",
+        "from .events import (",
+        "from .models import (",
+        "from .utils import (",
+        "__version__ = \"1.0.0\"",
+        "__author__ = \"LeanVibe Agent Hive Team\"",
+        "__email__ = \"team@leanvibe.com\"",
+        "__all__ = [",
+        "    \"__version__\",",
+        "    \"__author__\",",
+        "    \"__email__\",",
+        "    from ..models.project_index import FileType",
+        "    from ..models.project_index import DependencyType"
+      ],
+      "estimated_loc_savings": 323,
+      "requires_standardization": true
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/app/models/__init__.py",
+      "current_size_lines": 69,
+      "has_imports": true,
+      "has_version": false,
+      "has_all": true,
+      "preserved_content": [
+        "from .agent import Agent, AgentStatus, AgentType",
+        "from .session import Session, SessionStatus, SessionType",
+        "from .task import Task, TaskStatus, TaskPriority, TaskType",
+        "from .workflow import Workflow, WorkflowStatus, WorkflowPriority",
+        "from .context import Context, ContextType",
+        "from .conversation import Conversation",
+        "from .system_checkpoint import SystemCheckpoint, CheckpointType as SystemCheckpointType",
+        "from .sleep_wake import (",
+        "from .performance_metric import PerformanceMetric",
+        "from .observability import AgentEvent, EventType, ChatTranscript",
+        "from .github_integration import (",
+        "from .self_modification import (",
+        "from .prompt_optimization import (",
+        "from .coordination_event import (",
+        "from .coordination import (",
+        "from .project_index import (",
+        "__all__ = ["
+      ],
+      "estimated_loc_savings": 47,
+      "requires_standardization": true
+    }
+  ],
+  "estimated_loc_savings": 377,
+  "file_count": 5
+}

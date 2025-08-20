@@ -1,1 +1,5 @@
-# Demo API Package
+"""
+api module initialization.
+
+This module provides the api functionality.
+"""

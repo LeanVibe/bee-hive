@@ -182,20 +182,58 @@ This module provides {module_description}.
         lines = content.splitlines()
         preserved = []
         
-        for line in lines:
+        # Simple line-by-line approach with better validation
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             stripped = line.strip()
-            if not stripped or stripped.startswith('#'):
-                continue
-                
-            # Check if line matches preservation patterns
-            should_preserve = any(
-                pattern in stripped for pattern in self.preserve_patterns
-            )
             
-            if should_preserve:
-                preserved.append(line)
+            if not stripped or stripped.startswith('#'):
+                i += 1
+                continue
+            
+            # Handle single-line imports and metadata
+            if self._is_simple_preserve_line(stripped):
+                preserved.append(stripped)
+                i += 1
+                continue
+            
+            # Handle multi-line imports and assignments - skip them for now to avoid syntax issues
+            if ((stripped.startswith(('from ', 'import ')) and ('(' in stripped or stripped.endswith('\\'))) or
+                (stripped.startswith('__') and '=' in stripped and stripped.endswith('['))):
+                # Skip complex multi-line statements to avoid syntax errors
+                # These are typically large imports or __all__ definitions that are better left as-is
+                if stripped.endswith(('(', '[')):
+                    # Skip to closing delimiter
+                    i += 1
+                    closing_char = ')' if stripped.endswith('(') else ']'
+                    while i < len(lines):
+                        if lines[i].strip().endswith(closing_char):
+                            break
+                        i += 1
+                elif stripped.endswith('\\'):
+                    # Skip backslash-continued lines
+                    i += 1
+                    while i < len(lines) and lines[i-1].strip().endswith('\\'):
+                        i += 1
+                i += 1
+                continue
+            
+            i += 1
                 
         return preserved
+    
+    def _is_simple_preserve_line(self, line: str) -> bool:
+        """Check if line is a simple statement we should preserve."""
+        return (
+            # Simple imports
+            (line.startswith(('import ', 'from .')) and not line.endswith('(')) or
+            # Simple metadata assignments (single line only)
+            (any(f'__{meta}__' in line for meta in ['version', 'author', 'email']) and '=' in line and not line.endswith('[')) or
+            # Other single-line assignments we want to keep
+            (line.startswith('__') and '=' in line and not line.endswith(('[', '(')))
+        )
+    
     
     def _estimate_template_size(self, preserved_content: List[str]) -> int:
         """Estimate the size of the standardized template."""
@@ -330,43 +368,58 @@ This module provides {module_description}.
         # Organize preserved content
         imports = []
         metadata = []
-        all_definition = []
+        all_definition = None
         
         for line in analysis.preserved_content:
             stripped = line.strip()
-            if 'import' in stripped:
-                imports.append(line)
+            if 'import' in stripped and not '__all__' in stripped:
+                imports.append(stripped)
             elif '__all__' in stripped:
-                all_definition.append(line)
+                all_definition = stripped
             elif any(meta in stripped for meta in ['__version__', '__author__', '__email__']):
-                metadata.append(line)
+                metadata.append(stripped)
         
-        # Build sections
-        preserved_imports = '\n'.join(imports) if imports else ''
-        preserved_metadata = '\n'.join(metadata) if metadata else ''
-        preserved_all = '\n'.join(all_definition) if all_definition else ''
+        # Build content sections
+        sections = []
         
-        # Apply template
-        content = self.standard_template.format(
-            module_name=module_name,
-            module_description=module_description,
-            preserved_imports=preserved_imports,
-            preserved_metadata=preserved_metadata,
-            preserved_all=preserved_all
-        )
+        # 1. Docstring
+        sections.append(f'"""')
+        sections.append(f'{module_name} module initialization.')
+        sections.append('')
+        sections.append(f'This module provides {module_description}.')
+        sections.append('"""')
+        sections.append('')
         
-        # Clean up extra whitespace
-        lines = content.splitlines()
+        # 2. Imports
+        if imports:
+            sections.extend(imports)
+            sections.append('')
+        
+        # 3. Metadata
+        if metadata:
+            sections.extend(metadata)
+            sections.append('')
+        
+        # 4. __all__ definition
+        if all_definition:
+            sections.append(all_definition)
+            sections.append('')
+        
+        # Clean up extra blank lines
         cleaned_lines = []
         prev_blank = False
         
-        for line in lines:
+        for line in sections:
             if line.strip():
                 cleaned_lines.append(line)
                 prev_blank = False
             elif not prev_blank:
                 cleaned_lines.append('')
                 prev_blank = True
+        
+        # Ensure file ends with single newline
+        while cleaned_lines and not cleaned_lines[-1].strip():
+            cleaned_lines.pop()
         
         return '\n'.join(cleaned_lines) + '\n'
     
