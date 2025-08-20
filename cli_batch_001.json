@@ -1,0 +1,94 @@
+{
+  "batch_id": "batch_001",
+  "plans": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/app/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # REFACTORED: Use shared simple_main_wrapper instead of direct main() call\n            # This replaces: main()\n            # With standardized error handling and script name tracking\n            simple_main_wrapper(main, \"agent-hive-cli\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # REFACTORED: Use shared simple_main_wrapper instead of direct main() call\n            # This replaces: main()\n            # With standardized error handling and script name tracking\n            simple_main_wrapper(main, \"agent-hive-cli\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": 1,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/app/integrations/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == '__main__':\n    pi()\n\n\n# Export for use in other modules",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            pi()\n\n\n            port for use in other modules\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/identify/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == '__main__':\n    raise SystemExit(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            raise SystemExit(main())\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/commitizen/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/faker/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    execute_from_command_line()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            execute_from_command_line()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/safety/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    cli()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            cli()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/venv/lib/python3.12/site-packages/huggingface_hub/inference/_mcp/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    app()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            app()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    }
+  ],
+  "estimated_loc_savings": -59,
+  "file_count": 7
+}

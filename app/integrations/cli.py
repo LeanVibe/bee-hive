@@ -1,3 +1,4 @@
+import asyncio
 """
 CLI Integration Commands for Project Index Framework Setup
 
@@ -533,9 +534,20 @@ def test(api_url):
 
 
 # Make CLI available as a module
-if __name__ == '__main__':
-    pi()
+if __name__ == "__main__":
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class CliScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            pi()
 
 
-# Export for use in other modules
+            port for use in other modules
+            
+            return {"status": "completed"}
+    
+    script_main(CliScript)
 __all__ = ['pi', 'ProjectIndexCLI', 'cli_manager']
