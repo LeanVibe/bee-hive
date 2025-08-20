@@ -1,15 +1,11 @@
 """
-Quality Gates Framework
+Quality Gates module for LeanVibe Agent Hive 2.0.
 
-This module provides automated quality gates for the Epic 1-4 transformation.
-Quality gates ensure that consolidation only proceeds when all safety criteria are met.
+This module provides quality gates functionality.
 """
 
 __version__ = "1.0.0"
-__author__ = "LeanVibe Agent Hive"
+__author__ = "LeanVibe Agent Hive Team"
+__email__ = "dev@leanvibe.com"
 
-from .consolidation_quality_gates import ConsolidationQualityGates
-
-__all__ = [
-    "ConsolidationQualityGates"
-]
+__all__ = []
