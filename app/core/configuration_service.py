@@ -26,7 +26,7 @@ from pathlib import Path
 from enum import Enum
 from functools import lru_cache
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Configure logging for this module
@@ -53,18 +53,18 @@ class LogLevel(str, Enum):
 class DatabaseConfiguration(BaseSettings):
     """Database configuration with connection pooling and performance settings."""
     
-    url: str = Field(..., env="DATABASE_URL", description="Primary database connection URL")
-    pool_size: int = Field(20, env="DATABASE_POOL_SIZE", description="Connection pool size")
-    max_overflow: int = Field(30, env="DATABASE_MAX_OVERFLOW", description="Max pool overflow connections")
-    pool_timeout: int = Field(30, env="DATABASE_POOL_TIMEOUT", description="Pool checkout timeout (seconds)")
-    pool_recycle: int = Field(3600, env="DATABASE_POOL_RECYCLE", description="Connection recycle time (seconds)")
-    pool_pre_ping: bool = Field(True, env="DATABASE_POOL_PRE_PING", description="Enable connection pre-ping")
+    url: str = Field(..., validation_alias=AliasChoices("DATABASE_URL"), description="Primary database connection URL")
+    pool_size: int = Field(20, validation_alias=AliasChoices("DATABASE_POOL_SIZE"), description="Connection pool size")
+    max_overflow: int = Field(30, validation_alias=AliasChoices("DATABASE_MAX_OVERFLOW"), description="Max pool overflow connections")
+    pool_timeout: int = Field(30, validation_alias=AliasChoices("DATABASE_POOL_TIMEOUT"), description="Pool checkout timeout (seconds)")
+    pool_recycle: int = Field(3600, validation_alias=AliasChoices("DATABASE_POOL_RECYCLE"), description="Connection recycle time (seconds)")
+    pool_pre_ping: bool = Field(True, validation_alias=AliasChoices("DATABASE_POOL_PRE_PING"), description="Enable connection pre-ping")
     
     # pgvector specific settings
-    embedding_dimensions: int = Field(1536, env="DATABASE_EMBEDDING_DIMENSIONS", description="Vector embedding dimensions")
-    hnsw_m: int = Field(16, env="DATABASE_HNSW_M", description="HNSW index parameter M")
-    hnsw_ef_construction: int = Field(64, env="DATABASE_HNSW_EF_CONSTRUCTION", description="HNSW construction parameter")
-    hnsw_ef_search: int = Field(40, env="DATABASE_HNSW_EF_SEARCH", description="HNSW search parameter")
+    embedding_dimensions: int = Field(1536, validation_alias=AliasChoices("DATABASE_EMBEDDING_DIMENSIONS"), description="Vector embedding dimensions")
+    hnsw_m: int = Field(16, validation_alias=AliasChoices("DATABASE_HNSW_M"), description="HNSW index parameter M")
+    hnsw_ef_construction: int = Field(64, validation_alias=AliasChoices("DATABASE_HNSW_EF_CONSTRUCTION"), description="HNSW construction parameter")
+    hnsw_ef_search: int = Field(40, validation_alias=AliasChoices("DATABASE_HNSW_EF_SEARCH"), description="HNSW search parameter")
     
     @field_validator('url')
     @classmethod
@@ -78,7 +78,12 @@ class DatabaseConfiguration(BaseSettings):
             raise ValueError(f'Database URL must start with one of: {", ".join(valid_prefixes)}')
         return v
 
-    model_config = SettingsConfigDict(env_prefix="DATABASE_")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class RedisConfiguration(BaseSettings):
@@ -102,7 +107,13 @@ class RedisConfiguration(BaseSettings):
             raise ValueError('Redis URL must start with redis:// or rediss://')
         return v
 
-    model_config = SettingsConfigDict(env_prefix="REDIS_")
+    model_config = SettingsConfigDict(
+        env_prefix="REDIS_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class SecurityConfiguration(BaseSettings):
@@ -147,7 +158,13 @@ class SecurityConfiguration(BaseSettings):
             return [item.strip() for item in v.split(",")]
         return v
 
-    model_config = SettingsConfigDict(env_prefix="SECURITY_")
+    model_config = SettingsConfigDict(
+        env_prefix="SECURITY_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class PerformanceConfiguration(BaseSettings):
@@ -168,7 +185,13 @@ class PerformanceConfiguration(BaseSettings):
     target_p99_latency_ms: float = Field(500.0, env="TARGET_P99_LATENCY_MS", description="Target P99 latency")
     target_success_rate: float = Field(0.999, env="TARGET_SUCCESS_RATE", description="Target success rate")
 
-    model_config = SettingsConfigDict(env_prefix="PERFORMANCE_")
+    model_config = SettingsConfigDict(
+        env_prefix="PERFORMANCE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class ErrorHandlingConfiguration(BaseSettings):
@@ -194,7 +217,13 @@ class ErrorHandlingConfiguration(BaseSettings):
     dlq_max_size: int = Field(100000, env="DLQ_MAX_SIZE", description="DLQ maximum size")
     dlq_ttl_hours: int = Field(72, env="DLQ_TTL_HOURS", description="DLQ time-to-live")
 
-    model_config = SettingsConfigDict(env_prefix="ERROR_HANDLING_")
+    model_config = SettingsConfigDict(
+        env_prefix="ERROR_HANDLING_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class ProjectIndexConfiguration(BaseSettings):
@@ -218,7 +247,13 @@ class ProjectIndexConfiguration(BaseSettings):
             return [ext.strip() for ext in v.split(",")]
         return v
 
-    model_config = SettingsConfigDict(env_prefix="PROJECT_INDEX_")
+    model_config = SettingsConfigDict(
+        env_prefix="PROJECT_INDEX_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class SandboxConfiguration(BaseSettings):
@@ -238,7 +273,13 @@ class SandboxConfiguration(BaseSettings):
     response_delay_max: float = Field(4.0, env="SANDBOX_RESPONSE_DELAY_MAX", description="Maximum response delay")
     show_banner: bool = Field(True, env="SANDBOX_SHOW_BANNER", description="Show sandbox banner")
 
-    model_config = SettingsConfigDict(env_prefix="SANDBOX_")
+    model_config = SettingsConfigDict(
+        env_prefix="SANDBOX_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class ExternalServicesConfiguration(BaseSettings):
@@ -262,7 +303,13 @@ class ExternalServicesConfiguration(BaseSettings):
     github_private_key: Optional[str] = Field(None, env="GITHUB_PRIVATE_KEY", description="GitHub App private key")
     github_api_url: str = Field("https://api.github.com", env="GITHUB_API_URL", description="GitHub API URL")
 
-    model_config = SettingsConfigDict(env_prefix="EXTERNAL_")
+    model_config = SettingsConfigDict(
+        env_prefix="EXTERNAL_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra='ignore'
+    )
 
 
 class ApplicationConfiguration(BaseSettings):
@@ -283,14 +330,14 @@ class ApplicationConfiguration(BaseSettings):
     repositories_dir: Path = Field(Path("./repositories"), env="REPOSITORIES_DIR", description="Repositories directory")
     
     # Sub-configurations
-    database: DatabaseConfiguration = DatabaseConfiguration()
-    redis: RedisConfiguration = RedisConfiguration()
-    security: SecurityConfiguration = SecurityConfiguration()
-    performance: PerformanceConfiguration = PerformanceConfiguration()
-    error_handling: ErrorHandlingConfiguration = ErrorHandlingConfiguration()
-    project_index: ProjectIndexConfiguration = ProjectIndexConfiguration()
-    sandbox: SandboxConfiguration = SandboxConfiguration()
-    external_services: ExternalServicesConfiguration = ExternalServicesConfiguration()
+    database: DatabaseConfiguration = Field(default_factory=DatabaseConfiguration)
+    redis: RedisConfiguration = Field(default_factory=RedisConfiguration)
+    security: SecurityConfiguration = Field(default_factory=SecurityConfiguration)
+    performance: PerformanceConfiguration = Field(default_factory=PerformanceConfiguration)
+    error_handling: ErrorHandlingConfiguration = Field(default_factory=ErrorHandlingConfiguration)
+    project_index: ProjectIndexConfiguration = Field(default_factory=ProjectIndexConfiguration)
+    sandbox: SandboxConfiguration = Field(default_factory=SandboxConfiguration)
+    external_services: ExternalServicesConfiguration = Field(default_factory=ExternalServicesConfiguration)
 
     @field_validator('environment', mode='before')
     @classmethod
