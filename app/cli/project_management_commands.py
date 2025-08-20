@@ -23,11 +23,10 @@ from sqlalchemy.orm import Session
 from ..core.database import get_db_session
 from ..core.kanban_state_machine import KanbanStateMachine, KanbanState
 from ..models.project_management import (
-    Project, Epic, PRD, Task, ProjectStatus, EpicStatus, 
+    Project, Epic, PRD, ProjectTask as Task, ProjectStatus, EpicStatus, 
     PRDStatus, TaskType, TaskPriority
 )
 from ..core.short_id_generator import get_generator, EntityType
-from .enhanced_commands import enhanced_command_group
 
 console = Console()
 

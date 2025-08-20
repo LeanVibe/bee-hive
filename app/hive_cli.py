@@ -32,9 +32,72 @@ try:
     from rich.panel import Panel
 
     # Import our existing CLI components
-    from .cli.unix_commands import unix_commands
+    try:
+        from .cli.unix_commands import HiveContext, ctx
+        unix_commands_available = True
+    except ImportError:
+        from pathlib import Path
+        import requests
+        from dataclasses import dataclass
+        
+        @dataclass
+        class HiveContext:
+            api_base: str = "http://localhost:18080"
+            config_dir: Path = Path.home() / ".config" / "agent-hive"
+            
+            def __post_init__(self):
+                self.config_dir.mkdir(parents=True, exist_ok=True)
+            
+            def api_call(self, endpoint: str, method: str = "GET", data: dict = None):
+                try:
+                    url = f"{self.api_base}/{endpoint.lstrip('/')}"
+                    if method == "GET":
+                        response = requests.get(url, timeout=5)
+                    elif method == "POST":
+                        response = requests.post(url, json=data, timeout=5)
+                    else:
+                        response = requests.request(method, url, json=data, timeout=5)
+                    
+                    if response.status_code == 200:
+                        return response.json() if response.content else {}
+                    return None
+                except Exception:
+                    return None
+        
+        ctx = HiveContext()
+        unix_commands_available = False
+    
     # Import from project root
-    from deploy_agent_cli import AgentDeploymentCLI
+    try:
+        from deploy_agent_cli import AgentDeploymentCLI
+        agent_cli_available = True
+    except ImportError:
+        agent_cli_available = False
+    
+    # Import existing CLI modules
+    try:
+        from .cli.project_management_commands import project_management
+        project_management_available = True
+    except ImportError:
+        project_management_available = False
+    
+    try:
+        from .cli.enhanced_project_commands import enhanced_project_commands
+        enhanced_project_available = True
+    except ImportError:
+        enhanced_project_available = False
+    
+    try:
+        from .cli.short_id_commands import short_id
+        short_id_available = True
+    except ImportError:
+        short_id_available = False
+    
+    try:
+        from .cli.agent_session_commands import agent as agent_session_commands
+        agent_session_available = True
+    except ImportError:
+        agent_session_available = False
 
     console = Console()
 
@@ -126,22 +189,39 @@ try:
     @click.option('--json', 'output_json', is_flag=True, help='Output as JSON')
     def status(watch, output_json):
         """📊 Show system and agent status"""
-        deployment_cli = AgentDeploymentCLI()
-        
-        if watch:
-            import time
-            console.print("👁️ Watching system status (Press Ctrl+C to stop)...")
-            try:
-                while True:
-                    click.clear()
-                    console.print(f"🕒 {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                    asyncio.run(deployment_cli.system_status())
-                    time.sleep(2)
-            except KeyboardInterrupt:
-                console.print("\n🛑 Stopped watching")
-                return
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            
+            if watch:
+                import time
+                console.print("👁️ Watching system status (Press Ctrl+C to stop)...")
+                try:
+                    while True:
+                        click.clear()
+                        console.print(f"🕒 {time.strftime('%Y-%m-%d %H:%M:%S')}")
+                        asyncio.run(deployment_cli.system_status())
+                        time.sleep(2)
+                except KeyboardInterrupt:
+                    console.print("\n🛑 Stopped watching")
+                    return
+            else:
+                asyncio.run(deployment_cli.system_status())
         else:
-            asyncio.run(deployment_cli.system_status())
+            # Fallback status check
+            api_port = os.getenv("API_PORT", "18080")
+            try:
+                import requests
+                response = requests.get(f"http://localhost:{api_port}/health", timeout=2)
+                if response.status_code == 200:
+                    console.print("✅ [green]System is running[/green]")
+                    if output_json:
+                        import json
+                        print(json.dumps({"status": "healthy", "api_port": api_port}))
+                else:
+                    console.print("❌ [red]System is not responding[/red]")
+            except:
+                console.print("❌ [red]System is not running[/red]")
+                console.print(f"💡 Run 'hive start' to start services")
 
     @hive.command()
     @click.option('--follow', '-f', is_flag=True, help='Follow log output')
@@ -171,15 +251,23 @@ try:
     @click.option('--format', '-o', type=click.Choice(['table', 'json']), default='table')
     def agent_list(format):
         """📋 List all agents (alias: ls)"""
-        deployment_cli = AgentDeploymentCLI()
-        asyncio.run(deployment_cli.list_agents())
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            asyncio.run(deployment_cli.list_agents())
+        else:
+            console.print("[yellow]Agent CLI not available[/yellow]")
+            console.print("Available agents: Run 'hive doctor' for system status")
 
     @agent.command('ls')
     @click.option('--format', '-o', type=click.Choice(['table', 'json']), default='table') 
     def agent_ls(format):
         """📋 List all agents (alias for list)"""
-        deployment_cli = AgentDeploymentCLI()
-        asyncio.run(deployment_cli.list_agents())
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            asyncio.run(deployment_cli.list_agents())
+        else:
+            console.print("[yellow]Agent CLI not available[/yellow]")
+            console.print("Available agents: Run 'hive doctor' for system status")
 
     @agent.command('deploy')
     @click.argument('role', type=click.Choice(['backend-developer', 'frontend-developer', 'qa-engineer', 'devops-engineer', 'meta-agent']))
@@ -187,32 +275,42 @@ try:
     @click.option('--name', help='Custom agent name')
     def agent_deploy(role, task, name):
         """🚀 Deploy a new agent"""
-        deployment_cli = AgentDeploymentCLI()
-        
-        console.print(f"🚀 [bold blue]Deploying {role} agent...[/bold blue]")
-        agent_id = asyncio.run(deployment_cli.deploy_agent(role, task, True))
-        
-        if agent_id:
-            console.print(f"✅ [green]Agent deployed: {agent_id}[/green]")
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            
+            console.print(f"🚀 [bold blue]Deploying {role} agent...[/bold blue]")
+            agent_id = asyncio.run(deployment_cli.deploy_agent(role, task, True))
+            
+            if agent_id:
+                console.print(f"✅ [green]Agent deployed: {agent_id}[/green]")
+            else:
+                console.print("❌ [red]Deployment failed[/red]")
         else:
-            console.print("❌ [red]Deployment failed[/red]")
+            console.print("[red]Agent deployment CLI not available[/red]")
+            console.print("💡 Make sure the system is properly configured")
 
     @agent.command('run')
     @click.argument('role', type=click.Choice(['backend-developer', 'frontend-developer', 'qa-engineer', 'devops-engineer', 'meta-agent']))
     @click.option('--task', '-t', default='Autonomous development task')
     def agent_run(role, task):
         """🏃 Run an agent (alias for deploy)"""
-        deployment_cli = AgentDeploymentCLI()
-        agent_id = asyncio.run(deployment_cli.deploy_agent(role, task, True))
-        
-        if agent_id:
-            console.print(f"✅ [green]Agent running: {agent_id}[/green]")
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            agent_id = asyncio.run(deployment_cli.deploy_agent(role, task, True))
+            
+            if agent_id:
+                console.print(f"✅ [green]Agent running: {agent_id}[/green]")
+        else:
+            console.print("[red]Agent deployment CLI not available[/red]")
 
     @agent.command('ps')
     def agent_ps():
         """📊 Show running agents (docker ps style)"""
-        deployment_cli = AgentDeploymentCLI()
-        asyncio.run(deployment_cli.list_agents())
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            asyncio.run(deployment_cli.list_agents())
+        else:
+            console.print("[yellow]Agent CLI not available[/yellow]")
 
     # === QUICK ACTIONS ===
     @hive.command()
@@ -255,51 +353,54 @@ try:
     @hive.command()
     def demo():
         """🎭 Run complete system demonstration"""
-        deployment_cli = AgentDeploymentCLI()
-        
-        console.print("🎭 [bold blue]Running Agent Hive Demo[/bold blue]")
-        console.print("This will deploy multiple agents and show system capabilities")
-        
-        if click.confirm("Continue with demo?"):
-            # Run the demo from deployment CLI
-            import inspect
-            demo_method = getattr(deployment_cli.__class__, 'demo_async', None)
-            if demo_method:
-                # Get the demo implementation from deploy_agent_cli
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            
+            console.print("🎭 [bold blue]Running Agent Hive Demo[/bold blue]")
+            console.print("This will deploy multiple agents and show system capabilities")
+            
+            if click.confirm("Continue with demo?"):
+                # Run the demo from deployment CLI
                 asyncio.run(demo_agent_deployment())
+        else:
+            console.print("[red]Demo requires agent deployment CLI[/red]")
+            console.print("💡 Make sure the system is properly configured")
 
     async def demo_agent_deployment():
         """Demo function for agent deployment"""
-        deployment_cli = AgentDeploymentCLI()
-        
-        console.print("🔄 [bold]Phase 1: Deploying Backend Developer[/bold]")
-        backend_agent = await deployment_cli.deploy_agent(
-            'backend-developer', 
-            'Implement missing PWA backend API endpoints',
-            True
-        )
-        
-        console.print("🔄 [bold]Phase 2: Deploying QA Engineer[/bold]")
-        qa_agent = await deployment_cli.deploy_agent(
-            'qa-engineer',
-            'Create comprehensive tests for new backend endpoints',
-            True
-        )
-        
-        console.print("🔄 [bold]Phase 3: Deploying Meta-Agent[/bold]")
-        meta_agent = await deployment_cli.deploy_agent(
-            'meta-agent',
-            'Analyze system architecture and recommend optimizations',
-            True
-        )
-        
-        console.print("\n🎉 [green]Demo Complete![/green]")
-        console.print("Deployed agents:")
-        if backend_agent: console.print(f"  - Backend Developer: {backend_agent}")
-        if qa_agent: console.print(f"  - QA Engineer: {qa_agent}")
-        if meta_agent: console.print(f"  - Meta-Agent: {meta_agent}")
-        
-        await deployment_cli.system_status()
+        if agent_cli_available:
+            deployment_cli = AgentDeploymentCLI()
+            
+            console.print("🔄 [bold]Phase 1: Deploying Backend Developer[/bold]")
+            backend_agent = await deployment_cli.deploy_agent(
+                'backend-developer', 
+                'Implement missing PWA backend API endpoints',
+                True
+            )
+            
+            console.print("🔄 [bold]Phase 2: Deploying QA Engineer[/bold]")
+            qa_agent = await deployment_cli.deploy_agent(
+                'qa-engineer',
+                'Create comprehensive tests for new backend endpoints',
+                True
+            )
+            
+            console.print("🔄 [bold]Phase 3: Deploying Meta-Agent[/bold]")
+            meta_agent = await deployment_cli.deploy_agent(
+                'meta-agent',
+                'Analyze system architecture and recommend optimizations',
+                True
+            )
+            
+            console.print("\n🎉 [green]Demo Complete![/green]")
+            console.print("Deployed agents:")
+            if backend_agent: console.print(f"  - Backend Developer: {backend_agent}")
+            if qa_agent: console.print(f"  - QA Engineer: {qa_agent}")
+            if meta_agent: console.print(f"  - Meta-Agent: {meta_agent}")
+            
+            await deployment_cli.system_status()
+        else:
+            console.print("[red]Demo requires agent deployment CLI[/red]")
 
     @hive.command()
     def doctor():
@@ -376,6 +477,31 @@ try:
         version_table.add_row("Platform", sys.platform)
         
         console.print(version_table)
+
+    # Register existing command groups if available
+    if project_management_available:
+        try:
+            hive.add_command(project_management, name="project")
+        except Exception as e:
+            pass  # Silently fail during import
+    
+    if enhanced_project_available:
+        try:
+            hive.add_command(enhanced_project_commands, name="execute")
+        except Exception as e:
+            pass  # Silently fail during import
+    
+    if short_id_available:
+        try:
+            hive.add_command(short_id, name="id")
+        except Exception as e:
+            pass  # Silently fail during import
+    
+    if agent_session_available:
+        try:
+            hive.add_command(agent_session_commands, name="session")
+        except Exception as e:
+            pass  # Silently fail during import
 
     def main():
         """Main entry point for the hive CLI."""

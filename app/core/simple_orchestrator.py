@@ -30,6 +30,20 @@ from .enhanced_logging import (
     set_request_context,
     correlation_context
 )
+from .enhanced_agent_launcher import (
+    EnhancedAgentLauncher, 
+    AgentLauncherType, 
+    AgentLaunchConfig,
+    create_enhanced_agent_launcher
+)
+from .agent_redis_bridge import (
+    AgentRedisBridge,
+    create_agent_redis_bridge,
+    MessageType,
+    Priority as MessagePriority
+)
+from .tmux_session_manager import TmuxSessionManager
+from .short_id_generator import ShortIDGenerator
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.task import Task, TaskStatus, TaskPriority
 
@@ -132,7 +146,11 @@ class SimpleOrchestrator:
         self,
         db_session_factory: Optional[DatabaseDependency] = None,
         cache: Optional[CacheDependency] = None,
-        anthropic_client: Optional[AsyncAnthropic] = None
+        anthropic_client: Optional[AsyncAnthropic] = None,
+        agent_launcher: Optional[EnhancedAgentLauncher] = None,
+        redis_bridge: Optional[AgentRedisBridge] = None,
+        tmux_manager: Optional[TmuxSessionManager] = None,
+        short_id_generator: Optional[ShortIDGenerator] = None
     ):
         """Initialize orchestrator with dependency injection."""
         self._db_session_factory = db_session_factory
@@ -141,26 +159,82 @@ class SimpleOrchestrator:
             api_key=settings.ANTHROPIC_API_KEY
         )
         
+        # Tmux and agent management components
+        self._agent_launcher = agent_launcher
+        self._redis_bridge = redis_bridge
+        self._tmux_manager = tmux_manager
+        self._short_id_generator = short_id_generator or ShortIDGenerator()
+        
         # In-memory agent registry for fast access
         self._agents: Dict[str, AgentInstance] = {}
         self._task_assignments: Dict[str, TaskAssignment] = {}
         
+        # Enhanced agent tracking
+        self._tmux_agents: Dict[str, str] = {}  # agent_id -> session_id
+        
         # Performance metrics
         self._operation_count = 0
         self._last_performance_check = datetime.utcnow()
+        
+        # Initialization flag
+        self._initialized = False
+    
+    async def initialize(self) -> None:
+        """Initialize the orchestrator and its dependencies."""
+        if self._initialized:
+            return
+        
+        logger.info("🚀 Initializing Enhanced SimpleOrchestrator...")
+        
+        try:
+            # Initialize tmux manager if not provided
+            if self._tmux_manager is None:
+                self._tmux_manager = TmuxSessionManager()
+                await self._tmux_manager.initialize()
+            
+            # Initialize agent launcher if not provided
+            if self._agent_launcher is None:
+                self._agent_launcher = await create_enhanced_agent_launcher(
+                    tmux_manager=self._tmux_manager,
+                    short_id_generator=self._short_id_generator
+                )
+            
+            # Initialize Redis bridge if not provided
+            if self._redis_bridge is None:
+                self._redis_bridge = await create_agent_redis_bridge()
+            
+            self._initialized = True
+            
+            logger.info("✅ Enhanced SimpleOrchestrator initialized successfully")
+            
+        except Exception as e:
+            logger.error("❌ Failed to initialize Enhanced SimpleOrchestrator", error=str(e))
+            raise
     
     @with_performance_logging("spawn_agent")
     async def spawn_agent(
         self,
         role: AgentRole,
-        agent_id: Optional[str] = None
+        agent_id: Optional[str] = None,
+        agent_type: AgentLauncherType = AgentLauncherType.CLAUDE_CODE,
+        task_id: Optional[str] = None,
+        workspace_name: Optional[str] = None,
+        git_branch: Optional[str] = None,
+        working_directory: Optional[str] = None,
+        environment_vars: Optional[Dict[str, str]] = None
     ) -> str:
         """
-        Spawn a new agent instance.
+        Spawn a new agent instance with tmux session integration.
         
         Args:
             role: The role for the new agent
             agent_id: Optional specific ID, otherwise generated
+            agent_type: Type of CLI agent to launch
+            task_id: Optional task ID to assign to the agent
+            workspace_name: Optional workspace directory name
+            git_branch: Optional git branch for the workspace
+            working_directory: Optional working directory
+            environment_vars: Optional environment variables
             
         Returns:
             The agent ID
@@ -168,10 +242,15 @@ class SimpleOrchestrator:
         Raises:
             SimpleOrchestratorError: If spawning fails
         """
+        # Ensure orchestrator is initialized
+        if not self._initialized:
+            await self.initialize()
+        
         async with operation_context(
             enhanced_logger, 
             "spawn_agent",
             role=role.value,
+            agent_type=agent_type.value,
             requested_agent_id=agent_id
         ) as operation_id:
             try:
@@ -183,6 +262,7 @@ class SimpleOrchestrator:
                 enhanced_logger.logger = enhanced_logger.logger.bind(
                     agent_id=agent_id,
                     role=role.value,
+                    agent_type=agent_type.value,
                     operation_id=operation_id
                 )
                 
@@ -216,6 +296,25 @@ class SimpleOrchestrator:
                     )
                     raise SimpleOrchestratorError("Maximum concurrent agents reached")
                 
+                # Create launch configuration
+                launch_config = AgentLaunchConfig(
+                    agent_type=agent_type,
+                    task_id=task_id,
+                    workspace_name=workspace_name,
+                    git_branch=git_branch,
+                    working_directory=working_directory,
+                    environment_vars=environment_vars
+                )
+                
+                # Launch agent using enhanced launcher
+                launch_result = await self._agent_launcher.launch_agent(
+                    config=launch_config,
+                    agent_name=f"{role.value}-{agent_id[:8]}"
+                )
+                
+                if not launch_result.success:
+                    raise SimpleOrchestratorError(f"Failed to launch agent: {launch_result.error_message}")
+                
                 # Create agent instance
                 agent = AgentInstance(
                     id=agent_id,
@@ -225,28 +324,55 @@ class SimpleOrchestrator:
                 
                 # Store in memory registry
                 self._agents[agent_id] = agent
+                self._tmux_agents[agent_id] = launch_result.session_id
+                
+                # Register agent with Redis bridge
+                if self._redis_bridge:
+                    await self._redis_bridge.register_agent(
+                        agent_id=agent_id,
+                        agent_type=agent_type.value,
+                        session_name=launch_result.session_name,
+                        capabilities=[role.value],
+                        consumer_group="general_agents",
+                        workspace_path=launch_result.workspace_path
+                    )
                 
                 # Persist to database if available
                 if self._db_session_factory:
-                    await self._persist_agent(agent)
+                    await self._persist_enhanced_agent(agent, launch_result)
                 
                 # Cache for fast access
                 if self._cache:
-                    await self._cache.set(f"agent:{agent_id}", agent.to_dict(), ttl=3600)
+                    agent_data = agent.to_dict()
+                    agent_data.update({
+                        "session_id": launch_result.session_id,
+                        "session_name": launch_result.session_name,
+                        "workspace_path": launch_result.workspace_path,
+                        "agent_type": agent_type.value
+                    })
+                    await self._cache.set(f"agent:{agent_id}", agent_data, ttl=3600)
                 
                 # Log successful creation
                 enhanced_logger.log_audit_event(
-                    "agent_created",
+                    "enhanced_agent_created",
                     f"agent:{agent_id}",
                     success=True,
                     agent_role=role.value,
+                    agent_type=agent_type.value,
+                    session_name=launch_result.session_name,
+                    workspace_path=launch_result.workspace_path,
+                    launch_time=launch_result.launch_time_seconds,
                     total_active_agents=active_agents + 1
                 )
                 
                 logger.info(
-                    "Agent spawned successfully",
+                    "Enhanced agent spawned successfully",
                     agent_id=agent_id,
                     role=role.value,
+                    agent_type=agent_type.value,
+                    session_name=launch_result.session_name,
+                    workspace_path=launch_result.workspace_path,
+                    launch_time=launch_result.launch_time_seconds,
                     total_agents=len(self._agents)
                 )
                 
@@ -257,15 +383,17 @@ class SimpleOrchestrator:
                 enhanced_logger.log_error(e, {
                     "operation": "spawn_agent",
                     "agent_id": agent_id,
-                    "role": role.value if role else None
+                    "role": role.value if role else None,
+                    "agent_type": agent_type.value if agent_type else None
                 })
                 
                 enhanced_logger.log_audit_event(
-                    "agent_creation_failed",
+                    "enhanced_agent_creation_failed",
                     f"agent:{agent_id or 'unknown'}",
                     success=False,
                     error=str(e),
-                    role=role.value if role else None
+                    role=role.value if role else None,
+                    agent_type=agent_type.value if agent_type else None
                 )
                 
                 raise SimpleOrchestratorError(f"Failed to spawn agent: {e}") from e
@@ -334,6 +462,17 @@ class SimpleOrchestrator:
                 old_status = agent.status
                 agent.status = AgentStatus.INACTIVE
                 agent.last_activity = datetime.utcnow()
+                
+                # Terminate tmux session if exists
+                if agent_id in self._tmux_agents:
+                    session_id = self._tmux_agents[agent_id]
+                    if self._agent_launcher:
+                        await self._agent_launcher.terminate_agent(agent_id, cleanup_workspace=True)
+                    del self._tmux_agents[agent_id]
+                
+                # Unregister from Redis bridge
+                if self._redis_bridge:
+                    await self._redis_bridge.unregister_agent(agent_id)
                 
                 # Remove from active registry
                 del self._agents[agent_id]
@@ -441,34 +580,63 @@ class SimpleOrchestrator:
                                         if a.status == AgentStatus.ACTIVE and a.current_task_id is None])
                 )
                 
-                # Find suitable agent
-                suitable_agent = await self._find_suitable_agent(
-                    preferred_role=preferred_agent_role,
-                    task_type=task_type
-                )
+                # Convert task priority to message priority
+                msg_priority = MessagePriority.NORMAL
+                if priority == TaskPriority.HIGH:
+                    msg_priority = MessagePriority.HIGH
+                elif priority == TaskPriority.LOW:
+                    msg_priority = MessagePriority.LOW
+                elif priority == TaskPriority.URGENT:
+                    msg_priority = MessagePriority.URGENT
                 
-                if not suitable_agent:
-                    enhanced_logger.log_security_event(
-                        "task_delegation_failed_no_agents",
-                        "MEDIUM",
-                        task_type=task_type,
-                        priority=priority.value,
-                        total_agents=len(self._agents),
-                        active_agents=len([a for a in self._agents.values() 
-                                         if a.status == AgentStatus.ACTIVE])
+                # Determine required capabilities based on task type and role
+                required_capabilities = []
+                if preferred_agent_role:
+                    required_capabilities.append(preferred_agent_role.value)
+                if task_type:
+                    required_capabilities.append(task_type)
+                
+                # Try to assign task via Redis bridge first
+                assigned_agent_id = None
+                if self._redis_bridge:
+                    assigned_agent_id = await self._redis_bridge.assign_task_to_agent(
+                        task_id=task_id,
+                        task_description=task_description,
+                        required_capabilities=required_capabilities,
+                        priority=msg_priority
                     )
-                    raise TaskDelegationError("No suitable agent available")
+                
+                # Fallback to local agent selection if Redis bridge unavailable
+                if not assigned_agent_id:
+                    suitable_agent = await self._find_suitable_agent(
+                        preferred_role=preferred_agent_role,
+                        task_type=task_type
+                    )
+                    
+                    if not suitable_agent:
+                        enhanced_logger.log_security_event(
+                            "task_delegation_failed_no_agents",
+                            "MEDIUM",
+                            task_type=task_type,
+                            priority=priority.value,
+                            total_agents=len(self._agents),
+                            active_agents=len([a for a in self._agents.values() 
+                                             if a.status == AgentStatus.ACTIVE])
+                        )
+                        raise TaskDelegationError("No suitable agent available")
+                    
+                    assigned_agent_id = suitable_agent.id
+                    
+                    # Update agent with current task
+                    suitable_agent.current_task_id = task_id
+                    suitable_agent.last_activity = datetime.utcnow()
                 
                 # Create task assignment
                 assignment = TaskAssignment(
                     task_id=task_id,
-                    agent_id=suitable_agent.id,
+                    agent_id=assigned_agent_id,
                     status=TaskStatus.PENDING
                 )
-                
-                # Update agent with current task
-                suitable_agent.current_task_id = task_id
-                suitable_agent.last_activity = datetime.utcnow()
                 
                 # Store assignment
                 self._task_assignments[task_id] = assignment
@@ -490,19 +658,18 @@ class SimpleOrchestrator:
                     "task_delegated",
                     f"task:{task_id}",
                     success=True,
-                    agent_id=suitable_agent.id,
-                    agent_role=suitable_agent.role.value,
+                    agent_id=assigned_agent_id,
                     task_type=task_type,
-                    priority=priority.value
+                    priority=priority.value,
+                    via_redis_bridge=bool(self._redis_bridge and assigned_agent_id)
                 )
                 
                 logger.info(
                     "Task delegated successfully",
                     task_id=task_id,
-                    agent_id=suitable_agent.id,
+                    agent_id=assigned_agent_id,
                     task_type=task_type,
-                    priority=priority.value,
-                    agent_role=suitable_agent.role.value
+                    priority=priority.value
                 )
                 
                 self._operation_count += 1
@@ -684,13 +851,191 @@ class SimpleOrchestrator:
         except Exception as e:
             logger.warning("Failed to persist task to database",
                          task_id=task_id, error=str(e))
+    
+    # Enhanced methods for tmux integration
+    
+    async def _persist_enhanced_agent(self, agent: AgentInstance, launch_result) -> None:
+        """Persist enhanced agent with tmux session details to database."""
+        if not self._db_session_factory:
+            return
+            
+        try:
+            async with get_session() as session:
+                db_agent = Agent(
+                    id=agent.id,
+                    role=agent.role.value,
+                    agent_type=AgentType.CLAUDE_CODE,  # Could be enhanced to support other types
+                    status=agent.status,
+                    tmux_session=launch_result.session_name,
+                    created_at=agent.created_at
+                )
+                session.add(db_agent)
+                await session.commit()
+        except Exception as e:
+            logger.warning("Failed to persist enhanced agent to database", 
+                         agent_id=agent.id, error=str(e))
+    
+    async def get_agent_session_info(self, agent_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed session information for an agent."""
+        if agent_id not in self._agents:
+            return None
+        
+        agent = self._agents[agent_id]
+        session_info = None
+        
+        # Get session info from tmux manager
+        if self._tmux_manager and agent_id in self._tmux_agents:
+            session_id = self._tmux_agents[agent_id]
+            session_info = self._tmux_manager.get_session_info(session_id)
+        
+        # Get agent status from launcher
+        launcher_status = None
+        if self._agent_launcher:
+            launcher_status = await self._agent_launcher.get_agent_status(agent_id)
+        
+        # Get Redis bridge status
+        bridge_status = None
+        if self._redis_bridge:
+            bridge_status = await self._redis_bridge.get_agent_status(agent_id)
+        
+        return {
+            "agent_instance": agent.to_dict(),
+            "session_info": session_info.to_dict() if session_info else None,
+            "launcher_status": launcher_status,
+            "bridge_status": bridge_status,
+            "tmux_session_id": self._tmux_agents.get(agent_id)
+        }
+    
+    async def list_agent_sessions(self) -> List[Dict[str, Any]]:
+        """List all agent sessions with detailed information."""
+        sessions = []
+        
+        for agent_id in self._agents.keys():
+            session_info = await self.get_agent_session_info(agent_id)
+            if session_info:
+                sessions.append(session_info)
+        
+        return sessions
+    
+    async def attach_to_agent_session(self, agent_id: str) -> Optional[str]:
+        """Get the tmux session name for attaching to an agent session."""
+        if agent_id not in self._agents:
+            return None
+        
+        session_info = await self.get_agent_session_info(agent_id)
+        if session_info and session_info.get("session_info"):
+            return session_info["session_info"]["session_name"]
+        
+        return None
+    
+    async def execute_command_in_agent_session(
+        self,
+        agent_id: str,
+        command: str,
+        window_name: Optional[str] = None,
+        capture_output: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Execute a command in an agent's tmux session."""
+        if agent_id not in self._tmux_agents:
+            return None
+        
+        session_id = self._tmux_agents[agent_id]
+        
+        if self._tmux_manager:
+            return await self._tmux_manager.execute_command(
+                session_id=session_id,
+                command=command,
+                window_name=window_name,
+                capture_output=capture_output
+            )
+        
+        return None
+    
+    async def get_agent_logs(self, agent_id: str, lines: int = 100) -> Optional[List[str]]:
+        """Get recent logs from an agent session."""
+        launcher_status = None
+        if self._agent_launcher:
+            launcher_status = await self._agent_launcher.get_agent_status(agent_id)
+        
+        if launcher_status and launcher_status.get("recent_logs"):
+            return launcher_status["recent_logs"][-lines:]
+        
+        return None
+    
+    async def get_enhanced_system_status(self) -> Dict[str, Any]:
+        """Get enhanced system status including tmux and Redis information."""
+        base_status = await self.get_system_status()
+        
+        # Add tmux manager metrics
+        tmux_metrics = {}
+        if self._tmux_manager:
+            tmux_metrics = await self._tmux_manager.get_session_metrics()
+        
+        # Add agent launcher metrics
+        launcher_metrics = {}
+        if self._agent_launcher:
+            launcher_metrics = await self._agent_launcher.get_launcher_metrics()
+        
+        # Add Redis bridge metrics
+        bridge_metrics = {}
+        if self._redis_bridge:
+            bridge_metrics = await self._redis_bridge.get_bridge_metrics()
+        
+        # Enhanced status
+        enhanced_status = {
+            **base_status,
+            "tmux_integration": {
+                "enabled": bool(self._tmux_manager),
+                "metrics": tmux_metrics
+            },
+            "agent_launcher": {
+                "enabled": bool(self._agent_launcher),
+                "metrics": launcher_metrics
+            },
+            "redis_bridge": {
+                "enabled": bool(self._redis_bridge),
+                "metrics": bridge_metrics
+            },
+            "enhanced_agents": {
+                "total_with_sessions": len(self._tmux_agents),
+                "session_mappings": len(self._tmux_agents),
+                "initialized": self._initialized
+            }
+        }
+        
+        return enhanced_status
+    
+    async def shutdown(self) -> None:
+        """Shutdown the orchestrator and all its components."""
+        logger.info("🛑 Shutting down Enhanced SimpleOrchestrator...")
+        
+        # Shutdown all active agents
+        active_agents = list(self._agents.keys())
+        for agent_id in active_agents:
+            try:
+                await self.shutdown_agent(agent_id, graceful=True)
+            except Exception as e:
+                logger.warning(f"Failed to shutdown agent {agent_id}: {e}")
+        
+        # Shutdown components
+        if self._redis_bridge:
+            await self._redis_bridge.shutdown()
+        
+        if self._tmux_manager:
+            await self._tmux_manager.shutdown()
+        
+        logger.info("✅ Enhanced SimpleOrchestrator shutdown complete")
 
 
 # Factory function for dependency injection
 def create_simple_orchestrator(
     db_session_factory: Optional[DatabaseDependency] = None,
     cache: Optional[CacheDependency] = None,
-    anthropic_client: Optional[AsyncAnthropic] = None
+    anthropic_client: Optional[AsyncAnthropic] = None,
+    agent_launcher: Optional[EnhancedAgentLauncher] = None,
+    redis_bridge: Optional[AgentRedisBridge] = None,
+    tmux_manager: Optional[TmuxSessionManager] = None,
+    short_id_generator: Optional[ShortIDGenerator] = None
 ) -> SimpleOrchestrator:
     """
     Factory function to create SimpleOrchestrator with proper dependencies.
@@ -700,8 +1045,35 @@ def create_simple_orchestrator(
     return SimpleOrchestrator(
         db_session_factory=db_session_factory,
         cache=cache,
+        anthropic_client=anthropic_client,
+        agent_launcher=agent_launcher,
+        redis_bridge=redis_bridge,
+        tmux_manager=tmux_manager,
+        short_id_generator=short_id_generator
+    )
+
+
+# Enhanced factory function for full initialization
+async def create_enhanced_simple_orchestrator(
+    db_session_factory: Optional[DatabaseDependency] = None,
+    cache: Optional[CacheDependency] = None,
+    anthropic_client: Optional[AsyncAnthropic] = None
+) -> SimpleOrchestrator:
+    """
+    Factory function to create fully initialized SimpleOrchestrator with tmux integration.
+    
+    This initializes all components and their dependencies automatically.
+    """
+    orchestrator = create_simple_orchestrator(
+        db_session_factory=db_session_factory,
+        cache=cache,
         anthropic_client=anthropic_client
     )
+    
+    # Initialize the orchestrator (this will set up all components)
+    await orchestrator.initialize()
+    
+    return orchestrator
 
 
 # Global instance for API usage (can be overridden in tests)

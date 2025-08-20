@@ -20,6 +20,7 @@ from .unix_commands import (
     hive_scale, hive_config, hive_init, hive_metrics, hive_debug, 
     hive_doctor, hive_version, hive_help
 )
+from .agent_session_commands import agent
 
 console = Console()
 
@@ -135,6 +136,9 @@ for name, func in COMMAND_REGISTRY.items():
         short_help=func.short_help
     )
     hive_cli.add_command(cmd)
+
+# Add agent session management commands
+hive_cli.add_command(agent)
 
 
 def install_unix_commands():

@@ -13,7 +13,7 @@ Examples:
 """
 
 import sys
-import uuid
+import uuid as uuid_module
 from typing import List, Optional, Dict, Any, Tuple, Union
 from dataclasses import dataclass
 from enum import Enum
@@ -46,8 +46,8 @@ class IdResolutionResult:
     """Result of ID resolution attempt."""
     success: bool
     short_id: Optional[str] = None
-    uuid: Optional[uuid.UUID] = None
-    matches: List[Tuple[str, uuid.UUID]] = None
+    uuid: Optional[uuid_module.UUID] = None
+    matches: List[Tuple[str, uuid_module.UUID]] = None
     error: Optional[str] = None
     
     @property
@@ -105,7 +105,7 @@ class ShortIdResolver:
         try:
             if self._is_uuid_format(id_input):
                 # Handle UUID input
-                uuid_obj = uuid.UUID(id_input.lower())
+                uuid_obj = uuid_module.UUID(id_input.lower())
                 short_id, resolved_uuid = resolve_short_id(uuid_obj)
                 return IdResolutionResult(
                     success=True,
@@ -143,13 +143,13 @@ class ShortIdResolver:
     def _is_uuid_format(self, value: str) -> bool:
         """Check if string looks like a UUID."""
         try:
-            uuid.UUID(value)
+            uuid_module.UUID(value)
             return True
         except (ValueError, AttributeError):
             return False
     
     def _find_partial_matches(self, partial_id: str, 
-                             entity_type: Optional[EntityType] = None) -> List[Tuple[str, uuid.UUID]]:
+                             entity_type: Optional[EntityType] = None) -> List[Tuple[str, uuid_module.UUID]]:
         """
         Find partial matches for an ID fragment.
         
@@ -190,7 +190,7 @@ class ShortIdResolver:
         
         return unique_matches
     
-    def _handle_matches(self, matches: List[Tuple[str, uuid.UUID]], 
+    def _handle_matches(self, matches: List[Tuple[str, uuid_module.UUID]], 
                        original_input: str,
                        strategy: IdResolutionStrategy) -> IdResolutionResult:
         """
@@ -262,8 +262,8 @@ class ShortIdResolver:
             matches=matches
         )
     
-    def _interactive_select(self, matches: List[Tuple[str, uuid.UUID]], 
-                           original_input: str) -> Optional[Tuple[str, uuid.UUID]]:
+    def _interactive_select(self, matches: List[Tuple[str, uuid_module.UUID]], 
+                           original_input: str) -> Optional[Tuple[str, uuid_module.UUID]]:
         """
         Interactive selection for ambiguous matches.
         
