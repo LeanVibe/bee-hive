@@ -653,4 +653,15 @@ async def main():
         print(f"- {group.pattern_description}: {group.consolidation_potential} LOC, ROI {group.roi_score:.1f}")
         
 if __name__ == "__main__":
-    asyncio.run(main())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class DuplicateLogicDetectorScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await main()
+            
+            return {"status": "completed"}
+    
+    script_main(DuplicateLogicDetectorScript)

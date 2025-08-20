@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Manager Analysis Tool for Epic 1.5 Consolidation
@@ -262,6 +263,17 @@ class ManagerAnalyzer:
         return self.generate_consolidation_report()
 
 if __name__ == "__main__":
-    analyzer = ManagerAnalyzer("/Users/bogdan/work/leanvibe-dev/bee-hive/app/core")
-    report = analyzer.analyze()
-    print(report)
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class ManagerAnalysisScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            analyzer = ManagerAnalyzer("/Users/bogdan/work/leanvibe-dev/bee-hive/app/core")
+            report = analyzer.analyze()
+            self.logger.info(report)
+            
+            return {"status": "completed"}
+    
+    script_main(ManagerAnalysisScript)

@@ -1,3 +1,4 @@
+import asyncio
 """
 Production Configuration Extension for LeanVibe Agent Hive 2.0
 Enhanced configuration for new CLI adapters and real-time communication
@@ -434,7 +435,18 @@ ENCRYPTION_KEY=development-encryption-key
 """
 
 if __name__ == "__main__":
-    # Example usage and validation
-    config = create_production_config(Environment.DEVELOPMENT)
-    print("Development configuration created successfully")
-    print(f"Configuration validation issues: {config.validate()}")
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class ProductionConfigScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            # Example usage and validation
+            config = create_production_config(Environment.DEVELOPMENT)
+            self.logger.info("Development configuration created successfully")
+            self.logger.info(f"Configuration validation issues: {config.validate()}")
+            
+            return {"status": "completed"}
+    
+    script_main(ProductionConfigScript)

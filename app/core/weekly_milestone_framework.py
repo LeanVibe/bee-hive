@@ -789,53 +789,64 @@ async def get_milestone_framework() -> WeeklyMilestoneFramework:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_milestone_framework():
-        """Test the weekly milestone framework."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class WeeklyMilestoneFrameworkScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        framework = await get_milestone_framework()
-        
-        # Create milestone plan
-        guarantee_id = "guarantee_test_20250801"
-        milestone_plan = await framework.create_milestone_plan(
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_milestone_framework():
+            """Test the weekly milestone framework."""
+
+            framework = await get_milestone_framework()
+
+            # Create milestone plan
+            guarantee_id = "guarantee_test_20250801"
+            milestone_plan = await framework.create_milestone_plan(
             guarantee_id, "mvp_development"
-        )
-        
-        print(f"Created milestone plan with {len(milestone_plan)} weeks")
-        
-        # Test milestone validation
-        week_1_milestone = milestone_plan["week_1"]
-        
-        # Sample validation data
-        validation_data = {
+            )
+
+            self.logger.info(f"Created milestone plan with {len(milestone_plan)} weeks")
+
+            # Test milestone validation
+            week_1_milestone = milestone_plan["week_1"]
+
+            # Sample validation data
+            validation_data = {
             week_1_milestone.success_criteria[0].criterion_id: {
-                "stakeholder_approval": {
-                    "total_stakeholders": 3,
-                    "approved_count": 3,
-                    "feedback": ["Excellent requirements analysis", "Very thorough", "Ready to proceed"],
-                    "approval_timestamps": ["2025-08-01T10:00:00Z", "2025-08-01T11:00:00Z", "2025-08-01T12:00:00Z"]
-                },
-                "deliverable_url": "https://docs.company.com/requirements-spec"
+            "stakeholder_approval": {
+            "total_stakeholders": 3,
+            "approved_count": 3,
+            "feedback": ["Excellent requirements analysis", "Very thorough", "Ready to proceed"],
+            "approval_timestamps": ["2025-08-01T10:00:00Z", "2025-08-01T11:00:00Z", "2025-08-01T12:00:00Z"]
+            },
+            "deliverable_url": "https://docs.company.com/requirements-spec"
             },
             week_1_milestone.success_criteria[1].criterion_id: {
-                "technical_review": {
-                    "review_score": 9.2,
-                    "reviewer_feedback": "Solid architecture design with good scalability considerations",
-                    "review_date": "2025-08-01T15:00:00Z"
-                },
-                "deliverable_url": "https://docs.company.com/architecture-design"
+            "technical_review": {
+            "review_score": 9.2,
+            "reviewer_feedback": "Solid architecture design with good scalability considerations",
+            "review_date": "2025-08-01T15:00:00Z"
+            },
+            "deliverable_url": "https://docs.company.com/architecture-design"
             }
-        }
-        
-        validation_result = await framework.validate_weekly_milestone(
+            }
+
+            validation_result = await framework.validate_weekly_milestone(
             week_1_milestone.milestone_id,
             validation_data
-        )
-        
-        print(f"Validation Result:")
-        print(f"Overall Score: {validation_result.overall_score:.1f}")
-        print(f"Status: {validation_result.status.value}")
-        print(f"Escalation Required: {validation_result.escalation_required}")
-        print(f"Recommendations: {validation_result.recommendations}")
+            )
+
+            self.logger.info(f"Validation Result:")
+            self.logger.info(f"Overall Score: {validation_result.overall_score:.1f}")
+            self.logger.info(f"Status: {validation_result.status.value}")
+            self.logger.info(f"Escalation Required: {validation_result.escalation_required}")
+            self.logger.info(f"Recommendations: {validation_result.recommendations}")
+
+            # Run test
+            await test_milestone_framework()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_milestone_framework())
+    script_main(WeeklyMilestoneFrameworkScript)

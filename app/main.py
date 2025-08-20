@@ -637,13 +637,24 @@ elif "PYTEST_CURRENT_TEST" not in os.environ:
 
 
 if __name__ == "__main__":
-    import uvicorn
+    from app.common.utilities.script_base import BaseScript, script_main
     
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=get_settings().DEBUG,
-        log_config=None,  # We use structlog
-        access_log=False,  # Handled by middleware
-    )
+    class MainScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            import uvicorn
+
+            uvicorn.run(
+            "app.main:app",
+            host="0.0.0.0",
+            port=8000,
+            reload=get_settings().DEBUG,
+            log_config=None,  # We use structlog
+            access_log=False,  # Handled by middleware
+            )
+            
+            return {"status": "completed"}
+    
+    script_main(MainScript)

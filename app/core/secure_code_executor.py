@@ -450,12 +450,23 @@ async def create_secure_code_executor() -> SecureCodeExecutor:
 
 # Example usage and testing
 if __name__ == "__main__":
-    async def test_secure_execution():
-        """Test secure code execution."""
-        executor = await create_secure_code_executor()
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class SecureCodeExecutorScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        # Test Python code execution
-        python_code = '''
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_secure_execution():
+            """Test secure code execution."""
+            executor = await create_secure_code_executor()
+
+            # Test Python code execution
+            python_code = '''
+            
+            return {"status": "completed"}
+    
+    script_main(SecureCodeExecutorScript)
 def hello_world():
     return "Hello from secure execution!"
 

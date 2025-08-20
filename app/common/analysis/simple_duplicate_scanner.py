@@ -1,3 +1,4 @@
+import asyncio
 """
 Simple Duplicate Scanner - Pragmatic 80/20 Approach
 ==================================================
@@ -272,4 +273,15 @@ def run_quick_scan():
     return quick_wins
 
 if __name__ == "__main__":
-    run_quick_scan()
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class SimpleDuplicateScannerScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            run_quick_scan()
+            
+            return {"status": "completed"}
+    
+    script_main(SimpleDuplicateScannerScript)

@@ -519,4 +519,15 @@ async def main():
         print(f"- {item.pattern_type if hasattr(item, 'pattern_type') else item.debt_type}: ROI {getattr(item, 'roi_score', 'N/A')}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class ProjectIndexAnalyzerScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await main()
+            
+            return {"status": "completed"}
+    
+    script_main(ProjectIndexAnalyzerScript)

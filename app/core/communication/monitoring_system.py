@@ -1109,4 +1109,15 @@ async def example_usage():
     await monitoring.shutdown()
 
 if __name__ == "__main__":
-    asyncio.run(example_usage())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class MonitoringSystemScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await example_usage()
+            
+            return {"status": "completed"}
+    
+    script_main(MonitoringSystemScript)

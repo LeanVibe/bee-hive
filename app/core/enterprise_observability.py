@@ -512,12 +512,19 @@ async def create_enterprise_observability(metrics_port: int = 8001) -> Enterpris
 
 # Example usage and testing
 if __name__ == "__main__":
-    async def test_observability():
-        """Test enterprise observability system."""
-        observability = await create_enterprise_observability()
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class EnterpriseObservabilityScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        # Simulate some development metrics
-        test_metrics = DevelopmentMetrics(
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_observability():
+            """Test enterprise observability system."""
+            observability = await create_enterprise_observability()
+
+            # Simulate some development metrics
+            test_metrics = DevelopmentMetrics(
             task_id="test_001",
             agent_type="claude_code",
             generation_time_seconds=15.5,
@@ -528,16 +535,20 @@ if __name__ == "__main__":
             security_level="high",
             quality_score=0.85,
             created_at=datetime.utcnow()
-        )
-        
-        await observability.record_autonomous_development(test_metrics)
-        
-        # Get dashboard data
-        dashboard_data = await observability.get_enterprise_dashboard_data()
-        
-        print("Enterprise Observability Test:")
-        print(f"Dashboard Data: {json.dumps(dashboard_data, indent=2)}")
-        print(f"Metrics server running on http://localhost:8001/metrics")
+            )
 
-    # Run test if executed directly
-    asyncio.run(test_observability())
+            await observability.record_autonomous_development(test_metrics)
+
+            # Get dashboard data
+            dashboard_data = await observability.get_enterprise_dashboard_data()
+
+            self.logger.info("Enterprise Observability Test:")
+            self.logger.info(f"Dashboard Data: {json.dumps(dashboard_data, indent=2)}")
+            self.logger.info(f"Metrics server running on http://localhost:8001/metrics")
+
+            # Run test if executed directly
+            await test_observability()
+            
+            return {"status": "completed"}
+    
+    script_main(EnterpriseObservabilityScript)

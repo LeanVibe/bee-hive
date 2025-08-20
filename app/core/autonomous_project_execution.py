@@ -750,84 +750,95 @@ async def get_project_executor() -> AutonomousProjectExecutor:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_project_execution():
-        """Test the autonomous project execution engine."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class AutonomousProjectExecutionScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        executor = await get_project_executor()
-        
-        # Sample project configuration
-        project_config = {
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_project_execution():
+            """Test the autonomous project execution engine."""
+
+            executor = await get_project_executor()
+
+            # Sample project configuration
+            project_config = {
             "customer_id": "customer_techcorp",
             "service_type": "mvp_development",
             "project_name": "E-commerce MVP",
             "timeline_weeks": 4,
             "budget_usd": 150000,
             "requirements": [
-                "User authentication system",
-                "Product catalog with search",
-                "Shopping cart functionality",
-                "Payment processing integration",
-                "Admin dashboard"
+            "User authentication system",
+            "Product catalog with search",
+            "Shopping cart functionality",
+            "Payment processing integration",
+            "Admin dashboard"
             ],
             "technology_preferences": ["React", "Node.js", "PostgreSQL"],
             "compliance_requirements": ["PCI DSS"]
-        }
-        
-        guarantee_config = {
+            }
+
+            guarantee_config = {
             "guarantee_amount": 150000,
             "minimum_success_threshold": 80.0
-        }
-        
-        # Initiate project execution
-        execution_result = await executor.initiate_project_execution(
+            }
+
+            # Initiate project execution
+            execution_result = await executor.initiate_project_execution(
             project_config, guarantee_config
-        )
-        
-        print("Project Execution Initiation Result:")
-        print(f"Status: {execution_result['status']}")
-        print(f"Project ID: {execution_result['project_id']}")
-        print(f"Setup Time: {execution_result['total_setup_time_minutes']} minutes")
-        print(f"Team Size: {execution_result['team_composition']['total_agents']} agents")
-        print(f"Total Tasks: {execution_result['task_breakdown']['total_tasks']}")
-        print(f"Estimated Hours: {execution_result['task_breakdown']['estimated_total_hours']}")
-        print()
-        
-        if execution_result["status"] == "initiated":
+            )
+
+            self.logger.info("Project Execution Initiation Result:")
+            self.logger.info(f"Status: {execution_result['status']}")
+            self.logger.info(f"Project ID: {execution_result['project_id']}")
+            self.logger.info(f"Setup Time: {execution_result['total_setup_time_minutes']} minutes")
+            self.logger.info(f"Team Size: {execution_result['team_composition']['total_agents']} agents")
+            self.logger.info(f"Total Tasks: {execution_result['task_breakdown']['total_tasks']}")
+            self.logger.info(f"Estimated Hours: {execution_result['task_breakdown']['estimated_total_hours']}")
+            self.logger.info()
+
+            if execution_result["status"] == "initiated":
             project_id = execution_result["project_id"]
-            
+
             # Simulate progress update
             progress_data = {
-                "agent_id": "agent_" + project_id + "_requirements_analyst_1",
-                "task_id": "task_" + project_id + "_w1_1",
-                "current_progress": 75.0,
-                "work_completed": "Requirements analysis 75% complete. Documented 15 of 20 requirements.",
-                "time_spent_hours": 24.0,
-                "quality_indicators": {
-                    "documentation_completeness": 75.0,
-                    "stakeholder_approval": 90.0
-                },
-                "next_steps": [
-                    "Complete remaining 5 requirements",
-                    "Schedule stakeholder review session"
-                ]
+            "agent_id": "agent_" + project_id + "_requirements_analyst_1",
+            "task_id": "task_" + project_id + "_w1_1",
+            "current_progress": 75.0,
+            "work_completed": "Requirements analysis 75% complete. Documented 15 of 20 requirements.",
+            "time_spent_hours": 24.0,
+            "quality_indicators": {
+            "documentation_completeness": 75.0,
+            "stakeholder_approval": 90.0
+            },
+            "next_steps": [
+            "Complete remaining 5 requirements",
+            "Schedule stakeholder review session"
+            ]
             }
-            
+
             # Process progress update
             update_result = await executor.process_progress_update(project_id, progress_data)
-            print("Progress Update Result:")
-            print(f"Status: {update_result['status']}")
-            print(f"Project Progress: {update_result['project_progress']:.1f}%")
-            print(f"Project Status: {update_result['project_status']}")
-            print()
-            
+            self.logger.info("Progress Update Result:")
+            self.logger.info(f"Status: {update_result['status']}")
+            self.logger.info(f"Project Progress: {update_result['project_progress']:.1f}%")
+            self.logger.info(f"Project Status: {update_result['project_status']}")
+            self.logger.info()
+
             # Get project status
             status = await executor.get_project_status(project_id)
-            print("Project Status:")
-            print(f"Overall Progress: {status['overall_progress']:.1f}%")
-            print(f"Current Status: {status['current_status']}")
-            print(f"Days Elapsed: {status['timeline']['days_elapsed']}")
-            print(f"Days Remaining: {status['timeline']['days_remaining']}")
-            print(f"Active Tasks: {status['task_status']['in_progress_tasks']}")
+            self.logger.info("Project Status:")
+            self.logger.info(f"Overall Progress: {status['overall_progress']:.1f}%")
+            self.logger.info(f"Current Status: {status['current_status']}")
+            self.logger.info(f"Days Elapsed: {status['timeline']['days_elapsed']}")
+            self.logger.info(f"Days Remaining: {status['timeline']['days_remaining']}")
+            self.logger.info(f"Active Tasks: {status['task_status']['in_progress_tasks']}")
+
+            # Run test
+            await test_project_execution()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_project_execution())
+    script_main(AutonomousProjectExecutionScript)

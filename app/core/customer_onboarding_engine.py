@@ -691,88 +691,99 @@ async def get_feasibility_analyzer() -> ProjectFeasibilityAnalyzer:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_customer_onboarding():
-        """Test the customer onboarding engine."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class CustomerOnboardingEngineScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        # Sample lead data
-        lead_data = {
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_customer_onboarding():
+            """Test the customer onboarding engine."""
+
+            # Sample lead data
+            lead_data = {
             "organization_name": "TechCorp Inc.",
             "contact_information": {
-                "primary_contact": "John Smith",
-                "email": "john.smith@techcorp.com",
-                "phone": "+1-555-0123"
+            "primary_contact": "John Smith",
+            "email": "john.smith@techcorp.com",
+            "phone": "+1-555-0123"
             },
             "project_requirements": {
-                "service_type": "mvp_development",
-                "timeline_weeks": 8,
-                "complexity": "medium",
-                "requirements": [
-                    "User authentication system",
-                    "Product catalog with search",
-                    "Shopping cart functionality",
-                    "Payment processing integration",
-                    "Admin dashboard"
-                ],
-                "technology_preferences": ["React", "Node.js", "PostgreSQL"],
-                "budget_usd": 150000,
-                "compliance_requirements": ["PCI DSS"]
+            "service_type": "mvp_development",
+            "timeline_weeks": 8,
+            "complexity": "medium",
+            "requirements": [
+            "User authentication system",
+            "Product catalog with search",
+            "Shopping cart functionality",
+            "Payment processing integration",
+            "Admin dashboard"
+            ],
+            "technology_preferences": ["React", "Node.js", "PostgreSQL"],
+            "budget_usd": 150000,
+            "compliance_requirements": ["PCI DSS"]
             },
             "technical_readiness": {
-                "has_existing_codebase": False,
-                "development_team_size": 2,
-                "documentation_quality": "partial",
-                "preferred_tech_stack": ["React", "Node.js"],
-                "has_infrastructure_plan": True
+            "has_existing_codebase": False,
+            "development_team_size": 2,
+            "documentation_quality": "partial",
+            "preferred_tech_stack": ["React", "Node.js"],
+            "has_infrastructure_plan": True
             },
             "business_readiness": {
-                "requirements_clarity": "mostly_clear",
-                "timeline_urgency": "moderate",
-                "stakeholder_alignment": "good",
-                "has_success_criteria": True,
-                "change_management_experience": True
+            "requirements_clarity": "mostly_clear",
+            "timeline_urgency": "moderate",
+            "stakeholder_alignment": "good",
+            "has_success_criteria": True,
+            "change_management_experience": True
             },
             "financial_readiness": {
-                "budget_status": "approved",
-                "decision_authority": "full",
-                "contract_timeline_weeks": 3,
-                "payment_terms_acceptable": True
+            "budget_status": "approved",
+            "decision_authority": "full",
+            "contract_timeline_weeks": 3,
+            "payment_terms_acceptable": True
             },
             "organizational_readiness": {
-                "change_readiness": "open",
-                "team_availability": "partial",
-                "communication_structure": "good",
-                "is_high_priority": True
+            "change_readiness": "open",
+            "team_availability": "partial",
+            "communication_structure": "good",
+            "is_high_priority": True
             }
-        }
-        
-        # Test lead qualification
-        qualification_engine = await get_qualification_engine()
-        lead_profile = await qualification_engine.qualify_lead(lead_data)
-        
-        print("Lead Qualification Result:")
-        print(f"Organization: {lead_profile.organization_name}")
-        print(f"Qualification Score: {lead_profile.qualification_score:.1f}")
-        print(f"Qualification Level: {lead_profile.qualification_level.value}")
-        print(f"Disqualifiers: {lead_profile.disqualifiers}")
-        print(f"Next Steps: {lead_profile.next_steps}")
-        print()
-        
-        # Test feasibility analysis
-        feasibility_analyzer = await get_feasibility_analyzer()
-        feasibility_assessment = await feasibility_analyzer.analyze_project_feasibility(
+            }
+
+            # Test lead qualification
+            qualification_engine = await get_qualification_engine()
+            lead_profile = await qualification_engine.qualify_lead(lead_data)
+
+            self.logger.info("Lead Qualification Result:")
+            self.logger.info(f"Organization: {lead_profile.organization_name}")
+            self.logger.info(f"Qualification Score: {lead_profile.qualification_score:.1f}")
+            self.logger.info(f"Qualification Level: {lead_profile.qualification_level.value}")
+            self.logger.info(f"Disqualifiers: {lead_profile.disqualifiers}")
+            self.logger.info(f"Next Steps: {lead_profile.next_steps}")
+            self.logger.info()
+
+            # Test feasibility analysis
+            feasibility_analyzer = await get_feasibility_analyzer()
+            feasibility_assessment = await feasibility_analyzer.analyze_project_feasibility(
             lead_data["project_requirements"],
             lead_profile
-        )
-        
-        print("Feasibility Assessment Result:")
-        print(f"Overall Feasibility: {feasibility_assessment.overall_feasibility:.1f}")
-        print(f"Feasibility Level: {feasibility_assessment.feasibility_level.value}")
-        print(f"Success Probability: {feasibility_assessment.success_probability:.1f}%")
-        print(f"Technical Feasibility: {feasibility_assessment.technical_feasibility:.1f}")
-        print(f"Timeline Feasibility: {feasibility_assessment.timeline_feasibility:.1f}")
-        print(f"Resource Feasibility: {feasibility_assessment.resource_feasibility:.1f}")
-        print(f"Risk Factors: {feasibility_assessment.risk_factors}")
-        print(f"Recommended Approach: {feasibility_assessment.recommended_approach}")
+            )
+
+            self.logger.info("Feasibility Assessment Result:")
+            self.logger.info(f"Overall Feasibility: {feasibility_assessment.overall_feasibility:.1f}")
+            self.logger.info(f"Feasibility Level: {feasibility_assessment.feasibility_level.value}")
+            self.logger.info(f"Success Probability: {feasibility_assessment.success_probability:.1f}%")
+            self.logger.info(f"Technical Feasibility: {feasibility_assessment.technical_feasibility:.1f}")
+            self.logger.info(f"Timeline Feasibility: {feasibility_assessment.timeline_feasibility:.1f}")
+            self.logger.info(f"Resource Feasibility: {feasibility_assessment.resource_feasibility:.1f}")
+            self.logger.info(f"Risk Factors: {feasibility_assessment.risk_factors}")
+            self.logger.info(f"Recommended Approach: {feasibility_assessment.recommended_approach}")
+
+            # Run test
+            await test_customer_onboarding()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_customer_onboarding())
+    script_main(CustomerOnboardingEngineScript)

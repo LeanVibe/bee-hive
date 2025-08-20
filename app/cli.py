@@ -1,3 +1,4 @@
+import asyncio
 """
 Agent Hive CLI - Professional Command Line Interface
 
@@ -1018,7 +1019,18 @@ from app.common.utilities.shared_patterns import simple_main_wrapper
 
 
 if __name__ == "__main__":
-    # REFACTORED: Use shared simple_main_wrapper instead of direct main() call
-    # This replaces: main()
-    # With standardized error handling and script name tracking
-    simple_main_wrapper(main, "agent-hive-cli")
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class CliScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            # REFACTORED: Use shared simple_main_wrapper instead of direct main() call
+            # This replaces: main()
+            # With standardized error handling and script name tracking
+            simple_main_wrapper(main, "agent-hive-cli")
+            
+            return {"status": "completed"}
+    
+    script_main(CliScript)

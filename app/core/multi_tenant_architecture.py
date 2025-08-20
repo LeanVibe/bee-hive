@@ -817,40 +817,51 @@ async def get_multi_tenant_service() -> MultiTenantArchitectureService:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_multi_tenant_architecture():
-        """Test the multi-tenant architecture service."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class MultiTenantArchitectureScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        service = await get_multi_tenant_service()
-        
-        # Sample tenant request
-        tenant_request = {
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_multi_tenant_architecture():
+            """Test the multi-tenant architecture service."""
+
+            service = await get_multi_tenant_service()
+
+            # Sample tenant request
+            tenant_request = {
             "organization_name": "TechCorp Enterprise",
             "tier": "enterprise",
             "compliance_requirements": ["SOC2", "GDPR", "HIPAA"],
             "custom_domains": ["api.techcorp.com", "app.techcorp.com"],
             "custom_limits": {
-                "cpu_cores": 24.0,
-                "memory_gb": 96.0,
-                "concurrent_agents": 75
+            "cpu_cores": 24.0,
+            "memory_gb": 96.0,
+            "concurrent_agents": 75
             },
             "security_requirements": {
-                "sso_integration": True,
-                "ip_whitelist": ["192.168.1.0/24", "10.0.0.0/8"],
-                "encryption_at_rest": True,
-                "audit_logging": True
+            "sso_integration": True,
+            "ip_whitelist": ["192.168.1.0/24", "10.0.0.0/8"],
+            "encryption_at_rest": True,
+            "audit_logging": True
             }
-        }
-        
-        # Create tenant
-        result = await service.create_tenant(tenant_request)
-        print("Tenant creation result:", json.dumps(result, indent=2, default=str))
-        
-        if result["status"] == "success":
+            }
+
+            # Create tenant
+            result = await service.create_tenant(tenant_request)
+            self.logger.info("Tenant creation result:", json.dumps(result, indent=2, default=str))
+
+            if result["status"] == "success":
             tenant_id = result["tenant_id"]
-            
+
             # Monitor tenant resources
             metrics = await service.resource_manager.monitor_tenant_resources(tenant_id)
-            print("Tenant metrics:", json.dumps(metrics.__dict__, indent=2, default=str))
+            self.logger.info("Tenant metrics:", json.dumps(metrics.__dict__, indent=2, default=str))
+
+            # Run test
+            await test_multi_tenant_architecture()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_multi_tenant_architecture())
+    script_main(MultiTenantArchitectureScript)

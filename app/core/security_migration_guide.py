@@ -417,5 +417,16 @@ async def migrate_component_example():
 
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(migrate_component_example())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class SecurityMigrationGuideScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            import asyncio
+            await migrate_component_example()
+            
+            return {"status": "completed"}
+    
+    script_main(SecurityMigrationGuideScript)

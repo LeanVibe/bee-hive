@@ -590,5 +590,16 @@ async def main():
 
 
 if __name__ == "__main__":
-    import os
-    asyncio.run(main())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class PostToolUseScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            import os
+            await main()
+            
+            return {"status": "completed"}
+    
+    script_main(PostToolUseScript)

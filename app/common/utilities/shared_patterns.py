@@ -463,11 +463,22 @@ def migrate_async_main(old_async_main: Callable, script_name: str) -> None:
 
 
 if __name__ == "__main__":
-    # Example usage
-    config = ScriptConfig(
-        name="shared_patterns_demo",
-        description="Demonstration of shared pattern utilities",
-        enable_json_output=True
-    )
+    from app.common.utilities.script_base import BaseScript, script_main
     
-    standard_main_wrapper(ExampleValidationScript, config)
+    class SharedPatternsScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            # Example usage
+            config = ScriptConfig(
+            name="shared_patterns_demo",
+            description="Demonstration of shared pattern utilities",
+            enable_json_output=True
+            )
+
+            standard_main_wrapper(ExampleValidationScript, config)
+            
+            return {"status": "completed"}
+    
+    script_main(SharedPatternsScript)

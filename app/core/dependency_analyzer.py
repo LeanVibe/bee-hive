@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Dependency Analysis Tool for Manager Consolidation
@@ -265,6 +266,17 @@ class DependencyAnalyzer:
         return self.generate_dependency_report()
 
 if __name__ == "__main__":
-    analyzer = DependencyAnalyzer("/Users/bogdan/work/leanvibe-dev/bee-hive/app/core")
-    report = analyzer.analyze()
-    print(report)
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class DependencyAnalyzerScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            analyzer = DependencyAnalyzer("/Users/bogdan/work/leanvibe-dev/bee-hive/app/core")
+            report = analyzer.analyze()
+            self.logger.info(report)
+            
+            return {"status": "completed"}
+    
+    script_main(DependencyAnalyzerScript)

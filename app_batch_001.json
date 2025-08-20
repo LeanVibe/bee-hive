@@ -1,0 +1,149 @@
+{
+  "batch_id": "app_batch_001",
+  "plans": [
+    {
+      "file_path": "app/main.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    import uvicorn\n    \n    uvicorn.run(\n        \"app.main:app\",\n        host=\"0.0.0.0\",\n        port=8000,\n        reload=get_settings().DEBUG,\n        log_config=None,  # We use structlog\n        access_log=False,  # Handled by middleware\n    )",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class MainScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            import uvicorn\n\n            uvicorn.run(\n            \"app.main:app\",\n            host=\"0.0.0.0\",\n            port=8000,\n            reload=get_settings().DEBUG,\n            log_config=None,  # We use structlog\n            access_log=False,  # Handled by middleware\n            )\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(MainScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # REFACTORED: Use shared simple_main_wrapper instead of direct main() call\n    # This replaces: main()\n    # With standardized error handling and script name tracking\n    simple_main_wrapper(main, \"agent-hive-cli\")",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # REFACTORED: Use shared simple_main_wrapper instead of direct main() call\n            # This replaces: main()\n            # With standardized error handling and script name tracking\n            simple_main_wrapper(main, \"agent-hive-cli\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CliScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/dx_cli.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DxCliScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DxCliScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/api/main.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    import uvicorn\n    \n    # Use port from environment or default to 8100 (non-standard to avoid conflicts)\n    port = int(os.getenv(\"PORT\", 8100))\n    host = os.getenv(\"HOST\", \"0.0.0.0\")\n    \n    logger.info(f\"Starting LeanVibe Agent Hive 2.0 API server on {host}:{port}\")\n    uvicorn.run(app, host=host, port=port, reload=True)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class MainScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            import uvicorn\n\n            # Use port from environment or default to 8100 (non-standard to avoid conflicts)\n            port = int(os.getenv(\"PORT\", 8100))\n            host = os.getenv(\"HOST\", \"0.0.0.0\")\n\n            logger.info(f\"Starting LeanVibe Agent Hive 2.0 API server on {host}:{port}\")\n            uvicorn.run(app, host=host, port=port, reload=True)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(MainScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/config/production_config.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Example usage and validation\n    config = create_production_config(Environment.DEVELOPMENT)\n    print(\"Development configuration created successfully\")\n    print(f\"Configuration validation issues: {config.validate()}\")",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ProductionConfigScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Example usage and validation\n            config = create_production_config(Environment.DEVELOPMENT)\n            self.logger.info(\"Development configuration created successfully\")\n            self.logger.info(f\"Configuration validation issues: {config.validate()}\")\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ProductionConfigScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/common/utilities/shared_patterns.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    # Example usage\n    config = ScriptConfig(\n        name=\"shared_patterns_demo\",\n        description=\"Demonstration of shared pattern utilities\",\n        enable_json_output=True\n    )\n    \n    standard_main_wrapper(ExampleValidationScript, config)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class SharedPatternsScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            # Example usage\n            config = ScriptConfig(\n            name=\"shared_patterns_demo\",\n            description=\"Demonstration of shared pattern utilities\",\n            enable_json_output=True\n            )\n\n            standard_main_wrapper(ExampleValidationScript, config)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(SharedPatternsScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/common/analysis/simple_duplicate_scanner.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    run_quick_scan()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class SimpleDuplicateScannerScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            run_quick_scan()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(SimpleDuplicateScannerScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/common/analysis/duplicate_logic_detector.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DuplicateLogicDetectorScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DuplicateLogicDetectorScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/common/analysis/project_index_analyzer.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ProjectIndexAnalyzerScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ProjectIndexAnalyzerScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/common/utilities/init_file_standardizer.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class InitFileStandardizerScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(InitFileStandardizerScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/core/communication/monitoring_system.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(example_usage())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class MonitoringSystemScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await example_usage()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(MonitoringSystemScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "app/core/communication/realtime_communication_hub.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class RealtimeCommunicationHubScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(RealtimeCommunicationHubScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    }
+  ],
+  "estimated_loc_savings": -120,
+  "file_count": 12
+}

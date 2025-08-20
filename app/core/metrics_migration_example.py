@@ -1,3 +1,4 @@
+import asyncio
 """
 Example: Migrating Legacy Metrics Systems to Unified Metrics Collector
 
@@ -246,28 +247,39 @@ def migration_validation():
     return all_passed
 
 if __name__ == "__main__":
-    """
-    Run migration examples to demonstrate consolidation
-    """
-    print("🚀 Starting Metrics Collection Consolidation Migration")
-    print("=" * 60)
+    from app.common.utilities.script_base import BaseScript, script_main
     
-    try:
-        # Run all migration examples
-        migrate_custom_metrics_exporter()
-        migrate_dashboard_streaming()
-        migrate_team_coordination_metrics()
-        migrate_prometheus_exporter()
-        migrate_performance_storage()
+    class MetricsMigrationExampleScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        # Validate the consolidation
-        success = migration_validation()
-        
-        if success:
-            print(f"\n🎉 Metrics Collection Consolidation: COMPLETE")
-            print("📈 6+ metrics systems successfully consolidated into 1 unified collector")
-            print("⚡ Enhanced performance, reliability, and maintainability achieved")
-        
-    except Exception as e:
-        print(f"\n❌ Migration failed: {e}")
-        raise
+        async def execute(self):
+            """Execute the main script logic."""
+            """
+            Run migration examples to demonstrate consolidation
+            """
+            self.logger.info("🚀 Starting Metrics Collection Consolidation Migration")
+            self.logger.info("=" * 60)
+
+            try:
+            # Run all migration examples
+            migrate_custom_metrics_exporter()
+            migrate_dashboard_streaming()
+            migrate_team_coordination_metrics()
+            migrate_prometheus_exporter()
+            migrate_performance_storage()
+
+            # Validate the consolidation
+            success = migration_validation()
+
+            if success:
+            self.logger.info(f"\n🎉 Metrics Collection Consolidation: COMPLETE")
+            self.logger.info("📈 6+ metrics systems successfully consolidated into 1 unified collector")
+            self.logger.info("⚡ Enhanced performance, reliability, and maintainability achieved")
+
+            except Exception as e:
+            self.logger.info(f"\n❌ Migration failed: {e}")
+            raise
+            
+            return {"status": "completed"}
+    
+    script_main(MetricsMigrationExampleScript)

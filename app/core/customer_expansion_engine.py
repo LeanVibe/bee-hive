@@ -961,81 +961,92 @@ async def get_expansion_engine() -> CustomerExpansionEngine:
 
 # Usage example and testing
 if __name__ == "__main__":
-    async def test_expansion_engine():
-        """Test the customer expansion engine."""
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class CustomerExpansionEngineScript(BaseScript):
+        """Refactored script using standardized pattern."""
         
-        engine = await get_expansion_engine()
-        
-        # Sample customer data
-        customer_data = {
+        async def execute(self):
+            """Execute the main script logic."""
+            async def test_expansion_engine():
+            """Test the customer expansion engine."""
+
+            engine = await get_expansion_engine()
+
+            # Sample customer data
+            customer_data = {
             "customer_name": "TechCorp Inc.",
             "current_services": ["mvp_development"],
             "satisfaction_metrics": {
-                "overall_satisfaction": 8.7,
-                "nps_score": 65,
-                "support_satisfaction": 8.2,
-                "stakeholder_sentiment": 85.0
+            "overall_satisfaction": 8.7,
+            "nps_score": 65,
+            "support_satisfaction": 8.2,
+            "stakeholder_sentiment": 85.0
             },
             "engagement_metrics": {
-                "platform_usage_percentage": 78.0,
-                "feature_adoption_percentage": 65.0,
-                "communication_frequency_score": 82.0,
-                "feedback_participation_percentage": 55.0
+            "platform_usage_percentage": 78.0,
+            "feature_adoption_percentage": 65.0,
+            "communication_frequency_score": 82.0,
+            "feedback_participation_percentage": 55.0
             },
             "project_success_metrics": {
-                "delivery_success_rate": 95.0,
-                "timeline_adherence": 88.0,
-                "quality_scores": 92.0
+            "delivery_success_rate": 95.0,
+            "timeline_adherence": 88.0,
+            "quality_scores": 92.0
             },
             "business_outcome_metrics": {
-                "roi_achievement": 135.0,
-                "business_impact": 88.0,
-                "goal_attainment": 92.0
+            "roi_achievement": 135.0,
+            "business_impact": 88.0,
+            "goal_attainment": 92.0
             },
             "relationship_metrics": {
-                "stakeholder_relationships": 85.0,
-                "champion_strength": 80.0,
-                "escalation_frequency": 95.0
+            "stakeholder_relationships": 85.0,
+            "champion_strength": 80.0,
+            "escalation_frequency": 95.0
             },
             "profile": {
-                "company_growth": 65,
-                "hiring_challenges": True,
-                "project_values": {"latest_project": 150000}
+            "company_growth": 65,
+            "hiring_challenges": True,
+            "project_values": {"latest_project": 150000}
             },
             "project_history": [
-                {
-                    "project_type": "mvp_development",
-                    "success_score": 92.0,
-                    "satisfaction_score": 8.7,
-                    "delivery_on_time": True
-                }
+            {
+            "project_type": "mvp_development",
+            "success_score": 92.0,
+            "satisfaction_score": 8.7,
+            "delivery_on_time": True
+            }
             ],
             "lifetime_value": 150000,
             "last_interaction": datetime.now().isoformat()
-        }
-        
-        # Create expansion profile
-        expansion_profile = await engine.create_expansion_profile(
+            }
+
+            # Create expansion profile
+            expansion_profile = await engine.create_expansion_profile(
             "customer_techcorp", customer_data
-        )
-        
-        print("Customer Expansion Profile Created:")
-        print(f"Customer: {expansion_profile.customer_name}")
-        print(f"Health Score: {expansion_profile.health_score.overall_score:.1f}")
-        print(f"Health Status: {expansion_profile.health_score.health_status.value}")
-        print(f"Expansion Readiness: {expansion_profile.expansion_readiness.value}")
-        print(f"Expansion Opportunities: {len(expansion_profile.expansion_opportunities)}")
-        print(f"Retention Actions: {len(expansion_profile.retention_actions)}")
-        print(f"Expansion Potential Value: ${expansion_profile.expansion_potential_value:,.2f}")
-        print()
-        
-        # Get expansion dashboard
-        dashboard = await engine.get_expansion_dashboard("customer_techcorp")
-        print("Expansion Dashboard:")
-        print(f"Overall Health: {dashboard['health_summary']['overall_score']:.1f}")
-        print(f"Risk Factors: {len(dashboard['health_summary']['risk_factors'])}")
-        print(f"Positive Indicators: {len(dashboard['health_summary']['positive_indicators'])}")
-        print(f"Top Opportunities: {len(dashboard['expansion_opportunities'])}")
+            )
+
+            self.logger.info("Customer Expansion Profile Created:")
+            self.logger.info(f"Customer: {expansion_profile.customer_name}")
+            self.logger.info(f"Health Score: {expansion_profile.health_score.overall_score:.1f}")
+            self.logger.info(f"Health Status: {expansion_profile.health_score.health_status.value}")
+            self.logger.info(f"Expansion Readiness: {expansion_profile.expansion_readiness.value}")
+            self.logger.info(f"Expansion Opportunities: {len(expansion_profile.expansion_opportunities)}")
+            self.logger.info(f"Retention Actions: {len(expansion_profile.retention_actions)}")
+            self.logger.info(f"Expansion Potential Value: ${expansion_profile.expansion_potential_value:,.2f}")
+            self.logger.info()
+
+            # Get expansion dashboard
+            dashboard = await engine.get_expansion_dashboard("customer_techcorp")
+            self.logger.info("Expansion Dashboard:")
+            self.logger.info(f"Overall Health: {dashboard['health_summary']['overall_score']:.1f}")
+            self.logger.info(f"Risk Factors: {len(dashboard['health_summary']['risk_factors'])}")
+            self.logger.info(f"Positive Indicators: {len(dashboard['health_summary']['positive_indicators'])}")
+            self.logger.info(f"Top Opportunities: {len(dashboard['expansion_opportunities'])}")
+
+            # Run test
+            await test_expansion_engine()
+            
+            return {"status": "completed"}
     
-    # Run test
-    asyncio.run(test_expansion_engine())
+    script_main(CustomerExpansionEngineScript)
