@@ -191,6 +191,7 @@ agent-hive = "app.cli:main"
 ahive = "app.cli:main"
 lv = "app.dx_cli:main"
 hive = "app.hive_cli:main"
+hive2 = "app.enhanced_hive_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
