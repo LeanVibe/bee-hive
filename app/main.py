@@ -145,6 +145,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         performance_publisher = await get_performance_publisher()
         app.state.performance_publisher = performance_publisher
         
+        # Initialize PWA backend services for real-time updates
+        from .api.pwa_backend import start_pwa_backend_services
+        await start_pwa_backend_services()
+        logger.info("✅ PWA backend services initialized")
+        
         logger.info("✅ Agent Hive initialized successfully")
         
         yield  # Application runs here
@@ -181,6 +186,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Stop error handling hot-reload
         if hasattr(app.state, 'error_config_manager'):
             await app.state.error_config_manager.stop_hot_reload()
+        
+        # Stop PWA backend services
+        try:
+            from .api.pwa_backend import stop_pwa_backend_services
+            await stop_pwa_backend_services()
+            logger.info("✅ PWA backend services stopped")
+        except Exception as e:
+            logger.warning(f"Warning during PWA backend services shutdown: {e}")
         
         # Stop performance metrics publisher
         await stop_performance_publisher()
