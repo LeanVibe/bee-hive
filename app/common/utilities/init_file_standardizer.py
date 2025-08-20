@@ -552,15 +552,39 @@ def main():
 
 
 if __name__ == "__main__":
-    from app.common.utilities.script_base import BaseScript, script_main
+    import argparse
     
-    class InitFileStandardizerScript(BaseScript):
-        """Refactored script using standardized pattern."""
+    parser = argparse.ArgumentParser(description='Standardize __init__.py files across the project')
+    parser.add_argument('--project-root', type=str, default='.', help='Project root directory')
+    parser.add_argument('--dry-run', action='store_true', help='Show changes without applying')
+    parser.add_argument('--report', action='store_true', help='Generate analysis report')
+    parser.add_argument('--apply', action='store_true', help='Apply standardization changes')
+    
+    args = parser.parse_args()
+    
+    project_root = Path(args.project_root).resolve()
+    standardizer = InitFileStandardizer(project_root)
+    
+    if args.report:
+        print("📊 __init__.py File Standardization Report")
+        print("=" * 45)
         
-        async def execute(self):
-            """Execute the main script logic."""
-            main()
-            
-            return {"status": "completed"}
+        templates, file_groups = standardizer.analyze_init_files()
+        
+        for file_type, files in file_groups.items():
+            if files:
+                print(f"\n{file_type.value.replace('_', ' ').title()}: {len(files)} files")
+                for metadata in files[:5]:  # Show first 5
+                    print(f"  • {metadata.file_path}")
+                if len(files) > 5:
+                    print(f"  ... and {len(files) - 5} more")
     
-    script_main(InitFileStandardizerScript)
+    elif args.apply:
+        changes = standardizer.apply_standardization(dry_run=args.dry_run)
+        if not args.dry_run:
+            print(f"✅ Applied standardization to {len(changes)} files")
+            
+    else:
+        # Default: dry run analysis
+        changes = standardizer.apply_standardization(dry_run=True)
+        print(f"📊 Would standardize {len([c for c in changes if 'SUCCESS' in c[1]])} files")
