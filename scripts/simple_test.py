@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Simple system test - Check basic API functionality
@@ -77,4 +78,15 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class SimpleTest(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            sys.exit(main())
+            
+            return {"status": "completed"}
+    
+    script_main(SimpleTest)

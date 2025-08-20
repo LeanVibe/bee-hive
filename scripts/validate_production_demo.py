@@ -92,5 +92,16 @@ async def validate_demo_readiness():
         return False
 
 if __name__ == "__main__":
-    result = asyncio.run(validate_demo_readiness())
-    sys.exit(0 if result else 1)
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class ValidateProductionDemoScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await validate_demo_readiness()
+            sys.exit(0 if result else 1)
+            
+            return {"status": "completed"}
+    
+    script_main(ValidateProductionDemoScript)

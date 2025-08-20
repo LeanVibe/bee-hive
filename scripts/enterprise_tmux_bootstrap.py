@@ -152,7 +152,18 @@ async def quick_status_check():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--status":
-        asyncio.run(quick_status_check())
-    else:
-        asyncio.run(bootstrap_enterprise_session())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class EnterpriseTmuxBootstrapScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            if len(sys.argv) > 1 and sys.argv[1] == "--status":
+            await quick_status_check()
+            else:
+            await bootstrap_enterprise_session()
+            
+            return {"status": "completed"}
+    
+    script_main(EnterpriseTmuxBootstrapScript)

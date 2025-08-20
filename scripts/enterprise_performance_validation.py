@@ -1173,10 +1173,21 @@ async def main():
 
 
 if __name__ == "__main__":
-    import sys
+    from app.common.utilities.script_base import BaseScript, script_main
     
-    # Run validation
-    success = asyncio.run(main())
+    class EnterprisePerformanceValidationScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            import sys
+
+            # Run validation
+            await main()
+
+            # Exit with appropriate code
+            sys.exit(0 if success else 1)
+            
+            return {"status": "completed"}
     
-    # Exit with appropriate code
-    sys.exit(0 if success else 1)
+    script_main(EnterprisePerformanceValidationScript)

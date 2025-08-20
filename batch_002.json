@@ -1,0 +1,292 @@
+{
+  "batch_id": "batch_002",
+  "plans": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/verify_core.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class VerifyCoreScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(VerifyCoreScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/autonomous_demo.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    success = main()\n    sys.exit(0 if success else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class AutonomousDemoScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            success = main()\n            sys.exit(0 if success else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(AutonomousDemoScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/benchmark_universal_orchestrator.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class BenchmarkUniversalOrchestratorScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(BenchmarkUniversalOrchestratorScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/validate_documentation_links.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ValidateDocumentationLinksScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ValidateDocumentationLinksScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/validate_project_index.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ValidateProjectIndexScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ValidateProjectIndexScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/production-deployment-validator.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class Production-deployment-validatorScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(Production-deployment-validatorScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/cleanup_legacy_code.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CleanupLegacyCodeScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CleanupLegacyCodeScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/focused_performance_test.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    import sys\n    \n    # Run focused performance testing\n    success = asyncio.run(main())\n    \n    # Exit with appropriate code\n    sys.exit(0 if success else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class FocusedPerformanceTest(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            import sys\n\n            # Run focused performance testing\n            await main()\n\n            # Exit with appropriate code\n            sys.exit(0 if success else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(FocusedPerformanceTest)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/simple_test.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    sys.exit(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class SimpleTest(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            sys.exit(main())\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(SimpleTest)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/load_testing.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    import sys\n    \n    # Run load testing\n    success = asyncio.run(main())\n    \n    # Exit with appropriate code\n    sys.exit(0 if success else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class LoadTesting(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            import sys\n\n            # Run load testing\n            await main()\n\n            # Exit with appropriate code\n            sys.exit(0 if success else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(LoadTesting)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/dx_metrics_validation_framework.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    success = asyncio.run(main())\n    exit(0 if success else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DxMetricsValidationFrameworkScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            exit(0 if success else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DxMetricsValidationFrameworkScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/production_readiness_check.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ProductionReadinessCheckScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ProductionReadinessCheckScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/backup_system.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class BackupSystemScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(BackupSystemScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/test_hive_commands.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class TestHiveCommands(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(TestHiveCommands)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/install_project_index.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class InstallProjectIndexScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(InstallProjectIndexScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/validate_github_integration.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ValidateGithubIntegrationScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ValidateGithubIntegrationScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/mobile_dashboard.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class MobileDashboardScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(MobileDashboardScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/synthetic_probes.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == '__main__':\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class SyntheticProbesScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(SyntheticProbesScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/complete_autonomous_walkthrough.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class CompleteAutonomousWalkthroughScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(CompleteAutonomousWalkthroughScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/validate_api_integration.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ValidateApiIntegrationScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ValidateApiIntegrationScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/validate_contracts.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    sys.exit(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ValidateContractsScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            sys.exit(main())\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ValidateContractsScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/validate_production_demo.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    result = asyncio.run(validate_demo_readiness())\n    sys.exit(0 if result else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ValidateProductionDemoScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await validate_demo_readiness()\n            sys.exit(0 if result else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ValidateProductionDemoScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/run_quality_gates.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class RunQualityGatesScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(RunQualityGatesScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/error_handling_tests.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    import sys\n    \n    # Run error handling tests\n    success = asyncio.run(main())\n    \n    # Exit with appropriate code\n    sys.exit(0 if success else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class ErrorHandlingTests(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            import sys\n\n            # Run error handling tests\n            await main()\n\n            # Exit with appropriate code\n            sys.exit(0 if success else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(ErrorHandlingTests)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/simple_performance_validation.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    result = main()\n    print(f\"\\n{'\u2705 SUCCESS' if result else '\u274c FAILURE'}: Performance validation {'completed' if result else 'failed'}\")\n    exit(0 if result else 1)",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class SimplePerformanceValidationScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            result = main()\n            self.logger.info(f\"\\n{'\u2705 SUCCESS' if result else '\u274c FAILURE'}: Performance validation {'completed' if result else 'failed'}\")\n            exit(0 if result else 1)\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(SimplePerformanceValidationScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    }
+  ],
+  "estimated_loc_savings": -250,
+  "file_count": 25
+}

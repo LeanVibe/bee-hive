@@ -480,5 +480,16 @@ async def main():
     return results['overall_status'] in ["passed", "exceeded"]
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
-    exit(0 if success else 1)
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class DxMetricsValidationFrameworkScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await main()
+            exit(0 if success else 1)
+            
+            return {"status": "completed"}
+    
+    script_main(DxMetricsValidationFrameworkScript)

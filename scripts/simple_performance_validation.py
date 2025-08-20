@@ -274,6 +274,17 @@ def main():
 
 
 if __name__ == "__main__":
-    result = main()
-    print(f"\n{'✅ SUCCESS' if result else '❌ FAILURE'}: Performance validation {'completed' if result else 'failed'}")
-    exit(0 if result else 1)
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class SimplePerformanceValidationScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            result = main()
+            self.logger.info(f"\n{'✅ SUCCESS' if result else '❌ FAILURE'}: Performance validation {'completed' if result else 'failed'}")
+            exit(0 if result else 1)
+            
+            return {"status": "completed"}
+    
+    script_main(SimplePerformanceValidationScript)

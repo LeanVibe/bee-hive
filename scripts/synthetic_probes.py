@@ -63,5 +63,16 @@ async def main():
     print("All synthetic probes passed.")
 
 
-if __name__ == '__main__':
-    asyncio.run(main())
+if __name__ == "__main__":
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class SyntheticProbesScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await main()
+            
+            return {"status": "completed"}
+    
+    script_main(SyntheticProbesScript)

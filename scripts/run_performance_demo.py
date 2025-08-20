@@ -368,5 +368,16 @@ def main():
     asyncio.run(run_performance_demo(args.data_size))
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class RunPerformanceDemoScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            main()
+            
+            return {"status": "completed"}
+    
+    script_main(RunPerformanceDemoScript)

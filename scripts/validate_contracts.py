@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Contract Validation Script
@@ -447,4 +448,15 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class ValidateContractsScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            sys.exit(main())
+            
+            return {"status": "completed"}
+    
+    script_main(ValidateContractsScript)

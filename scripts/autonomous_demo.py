@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 LeanVibe Agent Hive 2.0 - 60-Second Autonomous Development Demo
@@ -292,5 +293,16 @@ def main():
     return demo.run_60_second_demo()
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class AutonomousDemoScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            success = main()
+            sys.exit(0 if success else 1)
+            
+            return {"status": "completed"}
+    
+    script_main(AutonomousDemoScript)

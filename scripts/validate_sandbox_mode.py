@@ -306,9 +306,20 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Set sandbox mode for testing
-    os.environ["SANDBOX_MODE"] = "true"
-    os.environ["SANDBOX_DEMO_MODE"] = "true"
+    from app.common.utilities.script_base import BaseScript, script_main
     
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code)
+    class ValidateSandboxModeScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            # Set sandbox mode for testing
+            os.environ["SANDBOX_MODE"] = "true"
+            os.environ["SANDBOX_DEMO_MODE"] = "true"
+
+            await main()
+            sys.exit(exit_code)
+            
+            return {"status": "completed"}
+    
+    script_main(ValidateSandboxModeScript)

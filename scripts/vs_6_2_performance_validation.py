@@ -632,4 +632,15 @@ async def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class Vs62PerformanceValidationScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            await main()
+            
+            return {"status": "completed"}
+    
+    script_main(Vs62PerformanceValidationScript)

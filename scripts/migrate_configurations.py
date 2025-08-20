@@ -1,3 +1,4 @@
+import asyncio
 #!/usr/bin/env python3
 """
 Configuration Migration Tool for LeanVibe Agent Hive 2.0
@@ -542,4 +543,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class MigrateConfigurationsScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            main()
+            
+            return {"status": "completed"}
+    
+    script_main(MigrateConfigurationsScript)

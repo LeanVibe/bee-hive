@@ -466,9 +466,20 @@ from app.common.utilities.shared_patterns import async_main_wrapper
 
 
 if __name__ == "__main__":
-    # REFACTORED: Use shared async_main_wrapper instead of duplicated pattern
-    # This replaces: 
-    #   import sys
-    #   exit_code = asyncio.run(main())
-    #   sys.exit(exit_code)
-    async_main_wrapper(main, "engine_benchmarks")
+    from app.common.utilities.script_base import BaseScript, script_main
+    
+    class BenchmarkEnginesScript(BaseScript):
+        """Refactored script using standardized pattern."""
+        
+        async def execute(self):
+            """Execute the main script logic."""
+            # REFACTORED: Use shared async_main_wrapper instead of duplicated pattern
+            # This replaces:
+            #   import sys
+            await main()
+            #   sys.exit(exit_code)
+            async_main_wrapper(main, "engine_benchmarks")
+            
+            return {"status": "completed"}
+    
+    script_main(BenchmarkEnginesScript)

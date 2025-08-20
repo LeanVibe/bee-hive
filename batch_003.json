@@ -1,0 +1,53 @@
+{
+  "batch_id": "batch_003",
+  "plans": [
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/deploy_production_security.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class DeployProductionSecurityScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(DeployProductionSecurityScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/enterprise_tmux_bootstrap.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    if len(sys.argv) > 1 and sys.argv[1] == \"--status\":\n        asyncio.run(quick_status_check())\n    else:\n        asyncio.run(bootstrap_enterprise_session())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class EnterpriseTmuxBootstrapScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            if len(sys.argv) > 1 and sys.argv[1] == \"--status\":\n            await quick_status_check()\n            else:\n            await bootstrap_enterprise_session()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(EnterpriseTmuxBootstrapScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 2.0,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/rollback_migration.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    asyncio.run(main())",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class RollbackMigrationScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            await main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(RollbackMigrationScript)",
+      "imports_to_add": [],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    },
+    {
+      "file_path": "/Users/bogdan/work/leanvibe-dev/bee-hive/scripts/init_db.py",
+      "has_main_pattern": true,
+      "current_main_code": "if __name__ == \"__main__\":\n    main()",
+      "proposed_refactoring": "if __name__ == \"__main__\":\n    from app.common.utilities.script_base import BaseScript, script_main\n    \n    class InitDbScript(BaseScript):\n        \"\"\"Refactored script using standardized pattern.\"\"\"\n        \n        async def execute(self):\n            \"\"\"Execute the main script logic.\"\"\"\n            main()\n            \n            return {\"status\": \"completed\"}\n    \n    script_main(InitDbScript)",
+      "imports_to_add": [
+        "asyncio"
+      ],
+      "imports_to_remove": [],
+      "estimated_loc_savings": -10,
+      "complexity_score": 1.5,
+      "test_files": []
+    }
+  ],
+  "estimated_loc_savings": -40,
+  "file_count": 4
+}
