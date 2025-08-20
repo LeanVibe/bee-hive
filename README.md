@@ -4,9 +4,29 @@ Modern FastAPI backend with a Lit + Vite PWA for real‑time operational dashboa
 
 ## 🚀 Quick Start
 
-For detailed setup instructions, see [Getting Started Guide](docs/GETTING_STARTED.md).
+### Using the Unified CLI (Recommended)
 
-### Minimal Setup
+LeanVibe Agent Hive provides a unified CLI following Unix philosophies, similar to `docker`, `kubectl`, and `terraform`:
+
+**🚀 Installation with uv:**
+```bash
+# Global installation (recommended)
+uv tool install -e .
+
+# Now use hive command anywhere
+hive doctor           # System diagnostics
+hive start           # Start the platform  
+hive agent deploy backend-developer  # Deploy agents
+hive status --watch   # Monitor system
+hive dashboard       # Open dashboard
+```
+
+**📋 Documentation:**
+- **[uv Installation Guide](UV_INSTALLATION_GUIDE.md)** - Complete setup with uv
+- **[CLI Usage Guide](CLI_USAGE_GUIDE.md)** - Docker/kubectl-style commands
+- **[Port Configuration](PORT_CONFIGURATION.md)** - Non-standard ports to avoid conflicts
+
+### Manual Setup (Alternative)
 ```bash
 # Infrastructure
 docker compose up -d postgres redis
@@ -18,9 +38,14 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 cd mobile-pwa && npm ci && npm run dev
 ```
 
-### Health Checks
-- API Health: `GET http://localhost:8000/health`
-- WebSocket: `ws://localhost:8000/api/dashboard/ws/dashboard`
+### Health Checks & Service URLs
+- **CLI**: `hive doctor` (comprehensive diagnostics)
+- **API Health**: `http://localhost:18080/health` (non-standard port)
+- **API Docs**: `http://localhost:18080/docs`
+- **PWA Dashboard**: `http://localhost:18443`
+- **WebSocket**: `ws://localhost:18080/api/dashboard/ws/dashboard`
+
+> **Note**: Uses non-standard ports (18080, 18443, 15432, 16379) to avoid conflicts with other development tools.
 
 ## 🧪 Testing
 
@@ -96,10 +121,30 @@ bee-hive/
 ```
 
 ### Key Commands
+
+**🤖 Unified CLI (Recommended)**
+```bash
+hive doctor                          # System diagnostics
+hive start                           # Start platform services  
+hive agent deploy <role>             # Deploy agents
+hive status --watch                  # Monitor system
+hive dashboard                       # Open monitoring UI
+```
+
+**📋 Traditional Commands**
 - `./scripts/setup.sh` - Initial project setup
 - `./scripts/start.sh` - Start all services
 - `make test` - Run complete test suite
 - `make help` - Show all available commands
+
+**🎯 Quick Reference**
+| Task | CLI Command | Traditional |
+|------|-------------|-------------|
+| Start system | `hive start` | `uvicorn app.main:app` |
+| Deploy agent | `hive agent deploy backend-developer` | `python deploy_agent_cli.py deploy` |
+| Check status | `hive status` | `curl http://localhost:8000/health` |
+| View logs | `hive logs -f` | `tail -f logs/app.log` |
+| Open dashboard | `hive dashboard` | Open browser manually |
 
 ## 🔗 Related Projects
 

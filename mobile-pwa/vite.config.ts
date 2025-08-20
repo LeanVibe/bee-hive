@@ -173,7 +173,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: Number(process.env.VITE_DEV_PORT || 51735),
+    port: Number(process.env.PWA_DEV_PORT || process.env.VITE_DEV_PORT || 18443),
     strictPort: true,
     open: false,
     cors: true,

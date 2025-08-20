@@ -1,192 +1,264 @@
-# Port Configuration for Multi-CLI Agent Coordination System
+# 🔌 LeanVibe Agent Hive - Port Configuration
 
-## 🔌 **Non-Standard Port Strategy**
+## 🎯 **Non-Standard Port Strategy**
 
-To avoid conflicts with other projects running on the same machine, all services use **non-standard ports** by default:
+LeanVibe Agent Hive uses **non-standard ports** to avoid conflicts with common development tools and system services. This ensures smooth operation alongside:
 
-## 📊 **Port Allocation by Environment**
+- React/Next.js dev servers (port 3000)
+- Vite dev servers (port 5173) 
+- Django dev servers (port 8000)
+- System PostgreSQL (port 5432)
+- System Redis (port 6379)
+- Docker services
+- Other development tools
 
-| Service | Standard Port | Production | Staging | Development | Testing |
-|---------|---------------|------------|---------|-------------|---------|
-| **Redis** | 6379 | 6380 | 6381 | 6382 | 6383-6390 |
-| **WebSocket** | 8765 | 8766 | 8767 | 8768 | 8769-8780 |
-| **Prometheus** | 9090 | 9091 | 9092 | 9093 | 9094-9100 |
+## 📋 **Port Mapping Reference**
 
-## 🛠️ **Environment Configuration**
+### **Core Services**
+| Service | Standard Port | Agent Hive Port | Purpose |
+|---------|---------------|-----------------|---------|
+| **FastAPI Backend** | 8000 | **18080** | Main API server |
+| **PWA Development** | 5173 | **18443** | Frontend dev server |
+| **PWA Preview** | 4173 | **18444** | Production preview |
+| **PostgreSQL** | 5432 | **15432** | Database server |
+| **Redis** | 6379 | **16379** | Cache & messaging |
 
-### **Production Environment**
+### **Monitoring & Observability**
+| Service | Standard Port | Agent Hive Port | Purpose |
+|---------|---------------|-----------------|---------|
+| **Prometheus Metrics** | 9090 | **19090** | Monitoring |
+| **Health Checks** | 8080 | **18081** | Status monitoring |
+| **WebSocket** | 8080 | **18082** | Real-time updates |
+
+### **Development & Debugging**
+| Service | Standard Port | Agent Hive Port | Purpose |
+|---------|---------------|-----------------|---------|
+| **Hot Reload** | 8000 | **18083** | Development server |
+| **Debug Interface** | 8080 | **18084** | Profiling & debugging |
+| **API Docs** | 8080 | **18085** | Separate docs server |
+
+### **Testing & Mocking**
+| Service | Standard Port | Agent Hive Port | Purpose |
+|---------|---------------|-----------------|---------|
+| **Mock Anthropic** | - | **18090** | Testing without real AI API |
+| **Mock OpenAI** | - | **18091** | Testing without real AI API |
+
+## 🚀 **Quick Access URLs**
+
+### **Development URLs**
 ```bash
-export REDIS_PORT="6380"          # Redis (default 6379 + 1)
-export WEBSOCKET_PORT="8766"      # WebSocket (default 8765 + 1) 
-export METRICS_PORT="9091"        # Prometheus (default 9090 + 1)
+# Main services
+API Server:        http://localhost:18080
+API Documentation: http://localhost:18080/docs
+API Health:        http://localhost:18080/health
+PWA Dashboard:     http://localhost:18443
+
+# Database connections
+PostgreSQL:        postgresql://user:pass@localhost:15432/db
+Redis:             redis://localhost:16379/0
 ```
 
-### **Staging Environment**
+### **CLI Commands**
 ```bash
-export REDIS_PORT="6381"          # Redis (default 6379 + 2)
-export WEBSOCKET_PORT="8767"      # WebSocket (default 8765 + 2)
-export METRICS_PORT="9092"        # Prometheus (default 9090 + 2)
+# System management
+hive start          # Starts API on port 18080
+hive dashboard      # Opens PWA on port 18443  
+hive doctor         # Checks all port status
+hive status         # System health on port 18080
+
+# Service management
+docker-compose up postgres redis  # Uses ports 15432, 16379
+cd mobile-pwa && npm run dev      # Starts PWA on port 18443
 ```
 
-### **Development Environment**
-```bash
-export REDIS_PORT="6382"          # Redis (default 6379 + 3)
-export WEBSOCKET_PORT="8768"      # WebSocket (default 8765 + 3)
-export METRICS_PORT="9093"        # Prometheus (default 9090 + 3)
+## ⚙️ **Configuration Files**
+
+### **Environment Variables**
+The port configuration is defined in multiple files:
+
+**Primary Configuration: `.env`**
+```env
+# Core service ports
+API_PORT=18080
+PWA_DEV_PORT=18443
+PWA_PREVIEW_PORT=18444
+PROMETHEUS_PORT=19090
+
+# Database ports  
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:15432/db
+REDIS_URL=redis://localhost:16379/0
+
+# CORS origins
+CORS_ORIGINS=http://localhost:18080,http://localhost:18443,http://localhost:18444
 ```
 
-### **Testing Environment**
-```bash
-export REDIS_PORT="6383"          # Redis test instances (6383-6390)
-export WEBSOCKET_PORT="8769"      # WebSocket test instances (8769-8780)
-export METRICS_PORT="9094"        # Prometheus test instances (9094-9100)
-```
+**Detailed Configuration: `.env.ports`**
+- Complete port mapping for all services
+- Port range reservations (18000-18999)
+- Conflict detection settings
+- Enterprise feature ports
 
-## 🔧 **Easy Port Customization**
-
-All ports are easily configurable through environment variables:
-
-```bash
-# Custom Redis setup
-export REDIS_HOST="my-redis-server.com"
-export REDIS_PORT="6400"          # Custom port
-export REDIS_PASSWORD="secure-password"
-
-# Custom WebSocket setup
-export WEBSOCKET_HOST="0.0.0.0"
-export WEBSOCKET_PORT="9000"      # Custom port
-export WEBSOCKET_SSL_ENABLED="true"
-
-# Custom Prometheus setup
-export METRICS_PORT="8080"        # Custom port
-export METRICS_PATH="/custom-metrics"
-```
-
-## 🐳 **Docker Compose Configuration**
-
-Example `docker-compose.yml` for development:
-
+**Docker Compose: `docker-compose.yml`**
 ```yaml
-version: '3.8'
-services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6382:6379"  # Map container 6379 to host 6382
-    command: redis-server --requirepass mypassword
-  
-  cli-coordinator:
-    build: .
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379       # Container internal port
-      - REDIS_PASSWORD=mypassword
-      - WEBSOCKET_PORT=8768
-      - METRICS_PORT=9093
-    ports:
-      - "8768:8768"           # WebSocket
-      - "9093:9093"           # Prometheus metrics
-    depends_on:
-      - redis
+# PostgreSQL
+ports:
+  - "${POSTGRES_PORT:-15432}:5432"
+
+# Redis  
+ports:
+  - "${REDIS_PORT:-16379}:6379"
 ```
 
-## 🧪 **Testing Port Management**
-
-For parallel test execution, ports are automatically assigned:
-
-```python
-# Test configuration with dynamic port assignment
-def get_test_config(test_id: str):
-    base_redis_port = 6383
-    base_websocket_port = 8769
-    
-    return {
-        "redis_port": base_redis_port + hash(test_id) % 10,
-        "websocket_port": base_websocket_port + hash(test_id) % 10,
-        "metrics_port": 9094 + hash(test_id) % 10
+**PWA Configuration: `mobile-pwa/vite.config.ts`**
+```typescript
+server: {
+  port: Number(process.env.PWA_DEV_PORT || 18443),
+  proxy: {
+    '/api': {
+      target: 'http://localhost:18080'
     }
+  }
+}
 ```
 
-## 🔍 **Port Conflict Detection**
+## 🔧 **Port Conflict Resolution**
 
-Built-in port availability checking:
-
-```python
-import socket
-
-def is_port_available(host: str, port: int) -> bool:
-    """Check if port is available for binding."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        try:
-            sock.bind((host, port))
-            return True
-        except OSError:
-            return False
-
-def find_available_port(base_port: int, max_attempts: int = 100) -> int:
-    """Find next available port starting from base_port."""
-    for i in range(max_attempts):
-        port = base_port + i
-        if is_port_available("localhost", port):
-            return port
-    raise RuntimeError(f"No available port found starting from {base_port}")
-```
-
-## 🚦 **Port Health Monitoring**
-
-```python
-async def check_service_health():
-    """Check if all services are running on configured ports."""
-    services = {
-        "Redis": (config.redis.host, config.redis.port),
-        "WebSocket": (config.websocket.host, config.websocket.port),
-        "Prometheus": ("localhost", config.monitoring.metrics_port)
-    }
-    
-    for service, (host, port) in services.items():
-        if not is_port_available(host, port):
-            print(f"✅ {service} running on {host}:{port}")
-        else:
-            print(f"❌ {service} not running on {host}:{port}")
-```
-
-## 🔧 **Quick Start Commands**
+### **Automatic Detection**
+The CLI includes automatic port conflict detection:
 
 ```bash
-# Check port availability
-netstat -an | grep :6380    # Redis production
-netstat -an | grep :8766    # WebSocket production
-
-# Kill services on specific ports (if needed)
-lsof -ti:6380 | xargs kill  # Kill Redis on production port
-lsof -ti:8766 | xargs kill  # Kill WebSocket on production port
-
-# Start services with custom ports
-REDIS_PORT=6400 WEBSOCKET_PORT=9000 python -m app.main
-
-# Test port configuration
-python -c "
-from app.config.production import get_config
-config = get_config()
-print(f'Redis: {config.redis.host}:{config.redis.port}')
-print(f'WebSocket: {config.websocket.host}:{config.websocket.port}')
-print(f'Metrics: localhost:{config.monitoring.metrics_port}')
-"
+hive doctor  # Shows port status for all services
 ```
 
-## ⚠️ **Important Notes**
+**Sample Output:**
+```
+🔌 Port Status:
+  Port 18080 (API Server): 🟢 Available
+  Port 15432 (PostgreSQL): 🔴 In use  
+  Port 16379 (Redis): 🟢 Available
+  Port 18443 (PWA Dev Server): 🟢 Available
+```
 
-1. **Firewall Rules**: Ensure firewall allows traffic on custom ports
-2. **Load Balancers**: Update load balancer configs when changing ports
-3. **Monitoring**: Update monitoring tools to check custom ports
-4. **Documentation**: Keep port documentation up-to-date in deployment guides
-5. **Environment Sync**: Ensure all team members use same port configurations
+### **Manual Port Changes**
+To customize ports, update the `.env` file:
 
-## 🎯 **Benefits of Non-Standard Ports**
+```env
+# Change API port if 18080 conflicts
+API_PORT=18088
 
-- ✅ **Avoid Conflicts**: No conflicts with Redis (6379), WebSocket (8765), Prometheus (9090)
-- ✅ **Easy Identification**: Non-standard ports make services easily identifiable
-- ✅ **Environment Isolation**: Different ports for prod/staging/dev prevent cross-environment issues
-- ✅ **Parallel Testing**: Multiple test instances can run simultaneously
-- ✅ **Security**: Less obvious ports reduce automated attack vectors
-- ✅ **Flexibility**: Easy to change ports without affecting other services
+# Change database port if 15432 conflicts  
+POSTGRES_PORT=15433
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:15433/db
+```
+
+Then restart services:
+```bash
+hive stop
+hive start
+```
+
+### **Port Range Strategy**
+Agent Hive reserves the **18000-18999** port range:
+
+- **18000-18099**: Core services (API, PWA, databases)
+- **18100-18199**: Monitoring & observability
+- **18200-18299**: Enterprise features
+- **18300-18399**: Development tools
+- **18400-18499**: Testing & mocking
+- **18500-18599**: Service discovery
+- **18600-18699**: Dynamic allocation
+- **18700-18999**: Reserved for future expansion
+
+## 🛡️ **Security Considerations**
+
+### **Development vs Production**
+```env
+# Development - localhost only
+BIND_HOST=127.0.0.1
+
+# Production - configure firewall rules
+ENABLE_PORT_FIREWALL=true
+```
+
+### **Firewall Configuration**
+For production deployments:
+
+```bash
+# Allow Agent Hive port range
+sudo ufw allow 18000:18999/tcp
+sudo ufw allow 15432/tcp  # PostgreSQL
+sudo ufw allow 16379/tcp  # Redis
+```
+
+### **Network Security**
+- All services bind to localhost by default
+- CORS configured for specific ports only
+- No services exposed externally without explicit configuration
+
+## 🚨 **Troubleshooting**
+
+### **Common Port Conflicts**
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Address already in use: 18080` | API port conflict | Change `API_PORT` in `.env` |
+| `Connection refused: 15432` | PostgreSQL not running | `docker-compose up postgres` |
+| `Redis connection failed: 16379` | Redis not running | `docker-compose up redis` |
+| `PWA dev server failed: 18443` | PWA port conflict | Change `PWA_DEV_PORT` in `.env` |
+
+### **Diagnostic Commands**
+```bash
+# Check all port status
+hive doctor
+
+# Check specific port
+netstat -an | grep 18080
+lsof -i :18080
+
+# Test connectivity  
+curl http://localhost:18080/health
+telnet localhost 15432
+```
+
+### **Service Dependencies**
+Services must start in the correct order:
+1. **PostgreSQL** (port 15432) - Database
+2. **Redis** (port 16379) - Cache/messaging  
+3. **FastAPI** (port 18080) - Backend API
+4. **PWA** (port 18443) - Frontend dashboard
+
+```bash
+# Correct startup sequence
+docker-compose up -d postgres redis  # Start databases
+hive start                           # Start API server
+cd mobile-pwa && npm run dev         # Start PWA (optional)
+```
+
+## 📱 **Mobile & Remote Access**
+
+### **Network Configuration**
+For mobile access on the same network:
+
+```env
+# Bind to all interfaces (development only)
+API_HOST=0.0.0.0
+
+# Update CORS for network access
+CORS_ORIGINS=http://localhost:18080,http://192.168.1.100:18080,http://10.0.0.100:18080
+```
+
+### **Access URLs**
+- **Local**: `http://localhost:18443`
+- **Network**: `http://YOUR-IP:18443`
+- **Tailscale**: `http://YOUR-TAILSCALE-IP:18443`
+
+## 💡 **Best Practices**
+
+1. **Use the CLI**: `hive start` handles all port configuration automatically
+2. **Check conflicts**: Run `hive doctor` before starting services
+3. **Environment consistency**: Use `.env` file for all port configuration
+4. **Documentation**: Update port mappings when adding new services
+5. **Testing**: Validate port changes with `hive status` and `hive dashboard`
+
+---
+
+**The non-standard port strategy ensures LeanVibe Agent Hive can run alongside any development environment without conflicts.**

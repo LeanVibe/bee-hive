@@ -197,6 +197,11 @@ class Settings(BaseSettings):
     GRAFANA_PORT: int = Field(default=3000, env="GRAFANA_PORT")
     METRICS_ENABLED: bool = Field(default=True, env="METRICS_ENABLED")
     
+    # Port Configuration - Non-standard ports to avoid conflicts
+    API_PORT: int = Field(default=18080, env="API_PORT")
+    PWA_DEV_PORT: int = Field(default=18443, env="PWA_DEV_PORT") 
+    PWA_PREVIEW_PORT: int = Field(default=18444, env="PWA_PREVIEW_PORT")
+    
     # External Tools Configuration  
     GITHUB_API_URL: str = Field(default="https://api.github.com", env="GITHUB_API_URL")
     DOCKER_HOST: Optional[str] = Field(default=None, env="DOCKER_HOST")

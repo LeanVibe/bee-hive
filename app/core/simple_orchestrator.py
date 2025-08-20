@@ -43,6 +43,7 @@ class AgentRole(Enum):
     FRONTEND_DEVELOPER = "frontend_developer"
     DEVOPS_ENGINEER = "devops_engineer"
     QA_ENGINEER = "qa_engineer"
+    META_AGENT = "meta_agent"
 
 
 @dataclass
