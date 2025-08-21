@@ -43,7 +43,7 @@ from .agent_redis_bridge import (
     Priority as MessagePriority
 )
 from .tmux_session_manager import TmuxSessionManager
-from .short_id_generator import ShortIDGenerator
+from .short_id_generator import ShortIdGenerator
 from ..models.agent import Agent, AgentStatus, AgentType
 from ..models.task import Task, TaskStatus, TaskPriority
 
@@ -150,7 +150,7 @@ class SimpleOrchestrator:
         agent_launcher: Optional[EnhancedAgentLauncher] = None,
         redis_bridge: Optional[AgentRedisBridge] = None,
         tmux_manager: Optional[TmuxSessionManager] = None,
-        short_id_generator: Optional[ShortIDGenerator] = None
+        short_id_generator: Optional[ShortIdGenerator] = None
     ):
         """Initialize orchestrator with dependency injection."""
         self._db_session_factory = db_session_factory
@@ -163,7 +163,7 @@ class SimpleOrchestrator:
         self._agent_launcher = agent_launcher
         self._redis_bridge = redis_bridge
         self._tmux_manager = tmux_manager
-        self._short_id_generator = short_id_generator or ShortIDGenerator()
+        self._short_id_generator = short_id_generator or ShortIdGenerator()
         
         # In-memory agent registry for fast access
         self._agents: Dict[str, AgentInstance] = {}
@@ -1035,7 +1035,7 @@ def create_simple_orchestrator(
     agent_launcher: Optional[EnhancedAgentLauncher] = None,
     redis_bridge: Optional[AgentRedisBridge] = None,
     tmux_manager: Optional[TmuxSessionManager] = None,
-    short_id_generator: Optional[ShortIDGenerator] = None
+    short_id_generator: Optional[ShortIdGenerator] = None
 ) -> SimpleOrchestrator:
     """
     Factory function to create SimpleOrchestrator with proper dependencies.

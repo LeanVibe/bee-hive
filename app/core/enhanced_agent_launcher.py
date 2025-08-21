@@ -31,7 +31,7 @@ import libtmux
 from redis.asyncio import Redis
 
 from .config import settings
-from .short_id_generator import ShortIDGenerator
+from .short_id_generator import ShortIdGenerator
 from .tmux_session_manager import TmuxSessionManager, SessionInfo, SessionStatus
 from .enhanced_redis_streams_manager import EnhancedRedisStreamsManager, ConsumerGroupType
 from ..models.agent import Agent, AgentStatus, AgentType
@@ -94,7 +94,7 @@ class EnhancedAgentLauncher:
         self,
         tmux_manager: TmuxSessionManager,
         redis_manager: EnhancedRedisStreamsManager,
-        short_id_generator: ShortIDGenerator
+        short_id_generator: ShortIdGenerator
     ):
         self.tmux_manager = tmux_manager
         self.redis_manager = redis_manager
@@ -675,7 +675,7 @@ class EnhancedAgentLauncher:
 async def create_enhanced_agent_launcher(
     tmux_manager: Optional[TmuxSessionManager] = None,
     redis_manager: Optional[EnhancedRedisStreamsManager] = None,
-    short_id_generator: Optional[ShortIDGenerator] = None
+    short_id_generator: Optional[ShortIdGenerator] = None
 ) -> EnhancedAgentLauncher:
     """
     Factory function to create EnhancedAgentLauncher with proper dependencies.
@@ -689,7 +689,7 @@ async def create_enhanced_agent_launcher(
         await redis_manager.initialize()
     
     if short_id_generator is None:
-        short_id_generator = ShortIDGenerator()
+        short_id_generator = ShortIdGenerator()
     
     return EnhancedAgentLauncher(
         tmux_manager=tmux_manager,
