@@ -146,7 +146,7 @@ class SimpleOrchestrator:
     - Lazy plugin loading
     """
 
-    def __init__()
+    def __init__(
         self,
         db_session_factory: Optional[DatabaseDependency] = None,
         cache: Optional[CacheDependency] = None,
@@ -246,9 +246,10 @@ class SimpleOrchestrator:
 
             # Initialize agent launcher if not provided
             if self._agent_launcher is None:
-                self._agent_launcher = await create_enhanced_agent_launcher()
+                self._agent_launcher = await create_enhanced_agent_launcher(
                     tmux_manager=self._tmux_manager,
                     short_id_generator=self._short_id_generator
+                )
 
             # Initialize Redis bridge if not provided
             if self._redis_bridge is None:
@@ -278,7 +279,7 @@ class SimpleOrchestrator:
             logger.error("❌ Failed to initialize Enhanced SimpleOrchestrator", error=str(e))
             raise
 
-    async def spawn_agent()
+    async def spawn_agent(
         self,
         role: AgentRole,
         agent_id: Optional[str] = None,
@@ -325,95 +326,100 @@ class SimpleOrchestrator:
                 logger.error("Agent already exists", agent_id=agent_id)
                 raise SimpleOrchestratorError(f"Agent {agent_id} already exists")
 
-                # Check agent limit
-                active_agents = len([a for a in self._agents.values()
-                max_agents = getattr(settings, 'MAX_CONCURRENT_AGENTS', 10)
+            # Check agent limit
+            active_agents = len([a for a in self._agents.values() if a.status == AgentStatus.ACTIVE])
+            max_agents = getattr(settings, 'MAX_CONCURRENT_AGENTS', 10)
 
-                logger.debug("Active agents count",
-                           active_agents=active_agents,
-                           max_agents=max_agents)
+            logger.debug("Active agents count",
+                       active_agents=active_agents,
+                       max_agents=max_agents)
 
-                if active_agents >= max_agents:
-                    logger.warning("Resource limit exceeded",
-                                 active_agents=active_agents,
-                                 max_agents=max_agents,
-                                 attempted_role=role.value)
-                    raise SimpleOrchestratorError("Maximum concurrent agents reached")
+            if active_agents >= max_agents:
+                logger.warning("Resource limit exceeded",
+                             active_agents=active_agents,
+                             max_agents=max_agents,
+                             attempted_role=role.value)
+                raise SimpleOrchestratorError("Maximum concurrent agents reached")
 
-                # Create launch configuration
-                launch_config = AgentLaunchConfig()
-                    agent_type=agent_type,
-                    task_id=task_id,
-                    workspace_name=workspace_name,
-                    git_branch=git_branch,
-                    working_directory=working_directory,
-                    environment_vars=environment_vars
+            # Create launch configuration
+            launch_config = AgentLaunchConfig(
+                agent_type=agent_type,
+                task_id=task_id,
+                workspace_name=workspace_name,
+                git_branch=git_branch,
+                working_directory=working_directory,
+                environment_vars=environment_vars
+            )
 
-                # Launch agent using enhanced launcher
-                launch_result = await self._agent_launcher.launch_agent()
-                    config=launch_config,
-                    agent_name=f"{role.value}-{agent_id[:8]}"
+            # Launch agent using enhanced launcher
+            launch_result = await self._agent_launcher.launch_agent(
+                config=launch_config,
+                agent_name=f"{role.value}-{agent_id[:8]}"
+            )
 
-                if not launch_result.success:
-                    raise SimpleOrchestratorError(f"Failed to launch agent: {launch_result.error_message}")
+            if not launch_result.success:
+                raise SimpleOrchestratorError(f"Failed to launch agent: {launch_result.error_message}")
 
-                # Create agent instance
-                agent = AgentInstance()
-                    id=agent_id,
-                    role=role,
-                    status=AgentStatus.ACTIVE
+            # Create agent instance
+            agent = AgentInstance(
+                id=agent_id,
+                role=role,
+                status=AgentStatus.ACTIVE
+            )
 
-                # Store in memory registry
-                self._agents[agent_id] = agent
-                self._tmux_agents[agent_id] = launch_result.session_id
+            # Store in memory registry
+            self._agents[agent_id] = agent
+            self._tmux_agents[agent_id] = launch_result.session_id
 
-                # Register agent with Redis bridge
-                if self._redis_bridge:
-                    await self._redis_bridge.register_agent()
-                        agent_id=agent_id,
-                        agent_type=agent_type.value,
-                        session_name=launch_result.session_name,
-                        capabilities=[role.value],
-                        consumer_group="general_agents",
-                        workspace_path=launch_result.workspace_path
-
-                # Persist to database if available
-                if self._db_session_factory:
-                    await self._persist_enhanced_agent(agent, launch_result)
-
-                # Cache for fast access
-                if self._cache:
-                    agent_data = agent.to_dict()
-                    agent_data.update({)
-                        "session_id": launch_result.session_id,
-                        "session_name": launch_result.session_name,
-                        "workspace_path": launch_result.workspace_path,
-                        "agent_type": agent_type.value
-                    })
-                    await self._cache.set(f"agent:{agent_id}", agent_data, ttl=3600)
-
-                # Log successful creation
-                logger.info("Audit event")
-
-                logger.info()
-                    "Enhanced agent spawned successfully",
+            # Register agent with Redis bridge
+            if self._redis_bridge:
+                await self._redis_bridge.register_agent(
                     agent_id=agent_id,
-                    role=role.value,
                     agent_type=agent_type.value,
                     session_name=launch_result.session_name,
-                    workspace_path=launch_result.workspace_path,
-                    launch_time=launch_result.launch_time_seconds,
-                    total_agents=len(self._agents)
+                    capabilities=[role.value],
+                    consumer_group="general_agents",
+                    workspace_path=launch_result.workspace_path
+                )
 
-                self._operation_count += 1
-                return agent_id
+            # Persist to database if available
+            if self._db_session_factory:
+                await self._persist_enhanced_agent(agent, launch_result)
 
-            except Exception as e:
-                logger.error("Operation failed", error=str(e))
+            # Cache for fast access
+            if self._cache:
+                agent_data = agent.to_dict()
+                agent_data.update({
+                    "session_id": launch_result.session_id,
+                    "session_name": launch_result.session_name,
+                    "workspace_path": launch_result.workspace_path,
+                    "agent_type": agent_type.value
+                })
+                await self._cache.set(f"agent:{agent_id}", agent_data, ttl=3600)
 
-                logger.info("Audit event")
+            # Log successful creation
+            logger.info("Audit event")
 
-                raise SimpleOrchestratorError(f"Failed to spawn agent: {e}") from e
+            logger.info(
+                "Enhanced agent spawned successfully",
+                agent_id=agent_id,
+                role=role.value,
+                agent_type=agent_type.value,
+                session_name=launch_result.session_name,
+                workspace_path=launch_result.workspace_path,
+                launch_time=launch_result.launch_time_seconds,
+                total_agents=len(self._agents)
+            )
+
+            self._operation_count += 1
+            return agent_id
+
+        except Exception as e:
+            logger.error("Operation failed", error=str(e))
+
+            logger.info("Audit event")
+
+            raise SimpleOrchestratorError(f"Failed to spawn agent: {e}") from e
 
     async def shutdown_agent(self, agent_id: str, graceful: bool = True) -> bool:
         """
@@ -430,78 +436,78 @@ class SimpleOrchestrator:
             SimpleOrchestratorError: If shutdown fails
         """
         try:
-            try:
-                # Enhanced logging context
-                # Enhanced logger context removed
+            # Enhanced logging context
+            # Enhanced logger context removed
 
-                # Check if agent exists
-                if agent_id not in self._agents:
-                    logger.info("Audit event")
-                    logger.warning("Agent not found for shutdown", agent_id=agent_id)
-                    return False
+            # Check if agent exists
+            if agent_id not in self._agents:
+                logger.info("Audit event")
+                logger.warning("Agent not found for shutdown", agent_id=agent_id)
+                return False
 
-                agent = self._agents[agent_id]
+            agent = self._agents[agent_id]
 
-                # Log current agent state before shutdown
+            # Log current agent state before shutdown
+            logger.info("Operation info")
+
+            # Handle graceful shutdown with enhanced logging
+            if graceful and agent.current_task_id:
                 logger.info("Operation info")
+                # Wait for current task (simplified - could be enhanced)
+                await asyncio.sleep(1)  # Brief wait
 
-                # Handle graceful shutdown with enhanced logging
-                if graceful and agent.current_task_id:
-                    logger.info("Operation info")
-                    # Wait for current task (simplified - could be enhanced)
-                    await asyncio.sleep(1)  # Brief wait
+            # Update agent status
+            old_status = agent.status
+            agent.status = AgentStatus.INACTIVE
+            agent.last_activity = datetime.utcnow()
 
-                # Update agent status
-                old_status = agent.status
-                agent.status = AgentStatus.INACTIVE
-                agent.last_activity = datetime.utcnow()
+            # Terminate tmux session if exists
+            if agent_id in self._tmux_agents:
+                session_id = self._tmux_agents[agent_id]
+                if self._agent_launcher:
+                    await self._agent_launcher.terminate_agent(agent_id, cleanup_workspace=True)
+                del self._tmux_agents[agent_id]
 
-                # Terminate tmux session if exists
-                if agent_id in self._tmux_agents:
-                    session_id = self._tmux_agents[agent_id]
-                    if self._agent_launcher:
-                        await self._agent_launcher.terminate_agent(agent_id, cleanup_workspace=True)
-                    del self._tmux_agents[agent_id]
+            # Unregister from Redis bridge
+            if self._redis_bridge:
+                await self._redis_bridge.unregister_agent(agent_id)
 
-                # Unregister from Redis bridge
-                if self._redis_bridge:
-                    await self._redis_bridge.unregister_agent(agent_id)
+            # Remove from active registry
+            del self._agents[agent_id]
 
-                # Remove from active registry
-                del self._agents[agent_id]
+            # Update database if available
+            if self._db_session_factory:
+                await self._update_agent_status(agent_id, AgentStatus.INACTIVE)
 
-                # Update database if available
-                if self._db_session_factory:
-                    await self._update_agent_status(agent_id, AgentStatus.INACTIVE)
+            # Remove from cache
+            if self._cache:
+                await self._cache.set(f"agent:{agent_id}", None, ttl=1)
 
-                # Remove from cache
-                if self._cache:
-                    await self._cache.set(f"agent:{agent_id}", None, ttl=1)
+            # Log performance metrics
+            remaining_agents = len(self._agents)
+            logger.debug("Performance metric")
 
-                # Log performance metrics
-                remaining_agents = len(self._agents)
-                logger.debug("Performance metric")
+            # Log successful shutdown audit event
+            logger.info("Audit event")
 
-                # Log successful shutdown audit event
-                logger.info("Audit event")
+            logger.info(
+                "Agent shutdown successful",
+                agent_id=agent_id,
+                graceful=graceful,
+                remaining_agents=remaining_agents
+            )
 
-                logger.info()
-                    "Agent shutdown successful",
-                    agent_id=agent_id,
-                    graceful=graceful,
-                    remaining_agents=remaining_agents
+            self._operation_count += 1
+            return True
 
-                self._operation_count += 1
-                return True
+        except Exception as e:
+            logger.error("Operation failed", error=str(e))
 
-            except Exception as e:
-                logger.error("Operation failed", error=str(e))
+            logger.info("Audit event")
 
-                logger.info("Audit event")
+            raise SimpleOrchestratorError(f"Failed to shutdown agent: {e}") from e
 
-                raise SimpleOrchestratorError(f"Failed to shutdown agent: {e}") from e
-
-    async def delegate_task()
+    async def delegate_task(
         self,
         task_description: str,
         task_type: str,
@@ -524,97 +530,96 @@ class SimpleOrchestrator:
             TaskDelegationError: If no suitable agent available
         """
         try:
-            try:
-                # Generate task ID
-                task_id = str(uuid.uuid4())
+            # Generate task ID
+            task_id = str(uuid.uuid4())
 
-                # Enhanced logging context
-                # Enhanced logger context removed
+            # Enhanced logging context
+            # Enhanced logger context removed
 
-                # Log task delegation request
-                logger.info("Operation info")
+            # Log task delegation request
+            logger.info("Operation info")
 
-                # Convert task priority to message priority
-                msg_priority = MessagePriority.NORMAL
-                if priority == TaskPriority.HIGH:
-                    msg_priority = MessagePriority.HIGH
-                elif priority == TaskPriority.LOW:
-                    msg_priority = MessagePriority.LOW
-                elif priority == TaskPriority.URGENT:
-                    msg_priority = MessagePriority.URGENT
+            # Convert task priority to message priority
+            msg_priority = MessagePriority.NORMAL
+            if priority == TaskPriority.HIGH:
+                msg_priority = MessagePriority.HIGH
+            elif priority == TaskPriority.LOW:
+                msg_priority = MessagePriority.LOW
+            elif priority == TaskPriority.URGENT:
+                msg_priority = MessagePriority.URGENT
 
-                # Determine required capabilities based on task type and role
-                required_capabilities = []
-                if preferred_agent_role:
-                    required_capabilities.append(preferred_agent_role.value)
-                if task_type:
-                    required_capabilities.append(task_type)
+            # Determine required capabilities based on task type and role
+            required_capabilities = []
+            if preferred_agent_role:
+                required_capabilities.append(preferred_agent_role.value)
+            if task_type:
+                required_capabilities.append(task_type)
 
-                # Try to assign task via Redis bridge first
-                assigned_agent_id = None
-                if self._redis_bridge:
-                    assigned_agent_id = await self._redis_bridge.assign_task_to_agent()
-                        task_id=task_id,
-                        task_description=task_description,
-                        required_capabilities=required_capabilities,
-                        priority=msg_priority
-
-                # Fallback to local agent selection if Redis bridge unavailable
-                if not assigned_agent_id:
-                    suitable_agent = await self._find_suitable_agent()
-                        preferred_role=preferred_agent_role,
-                        task_type=task_type
-
-                    if not suitable_agent:
-                        logger.warning("Security event")
-                        raise TaskDelegationError("No suitable agent available")
-
-                    assigned_agent_id = suitable_agent.id
-
-                    # Update agent with current task
-                    suitable_agent.current_task_id = task_id
-                    suitable_agent.last_activity = datetime.utcnow()
-
-                # Create task assignment
-                assignment = TaskAssignment()
+            # Try to assign task via Redis bridge first
+            assigned_agent_id = None
+            if self._redis_bridge:
+                assigned_agent_id = await self._redis_bridge.assign_task_to_agent(
                     task_id=task_id,
-                    agent_id=assigned_agent_id,
-                    status=TaskStatus.PENDING
+                    task_description=task_description,
+                    required_capabilities=required_capabilities,
+                    priority=msg_priority
+                )
 
-                # Store assignment
-                self._task_assignments[task_id] = assignment
+            # Fallback to local agent selection if Redis bridge unavailable
+            if not assigned_agent_id:
+                suitable_agent = await self._find_suitable_agent(
+                    preferred_role=preferred_agent_role,
+                    task_type=task_type
+                )
 
-                # Persist to database if available
-                if self._db_session_factory:
-                    await self._persist_task(task_id, task_description, task_type,
-                                           priority, suitable_agent.id)
+                if not suitable_agent:
+                    logger.warning("Security event")
+                    raise TaskDelegationError("No suitable agent available")
 
-                # Log performance metrics
-                logger.debug("Performance metric")
+                assigned_agent_id = suitable_agent.id
 
-                # Log successful task delegation audit event
-                logger.info("Audit event")
+                # Update agent with current task
+                suitable_agent.current_task_id = task_id
+                suitable_agent.last_activity = datetime.utcnow()
 
-                logger.info()
-                    "Task delegated successfully",
-                    task_id=task_id,
-                    agent_id=assigned_agent_id,
-                    task_type=task_type,
-                    priority=priority.value
+            # Create task assignment
+            assignment = TaskAssignment(
+                task_id=task_id,
+                agent_id=assigned_agent_id,
+                status=TaskStatus.PENDING
+            )
 
-                self._operation_count += 1
-                return task_id
+            # Store assignment
+            self._task_assignments[task_id] = assignment
 
-            except Exception as e:
-                logger.error("Operation failed", error=str(e))
+            # Persist to database if available
+            if self._db_session_factory:
+                await self._persist_task(task_id, task_description, task_type,
+                                       priority, suitable_agent.id)
 
-                logger.info("Audit event") else 'unknown'}",
-                    success=False,
-                    error=str(e),
-                    task_type=task_type,
-                    priority=priority.value
+            # Log performance metrics
+            logger.debug("Performance metric")
 
-                raise TaskDelegationError(f"Failed to delegate task: {e}") from e
+            # Log successful task delegation audit event
+            logger.info("Audit event")
+
+            logger.info(
+                "Task delegated successfully",
+                task_id=task_id,
+                agent_id=assigned_agent_id,
+                task_type=task_type,
+                priority=priority.value
+            )
+
+            self._operation_count += 1
+            return task_id
+
+        except Exception as e:
+            logger.error("Operation failed", error=str(e))
+
+            logger.info("Audit event")
+
+            raise TaskDelegationError(f"Failed to delegate task: {e}") from e
 
     async def get_system_status(self) -> Dict[str, Any]:
         """
@@ -659,8 +664,9 @@ class SimpleOrchestrator:
                 "performance": {
                     "operations_count": self._operation_count,
                     "operations_per_second": round(ops_per_second, 2),
-                    "response_time_ms": round()
+                    "response_time_ms": round(
                         (datetime.utcnow() - start_time).total_seconds() * 1000, 2
+                    )
                 },
                 "health": "healthy" if len(self._agents) > 0 else "no_agents"
             }
@@ -679,8 +685,8 @@ class SimpleOrchestrator:
 
                 status["plugins"] = plugin_status
 
-            logger.debug("Performance metric"),
-                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
+            logger.debug("Performance metric",
+                duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000)
 
             return status
 
@@ -694,7 +700,7 @@ class SimpleOrchestrator:
 
     # Private helper methods
 
-    async def _find_suitable_agent()
+    async def _find_suitable_agent(
         self,
         preferred_role: Optional[AgentRole] = None,
         task_type: str = ""
@@ -724,12 +730,13 @@ class SimpleOrchestrator:
 
         try:
             async with get_session() as session:
-                db_agent = Agent()
+                db_agent = Agent(
                     id=agent.id,
                     role=agent.role.value,
                     agent_type=AgentType.CLAUDE_CODE,
                     status=agent.status,
                     created_at=agent.created_at
+                )
                 session.add(db_agent)
                 await session.commit()
         except Exception as e:
@@ -752,7 +759,7 @@ class SimpleOrchestrator:
             logger.warning("Failed to update agent status in database",
                          agent_id=agent_id, error=str(e))
 
-    async def _persist_task()
+    async def _persist_task(
         self,
         task_id: str,
         description: str,
@@ -855,7 +862,7 @@ class SimpleOrchestrator:
 
         return None
 
-    async def execute_command_in_agent_session()
+    async def execute_command_in_agent_session(
         self,
         agent_id: str,
         command: str,
@@ -933,7 +940,7 @@ class SimpleOrchestrator:
 
     # Epic 2 Phase 2.1: Advanced Plugin Manager Methods
 
-    async def load_plugin_dynamic()
+    async def load_plugin_dynamic(
         self,
         plugin_id: str,
         version: str = "latest",
@@ -1032,7 +1039,7 @@ class SimpleOrchestrator:
 
 
 # Factory function for dependency injection
-def create_simple_orchestrator()
+def create_simple_orchestrator(
     db_session_factory: Optional[DatabaseDependency] = None,
     cache: Optional[CacheDependency] = None,
     anthropic_client: Optional[AsyncAnthropic] = None,
@@ -1057,7 +1064,7 @@ def create_simple_orchestrator()
 
 
 # Enhanced factory function for full initialization
-async def create_enhanced_simple_orchestrator()
+async def create_enhanced_simple_orchestrator(
     db_session_factory: Optional[DatabaseDependency] = None,
     cache: Optional[CacheDependency] = None,
     anthropic_client: Optional[AsyncAnthropic] = None
