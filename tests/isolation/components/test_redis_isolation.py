@@ -326,6 +326,9 @@ class TestRedisClientIsolation:
             assert success is True
             
             value = await client.get("test_key")
+            # Handle both string and bytes return values
+            if isinstance(value, bytes):
+                value = value.decode()
             assert value == "test_value"
             
             # Test EXISTS
@@ -348,6 +351,9 @@ class TestRedisClientIsolation:
         assert success is True
         
         value = await client.hget("test_hash", "field1")
+        # Handle both string and bytes return values
+        if isinstance(value, bytes):
+            value = value.decode()
         assert value == "value1"
         
         # Test HDEL

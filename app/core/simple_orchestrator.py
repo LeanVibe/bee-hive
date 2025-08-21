@@ -134,12 +134,14 @@ class SimpleOrchestrator:
     - Agent lifecycle management (spawn, shutdown)
     - Basic task delegation
     - System status monitoring
+    - Plugin architecture for production enhancements
     
     Design goals:
     - <100ms response times for core operations
     - Easy to test and maintain
     - Clear separation of concerns
     - Minimal dependencies
+    - Extensible via plugins
     """
     
     def __init__(
@@ -150,7 +152,8 @@ class SimpleOrchestrator:
         agent_launcher: Optional[EnhancedAgentLauncher] = None,
         redis_bridge: Optional[AgentRedisBridge] = None,
         tmux_manager: Optional[TmuxSessionManager] = None,
-        short_id_generator: Optional[ShortIdGenerator] = None
+        short_id_generator: Optional[ShortIdGenerator] = None,
+        enable_production_plugin: bool = False
     ):
         """Initialize orchestrator with dependency injection."""
         self._db_session_factory = db_session_factory
@@ -175,6 +178,10 @@ class SimpleOrchestrator:
         # Performance metrics
         self._operation_count = 0
         self._last_performance_check = datetime.utcnow()
+        
+        # Plugin system
+        self._plugins: List[Any] = []
+        self._enable_production_plugin = enable_production_plugin
         
         # Initialization flag
         self._initialized = False
@@ -203,9 +210,20 @@ class SimpleOrchestrator:
             if self._redis_bridge is None:
                 self._redis_bridge = await create_agent_redis_bridge()
             
+            # Initialize production plugin if enabled
+            if self._enable_production_plugin:
+                try:
+                    from .orchestrator_plugins.production_enhancement_plugin import create_production_enhancement_plugin
+                    production_plugin = create_production_enhancement_plugin(self)
+                    self._plugins.append(production_plugin)
+                    logger.info("✅ Production enhancement plugin loaded")
+                except Exception as e:
+                    logger.warning("Failed to load production plugin", error=str(e))
+            
             self._initialized = True
             
-            logger.info("✅ Enhanced SimpleOrchestrator initialized successfully")
+            logger.info("✅ Enhanced SimpleOrchestrator initialized successfully", 
+                       plugins_loaded=len(self._plugins))
             
         except Exception as e:
             logger.error("❌ Failed to initialize Enhanced SimpleOrchestrator", error=str(e))
@@ -744,10 +762,25 @@ class SimpleOrchestrator:
                 "health": "healthy" if len(self._agents) > 0 else "no_agents"
             }
             
+            # Add plugin status if plugins are loaded
+            if self._plugins:
+                plugin_status = {}
+                for i, plugin in enumerate(self._plugins):
+                    try:
+                        if hasattr(plugin, 'get_production_status'):
+                            plugin_status[f'production_plugin'] = await plugin.get_production_status()
+                        else:
+                            plugin_status[f'plugin_{i}'] = {"status": "loaded"}
+                    except Exception as e:
+                        plugin_status[f'plugin_{i}'] = {"status": "error", "error": str(e)}
+                
+                status["plugins"] = plugin_status
+            
             logger.debug(
                 "System status retrieved",
                 agent_count=len(self._agents),
                 task_count=assignment_count,
+                plugins_count=len(self._plugins),
                 duration_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
             )
             

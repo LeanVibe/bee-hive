@@ -25,6 +25,8 @@ BUILT ON PHASE 2 FRAMEWORK:
 GEMINI CLI REVIEWED: ✅ Architecture validated for production deployment
 """
 
+from typing import Optional, Dict, List, Any
+
 # Version information
 __version__ = "2.1.0"
 __phase__ = "Phase 2.1 - Manager Consolidation"

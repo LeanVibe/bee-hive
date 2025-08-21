@@ -27,7 +27,7 @@ import structlog
 from pydantic import BaseModel, Field
 
 # Import shared patterns from Phase 1.1-1.2
-from ..common.utilities.shared_patterns import (
+from ...common.utilities.shared_patterns import (
     standard_logging_setup, standard_error_handling
 )
 
@@ -67,6 +67,8 @@ class PluginType(str, Enum):
     MONITORING = "monitoring"
     OPTIMIZATION = "optimization"
     INTEGRATION = "integration"
+    LIFECYCLE = "lifecycle"
+    CONFIGURATION = "configuration"
 
 
 @dataclass

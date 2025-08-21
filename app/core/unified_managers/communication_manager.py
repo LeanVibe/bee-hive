@@ -38,7 +38,7 @@ from .base_manager import (
 )
 
 # Import shared patterns from Phase 1
-from ..common.utilities.shared_patterns import (
+from ...common.utilities.shared_patterns import (
     standard_logging_setup, standard_error_handling
 )
 
