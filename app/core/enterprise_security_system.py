@@ -458,10 +458,33 @@ class SecurityAuditLogger:
     def __init__(self, config: SecurityConfig):
         self.config = config
         self.redis = None
+        self._redis_initialized = False
         
     async def initialize(self):
         """Initialize async components."""
-        self.redis = get_redis()
+        try:
+            self.redis = get_redis()
+            self._redis_initialized = True
+        except Exception as e:
+            logger.warning(f"Redis initialization failed for audit logger: {e}")
+            self.redis = None
+            self._redis_initialized = False
+    
+    async def _ensure_redis_connection(self):
+        """Ensure Redis connection is available, with lazy initialization."""
+        if not self._redis_initialized or self.redis is None:
+            try:
+                from .redis import get_redis
+                self.redis = get_redis()
+                self._redis_initialized = True
+                # Test the connection
+                await self.redis.ping()
+            except Exception as e:
+                logger.warning(f"Redis connection failed in audit logger: {e}")
+                self.redis = None
+                self._redis_initialized = False
+                return False
+        return True
     
     async def log_event(self, event: SecurityEvent, user_id: str = None,
                        request: Request = None, **kwargs):
@@ -488,7 +511,7 @@ class SecurityAuditLogger:
             })
         
         # Store in Redis for real-time monitoring
-        if self.redis:
+        if await self._ensure_redis_connection():
             try:
                 await self.redis.lpush("security_events", json.dumps(event_data))
                 await self.redis.ltrim("security_events", 0, 9999)  # Keep last 10k events
@@ -541,11 +564,34 @@ class ThreatDetectionEngine:
     def __init__(self, config: SecurityConfig):
         self.config = config
         self.redis = None
+        self._redis_initialized = False
         self.suspicious_patterns = self._load_suspicious_patterns()
     
     async def initialize(self):
         """Initialize async components."""
-        self.redis = get_redis()
+        try:
+            self.redis = get_redis()
+            self._redis_initialized = True
+        except Exception as e:
+            logger.warning(f"Redis initialization failed for threat detector: {e}")
+            self.redis = None
+            self._redis_initialized = False
+    
+    async def _ensure_redis_connection(self):
+        """Ensure Redis connection is available, with lazy initialization."""
+        if not self._redis_initialized or self.redis is None:
+            try:
+                from .redis import get_redis
+                self.redis = get_redis()
+                self._redis_initialized = True
+                # Test the connection
+                await self.redis.ping()
+            except Exception as e:
+                logger.warning(f"Redis connection failed in threat detector: {e}")
+                self.redis = None
+                self._redis_initialized = False
+                return False
+        return True
     
     def _load_suspicious_patterns(self) -> Dict[str, List[str]]:
         """Load patterns for threat detection."""
@@ -642,7 +688,7 @@ class ThreatDetectionEngine:
         """Analyze IP address behavior patterns."""
         threats = []
         
-        if not self.redis or ip_address == "unknown":
+        if ip_address == "unknown" or not await self._ensure_redis_connection():
             return threats
         
         try:
@@ -708,14 +754,39 @@ class EnterpriseRateLimiter:
     def __init__(self, config: SecurityConfig):
         self.config = config
         self.redis = None
+        self._redis_initialized = False
         
     async def initialize(self):
         """Initialize async components."""
-        self.redis = get_redis()
+        try:
+            self.redis = get_redis()
+            self._redis_initialized = True
+        except Exception as e:
+            logger.warning(f"Redis initialization failed for rate limiter: {e}")
+            self.redis = None
+            self._redis_initialized = False
+    
+    async def _ensure_redis_connection(self):
+        """Ensure Redis connection is available, with lazy initialization."""
+        if not self._redis_initialized or self.redis is None:
+            try:
+                from .redis import get_redis
+                self.redis = get_redis()
+                self._redis_initialized = True
+                # Test the connection
+                await self.redis.ping()
+            except Exception as e:
+                logger.warning(f"Redis connection failed in rate limiter: {e}")
+                self.redis = None
+                self._redis_initialized = False
+                return False
+        return True
     
     async def check_limit(self, identifier: str, action: str = "api_call") -> bool:
         """Check if request is within rate limits."""
-        if not self.redis:
+        # Ensure Redis connection is available
+        if not await self._ensure_redis_connection():
+            logger.debug("Redis not available for rate limiting, allowing request")
             return True  # Allow if Redis not available
         
         try:
@@ -732,6 +803,9 @@ class EnterpriseRateLimiter:
             current_count = await self.redis.zcard(key)
             
             if current_count >= self.config.rate_limit_requests_per_minute:
+                logger.info(f"Rate limit exceeded for {identifier}:{action}", 
+                           current_count=current_count, 
+                           limit=self.config.rate_limit_requests_per_minute)
                 return False
             
             # Add current request
@@ -741,13 +815,17 @@ class EnterpriseRateLimiter:
             return True
             
         except Exception as e:
-            logger.error("Rate limit check failed", error=str(e))
-            return True  # Allow on error
+            logger.error("Rate limit check failed", error=str(e), identifier=identifier)
+            return True  # Allow on error to prevent service disruption
     
     async def get_limit_info(self, identifier: str, action: str = "api_call") -> Dict[str, Any]:
         """Get current rate limit information."""
-        if not self.redis:
-            return {"requests_remaining": self.config.rate_limit_requests_per_minute}
+        # Ensure Redis connection is available
+        if not await self._ensure_redis_connection():
+            return {
+                "requests_remaining": self.config.rate_limit_requests_per_minute,
+                "redis_available": False
+            }
         
         try:
             current_time = time.time()
@@ -765,12 +843,17 @@ class EnterpriseRateLimiter:
                 "requests_made": current_count,
                 "requests_remaining": max(0, self.config.rate_limit_requests_per_minute - current_count),
                 "window_minutes": self.config.rate_limit_window_minutes,
-                "reset_time": window_start + (self.config.rate_limit_window_minutes * 60)
+                "reset_time": window_start + (self.config.rate_limit_window_minutes * 60),
+                "redis_available": True
             }
             
         except Exception as e:
-            logger.error("Rate limit info failed", error=str(e))
-            return {"requests_remaining": 0}
+            logger.error("Rate limit info failed", error=str(e), identifier=identifier)
+            return {
+                "requests_remaining": 0,
+                "error": str(e),
+                "redis_available": False
+            }
 
 
 # Global security system instance
@@ -778,11 +861,19 @@ _security_system: Optional[EnterpriseSecuritySystem] = None
 
 
 async def get_security_system() -> EnterpriseSecuritySystem:
-    """Get or create security system instance."""
+    """Get or create security system instance with graceful error handling."""
     global _security_system
     if _security_system is None:
-        _security_system = EnterpriseSecuritySystem()
-        await _security_system.initialize()
+        try:
+            _security_system = EnterpriseSecuritySystem()
+            await _security_system.initialize()
+            logger.info("Enterprise security system initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize enterprise security system: {e}")
+            # Create a fallback instance that works without Redis
+            _security_system = EnterpriseSecuritySystem()
+            # Don't call initialize to avoid Redis dependency
+            logger.warning("Enterprise security system running in fallback mode (no Redis features)")
     return _security_system
 
 
