@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Production PostgreSQL with optimizations
   postgres:
@@ -57,7 +55,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: leanvibe_api_prod
     environment:
       - DATABASE_URL=postgresql://leanvibe_user:${POSTGRES_PASSWORD}@postgres:5432/leanvibe_agent_hive
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -106,7 +103,6 @@ services:
       retries: 3
     restart: unless-stopped
     deploy:
-      replicas: 2
       resources:
         limits:
           memory: 2G
