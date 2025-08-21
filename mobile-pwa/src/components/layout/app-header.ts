@@ -353,7 +353,7 @@ export class AppHeader extends LitElement {
     switch (this.currentRoute) {
       case '/':
       case '/dashboard':
-        return 'Dashboard'
+        return 'Agent Dashboard'
       case '/tasks':
         return 'Tasks'
       case '/agents':
@@ -446,7 +446,7 @@ export class AppHeader extends LitElement {
           
           <div class="logo">
             <div class="logo-icon" aria-label="HiveOps brand">HO</div>
-            <span class="title">${this.getPageTitle()}</span>
+            <span class="title">HiveOps ${this.getPageTitle()}</span>
           </div>
         </div>
         

@@ -115,10 +115,6 @@ export class AgentHiveApp extends LitElement {
 
     /* Header adjustments for responsive */
     .header-container {
-      display: none;
-    }
-
-    .app-container.mobile .header-container {
       display: block;
     }
     
@@ -542,15 +538,14 @@ export class AgentHiveApp extends LitElement {
 
         <!-- Main Layout -->
         <div class="main-layout">
-          <!-- Header (Mobile only) -->
+          <!-- Header (Always visible) -->
           <div class="header-container">
-            ${this.isAuthenticated && this.isMobile ? html`
-              <app-header 
-                .currentRoute="${this.currentRoute}"
-                .isOnline="${this.isOnline}"
-                @menu-toggle="${this.handleMobileMenuToggle}"
-              ></app-header>
-            ` : ''}
+            <app-header 
+              .currentRoute="${this.currentRoute}"
+              .isOnline="${this.isOnline}"
+              .showMenuButton="${this.isMobile && this.isAuthenticated}"
+              @menu-toggle="${this.handleMobileMenuToggle}"
+            ></app-header>
           </div>
           
           <!-- Main content -->
