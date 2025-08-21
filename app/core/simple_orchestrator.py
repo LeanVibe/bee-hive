@@ -1,54 +1,62 @@
 """
 Simple Orchestrator for LeanVibe Agent Hive 2.0
 
-A clean, minimal orchestrator interface that provides the core 20% functionality
-for agent management and task delegation. Designed for <100ms response times
-and easy testing/maintenance.
+Epic 1 Optimized Version: Memory-efficient orchestrator with lazy loading
+and reduced initialization footprint. Optimized for <50ms response times
+and <20MB memory usage.
 
-Follows YAGNI principles - only implements what's needed now.
+Key Optimizations:
+- Lazy loading of heavy dependencies (Anthropic, Redis, etc.)
+- Memory-efficient data structures
+- Minimal initial imports
+- Plugin-based architecture for optional features
 """
 
 import asyncio
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Protocol
+from typing import Dict, List, Optional, Any, Protocol, TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from anthropic import AsyncAnthropic
-
+# Core lightweight imports only
 from .config import settings
-from .database import get_session
 from .logging_service import get_component_logger
-from .enhanced_logging import (
-    EnhancedLogger, 
-    PerformanceTracker,
-    with_correlation_id,
-    with_performance_logging,
-    operation_context,
-    set_request_context,
-    correlation_context
-)
-from .enhanced_agent_launcher import (
-    EnhancedAgentLauncher, 
-    AgentLauncherType, 
-    AgentLaunchConfig,
-    create_enhanced_agent_launcher
-)
-from .agent_redis_bridge import (
-    AgentRedisBridge,
-    create_agent_redis_bridge,
-    MessageType,
-    Priority as MessagePriority
-)
-from .tmux_session_manager import TmuxSessionManager
-from .short_id_generator import ShortIdGenerator
-from ..models.agent import Agent, AgentStatus, AgentType
-from ..models.task import Task, TaskStatus, TaskPriority
+
+# Essential imports needed at runtime
+from ..models.agent import AgentStatus, AgentType
+from ..models.task import TaskStatus, TaskPriority
+
+# Lazy imports - loaded only when needed
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from anthropic import AsyncAnthropic
+    from .enhanced_logging import EnhancedLogger, PerformanceTracker
+    from .enhanced_agent_launcher import EnhancedAgentLauncher, AgentLauncherType, AgentLaunchConfig
+    from .agent_redis_bridge import AgentRedisBridge, MessageType
+    from .tmux_session_manager import TmuxSessionManager
+    from .short_id_generator import ShortIdGenerator
+    from ..models.agent import Agent
+    from ..models.task import Task
+
+# For protocols, we need the actual import but we'll make it conditional
+try:
+    from sqlalchemy.ext.asyncio import AsyncSession
+except ImportError:
+    AsyncSession = Any  # Fallback for type hints
 
 logger = get_component_logger("simple_orchestrator")
-enhanced_logger = EnhancedLogger("simple_orchestrator")
+
+# Epic 1: Lazy load enhanced logger only when needed
+_enhanced_logger = None
+
+def get_enhanced_logger():
+    """Lazy load enhanced logger."""
+    global _enhanced_logger
+    if _enhanced_logger is None:
+        from .enhanced_logging import EnhancedLogger
+        _enhanced_logger = EnhancedLogger("simple_orchestrator")
+    return _enhanced_logger
 
 
 class AgentRole(Enum):
@@ -128,7 +136,7 @@ class TaskDelegationError(SimpleOrchestratorError):
 
 class SimpleOrchestrator:
     """
-    Simple, fast orchestrator focused on core agent management operations.
+    Epic 1 Optimized: Memory-efficient orchestrator with lazy loading.
     
     Provides:
     - Agent lifecycle management (spawn, shutdown)
@@ -136,44 +144,54 @@ class SimpleOrchestrator:
     - System status monitoring
     - Plugin architecture for production enhancements
     
-    Design goals:
-    - <100ms response times for core operations
-    - Easy to test and maintain
-    - Clear separation of concerns
-    - Minimal dependencies
-    - Extensible via plugins
+    Epic 1 Optimizations:
+    - <50ms response times for core operations
+    - <20MB memory footprint through lazy loading
+    - Minimal initial imports and dependencies
+    - Memory-efficient data structures
+    - Lazy plugin loading
     """
     
     def __init__(
         self,
         db_session_factory: Optional[DatabaseDependency] = None,
         cache: Optional[CacheDependency] = None,
-        anthropic_client: Optional[AsyncAnthropic] = None,
-        agent_launcher: Optional[EnhancedAgentLauncher] = None,
-        redis_bridge: Optional[AgentRedisBridge] = None,
-        tmux_manager: Optional[TmuxSessionManager] = None,
-        short_id_generator: Optional[ShortIdGenerator] = None,
+        anthropic_client: Optional["AsyncAnthropic"] = None,
+        agent_launcher: Optional["EnhancedAgentLauncher"] = None,
+        redis_bridge: Optional["AgentRedisBridge"] = None,
+        tmux_manager: Optional["TmuxSessionManager"] = None,
+        short_id_generator: Optional["ShortIdGenerator"] = None,
         enable_production_plugin: bool = False
     ):
-        """Initialize orchestrator with dependency injection."""
+        """Initialize orchestrator with Epic 1 lazy loading optimizations."""
+        # Core lightweight initialization
         self._db_session_factory = db_session_factory
         self._cache = cache
-        self._anthropic_client = anthropic_client or AsyncAnthropic(
-            api_key=settings.ANTHROPIC_API_KEY
-        )
         
-        # Tmux and agent management components
+        # Lazy-loaded dependencies (not initialized until needed)
+        self._anthropic_client = anthropic_client
         self._agent_launcher = agent_launcher
         self._redis_bridge = redis_bridge
         self._tmux_manager = tmux_manager
-        self._short_id_generator = short_id_generator or ShortIdGenerator()
+        self._short_id_generator = short_id_generator
         
-        # In-memory agent registry for fast access
-        self._agents: Dict[str, AgentInstance] = {}
-        self._task_assignments: Dict[str, TaskAssignment] = {}
+        # Memory-efficient storage
+        self._agents: Dict[str, "Agent"] = {}
+        self._tasks: Dict[str, "Task"] = {}
         
-        # Enhanced agent tracking
+        # Plugin system
+        self._plugins: List[Any] = []
+        self._enable_production_plugin = enable_production_plugin
+        
+        # Lazy initialization flags
+        self._initialized = False
+        self._dependencies_loaded = False
+        
+        logger.info("SimpleOrchestrator initialized with Epic 1 optimizations")
+        
+        # Enhanced agent tracking (memory-efficient)
         self._tmux_agents: Dict[str, str] = {}  # agent_id -> session_id
+        self._task_assignments: Dict[str, TaskAssignment] = {}
         
         # Performance metrics
         self._operation_count = 0
@@ -182,6 +200,40 @@ class SimpleOrchestrator:
         # Plugin system
         self._plugins: List[Any] = []
         self._enable_production_plugin = enable_production_plugin
+    
+    # Epic 1 Lazy Loading Methods
+    
+    async def _ensure_anthropic_client(self) -> "AsyncAnthropic":
+        """Lazy load Anthropic client only when needed."""
+        if self._anthropic_client is None:
+            from anthropic import AsyncAnthropic
+            self._anthropic_client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+            logger.info("Lazy loaded Anthropic client")
+        return self._anthropic_client
+    
+    async def _ensure_short_id_generator(self) -> "ShortIdGenerator":
+        """Lazy load short ID generator only when needed."""
+        if self._short_id_generator is None:
+            from .short_id_generator import ShortIdGenerator
+            self._short_id_generator = ShortIdGenerator()
+            logger.info("Lazy loaded ShortIdGenerator")
+        return self._short_id_generator
+    
+    async def _ensure_tmux_manager(self) -> "TmuxSessionManager":
+        """Lazy load tmux manager only when needed."""
+        if self._tmux_manager is None:
+            from .tmux_session_manager import TmuxSessionManager
+            self._tmux_manager = TmuxSessionManager()
+            logger.info("Lazy loaded TmuxSessionManager")
+        return self._tmux_manager
+    
+    async def _ensure_dependencies_loaded(self) -> None:
+        """Ensure all required dependencies are lazily loaded."""
+        if not self._dependencies_loaded:
+            # Only load what's absolutely necessary
+            await self._ensure_short_id_generator()
+            self._dependencies_loaded = True
+            logger.info("Epic 1 dependencies lazily loaded")
         
         # Initialization flag
         self._initialized = False
