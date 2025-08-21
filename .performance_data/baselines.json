@@ -1,0 +1,72 @@
+{
+  "redis_broker:send_message": {
+    "component": "redis_broker",
+    "operation": "send_message",
+    "baseline_date": "2025-08-21T16:06:13.936562",
+    "sample_count": 25,
+    "metrics": {
+      "response_time_ms": {
+        "mean": 1.1470413208007812,
+        "median": 1.1489391326904297,
+        "std": 0.022791481876822606,
+        "min": 1.0440349578857422,
+        "max": 1.1851787567138672,
+        "p95": 1.1575698852539062,
+        "p99": 1.1786556243896484
+      },
+      "throughput_ops_per_sec": {
+        "mean": 1000.0,
+        "median": 1000.0,
+        "std": 0.0,
+        "min": 1000.0,
+        "max": 1000.0,
+        "p95": 1000.0,
+        "p99": 1000.0
+      },
+      "error_rate_percent": {
+        "mean": 0.0,
+        "median": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      }
+    }
+  },
+  "security_system:rate_limit_check": {
+    "component": "security_system",
+    "operation": "rate_limit_check",
+    "baseline_date": "2025-08-21T16:06:14.350833",
+    "sample_count": 25,
+    "metrics": {
+      "response_time_ms": {
+        "mean": 5.646419525146484,
+        "median": 5.654096603393555,
+        "std": 0.0917520274547681,
+        "min": 5.261898040771484,
+        "max": 5.785942077636719,
+        "p95": 5.718326568603516,
+        "p99": 5.771350860595703
+      },
+      "throughput_ops_per_sec": {
+        "mean": 200.0,
+        "median": 200.0,
+        "std": 0.0,
+        "min": 200.0,
+        "max": 200.0,
+        "p95": 200.0,
+        "p99": 200.0
+      },
+      "error_rate_percent": {
+        "mean": 0.1,
+        "median": 0.1,
+        "std": 0.0,
+        "min": 0.1,
+        "max": 0.1,
+        "p95": 0.1,
+        "p99": 0.1
+      }
+    }
+  }
+}
