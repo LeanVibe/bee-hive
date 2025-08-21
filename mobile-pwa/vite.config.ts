@@ -173,8 +173,8 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: Number(process.env.PWA_DEV_PORT || process.env.VITE_DEV_PORT || 18443),
-    strictPort: true,
+    port: Number(process.env.PWA_DEV_PORT || process.env.VITE_DEV_PORT || 5001),
+    strictPort: false,
     open: false,
     cors: true,
     // Allow access from Tailscale network

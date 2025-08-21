@@ -614,7 +614,8 @@ class WebSocketAdapter(BaseProtocolAdapter):
                 self._record_latency(ack_time)
         
         except Exception as e:
-            await self._record_error(f"Acknowledgment handling failed: {e}")
+            # Fixed: Removed 'await' from non-async function call
+            self._record_error(f"Acknowledgment handling failed: {e}")
     
     # === CONNECTION MANAGEMENT ===
     
