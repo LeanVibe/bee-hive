@@ -25,7 +25,8 @@ from .routers import (
     health,
     admin,
     integrations,
-    dashboard
+    dashboard,
+    plugins
 )
 
 # Create main API router
@@ -50,6 +51,7 @@ api_router.include_router(health.router, prefix="/health", tags=["Health"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Admin"])
 api_router.include_router(integrations.router, prefix="/integrations", tags=["Integrations"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+api_router.include_router(plugins.router, tags=["Plugins"])
 
 @api_router.get("/")
 async def api_root():
@@ -57,12 +59,19 @@ async def api_root():
     return {
         "message": "LeanVibe Agent Hive 2.0 - Consolidated API",
         "version": "2.0.0",
-        "modules_consolidated": "96 → 15 (84% reduction)",
+        "modules_consolidated": "96 → 16 (83% reduction)",
         "resources": [
             "agents", "workflows", "tasks", "projects",  # "coordination" temporarily disabled
             "observability", "security", "resources", "contexts", "enterprise",
-            "websocket", "health", "admin", "integrations", "dashboard"
+            "websocket", "health", "admin", "integrations", "dashboard", "plugins"
         ],
+        "epic2_phase22": {
+            "plugin_marketplace": "✅ Completed",
+            "ai_discovery": "✅ Completed", 
+            "security_certification": "✅ Completed",
+            "developer_onboarding": "✅ Completed",
+            "api_endpoints": "✅ Completed"
+        },
         "docs": "/docs",
         "redoc": "/redoc"
     }
