@@ -21,6 +21,7 @@ from .unix_commands import (
     hive_doctor, hive_version, hive_help
 )
 from .agent_session_commands import agent
+from .demo_commands import demo
 
 console = Console()
 
@@ -111,6 +112,7 @@ def _show_overview():
         ("hive get agents", "List all agents"),
         ("hive logs -f", "Follow system logs"),
         ("hive create --count 2", "Create new agents"),
+        ("hive demo init ecommerce", "🎬 Start interactive demo"),
         ("hive doctor", "Diagnose system issues"),
     ]
     
@@ -139,6 +141,9 @@ for name, func in COMMAND_REGISTRY.items():
 
 # Add agent session management commands
 hive_cli.add_command(agent)
+
+# Add interactive demo commands
+hive_cli.add_command(demo)
 
 
 def install_unix_commands():
