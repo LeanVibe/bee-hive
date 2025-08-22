@@ -25,10 +25,13 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 _orchestrator: Optional[SimpleOrchestrator] = None
 
 async def get_orchestrator() -> SimpleOrchestrator:
-    """Get orchestrator instance, creating if needed."""
+    """Get orchestrator instance with WebSocket integration, creating if needed."""
     global _orchestrator
     if _orchestrator is None:
-        _orchestrator = create_simple_orchestrator()
+        # Import WebSocket manager
+        from .websockets import manager as websocket_manager
+        
+        _orchestrator = create_simple_orchestrator(websocket_manager=websocket_manager)
         await _orchestrator.initialize()
     return _orchestrator
 

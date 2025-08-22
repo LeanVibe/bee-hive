@@ -202,7 +202,8 @@ class SimpleOrchestrator:
         redis_bridge: Optional["AgentRedisBridge"] = None,
         tmux_manager: Optional["TmuxSessionManager"] = None,
         short_id_generator: Optional["ShortIdGenerator"] = None,
-        enable_production_plugin: bool = False
+        enable_production_plugin: bool = False,
+        websocket_manager: Optional["ConnectionManager"] = None
     ):
         """Initialize orchestrator with Epic 1 lazy loading optimizations."""
         # Core lightweight initialization
@@ -215,6 +216,7 @@ class SimpleOrchestrator:
         self._redis_bridge = redis_bridge
         self._tmux_manager = tmux_manager
         self._short_id_generator = short_id_generator
+        self._websocket_manager = websocket_manager
 
         # Memory-efficient storage
         self._agents: Dict[str, "Agent"] = {}
@@ -425,6 +427,19 @@ class SimpleOrchestrator:
             # Store in memory registry
             self._agents[agent_id] = agent
             self._tmux_agents[agent_id] = launch_result.session_id
+            
+            # Epic C Phase C.4: Broadcast agent creation
+            creation_data = {
+                "agent_id": agent_id,
+                "role": role.value,
+                "status": AgentStatus.ACTIVE.value,
+                "created_at": agent.created_at.isoformat(),
+                "agent_type": agent_type.value,
+                "session_name": launch_result.session_name,
+                "workspace_path": launch_result.workspace_path,
+                "source": "agent_creation"
+            }
+            await self._broadcast_agent_update(agent_id, creation_data)
 
             # Register agent with Redis bridge
             if self._redis_bridge:
@@ -515,6 +530,16 @@ class SimpleOrchestrator:
             old_status = agent.status
             agent.status = AgentStatus.INACTIVE
             agent.last_activity = datetime.utcnow()
+            
+            # Epic C Phase C.4: Broadcast agent status change
+            update_data = {
+                "agent_id": agent_id,
+                "status": AgentStatus.INACTIVE.value,
+                "previous_status": old_status.value,
+                "last_activity": agent.last_activity.isoformat(),
+                "source": "agent_shutdown"
+            }
+            await self._broadcast_agent_update(agent_id, update_data)
 
             # Terminate tmux session if exists
             if agent_id in self._tmux_agents:
@@ -799,7 +824,7 @@ class SimpleOrchestrator:
                          agent_id=agent.id, error=str(e))
 
     async def _update_agent_status(self, agent_id: str, status: AgentStatus) -> None:
-        """Update agent status in database."""
+        """Update agent status in database and broadcast via WebSocket."""
         if not self._db_session_factory:
             return
 
@@ -811,6 +836,16 @@ class SimpleOrchestrator:
                     .values(status=status, updated_at=datetime.utcnow())
                 )
                 await session.commit()
+                
+                # Epic C Phase C.4: Broadcast agent status update
+                update_data = {
+                    "agent_id": agent_id,
+                    "status": status.value,
+                    "updated_at": datetime.utcnow().isoformat(),
+                    "source": "database_update"
+                }
+                await self._broadcast_agent_update(agent_id, update_data)
+                
         except Exception as e:
             logger.warning("Failed to update agent status in database",
                          agent_id=agent_id, error=str(e))
@@ -840,6 +875,20 @@ class SimpleOrchestrator:
                 )
                 session.add(db_task)
                 await session.commit()
+                
+                # Epic C Phase C.4: Broadcast task creation
+                task_data = {
+                    "task_id": task_id,
+                    "description": description,
+                    "task_type": task_type,
+                    "priority": priority.value if hasattr(priority, 'value') else str(priority),
+                    "status": TaskStatus.PENDING.value,
+                    "assigned_agent_id": agent_id,
+                    "created_at": datetime.utcnow().isoformat(),
+                    "source": "task_creation"
+                }
+                await self._broadcast_task_update(task_id, task_data)
+                
         except Exception as e:
             logger.warning("Failed to persist task to database",
                          task_id=task_id, error=str(e))
@@ -1097,6 +1146,35 @@ class SimpleOrchestrator:
 
         logger.info("✅ Enhanced SimpleOrchestrator shutdown complete")
 
+    # Epic C Phase C.4: WebSocket Broadcasting Methods
+    
+    async def _broadcast_agent_update(self, agent_id: str, update_data: Dict[str, Any]) -> None:
+        """Broadcast agent status updates via WebSocket if manager available."""
+        if self._websocket_manager:
+            try:
+                await self._websocket_manager.broadcast_agent_update(agent_id, update_data)
+                logger.debug("Broadcasted agent update via WebSocket", agent_id=agent_id)
+            except Exception as e:
+                logger.warning("Failed to broadcast agent update", agent_id=agent_id, error=str(e))
+    
+    async def _broadcast_task_update(self, task_id: str, update_data: Dict[str, Any]) -> None:
+        """Broadcast task status updates via WebSocket if manager available."""
+        if self._websocket_manager:
+            try:
+                await self._websocket_manager.broadcast_task_update(task_id, update_data)
+                logger.debug("Broadcasted task update via WebSocket", task_id=task_id)
+            except Exception as e:
+                logger.warning("Failed to broadcast task update", task_id=task_id, error=str(e))
+    
+    async def _broadcast_system_status(self, status_data: Dict[str, Any]) -> None:
+        """Broadcast system status updates via WebSocket if manager available."""
+        if self._websocket_manager:
+            try:
+                await self._websocket_manager.broadcast_system_status(status_data)
+                logger.debug("Broadcasted system status via WebSocket")
+            except Exception as e:
+                logger.warning("Failed to broadcast system status", error=str(e))
+
 
 # Factory function for dependency injection
 def create_simple_orchestrator(
@@ -1106,7 +1184,8 @@ def create_simple_orchestrator(
     agent_launcher: Optional[EnhancedAgentLauncher] = None,
     redis_bridge: Optional[AgentRedisBridge] = None,
     tmux_manager: Optional[TmuxSessionManager] = None,
-    short_id_generator: Optional[ShortIdGenerator] = None
+    short_id_generator: Optional[ShortIdGenerator] = None,
+    websocket_manager: Optional["ConnectionManager"] = None
 ) -> SimpleOrchestrator:
     """
     Factory function to create SimpleOrchestrator with proper dependencies.
@@ -1120,7 +1199,8 @@ def create_simple_orchestrator(
         agent_launcher=agent_launcher,
         redis_bridge=redis_bridge,
         tmux_manager=tmux_manager,
-        short_id_generator=short_id_generator
+        short_id_generator=short_id_generator,
+        websocket_manager=websocket_manager
     )
 
 
