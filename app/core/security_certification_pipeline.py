@@ -205,7 +205,7 @@ class SecurityScanner:
             ],
             "path_traversal": [
                 r"\.\.\/",
-                r"\.\.\\\",
+                r"\.\.\\\\",
                 r"os\.path\.join\s*\(.*\.\.",
                 r"open\s*\(.*\.\.",
             ],

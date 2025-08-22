@@ -30,23 +30,53 @@ from .advanced_plugin_manager import AdvancedPluginManager, create_advanced_plug
 from ..models.agent import AgentStatus, AgentType
 from ..models.task import TaskStatus, TaskPriority
 
+# Runtime imports needed for enums and classes used directly
+try:
+    from .enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, EnhancedAgentLauncher
+except ImportError:
+    # Fallback if enhanced agent launcher not available
+    from enum import Enum
+    class AgentLauncherType(Enum):
+        CLAUDE_CODE = "claude_code"
+    AgentLaunchConfig = Any
+    EnhancedAgentLauncher = Any
+
+try:
+    from anthropic import AsyncAnthropic
+except ImportError:
+    AsyncAnthropic = Any
+
+try:
+    from .agent_redis_bridge import AgentRedisBridge, MessageType
+except ImportError:
+    AgentRedisBridge = Any
+    MessageType = Any
+
+try:
+    from .tmux_session_manager import TmuxSessionManager
+except ImportError:
+    TmuxSessionManager = Any
+
+try:
+    from .short_id_generator import ShortIdGenerator
+except ImportError:
+    ShortIdGenerator = Any
+
 # Lazy imports - loaded only when needed
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-    from anthropic import AsyncAnthropic
     from .enhanced_logging import EnhancedLogger, PerformanceTracker
-    from .enhanced_agent_launcher import EnhancedAgentLauncher, AgentLauncherType, AgentLaunchConfig
-    from .agent_redis_bridge import AgentRedisBridge, MessageType
-    from .tmux_session_manager import TmuxSessionManager
-    from .short_id_generator import ShortIdGenerator
     from ..models.agent import Agent
     from ..models.task import Task
 
 # For protocols, we need the actual import but we'll make it conditional
 try:
     from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy import update, select
 except ImportError:
     AsyncSession = Any  # Fallback for type hints
+    update = Any
+    select = Any
 
 logger = get_component_logger("simple_orchestrator")
 
@@ -729,7 +759,7 @@ class SimpleOrchestrator:
             return
 
         try:
-            async with get_session() as session:
+            async with self._db_session_factory.get_session() as session:
                 db_agent = Agent(
                     id=agent.id,
                     role=agent.role.value,
@@ -749,11 +779,12 @@ class SimpleOrchestrator:
             return
 
         try:
-            async with get_session() as session:
-                await session.execute()
+            async with self._db_session_factory.get_session() as session:
+                await session.execute(
                     update(Agent)
                     .where(Agent.id == agent_id)
                     .values(status=status, updated_at=datetime.utcnow())
+                )
                 await session.commit()
         except Exception as e:
             logger.warning("Failed to update agent status in database",
@@ -772,8 +803,8 @@ class SimpleOrchestrator:
             return
 
         try:
-            async with get_session() as session:
-                db_task = Task()
+            async with self._db_session_factory.get_session() as session:
+                db_task = Task(
                     id=task_id,
                     description=description,
                     task_type=task_type,
@@ -781,6 +812,7 @@ class SimpleOrchestrator:
                     status=TaskStatus.PENDING,
                     assigned_agent_id=agent_id,
                     created_at=datetime.utcnow()
+                )
                 session.add(db_task)
                 await session.commit()
         except Exception as e:
@@ -795,14 +827,15 @@ class SimpleOrchestrator:
             return
 
         try:
-            async with get_session() as session:
-                db_agent = Agent()
+            async with self._db_session_factory.get_session() as session:
+                db_agent = Agent(
                     id=agent.id,
                     role=agent.role.value,
                     agent_type=AgentType.CLAUDE_CODE,  # Could be enhanced to support other types
                     status=agent.status,
                     tmux_session=launch_result.session_name,
                     created_at=agent.created_at
+                )
                 session.add(db_agent)
                 await session.commit()
         except Exception as e:
@@ -876,11 +909,12 @@ class SimpleOrchestrator:
         session_id = self._tmux_agents[agent_id]
 
         if self._tmux_manager:
-            return await self._tmux_manager.execute_command()
+            return await self._tmux_manager.execute_command(
                 session_id=session_id,
                 command=command,
                 window_name=window_name,
                 capture_output=capture_output
+            )
 
         return None
 
@@ -956,11 +990,12 @@ class SimpleOrchestrator:
             from pathlib import Path
             path_obj = Path(source_path) if source_path else None
 
-            plugin = await self._advanced_plugin_manager.load_plugin_dynamic()
+            plugin = await self._advanced_plugin_manager.load_plugin_dynamic(
                 plugin_id=plugin_id,
                 version=version,
                 source_path=path_obj,
                 source_code=source_code
+            )
 
             logger.info("Plugin loaded dynamically",
                        plugin_id=plugin_id,
@@ -1053,7 +1088,7 @@ def create_simple_orchestrator(
 
     This makes it easy to inject dependencies for testing and different environments.
     """
-    return SimpleOrchestrator()
+    return SimpleOrchestrator(
         db_session_factory=db_session_factory,
         cache=cache,
         anthropic_client=anthropic_client,
@@ -1061,6 +1096,7 @@ def create_simple_orchestrator(
         redis_bridge=redis_bridge,
         tmux_manager=tmux_manager,
         short_id_generator=short_id_generator
+    )
 
 
 # Enhanced factory function for full initialization
@@ -1074,10 +1110,11 @@ async def create_enhanced_simple_orchestrator(
 
     This initializes all components and their dependencies automatically.
     """
-    orchestrator = create_simple_orchestrator()
+    orchestrator = create_simple_orchestrator(
         db_session_factory=db_session_factory,
         cache=cache,
         anthropic_client=anthropic_client
+    )
 
     # Initialize the orchestrator (this will set up all components)
     await orchestrator.initialize()
