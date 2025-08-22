@@ -1,0 +1,138 @@
+# LeanVibe Agent Hive 2.0 - Production Docker Image
+# Multi-stage build optimized for production deployment with security hardening
+
+ARG PYTHON_VERSION=3.12
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=2.0.0
+
+# Stage 1: Base system with security updates
+FROM python:${PYTHON_VERSION}-slim-bookworm AS base-system
+
+# Install system dependencies and security updates
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        wget \
+        gnupg \
+        ca-certificates \
+        git \
+        libpq-dev \
+        gcc \
+        g++ \
+        make \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Create non-root user for security
+RUN groupadd -r leanvibe && \
+    useradd -r -g leanvibe -d /app -s /bin/bash leanvibe && \
+    mkdir -p /app && \
+    chown -R leanvibe:leanvibe /app
+
+# Stage 2: Dependencies installation
+FROM base-system AS dependencies
+
+# Install UV for fast dependency management
+RUN pip install --no-cache-dir uv
+
+# Copy dependency files
+COPY requirements.txt pyproject.toml uv.lock /tmp/
+
+# Install Python dependencies with UV
+RUN uv pip install --system --no-cache-dir -r /tmp/requirements.txt
+
+# Stage 3: Application build
+FROM dependencies AS app-build
+
+# Set working directory
+WORKDIR /app
+
+# Copy application source
+COPY --chown=leanvibe:leanvibe . /app/
+
+# Install application in development mode
+RUN uv pip install --system --no-deps -e .
+
+# Remove development dependencies and unnecessary files
+RUN find /app -name "*.pyc" -delete && \
+    find /app -name "__pycache__" -type d -exec rm -rf {} + && \
+    rm -rf /app/.git /app/.pytest_cache /app/.mypy_cache && \
+    rm -rf /app/tests /app/docs /app/*.md /app/.gitignore
+
+# Stage 4: Production runtime
+FROM python:${PYTHON_VERSION}-slim-bookworm AS production
+
+# Metadata
+LABEL maintainer="Operations Specialist Agent" \
+      version="${VERSION}" \
+      description="LeanVibe Agent Hive 2.0 - Production Runtime" \
+      build-date="${BUILD_DATE}" \
+      vcs-ref="${VCS_REF}"
+
+# Install runtime dependencies only
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        libpq5 \
+        ca-certificates \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Create non-root user
+RUN groupadd -r leanvibe && \
+    useradd -r -g leanvibe -d /app -s /bin/bash leanvibe
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python environment from build stage
+COPY --from=app-build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=app-build /usr/local/bin /usr/local/bin
+
+# Copy application
+COPY --from=app-build --chown=leanvibe:leanvibe /app /app
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/logs /app/data /app/workspaces && \
+    chown -R leanvibe:leanvibe /app/logs /app/data /app/workspaces && \
+    chmod 755 /app/logs /app/data /app/workspaces
+
+# Health check script
+COPY --chown=leanvibe:leanvibe docker/healthcheck.py /app/healthcheck.py
+RUN chmod +x /app/healthcheck.py
+
+# Switch to non-root user
+USER leanvibe
+
+# Environment variables
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    ENVIRONMENT=production \
+    DEBUG=false \
+    LOG_LEVEL=INFO
+
+# Expose ports
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python /app/healthcheck.py
+
+# Default command
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--access-log"]
+
+# Security hardening - run as non-root, read-only filesystem where possible
+USER leanvibe:leanvibe
+VOLUME ["/app/logs", "/app/data"]
+
+# Production optimizations
+ENV MALLOC_ARENA_MAX=2 \
+    MALLOC_MMAP_THRESHOLD_=1024 \
+    MALLOC_TRIM_THRESHOLD_=1024 \
+    MALLOC_TOP_PAD_=1024 \
+    MALLOC_MMAP_MAX_=65536

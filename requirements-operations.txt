@@ -1,0 +1,32 @@
+# LeanVibe Agent Hive 2.0 - Operations Specialist Dependencies
+# Additional requirements for production monitoring, deployment automation,
+# operational excellence, and enterprise integration
+
+# Production Monitoring & Observability
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-jaeger==1.21.0
+opentelemetry-exporter-jaeger-thrift==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+prometheus-client==0.19.0
+
+# Deployment Automation
+docker==6.1.3
+kubernetes==28.1.0
+jinja2==3.1.2
+
+# Operational Excellence
+boto3==1.34.0  # For S3 backup storage
+elasticsearch[async]==8.11.0
+psutil==5.9.6
+schedule==1.2.0
+
+# Enterprise Integration
+pyjwt==2.8.0
+cryptography==41.0.8
+ldap3==2.9.1
+
+# Additional utilities
+aiofiles==23.2.1

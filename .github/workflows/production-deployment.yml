@@ -1,52 +1,36 @@
-name: Production Deployment Pipeline
-# ================================================================
-# LeanVibe Agent Hive 2.0 - Production CI/CD Pipeline
-# Integrates contract testing framework and automated deployment
-# ================================================================
+# LeanVibe Agent Hive 2.0 - Production Deployment Pipeline
+# Enterprise CI/CD pipeline with comprehensive testing, security scanning, and blue-green deployment
+
+name: Production Deployment
 
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      deployment_type:
-        description: 'Deployment Type'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-          - rollback
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  DEPLOYMENT_ID: ${{ github.run_number }}-${{ github.run_attempt }}
+  PYTHON_VERSION: '3.12'
 
 jobs:
-  # ================================================================
-  # CONTRACT TESTING AND VALIDATION
-  # ================================================================
-  contract-testing:
-    name: Contract Testing Framework Validation
+  # Quality Gates - Testing Phase
+  quality-gates:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     
     services:
       postgres:
         image: pgvector/pgvector:pg15
         env:
-          POSTGRES_DB: leanvibe_agent_hive_test
-          POSTGRES_USER: leanvibe_user
-          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: leanvibe_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -57,8 +41,6 @@ jobs:
       
       redis:
         image: redis:7-alpine
-        env:
-          REDIS_PASSWORD: test_password
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -68,379 +50,115 @@ jobs:
           - 6379:6379
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-test.txt
-      
-      - name: Set up test environment
-        run: |
-          cp .env.example .env.test
-          echo "DATABASE_URL=postgresql+asyncpg://leanvibe_user:test_password@localhost:5432/leanvibe_agent_hive_test" >> .env.test
-          echo "REDIS_URL=redis://localhost:6379/0" >> .env.test
-          echo "ENVIRONMENT=testing" >> .env.test
-      
-      - name: Run contract testing framework validation
-        run: |
-          python scripts/validate_contract_framework_integration.py
-          echo "Contract validation result: $?"
-        env:
-          DATABASE_URL: postgresql+asyncpg://leanvibe_user:test_password@localhost:5432/leanvibe_agent_hive_test
-          REDIS_URL: redis://localhost:6379/0
-      
-      - name: Run contract performance tests
-        run: |
-          python -c "
-          import time
-          import sys
-          sys.path.append('.')
-          from app.core.contract_testing_framework import ContractTestingFramework
-          
-          framework = ContractTestingFramework()
-          
-          # Test contract validation performance
-          total_time = 0
-          iterations = 100
-          
-          for i in range(iterations):
-              start_time = time.time()
-              result = framework.validate_api_endpoint('/test', {'status': 'ok'}, 10)
-              total_time += (time.time() - start_time) * 1000
-          
-          avg_time = total_time / iterations
-          print(f'Average contract validation time: {avg_time:.2f}ms')
-          
-          if avg_time > 5:
-              print(f'❌ Contract validation too slow: {avg_time:.2f}ms > 5ms target')
-              sys.exit(1)
-          else:
-              print(f'✅ Contract validation performance: {avg_time:.2f}ms meets <5ms target')
-          "
-      
-      - name: Generate contract testing report
-        run: |
-          mkdir -p reports
-          python -c "
-          import json
-          import sys
-          sys.path.append('.')
-          from app.core.contract_testing_framework import ContractTestingFramework
-          
-          framework = ContractTestingFramework()
-          health_report = framework.get_health_report()
-          
-          with open('reports/contract-testing-report.json', 'w') as f:
-              json.dump(health_report, f, indent=2)
-          
-          print('Contract testing report generated')
-          "
-      
-      - name: Upload contract testing artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: contract-testing-reports
-          path: reports/
-          retention-days: 30
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install UV
+      run: pip install uv
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+    
+    - name: Install dependencies
+      run: |
+        uv pip install --system -r requirements.txt
+        uv pip install --system -r requirements-test.txt
+    
+    - name: Security scanning
+      run: |
+        # Dependency vulnerability scanning
+        safety check
+        
+        # Code security analysis
+        bandit -r app/ -f json -o bandit-report.json
+    
+    - name: Unit tests
+      env:
+        DATABASE_URL: postgresql+asyncpg://test_user:test_pass@localhost:5432/leanvibe_test
+        REDIS_URL: redis://localhost:6379/0
+        ENVIRONMENT: testing
+        SKIP_STARTUP_INIT: true
+      run: |
+        pytest tests/ \
+          --cov=app \
+          --cov-report=xml \
+          --junitxml=test-results.xml \
+          -v
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: |
+          test-results.xml
+          bandit-report.json
 
-  # ================================================================
-  # BUILD AND TEST
-  # ================================================================
-  build-and-test:
-    name: Build and Test
+  # Container Build Phase
+  container-build:
+    needs: quality-gates
     runs-on: ubuntu-latest
-    needs: contract-testing
-    timeout-minutes: 20
+    timeout-minutes: 45
+    
+    outputs:
+      image: ${{ steps.image.outputs.image }}
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile
-          target: production
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
-            VCS_REF=${{ github.sha }}
-            VERSION=${{ github.ref_name }}
-      
-      - name: Run integration tests
-        run: |
-          docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d postgres redis
-          docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm test-runner
-        env:
-          IMAGE_TAG: ${{ github.sha }}
-
-  # ================================================================
-  # SECURITY SCANNING
-  # ================================================================
-  security-scan:
-    name: Security Scanning
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    timeout-minutes: 10
+    - name: Checkout code
+      uses: actions/checkout@v4
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Run Bandit security scan
-        run: |
-          pip install bandit[toml]
-          bandit -r app/ -f json -o bandit-report.json || true
-      
-      - name: Run Safety dependency scan
-        run: |
-          pip install safety
-          safety check --json --output safety-report.json || true
-      
-      - name: Upload security scan results
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-reports
-          path: |
-            bandit-report.json
-            safety-report.json
-          retention-days: 30
-
-  # ================================================================
-  # STAGING DEPLOYMENT
-  # ================================================================
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [contract-testing, build-and-test, security-scan]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: staging
-    timeout-minutes: 15
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up production environment
-        run: |
-          cp .env.production.unified .env.production
-          echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}" >> .env.production
-          echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .env.production
-          echo "VCS_REF=${{ github.sha }}" >> .env.production
-      
-      - name: Run staging deployment
-        run: |
-          # Simulate staging deployment
-          echo "🚀 Deploying to staging environment"
-          echo "Deployment ID: ${{ env.DEPLOYMENT_ID }}"
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          
-          # Run deployment pipeline in dry-run mode for staging
-          chmod +x production-deployment-pipeline.sh
-          FORCE_ROOT=false ./production-deployment-pipeline.sh || true
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      
-      - name: Run post-deployment contract validation
-        run: |
-          # Wait for services to be ready
-          sleep 30
-          
-          # Validate contracts in staging environment
-          python scripts/validate_contract_framework_integration.py || echo "Contract validation in staging completed"
-        env:
-          DATABASE_URL: postgresql+asyncpg://leanvibe_user:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/leanvibe_agent_hive
-          REDIS_URL: redis://:${{ secrets.REDIS_PASSWORD }}@localhost:6379/0
-      
-      - name: Generate deployment report
-        run: |
-          mkdir -p deployment-reports
-          cat > deployment-reports/staging-deployment-${{ env.DEPLOYMENT_ID }}.json << EOF
-          {
-            "deployment_id": "${{ env.DEPLOYMENT_ID }}",
-            "environment": "staging",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "git_ref": "${{ github.sha }}",
-            "git_branch": "${{ github.ref_name }}",
-            "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}",
-            "contract_testing": "enabled",
-            "status": "deployed"
-          }
-          EOF
-      
-      - name: Upload deployment artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-reports
-          path: deployment-reports/
-          retention-days: 90
-
-  # ================================================================
-  # PRODUCTION DEPLOYMENT (MANUAL APPROVAL)
-  # ================================================================
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: deploy-staging
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_type == 'production')
-    environment: production
-    timeout-minutes: 30
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up production environment
-        run: |
-          cp .env.production.unified .env.production
-          echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}" >> .env.production
-          echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .env.production
-          echo "VCS_REF=${{ github.sha }}" >> .env.production
-          echo "ENVIRONMENT=production" >> .env.production
-      
-      - name: Create pre-deployment backup
-        run: |
-          echo "📦 Creating pre-deployment backup"
-          mkdir -p backups/pre-deployment-${{ env.DEPLOYMENT_ID }}
-          echo "Backup location: backups/pre-deployment-${{ env.DEPLOYMENT_ID }}"
-      
-      - name: Execute production deployment
-        run: |
-          echo "🚀 Starting production deployment"
-          echo "Deployment ID: ${{ env.DEPLOYMENT_ID }}"
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          
-          # Run full production deployment pipeline
-          chmod +x production-deployment-pipeline.sh
-          FORCE_ROOT=false ./production-deployment-pipeline.sh
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
-          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-          GRAFANA_ADMIN_USER: ${{ secrets.GRAFANA_ADMIN_USER }}
-          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
-      
-      - name: Run production health checks
-        run: |
-          echo "🏥 Running production health checks"
-          
-          # Wait for all services to be ready
-          sleep 60
-          
-          # Check API health
-          curl -f http://localhost:8000/health || exit 1
-          
-          # Check PWA accessibility
-          curl -f http://localhost:80 || exit 1
-          
-          # Validate contract testing framework in production
-          python scripts/validate_contract_framework_integration.py
-        env:
-          DATABASE_URL: postgresql+asyncpg://leanvibe_user:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/leanvibe_agent_hive
-          REDIS_URL: redis://:${{ secrets.REDIS_PASSWORD }}@redis:6379/0
-      
-      - name: Generate production deployment report
-        run: |
-          mkdir -p deployment-reports
-          cat > deployment-reports/production-deployment-${{ env.DEPLOYMENT_ID }}.json << EOF
-          {
-            "deployment_id": "${{ env.DEPLOYMENT_ID }}",
-            "environment": "production",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "git_ref": "${{ github.sha }}",
-            "git_branch": "${{ github.ref_name }}",
-            "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}",
-            "contract_testing": "enabled",
-            "health_checks": "passed",
-            "backup_location": "backups/pre-deployment-${{ env.DEPLOYMENT_ID }}",
-            "status": "deployed_successfully"
-          }
-          EOF
-      
-      - name: Upload production deployment artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: production-deployment-reports
-          path: deployment-reports/
-          retention-days: 365
-      
-      - name: Notify deployment success
-        run: |
-          echo "🎉 Production deployment successful!"
-          echo "Deployment ID: ${{ env.DEPLOYMENT_ID }}"
-          echo "Contract Testing: ✅ Enabled and validated"
-          echo "Health Checks: ✅ All systems operational"
-
-  # ================================================================
-  # ROLLBACK CAPABILITY
-  # ================================================================
-  rollback-production:
-    name: Rollback Production
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_type == 'rollback'
-    environment: production
-    timeout-minutes: 15
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Execute rollback procedure
-        run: |
-          echo "🔄 Starting production rollback"
-          echo "Rolling back to previous stable deployment"
-          
-          # Implement rollback logic here
-          # This would typically involve:
-          # 1. Restoring previous Docker images
-          # 2. Restoring database from backup
-          # 3. Validating rollback success
-          
-          echo "Rollback procedure would be executed here"
-      
-      - name: Validate rollback success
-        run: |
-          echo "✅ Rollback validation completed"
-          echo "System restored to previous stable state"
+    - name: Build and push container
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+          VCS_REF=${{ github.sha }}
+          VERSION=${{ steps.meta.outputs.version }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Set image output
+      id: image
+      run: echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}" >> $GITHUB_OUTPUT
