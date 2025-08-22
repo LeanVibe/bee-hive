@@ -19,7 +19,7 @@ from ...core.database import get_session_dependency
 from ...models.agent import AgentStatus, AgentType
 
 logger = structlog.get_logger()
-router = APIRouter(prefix="/api/v2/agents", tags=["agents"])
+router = APIRouter(prefix="/agents", tags=["agents"])
 
 # Simple orchestrator instance for Epic B
 _orchestrator: Optional[SimpleOrchestrator] = None

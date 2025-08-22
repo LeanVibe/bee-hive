@@ -18,7 +18,7 @@ from ...core.simple_orchestrator import SimpleOrchestrator, create_simple_orches
 from ...models.task import TaskStatus, TaskPriority
 
 logger = structlog.get_logger()
-router = APIRouter(prefix="/api/v2/tasks", tags=["tasks"])
+router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 # Get orchestrator instance
 async def get_orchestrator() -> SimpleOrchestrator:
