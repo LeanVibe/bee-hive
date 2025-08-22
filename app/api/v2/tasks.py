@@ -80,11 +80,21 @@ async def create_task(
         
         # Validate priority
         try:
-            priority = TaskPriority(request.priority.upper())
-        except ValueError:
+            # Map string names to TaskPriority enum
+            priority_mapping = {
+                "LOW": TaskPriority.LOW,
+                "MEDIUM": TaskPriority.MEDIUM, 
+                "HIGH": TaskPriority.HIGH,
+                "CRITICAL": TaskPriority.CRITICAL
+            }
+            priority = priority_mapping.get(request.priority.upper())
+            if priority is None:
+                raise ValueError("Invalid priority name")
+        except (ValueError, AttributeError):
+            valid_priorities = ["low", "medium", "high", "critical"]
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid priority. Valid priorities: {[p.value for p in TaskPriority]}"
+                detail=f"Invalid priority. Valid priorities: {valid_priorities}"
             )
         
         # Generate task ID

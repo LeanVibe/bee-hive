@@ -32,7 +32,7 @@ class APIv2Tester:
     
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=30.0, follow_redirects=True)
         self.test_results = []
     
     async def test_health(self) -> bool:
