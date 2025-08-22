@@ -686,7 +686,6 @@ async def create_enhanced_agent_launcher(
     
     if redis_manager is None:
         redis_manager = EnhancedRedisStreamsManager()
-        await redis_manager.initialize()
     
     if short_id_generator is None:
         short_id_generator = ShortIdGenerator()

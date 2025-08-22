@@ -29,10 +29,11 @@ from .advanced_plugin_manager import AdvancedPluginManager, create_advanced_plug
 # Essential imports needed at runtime
 from ..models.agent import AgentStatus, AgentType
 from ..models.task import TaskStatus, TaskPriority
+from ..models.message import MessagePriority
 
 # Runtime imports needed for enums and classes used directly
 try:
-    from .enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, EnhancedAgentLauncher
+    from .enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, EnhancedAgentLauncher, create_enhanced_agent_launcher
 except ImportError:
     # Fallback if enhanced agent launcher not available
     from enum import Enum
@@ -40,6 +41,16 @@ except ImportError:
         CLAUDE_CODE = "claude_code"
     AgentLaunchConfig = Any
     EnhancedAgentLauncher = Any
+    
+    # Simple placeholder implementation
+    async def create_enhanced_agent_launcher(
+        tmux_manager=None,
+        short_id_generator=None,
+        redis_manager=None
+    ):
+        """Placeholder implementation for create_enhanced_agent_launcher."""
+        logger.warning("Using placeholder enhanced agent launcher - enhanced features not available")
+        return None
 
 try:
     from anthropic import AsyncAnthropic
@@ -47,10 +58,16 @@ except ImportError:
     AsyncAnthropic = Any
 
 try:
-    from .agent_redis_bridge import AgentRedisBridge, MessageType
+    from .agent_redis_bridge import AgentRedisBridge, MessageType, create_agent_redis_bridge
 except ImportError:
     AgentRedisBridge = Any
     MessageType = Any
+    
+    # Simple placeholder implementation
+    async def create_agent_redis_bridge(redis_manager=None):
+        """Placeholder implementation for create_agent_redis_bridge."""
+        logger.warning("Using placeholder Redis bridge - Redis features not available")
+        return None
 
 try:
     from .tmux_session_manager import TmuxSessionManager
@@ -276,14 +293,22 @@ class SimpleOrchestrator:
 
             # Initialize agent launcher if not provided
             if self._agent_launcher is None:
-                self._agent_launcher = await create_enhanced_agent_launcher(
-                    tmux_manager=self._tmux_manager,
-                    short_id_generator=self._short_id_generator
-                )
+                try:
+                    self._agent_launcher = await create_enhanced_agent_launcher(
+                        tmux_manager=self._tmux_manager,
+                        short_id_generator=self._short_id_generator
+                    )
+                except Exception as e:
+                    logger.warning("Failed to initialize enhanced agent launcher, continuing without it", error=str(e))
+                    self._agent_launcher = None
 
             # Initialize Redis bridge if not provided
             if self._redis_bridge is None:
-                self._redis_bridge = await create_agent_redis_bridge()
+                try:
+                    self._redis_bridge = await create_agent_redis_bridge()
+                except Exception as e:
+                    logger.warning("Failed to initialize Redis bridge, continuing without it", error=str(e))
+                    self._redis_bridge = None
 
             # Epic 2 Phase 2.1: Initialize Advanced Plugin Manager
             if self._advanced_plugin_manager is None:

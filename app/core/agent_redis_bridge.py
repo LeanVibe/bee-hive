@@ -752,7 +752,6 @@ async def create_agent_redis_bridge(
     """Create and initialize AgentRedisBridge."""
     if redis_manager is None:
         redis_manager = EnhancedRedisStreamsManager()
-        await redis_manager.initialize()
     
     bridge = AgentRedisBridge(redis_manager)
     await bridge.initialize()
