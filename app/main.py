@@ -247,8 +247,7 @@ def create_app() -> FastAPI:
     from .api.project_index import router as project_index_router
     
     # NEW: Import consolidated API v2 and compatibility layer
-    from .api_v2 import api_router as api_v2_router
-    from .api_v2.compatibility import compatibility_router
+    from .api.v2 import api_router as api_v2_router
 
     app = FastAPI(
         title="LeanVibe Agent Hive 2.0 - Consolidated API",
@@ -313,9 +312,8 @@ def create_app() -> FastAPI:
     
     # Include API routes
     
-    # 🚀 NEW: Consolidated API v2 (96 → 15 modules, 84% reduction)
-    app.include_router(api_v2_router)  # Main v2 API with unified middleware
-    app.include_router(compatibility_router)  # Compatibility layer for v1 endpoints
+    # 🚀 NEW: API v2 - Core Orchestration Endpoints for Epic B  
+    app.include_router(api_v2_router, prefix="/api/v2")  # Epic B agent and task management
     
     # Legacy v1 API routes (gradually being phased out)
     app.include_router(api_router, prefix="/api/v1")
