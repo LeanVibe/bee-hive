@@ -140,7 +140,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
     JWT_EXPIRE_MINUTES: int = Field(default=30, env="JWT_EXPIRE_MINUTES")
     ALLOWED_HOSTS: Union[str, List[str]] = Field(default="*")
-    CORS_ORIGINS: Union[str, List[str]] = Field(default="http://localhost:3000,http://localhost:8080,http://localhost:5173")
+    CORS_ORIGINS: Union[str, List[str]] = Field(default="http://localhost:3000,http://localhost:3001,http://localhost:5002,http://localhost:8080,http://localhost:5173")
     
     # Enterprise Security Settings
     SECURITY_ENABLED: bool = Field(default=True, env="SECURITY_ENABLED")

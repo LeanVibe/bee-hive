@@ -18,6 +18,7 @@ import './views/tasks-view'
 import './views/system-health-view'
 import './views/performance-analytics-view'
 import './views/login-view'
+import './views/api-v2-demo'
 import './components/autonomous-development-dashboard'
 
 @customElement('agent-hive-app')
@@ -437,6 +438,8 @@ export class AgentHiveApp extends LitElement {
         return html`<system-health-view></system-health-view>`
       case '/performance':
         return html`<performance-analytics-view></performance-analytics-view>`
+      case '/api-v2-demo':
+        return html`<api-v2-demo></api-v2-demo>`
       case '/events':
       case '/settings':
         return html`<div style="padding: 2rem; text-align: center; color: #6b7280;">
