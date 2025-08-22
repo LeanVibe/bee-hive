@@ -190,10 +190,17 @@ class DatabaseHealthCheck:
             return {"status": "not_initialized"}
         
         pool = _engine.pool
-        return {
+        stats = {
             "pool_size": pool.size(),
             "checked_in": pool.checkedin(),
             "checked_out": pool.checkedout(),
             "overflow": pool.overflow(),
-            "invalidated": pool.invalidated()
         }
+        
+        # AsyncAdaptedQueuePool doesn't have invalidated() method
+        try:
+            stats["invalidated"] = pool.invalidated()
+        except AttributeError:
+            stats["invalidated"] = "not_available"
+            
+        return stats

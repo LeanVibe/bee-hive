@@ -1,116 +1,82 @@
 """
-Infrastructure Validation Tests for LeanVibe Agent Hive 2.0
+Infrastructure validation tests for LeanVibe Agent Hive 2.0.
 
-These tests validate that the core testing infrastructure is working
-and database compatibility issues have been resolved.
+Tests basic database connectivity, Redis integration, and core functionality.
 """
 
 import pytest
-from unittest.mock import Mock
+import asyncio
 
 
-@pytest.mark.unit
-def test_basic_test_infrastructure():
-    """Test that basic test infrastructure is working."""
-    # This test should pass if our conftest.py is working
-    assert True
+class TestInfrastructureValidation:
+    """Test infrastructure components are operational."""
     
+    @pytest.mark.asyncio
+    @pytest.mark.database
+    async def test_database_connectivity(self):
+        """Test that database connection is working."""
+        from app.core.database import init_database, DatabaseHealthCheck, close_database
+        
+        await init_database()
+        
+        # Test connection
+        is_connected = await DatabaseHealthCheck.check_connection()
+        assert is_connected, "Database connection should be active"
+        
+        # Test extensions
+        extensions = await DatabaseHealthCheck.check_extensions()
+        assert extensions.get("pgvector") is True, "pgvector extension should be available"
+        assert extensions.get("uuid-ossp") is True, "uuid-ossp extension should be available"
+        
+        await close_database()
     
-@pytest.mark.unit 
-def test_sample_agent_fixture(sample_agent):
-    """Test that mock fixtures are working properly."""
-    assert sample_agent is not None
-    assert sample_agent.name == "Test Agent"
-    assert sample_agent.type == "CLAUDE"
-    assert sample_agent.role == "test_role"
-    assert len(sample_agent.capabilities) == 1
-    assert sample_agent.capabilities[0]["name"] == "test_capability"
-
-
-@pytest.mark.unit
-def test_sample_task_fixture(sample_task):
-    """Test that task fixtures work."""
-    assert sample_task is not None
-    assert sample_task.title == "Test Task"
-    assert sample_task.status == "PENDING"
-    assert sample_task.priority == "MEDIUM"
-
-
-@pytest.mark.unit
-def test_sample_session_fixture(sample_session):
-    """Test that session fixtures work."""
-    assert sample_session is not None
-    assert sample_session.name == "Test Session"
-    assert sample_session.status == "ACTIVE"
-
-
-@pytest.mark.unit
-def test_sample_workflow_fixture(sample_workflow):
-    """Test that workflow fixtures work."""
-    assert sample_workflow is not None
-    assert sample_workflow.name == "Test Workflow"
-    assert sample_workflow.status == "CREATED"
-
-
-@pytest.mark.unit
-def test_environment_setup():
-    """Test that test environment is properly configured."""
-    import os
-    assert os.getenv("TESTING") == "true"
-    assert os.getenv("ENVIRONMENT") == "test"
-    assert os.getenv("DATABASE_URL") == "sqlite+aiosqlite:///:memory:"
-
-
-@pytest.mark.asyncio
-async def test_async_test_client(async_test_client):
-    """Test that async test client works."""
-    # Simple health check
-    try:
-        response = await async_test_client.get("/health")
-        # We expect this to work or at least not crash on setup
-        assert response is not None
-    except Exception as e:
-        # For now, we just validate that the client can be created
-        assert async_test_client is not None
-
-
-@pytest.mark.unit
-def test_autonomous_agent_behavior_foundation():
-    """Foundation test for autonomous agent behavior testing."""
-    # Mock an autonomous agent decision
-    agent_decision = Mock()
-    agent_decision.confidence = 0.9
-    agent_decision.action = "feature_development"
-    agent_decision.reasoning = "Based on task requirements and agent capabilities"
+    @pytest.mark.asyncio
+    @pytest.mark.redis
+    async def test_redis_connectivity(self):
+        """Test that Redis connection is working."""
+        import redis.asyncio as redis
+        from app.core.config import settings
+        
+        redis_client = redis.from_url(settings.REDIS_URL)
+        
+        # Test basic connection
+        response = await redis_client.ping()
+        assert response is True, "Redis ping should return True"
+        
+        # Test set/get operations
+        await redis_client.set('test_key', 'test_value')
+        value = await redis_client.get('test_key')
+        assert value.decode() == 'test_value', "Redis get/set should work correctly"
+        
+        # Clean up
+        await redis_client.delete('test_key')
+        await redis_client.aclose()
     
-    # Validate decision structure
-    assert agent_decision.confidence >= 0.8
-    assert agent_decision.action in ["feature_development", "bug_fix", "testing"]
-    assert isinstance(agent_decision.reasoning, str)
-    assert len(agent_decision.reasoning) > 0
-
-
-@pytest.mark.integration
-def test_multi_agent_coordination_foundation():
-    """Foundation test for multi-agent coordination."""
-    # Mock multi-agent scenario
-    agent1 = Mock()
-    agent1.id = "agent-1"
-    agent1.role = "architect" 
-    agent1.status = "active"
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    async def test_simple_orchestrator_initialization(self):
+        """Test that SimpleOrchestrator can be initialized."""
+        from app.core.simple_orchestrator import SimpleOrchestrator
+        from app.core.database import init_database, close_database
+        
+        await init_database()
+        
+        orchestrator = SimpleOrchestrator()
+        assert orchestrator is not None, "SimpleOrchestrator should initialize"
+        
+        # Test system status
+        status = await orchestrator.get_system_status()
+        assert isinstance(status, dict), "System status should return dict"
+        assert "agents" in status, "Status should contain agents key"
+        
+        await close_database()
     
-    agent2 = Mock()
-    agent2.id = "agent-2"
-    agent2.role = "developer"
-    agent2.status = "active"
-    
-    # Mock coordination decision
-    coordination = Mock()
-    coordination.agents = [agent1, agent2]
-    coordination.task_assignments = {"agent-1": "design", "agent-2": "implement"}
-    
-    # Validate coordination
-    assert len(coordination.agents) == 2
-    assert len(coordination.task_assignments) == 2
-    assert coordination.task_assignments["agent-1"] == "design"
-    assert coordination.task_assignments["agent-2"] == "implement"
+    @pytest.mark.unit
+    def test_config_loading(self):
+        """Test that configuration loads correctly."""
+        from app.core.config import settings
+        
+        assert settings.DATABASE_URL is not None, "Database URL should be configured"
+        assert settings.REDIS_URL is not None, "Redis URL should be configured"
+        assert settings.ENVIRONMENT == "development", "Environment should be development"
+        assert settings.DEBUG is True, "Debug should be enabled in development"
