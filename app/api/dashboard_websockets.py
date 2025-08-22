@@ -965,11 +965,22 @@ class DashboardWebSocketManager:
         })
         
         # Check if we should open the circuit breaker
-        failure_threshold = getattr(self, 'circuit_breaker_config', {}).get('failure_threshold', 5)
+        config = getattr(self, 'circuit_breaker_config', None)
+        if config and hasattr(config, 'failure_threshold'):
+            failure_threshold = config.failure_threshold
+        else:
+            failure_threshold = 5  # Default
+            
+        # Transition to open from closed state
         if breaker["failure_count"] >= failure_threshold and breaker["state"] == "closed":
             breaker["state"] = "open"
             breaker["opened_at"] = current_time
             self.metrics["circuit_breaker_activations_total"] += 1
+        # Transition to open from half-open state on any failure
+        elif breaker["state"] == "half-open":
+            breaker["state"] = "open"
+            breaker["consecutive_successes"] = 0
+            breaker["opened_at"] = current_time
 
     async def record_connection_success(self, connection_id: str) -> None:
         """Record a successful connection operation."""
@@ -984,7 +995,12 @@ class DashboardWebSocketManager:
         
         # If in half-open state, check if we can close the circuit
         if breaker["state"] == "half-open":
-            success_threshold = getattr(self, 'circuit_breaker_config', {}).get('success_threshold', 3)
+            config = getattr(self, 'circuit_breaker_config', {})
+            if hasattr(config, 'success_threshold'):
+                success_threshold = config.success_threshold
+            else:
+                success_threshold = config.get('success_threshold', 3)
+            
             if breaker["consecutive_successes"] >= success_threshold:
                 breaker["state"] = "closed"
                 breaker["failure_count"] = 0
@@ -1035,6 +1051,25 @@ class DashboardWebSocketManager:
         ]
         
         return len(recent_failures)
+
+    async def update_circuit_breaker_states(self) -> None:
+        """Update circuit breaker states based on timeouts and conditions."""
+        current_time = time.time()
+        
+        for connection_id, breaker in self.circuit_breakers.items():
+            if breaker["state"] == "open":
+                # Check if timeout period has elapsed
+                config = getattr(self, 'circuit_breaker_config', {})
+                if hasattr(config, 'timeout_duration'):
+                    timeout_duration = config.timeout_duration
+                else:
+                    timeout_duration = config.get('timeout_duration', 60)
+                
+                # Use opened_at if available, otherwise fall back to last_failure_time
+                opened_time = breaker.get("opened_at") or breaker.get("last_failure_time")
+                if opened_time and (current_time - opened_time) >= timeout_duration:
+                    breaker["state"] = "half-open"
+                    breaker["consecutive_successes"] = 0
 
     async def get_circuit_breaker_metrics(self) -> dict[str, Any]:
         """Get comprehensive circuit breaker metrics."""
