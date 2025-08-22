@@ -42,16 +42,33 @@ console = Console()
 DEMO_SCENARIOS = {
     'ecommerce': {
         'name': 'ShopSmart E-commerce Platform',
-        'description': 'Build a complete e-commerce website with multiple AI agents',
+        'description': '🏪 Complete e-commerce website with AI-powered product recommendations',
+        'competitive_advantages': [
+            '5 specialized agents working in parallel (impossible with single-agent systems)',
+            'Real-time coordination with automatic task handoffs',
+            'Intelligent dependency management and conflict resolution',
+            'Self-healing workflows that adapt to changing requirements',
+            'Production-ready code with 90%+ test coverage in 15 minutes'
+        ],
+        'customer_value': 'Demonstrate how multiple AI agents can build enterprise-grade software faster than traditional development teams',
         'agents': [
-            {'role': 'backend_developer', 'name': 'backend-dev-01', 'description': 'FastAPI backend with PostgreSQL'},
-            {'role': 'frontend_developer', 'name': 'frontend-dev-02', 'description': 'React TypeScript frontend'},
-            {'role': 'qa_specialist', 'name': 'qa-engineer-03', 'description': 'Test automation and validation'},
-            {'role': 'devops_engineer', 'name': 'devops-specialist-04', 'description': 'Docker deployment setup'},
-            {'role': 'project_manager', 'name': 'project-manager-05', 'description': 'Task coordination and reporting'}
+            {'role': 'backend_developer', 'name': 'backend-dev-01', 'description': '🔧 FastAPI backend with PostgreSQL, Redis caching, JWT auth'},
+            {'role': 'frontend_developer', 'name': 'frontend-dev-02', 'description': '🎨 React TypeScript with responsive design and PWA features'},
+            {'role': 'qa_specialist', 'name': 'qa-engineer-03', 'description': '🔍 E2E testing, API validation, security audits'},
+            {'role': 'devops_engineer', 'name': 'devops-specialist-04', 'description': '🚀 Docker, CI/CD, monitoring, and production deployment'},
+            {'role': 'project_manager', 'name': 'project-manager-05', 'description': '📊 Agile coordination, risk management, stakeholder updates'}
         ],
         'duration_minutes': 15,
-        'tasks_count': 25
+        'tasks_count': 17,
+        'key_features': [
+            'User registration and authentication',
+            'Product catalog with search and filtering',
+            'Shopping cart with session persistence', 
+            'Secure checkout process simulation',
+            'Responsive design for mobile/desktop',
+            'API performance monitoring',
+            'Automated testing and deployment'
+        ]
     },
     'blog': {
         'name': 'TechBlog Content Platform',
@@ -297,7 +314,10 @@ def stress_test(agents, duration, tasks_per_second):
 @click.option('--refresh', type=float, default=1.5, help='Refresh rate in seconds')
 @click.option('--websocket-url', default='ws://localhost:8000', help='WebSocket server URL')
 @click.option('--no-websocket', is_flag=True, help='Disable WebSocket integration (use mock data)')
-def dashboard(mobile, refresh, websocket_url, no_websocket):
+@click.option('--presentation-mode', is_flag=True, help='Enable customer presentation mode with highlights')
+@click.option('--customer-name', help='Customer name for personalized demo')
+@click.option('--sales-mode', is_flag=True, help='Enable sales-optimized display with competitive advantages')
+def dashboard(mobile, refresh, websocket_url, no_websocket, presentation_mode, customer_name, sales_mode):
     """🎭 Launch interactive dashboard with real-time WebSocket updates.
     
     Beautiful real-time dashboard showing agent status, task progress,
@@ -315,6 +335,24 @@ def dashboard(mobile, refresh, websocket_url, no_websocket):
         hive demo dashboard --refresh 0.5      # High-frequency updates
         hive demo dashboard --no-websocket     # Use mock data (offline mode)
     """
+    
+    if presentation_mode or sales_mode:
+        mode_text = "CUSTOMER PRESENTATION MODE" if presentation_mode else "SALES DEMONSTRATION MODE"
+        console.print(f"🎪 [bold magenta]{mode_text} ENABLED[/bold magenta]")
+        
+        if customer_name:
+            console.print(f"👋 [bold cyan]Welcome {customer_name}![/bold cyan] Prepared for personalized demonstration")
+        
+        console.print("✨ Showcasing competitive advantages and real-time multi-agent coordination")
+        console.print("🏆 Highlighting unique capabilities impossible with single-agent systems")
+        console.print("💡 [dim]Perfect for demonstrating to prospects and customers[/dim]\n")
+        
+        if sales_mode:
+            console.print("📊 [yellow]SALES MODE FEATURES:[/yellow]")
+            console.print("   • Competitive advantage callouts")
+            console.print("   • ROI and time-savings highlights")  
+            console.print("   • Enterprise-readiness indicators")
+            console.print("   • Production-quality demonstrations\n")
     
     console.print("🎭 [bold blue]Launching Interactive Dashboard with WebSocket Integration...[/bold blue]")
     
@@ -344,7 +382,18 @@ def dashboard(mobile, refresh, websocket_url, no_websocket):
         dashboard_instance.demo_orchestrator = demo_state.demo_orchestrator
         status_indicator = f"🔴🟡🟢 WebSocket @ {websocket_url}"
     
+    # Enable presentation mode features
+    if (presentation_mode or sales_mode) and hasattr(dashboard_instance, 'enable_presentation_mode'):
+        dashboard_instance.enable_presentation_mode(True)
+        
+    # Enable sales mode specific features
+    if sales_mode and hasattr(dashboard_instance, 'enable_sales_mode'):
+        dashboard_instance.enable_sales_mode(True, customer_name=customer_name)
+    
     console.print(f"🎮 Controls: [bold]Ctrl+C[/bold] to exit | Refresh rate: {refresh:.1f}s | {status_indicator}")
+    if presentation_mode or sales_mode:
+        mode_text = "PRESENTATION MODE" if presentation_mode else "SALES MODE"
+        console.print(f"🎪 [bold magenta]{mode_text}:[/bold magenta] Competitive advantages highlighted | Customer-ready display")
     console.print("[dim]Dashboard starting in 2 seconds...[/dim]")
     
     # Brief delay to show connection status
@@ -358,6 +407,31 @@ def dashboard(mobile, refresh, websocket_url, no_websocket):
         console.print(f"\n[red]❌ Dashboard error: {e}[/red]")
         if not no_websocket:
             console.print("[yellow]💡 Try running with --no-websocket for offline mode[/yellow]")
+
+
+@demo.command()
+@click.argument('customer_name', required=True)
+@click.argument('scenario', type=click.Choice(['ecommerce', 'blog', 'api']), default='ecommerce')
+@click.option('--duration', type=int, help='Demo duration in minutes')
+@click.option('--industry', help='Customer industry for customization')
+@click.option('--technical-audience', is_flag=True, help='Optimize for technical stakeholders')
+@click.option('--executive-audience', is_flag=True, help='Optimize for executive stakeholders')
+def customer_demo(customer_name, scenario, duration, industry, technical_audience, executive_audience):
+    """🎯 Execute complete customer demonstration with personalized setup.
+    
+    Automated end-to-end customer demo including initialization, execution,
+    and results presentation with industry-specific customizations.
+    
+    Examples:
+        hive demo customer-demo "Acme Corp" ecommerce --industry fintech
+        hive demo customer-demo "TechStart Inc" blog --technical-audience  
+        hive demo customer-demo "Enterprise LLC" api --executive-audience --duration 12
+    """
+    
+    asyncio.run(_execute_customer_demo(
+        customer_name, scenario, duration, industry, 
+        technical_audience, executive_audience
+    ))
 
 
 @demo.command()
@@ -831,6 +905,154 @@ async def _stress_test_async(agents: int, duration: int, tasks_per_second: float
                 console.print(f"[red]Cleanup warning: {e}[/red]")
         
         console.print("✅ [green]Stress test completed[/green]")
+
+
+async def _execute_customer_demo(customer_name: str, scenario: str, duration: Optional[int], 
+                                industry: Optional[str], technical_audience: bool, executive_audience: bool):
+    """Execute complete customer demonstration workflow."""
+    
+    console.print("🎯 [bold blue]LeanVibe Agent Hive - Customer Demonstration[/bold blue]")
+    console.print(f"👋 [bold cyan]Welcome {customer_name}![/bold cyan]")
+    
+    if industry:
+        console.print(f"🏭 Industry focus: {industry}")
+    
+    audience_type = "Technical" if technical_audience else "Executive" if executive_audience else "Mixed"
+    console.print(f"👥 Audience: {audience_type} stakeholders")
+    console.print(f"⏰ Duration: {duration or 'default'} minutes\n")
+    
+    # Show competitive advantages upfront
+    console.print("🏆 [bold yellow]What makes LeanVibe Agent Hive unique:[/bold yellow]")
+    scenario_config = DEMO_SCENARIOS.get(scenario, {})
+    advantages = scenario_config.get('competitive_advantages', [])
+    for advantage in advantages[:3]:  # Show top 3 advantages
+        console.print(f"   ✨ {advantage}")
+    console.print()
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console
+        ) as progress:
+            
+            # Phase 1: Initialize demo
+            init_task = progress.add_task("Setting up personalized demo environment...", total=100)
+            
+            # Reset and initialize
+            demo_state.reset()
+            demo_state.session_id = str(uuid.uuid4())[:8]
+            demo_state.scenario = scenario
+            
+            scenario_config = DEMO_SCENARIOS[scenario]
+            if duration:
+                scenario_config = scenario_config.copy()
+                scenario_config['duration_minutes'] = duration
+            
+            progress.advance(init_task, 30)
+            
+            # Phase 2: Start orchestrator  
+            progress.update(init_task, description="Initializing AI orchestrator...")
+            demo_orchestrator = create_demo_orchestrator()
+            await demo_orchestrator.initialize()
+            demo_state.demo_orchestrator = demo_orchestrator
+            progress.advance(init_task, 30)
+            
+            # Phase 3: Begin demo scenario
+            progress.update(init_task, description="Starting multi-agent coordination...")
+            demo_info = await demo_orchestrator.start_demo(scenario)
+            progress.advance(init_task, 40)
+            
+            console.print(f"✅ [green]Demo environment ready![/green]")
+            console.print(f"🎬 Scenario: {demo_info['scenario_name']}")
+            console.print(f"🤖 Agents to deploy: {demo_info['agents_to_spawn']}")
+            console.print(f"📋 Tasks to complete: {demo_info['total_tasks']}")
+            
+            # Show customer value proposition
+            customer_value = scenario_config.get('customer_value', 'Multi-agent AI coordination demonstration')
+            console.print(f"\n💰 [bold green]Customer Value:[/bold green]")
+            console.print(f"   {customer_value}")
+            
+        # Phase 4: Execute live demo
+        console.print(f"\n🎭 [bold magenta]Beginning Live Demonstration...[/bold magenta]")
+        console.print("📊 [dim]Opening real-time dashboard in 3 seconds...[/dim]")
+        await asyncio.sleep(3)
+        
+        # Launch dashboard in sales mode
+        dashboard_instance = create_websocket_enabled_dashboard(
+            websocket_url='ws://localhost:8000',
+            mobile_mode=False,
+            refresh_rate=1.5
+        )
+        
+        dashboard_instance.demo_orchestrator = demo_state.demo_orchestrator
+        
+        # Enable customer-specific features
+        if hasattr(dashboard_instance, 'enable_sales_mode'):
+            dashboard_instance.enable_sales_mode(True, customer_name=customer_name)
+        if hasattr(dashboard_instance, 'set_industry_focus'):
+            dashboard_instance.set_industry_focus(industry)
+        if hasattr(dashboard_instance, 'set_audience_type'):
+            dashboard_instance.set_audience_type(audience_type.lower())
+        
+        # Start agents and monitoring
+        spawned_agents = await demo_orchestrator.spawn_demo_agents()
+        demo_state.agents = spawned_agents
+        demo_state.start_time = datetime.utcnow()
+        demo_state.is_running = True
+        
+        console.print(f"🚀 [bold green]{len(spawned_agents)} AI agents deployed successfully![/bold green]")
+        _display_agent_summary(spawned_agents, mobile=False)
+        
+        console.print(f"\n🎪 [bold]Live demonstration in progress...[/bold]")
+        console.print("🎮 Press [bold]Ctrl+C[/bold] to end demonstration")
+        
+        # Run dashboard monitoring
+        await dashboard_instance.start_monitoring()
+        
+    except KeyboardInterrupt:
+        console.print("\n👋 [bold]Customer demonstration ended[/bold]")
+        
+        # Show final results
+        if demo_state.demo_orchestrator:
+            console.print("\n📊 [bold]Demonstration Results Summary:[/bold]")
+            demo_status = await demo_state.demo_orchestrator.get_demo_status()
+            
+            progress_data = demo_status.get("progress", {})
+            metrics = demo_status.get("metrics", {})
+            runtime = demo_status.get("runtime", {})
+            
+            console.print(f"   ✅ Tasks completed: {progress_data.get('tasks_completed', 0)}")
+            console.print(f"   📊 Success rate: {metrics.get('success_rate', 0):.1%}")
+            console.print(f"   ⏰ Runtime: {runtime.get('formatted', '00:00:00')}")
+            
+            # Export results for customer
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            customer_safe_name = customer_name.replace(' ', '_').replace('/', '_')
+            output_file = f"demo_results_{customer_safe_name}_{timestamp}.html"
+            
+            try:
+                await _export_demo_results('demo-report', output_file, True)
+                console.print(f"📤 [green]Demo results exported to: {output_file}[/green]")
+            except Exception as e:
+                console.print(f"⚠️ [yellow]Could not export results: {e}[/yellow]")
+        
+        # Cleanup
+        await _stop_demo_async(graceful=True, immediate=False, save_state=True)
+        
+        # Next steps
+        console.print(f"\n🚀 [bold cyan]Thank you {customer_name}![/bold cyan]")
+        console.print("📧 Next steps:")
+        console.print("   • Demo results will be sent within 24 hours")
+        console.print("   • Technical deep-dive can be scheduled")  
+        console.print("   • Pilot project discussion available")
+        console.print("   • Custom integration planning offered")
+        
+    except Exception as e:
+        console.print(f"\n[red]❌ Demo execution error: {e}[/red]")
+        console.print("🔧 Our support team will follow up to resolve any issues")
 
 
 async def _export_demo_results(format_type: str, output: Optional[str], include_logs: bool):
