@@ -1,25 +1,25 @@
 {
   "summary": {
-    "total_files_validated": 3717,
-    "total_validations": 7676,
-    "success_count": 5471,
+    "total_files_validated": 3722,
+    "total_validations": 7687,
+    "success_count": 5478,
     "warning_count": 132,
-    "error_count": 2069,
+    "error_count": 2073,
     "success_rate": 71.3
   },
   "by_status": {
-    "success": 5471,
+    "success": 5478,
     "warning": 132,
-    "error": 2069,
+    "error": 2073,
     "info": 4
   },
   "by_type": {
-    "content_freshness": 3717,
+    "content_freshness": 3722,
     "internal_links": 2488,
     "bash_safety": 51,
-    "python_syntax": 831,
+    "python_syntax": 835,
     "bash_syntax": 75,
-    "json_syntax": 508,
+    "json_syntax": 510,
     "api_endpoint": 6
   },
   "errors": [
@@ -112,6 +112,10 @@
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/LOGGING_BEST_PRACTICES.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 2\", details=None)",
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/LOGGING_BEST_PRACTICES.md', validation_type='json_syntax', status='error', message='JSON syntax error: Expecting value at line 1', details=None)",
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/OPERATIONAL_RUNBOOK.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 5\", details=None)",
+    "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/OPERATIONS_RUNBOOK.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 4\", details=None)",
+    "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/OPERATIONS_RUNBOOK.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 4\", details=None)",
+    "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/OPERATIONS_RUNBOOK.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 4\", details=None)",
+    "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/OPERATIONS_RUNBOOK.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 4\", details=None)",
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/PLUGIN_INTEGRATION_TUTORIALS.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 7\", details=None)",
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/PLUGIN_INTEGRATION_TUTORIALS.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 41\", details=None)",
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/docs/PLUGIN_INTEGRATION_TUTORIALS.md', validation_type='python_syntax', status='error', message=\"Python syntax error: 'await' outside function at line 54\", details=None)",
@@ -2227,5 +2231,5 @@
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/tests/integration/README.md', validation_type='bash_safety', status='warning', message='Contains potentially dangerous bash commands', details=None)",
     "ValidationResult(file_path='/Users/bogdan/work/leanvibe-dev/bee-hive/tests/playwright-validation/EXECUTION_GUIDE.md', validation_type='bash_safety', status='warning', message='Contains potentially dangerous bash commands', details=None)"
   ],
-  "validation_timestamp": "2025-08-22T17:42:24.834075"
+  "validation_timestamp": "2025-08-22T18:32:50.544939"
 }

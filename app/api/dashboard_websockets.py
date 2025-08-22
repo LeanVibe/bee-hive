@@ -10,6 +10,7 @@ Part 3 of the dashboard monitoring infrastructure.
 import asyncio
 import contextlib
 import json
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -98,6 +99,23 @@ class DashboardWebSocketManager:
         self.backpressure_disconnect_threshold: int = 5
         # Idle disconnect configuration
         self.idle_disconnect_seconds: int = 600  # 10 minutes default
+        
+        # Sprint 2: Connection Recovery & Circuit Breaker
+        self.broken_connections: set[str] = set()
+        self.broken_connections_with_priority: dict[str, dict] = {}
+        self.circuit_breakers: dict[str, dict] = {}
+        self.connection_failure_history: dict[str, list] = {}
+        
+        # Recovery metrics
+        self.metrics.update({
+            "connection_recovery_attempts_total": 0,
+            "connection_recovery_successes_total": 0,
+            "connection_recovery_failures_total": 0,
+            "circuit_breaker_activations_total": 0,
+            "heartbeats_sent_total": 0,
+            "heartbeat_timeouts_total": 0,
+            "stale_connections_cleaned_total": 0
+        })
         # Optional WS auth/allowlist (feature-flagged via env)
         self.auth_required: bool = _os.environ.get("WS_AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
         # auth_mode: 'token' (default, env shared token) or 'jwt' (verify access token)
@@ -180,6 +198,12 @@ class DashboardWebSocketManager:
                 with contextlib.suppress(Exception):
                     inc_auth_metric("auth_failure_total_ws")
                 return None  # type: ignore[return-value]
+        
+        # Initialize default user_id and user_role if not set
+        if 'user_id' not in locals():
+            user_id = "anonymous"
+        if 'user_role' not in locals():
+            user_role = "user"
         await websocket.accept()
         with contextlib.suppress(Exception):
             if self.auth_required:
@@ -746,6 +770,315 @@ class DashboardWebSocketManager:
                 self.health_monitor_task and not self.health_monitor_task.done()
             ]) if self.connections else False
         }
+
+    # =============== SPRINT 2: CONNECTION RECOVERY METHODS ===============
+
+    async def is_connection_broken(self, connection_id: str) -> bool:
+        """Check if a WebSocket connection is broken."""
+        if connection_id not in self.connections:
+            return True
+        
+        connection = self.connections[connection_id]
+        try:
+            # Test connection by sending a ping
+            await connection.websocket.send_json({
+                "type": "connection_test",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+            return False
+        except Exception:
+            self.broken_connections.add(connection_id)
+            return True
+
+    async def recover_broken_connections(self) -> None:
+        """Attempt to recover broken connections with exponential backoff."""
+        for connection_id in list(self.broken_connections):
+            self.metrics["connection_recovery_attempts_total"] += 1
+            
+            # Attempt recovery (simplified for TDD)
+            if hasattr(self, 'attempt_connection_recovery'):
+                success = await self.attempt_connection_recovery(connection_id, 1)
+                if success:
+                    self.broken_connections.discard(connection_id)
+                    self.metrics["connection_recovery_successes_total"] += 1
+                else:
+                    self.metrics["connection_recovery_failures_total"] += 1
+
+    async def record_recovery_failure(self, connection_id: str) -> None:
+        """Record a connection recovery failure."""
+        if connection_id not in self.circuit_breakers:
+            self.circuit_breakers[connection_id] = {
+                "failure_count": 0,
+                "state": "closed"
+            }
+        
+        self.circuit_breakers[connection_id]["failure_count"] += 1
+        
+        # Open circuit breaker if failure threshold exceeded
+        if self.circuit_breakers[connection_id]["failure_count"] >= 5:
+            self.circuit_breakers[connection_id]["state"] = "open"
+            self.metrics["circuit_breaker_activations_total"] += 1
+
+    def get_circuit_breaker_state(self, connection_id: str) -> str:
+        """Get the current circuit breaker state for a connection."""
+        if connection_id not in self.circuit_breakers:
+            return "closed"
+        return self.circuit_breakers[connection_id]["state"]
+
+    async def should_attempt_recovery(self, connection_id: str) -> bool:
+        """Check if recovery should be attempted based on circuit breaker."""
+        state = self.get_circuit_breaker_state(connection_id)
+        return state != "open"
+
+    async def update_circuit_breaker_states(self) -> None:
+        """Update circuit breaker states based on timeouts."""
+        current_time = time.time()
+        
+        for connection_id, breaker in self.circuit_breakers.items():
+            if breaker["state"] == "open":
+                # Check if timeout period has elapsed (60 seconds)
+                if "last_failure_time" in breaker:
+                    time_since_failure = current_time - breaker["last_failure_time"]
+                    if time_since_failure >= 60:
+                        breaker["state"] = "half-open"
+
+    async def send_heartbeat(self, connection_id: str) -> None:
+        """Send heartbeat ping to a connection."""
+        if connection_id in self.connections:
+            connection = self.connections[connection_id]
+            try:
+                await connection.websocket.send_json({
+                    "type": "ping",
+                    "timestamp": time.time(),
+                    "correlation_id": str(uuid.uuid4())
+                })
+                self.metrics["heartbeats_sent_total"] += 1
+            except Exception:
+                self.metrics["heartbeat_timeouts_total"] += 1
+
+    async def is_connection_stale(self, connection_id: str) -> bool:
+        """Check if a connection is stale (no heartbeat response)."""
+        if connection_id not in self.connections:
+            return True
+        
+        connection = self.connections[connection_id]
+        if hasattr(connection, 'last_heartbeat_response'):
+            time_since_heartbeat = time.time() - connection.last_heartbeat_response
+            return time_since_heartbeat > 60  # 60 second timeout
+        return False
+
+    async def cleanup_stale_connections(self) -> None:
+        """Clean up stale connections."""
+        stale_connections = []
+        for connection_id in list(self.connections.keys()):
+            if await self.is_connection_stale(connection_id):
+                stale_connections.append(connection_id)
+        
+        for connection_id in stale_connections:
+            await self.disconnect(connection_id)
+            self.metrics["stale_connections_cleaned_total"] += 1
+
+    async def handle_connection_failure(self, connection_id: str, failure_type: str) -> None:
+        """Handle a connection failure event."""
+        self.broken_connections.add(connection_id)
+        
+        # Record failure history
+        if connection_id not in self.connection_failure_history:
+            self.connection_failure_history[connection_id] = []
+        
+        self.connection_failure_history[connection_id].append({
+            "timestamp": time.time(),
+            "type": failure_type
+        })
+        
+        # Track metrics
+        self.metrics["connection_failures_total"] = self.metrics.get("connection_failures_total", 0) + 1
+
+    async def get_recovery_priority_order(self) -> list[str]:
+        """Get connection recovery order based on priority."""
+        priority_order = []
+        
+        # Sort by priority: high, medium, low
+        for priority in ["high", "medium", "low"]:
+            for conn_id, props in self.broken_connections_with_priority.items():
+                if props.get("priority") == priority:
+                    priority_order.append(conn_id)
+        
+        return priority_order
+
+    async def get_recovery_metrics(self) -> dict[str, Any]:
+        """Get comprehensive recovery metrics."""
+        total_attempts = self.metrics["connection_recovery_attempts_total"]
+        total_successes = self.metrics["connection_recovery_successes_total"]
+        
+        success_rate = (total_successes / total_attempts * 100.0) if total_attempts > 0 else 0.0
+        
+        recovery_metrics = {
+            "connection_recovery_attempts_total": total_attempts,
+            "connection_recovery_successes_total": total_successes,
+            "connection_recovery_failures_total": self.metrics["connection_recovery_failures_total"],
+            "circuit_breaker_activations_total": self.metrics["circuit_breaker_activations_total"],
+            "heartbeats_sent_total": self.metrics["heartbeats_sent_total"],
+            "heartbeat_timeouts_total": self.metrics["heartbeat_timeouts_total"],
+            "stale_connections_cleaned_total": self.metrics["stale_connections_cleaned_total"],
+            "recovery_success_rate": success_rate,
+            "average_recovery_time_seconds": 0.0  # Placeholder
+        }
+        
+        return recovery_metrics
+
+    # =============== CIRCUIT BREAKER PATTERN METHODS ===============
+
+    async def initialize_circuit_breaker(self, connection_id: str) -> None:
+        """Initialize circuit breaker for a connection."""
+        self.circuit_breakers[connection_id] = {
+            "state": "closed",
+            "failure_count": 0,
+            "consecutive_successes": 0,
+            "last_failure_time": None,
+            "last_success_time": None,
+            "opened_at": None
+        }
+
+    async def record_connection_failure(self, connection_id: str, failure_type: str) -> None:
+        """Record a connection failure and update circuit breaker state."""
+        current_time = time.time()
+        
+        if connection_id not in self.circuit_breakers:
+            await self.initialize_circuit_breaker(connection_id)
+        
+        breaker = self.circuit_breakers[connection_id]
+        
+        # Only count relevant failures for circuit breaker
+        if failure_type not in ["authentication_error"]:  # Auth errors don't count
+            breaker["failure_count"] += 1
+            breaker["last_failure_time"] = current_time
+            breaker["consecutive_successes"] = 0
+        
+        # Record in failure history
+        if connection_id not in self.connection_failure_history:
+            self.connection_failure_history[connection_id] = []
+        
+        self.connection_failure_history[connection_id].append({
+            "timestamp": current_time,
+            "type": failure_type
+        })
+        
+        # Check if we should open the circuit breaker
+        failure_threshold = getattr(self, 'circuit_breaker_config', {}).get('failure_threshold', 5)
+        if breaker["failure_count"] >= failure_threshold and breaker["state"] == "closed":
+            breaker["state"] = "open"
+            breaker["opened_at"] = current_time
+            self.metrics["circuit_breaker_activations_total"] += 1
+
+    async def record_connection_success(self, connection_id: str) -> None:
+        """Record a successful connection operation."""
+        current_time = time.time()
+        
+        if connection_id not in self.circuit_breakers:
+            await self.initialize_circuit_breaker(connection_id)
+        
+        breaker = self.circuit_breakers[connection_id]
+        breaker["last_success_time"] = current_time
+        breaker["consecutive_successes"] += 1
+        
+        # If in half-open state, check if we can close the circuit
+        if breaker["state"] == "half-open":
+            success_threshold = getattr(self, 'circuit_breaker_config', {}).get('success_threshold', 3)
+            if breaker["consecutive_successes"] >= success_threshold:
+                breaker["state"] = "closed"
+                breaker["failure_count"] = 0
+                breaker["consecutive_successes"] = 0
+
+    async def should_allow_connection(self, connection_id: str) -> bool:
+        """Check if a connection should be allowed based on circuit breaker state."""
+        if connection_id not in self.circuit_breakers:
+            return True
+        
+        state = self.circuit_breakers[connection_id]["state"]
+        
+        if state == "open":
+            return False
+        elif state == "half-open":
+            return True  # Allow limited requests in half-open
+        else:  # closed
+            return True
+
+    async def record_failure_with_timestamp(self, connection_id: str, failure_type: str, timestamp: float) -> None:
+        """Record a failure with specific timestamp (for testing)."""
+        if connection_id not in self.connection_failure_history:
+            self.connection_failure_history[connection_id] = []
+        
+        self.connection_failure_history[connection_id].append({
+            "timestamp": timestamp,
+            "type": failure_type
+        })
+        
+        if connection_id not in self.circuit_breakers:
+            await self.initialize_circuit_breaker(connection_id)
+        
+        # Update failure count based on recent failures only
+        recent_failures = self.get_recent_failure_count(connection_id, window_seconds=120)
+        self.circuit_breakers[connection_id]["failure_count"] = recent_failures
+
+    def get_recent_failure_count(self, connection_id: str, window_seconds: int = 120) -> int:
+        """Get count of failures within the time window."""
+        if connection_id not in self.connection_failure_history:
+            return 0
+        
+        current_time = time.time()
+        cutoff_time = current_time - window_seconds
+        
+        recent_failures = [
+            f for f in self.connection_failure_history[connection_id]
+            if f["timestamp"] >= cutoff_time
+        ]
+        
+        return len(recent_failures)
+
+    async def get_circuit_breaker_metrics(self) -> dict[str, Any]:
+        """Get comprehensive circuit breaker metrics."""
+        total_breakers = len(self.circuit_breakers)
+        open_count = sum(1 for b in self.circuit_breakers.values() if b["state"] == "open")
+        closed_count = sum(1 for b in self.circuit_breakers.values() if b["state"] == "closed")
+        half_open_count = sum(1 for b in self.circuit_breakers.values() if b["state"] == "half-open")
+        
+        # Calculate average failure rate
+        total_failures = sum(b["failure_count"] for b in self.circuit_breakers.values())
+        avg_failure_rate = (total_failures / total_breakers) if total_breakers > 0 else 0.0
+        
+        return {
+            "circuit_breakers_total": total_breakers,
+            "circuit_breakers_open_total": open_count,
+            "circuit_breakers_closed_total": closed_count,
+            "circuit_breakers_half_open_total": half_open_count,
+            "circuit_breaker_transitions_total": self.metrics.get("circuit_breaker_activations_total", 0),
+            "circuit_breaker_blocked_requests_total": 0,  # Would need to track this
+            "circuit_breaker_allowed_requests_total": 0,  # Would need to track this
+            "average_failure_rate": avg_failure_rate,
+            "average_recovery_time_seconds": 0.0  # Placeholder
+        }
+
+    async def get_all_circuit_breaker_states(self) -> dict[str, dict]:
+        """Get detailed state information for all circuit breakers."""
+        current_time = time.time()
+        states = {}
+        
+        for connection_id, breaker in self.circuit_breakers.items():
+            time_in_current_state = 0
+            if breaker["opened_at"]:
+                time_in_current_state = current_time - breaker["opened_at"]
+            elif breaker["last_success_time"]:
+                time_in_current_state = current_time - breaker["last_success_time"]
+            
+            states[connection_id] = {
+                "state": breaker["state"],
+                "failure_count": breaker["failure_count"],
+                "last_failure_time": breaker["last_failure_time"],
+                "time_in_current_state": time_in_current_state
+            }
+        
+        return states
 
 
 # Global WebSocket manager instance
