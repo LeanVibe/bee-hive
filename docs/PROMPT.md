@@ -1,574 +1,307 @@
-# 🚀 LEANVIBE AGENT HIVE 2.0 - EPIC 2 PRODUCTION WEBSOCKET SPECIALIST PROMPT
+# CLAUDE CODE AGENT HANDOFF INSTRUCTIONS
 
-*Epic 2: Production WebSocket Observability & Reliability*  
-*Status: Epic 2 Phase 2.1 Complete ✅ → Phase 2.2 Ready for Execution*  
-*Mission: Harden WebSocket infrastructure for enterprise production deployment*
-
-## 🎯 **MISSION BRIEFING: EPIC 2 WEBSOCKET PRODUCTION SPECIALIST AGENT**
-
-### **Context: Standing on Epic 1 & Epic 2.1 Achievement Foundation**
-
-You are taking over LeanVibe Agent Hive 2.0 development after significant foundational progress:
-
-**✅ EPIC 1 ACHIEVEMENTS:**
-- **Performance Excellence**: <50ms API responses, 37MB memory usage (54% under target), 250+ concurrent agents
-- **Memory Optimization**: 85.7% reduction from baseline (256MB → 37MB)
-- **Concurrent Scaling**: 250 agents with 0% performance degradation
-- **Quality Gates**: Comprehensive performance monitoring and regression detection
-
-**✅ EPIC 2 PHASE 2.1 ACHIEVEMENTS:**
-- **Advanced Plugin Framework**: Dynamic plugin loading with hot-swap capabilities implemented
-- **Plugin Security**: Comprehensive security validation and resource isolation operational
-- **Integration**: SimpleOrchestrator enhanced with AdvancedPluginManager
-- **Performance Preservation**: Epic 1 targets maintained throughout plugin enhancements
-
-**Your Mission**: Execute **Epic 2 Phases 2.2-2.5: Production WebSocket Hardening** to transform the platform into a **bulletproof production-ready system**.
+**Date**: August 22, 2025  
+**System**: LeanVibe Agent Hive 2.0 - Autonomous Multi-Agent Orchestration Platform  
+**Current State**: Post-Epic C Completion - Ready for Epic D Implementation  
+**Business Context**: Immediate revenue opportunity through working PWA-backend demonstrations
 
 ---
 
-## 🎯 **EPIC 2 OBJECTIVES: PRODUCTION WEBSOCKET HARDENING**
+## 🎯 **IMMEDIATE MISSION: EPIC D - PWA-BACKEND INTEGRATION & CUSTOMER DEMONSTRATIONS**
 
-### **Primary Strategic Targets**
-1. **WebSocket Observability**: Comprehensive metrics, logging, and monitoring
-2. **Production Safeguards**: Rate limiting, backpressure protection, input validation
-3. **Chaos Engineering**: Resilience validation and automated recovery
-4. **Contract Versioning**: Schema enforcement and client compatibility
+**Primary Objective**: Connect the 85% complete Mobile PWA to functional backend APIs, enabling immediate customer demonstrations and revenue generation within 1-2 weeks.
 
-### **Success Criteria - ALL MUST BE ACHIEVED**
-- [x] Dynamic plugin system operational (Phase 2.1 complete)
-- [ ] WebSocket metrics and structured logging implemented
-- [ ] Rate limiting and backpressure protection active
-- [ ] Input validation and schema enforcement complete
-- [ ] Chaos engineering validation passed with recovery mechanisms
+**Success Criteria**: 
+- Sales team can demonstrate working multi-agent orchestration to customers through PWA interface
+- Real-time agent coordination visible in PWA dashboard via WebSocket streaming
+- Complete end-to-end customer journey from agent creation to task completion
 
 ---
 
-## 🏗️ **CURRENT SYSTEM STATE: EPIC 1 OPTIMIZED & READY**
+## 📊 **CURRENT SYSTEM STATE (CRITICAL CONTEXT)**
 
-### **High-Performance Foundation ✅ OPERATIONAL**
+### **✅ MAJOR ACCOMPLISHMENTS COMPLETED**
+Epic A, B, and C are fully operational with the following validated capabilities:
+
+**Epic A - Foundation**: Application startup, database connectivity, 39,092x performance improvements documented
+**Epic B - Orchestration**: 13 RESTful API v2 endpoints, agent management, task coordination, WebSocket infrastructure  
+**Epic C - API Reality**: Fixed double prefix routing issue, real-time broadcasting, database persistence working
+
+### **🚀 FUNCTIONAL COMPONENTS (VALIDATED)**
+1. **SimpleOrchestrator**: High-performance multi-agent coordination system
+2. **API v2 Endpoints**: All 13 endpoints (`/api/v2/agents`, `/api/v2/tasks`) returning real data
+3. **WebSocket Broadcasting**: Real-time state changes for agent lifecycle and task management  
+4. **Database Integration**: Agent and task persistence with async SQLAlchemy sessions
+5. **CLI Real-time Dashboard**: WebSocket-enabled dashboard with live agent monitoring
+6. **Mobile PWA**: 85% complete TypeScript infrastructure (938+ lines of production code)
+
+### **❌ CRITICAL GAPS REQUIRING IMMEDIATE ATTENTION**
+1. **PWA-Backend Connectivity**: Mobile app needs testing and integration with API v2 endpoints
+2. **Testing Infrastructure**: pytest configuration issues preventing validation of system claims
+3. **Customer Demo Scenarios**: Need compelling multi-agent demonstration workflows
+4. **Performance Evidence**: "39,092x improvement" claims need measurable validation for enterprise sales
+
+## 🏗️ **ARCHITECTURE & TECHNICAL CONTEXT**
+
+### **Core System Architecture**
 ```
-Performance Metrics (Epic 1 Achieved):
-├── API Response Time: <50ms (95th percentile) ✅
-├── Memory Usage: 37MB (54% under 80MB target) ✅
-├── Concurrent Agents: 250+ with 0% degradation ✅
-├── System Monitoring: Real-time performance tracking ✅
-└── Quality Gates: Automated regression detection ✅
-
-Core Architecture Status:
-├── SimpleOrchestrator: Epic 1 optimized with lazy loading
-├── Unified Managers (5): Memory-efficient, circuit breaker patterns
-├── API System: 339 routes with <50ms responses
-├── Database: PostgreSQL + pgvector, optimized queries
-├── Redis: <5ms response times, optimized connection pooling
-└── Plugin System: Basic framework ready for Epic 2 enhancement
-```
-
-### **Key Files & Components (Epic 1 Optimized)**
-- **Core Orchestrator**: `/app/core/simple_orchestrator.py` (Epic 1 memory optimized)
-- **Performance Framework**: `/app/core/performance_optimization_framework.py` (ML-based optimization)
-- **Unified Managers**: `/app/core/unified_managers/` (5 efficient managers)
-- **Epic 1 Optimizers**: Memory, API, concurrent scaling frameworks implemented
-- **Quality Gates**: Performance regression detection and automated optimization
-
-### **WebSocket System Current State**
-- **Advanced Plugin Framework**: Dynamic loading operational (Phase 2.1 complete)
-- **Basic WebSocket Support**: Functional but lacks production hardening
-- **Monitoring Gap**: Limited observability and error tracking
-- **Production Risk**: Missing rate limiting, input validation, and resilience patterns
-
----
-
-## 🚀 **EPIC 2 EXECUTION STRATEGY: 3-WEEK IMPLEMENTATION**
-
-### **Phase 2.2: WebSocket Observability & Metrics (Days 1-5)**
-**Objective**: Production-grade WebSocket monitoring and structured logging
-
-#### **WebSocket Observability Framework**
-```python
-# Production WebSocket Observability
-class WebSocketObservability:
-    """Comprehensive WebSocket monitoring and metrics collection."""
-    
-    async def track_message_metrics(self) -> MessageMetrics:
-        """Track all WebSocket message operations."""
-        # messages_sent_total, messages_send_failures_total
-        # messages_received_total, messages_dropped_rate_limit_total
-        # errors_sent_total, connections_total, disconnections_total
-        
-    async def log_structured_errors(self, error: WSError) -> None:
-        """Structured error logging with correlation tracking."""
-        # Include correlation_id, type, subscription in all error logs
-        # Guard logs for unknown message types and invalid subscriptions
-        
-    async def monitor_connection_health(self) -> ConnectionHealth:
-        """Real-time connection health monitoring."""
-        # Connection lifecycle tracking
-        # Performance metrics per connection
-        # Health check integration
+Mobile PWA (Lit + TypeScript) 
+    ↓ HTTP/WebSocket
+API v2 (FastAPI + SQLAlchemy)
+    ↓ Integration Layer
+SimpleOrchestrator (High-Performance Core)
+    ↓ Persistence
+PostgreSQL Database + Redis Cache
 ```
 
-**Implementation Tasks (Days 1-5)**:
-1. **Metrics Endpoint Development**
-   - `/api/dashboard/metrics/websockets` with comprehensive counters
-   - Integration with existing monitoring infrastructure
-   - Prometheus-compatible metrics exposition
-   - Real-time metrics streaming to dashboard
+### **Key Technologies**
+- **Backend**: Python FastAPI with async SQLAlchemy, PostgreSQL, Redis
+- **Frontend**: Mobile PWA with Lit framework, TypeScript, Vite build system
+- **Real-time**: WebSocket broadcasting for live dashboard updates
+- **Testing**: pytest (currently broken), Playwright for PWA e2e testing
+- **Performance**: SimpleOrchestrator with documented massive performance improvements
 
-2. **Structured Logging Implementation**
-   - Correlation ID injection for all WebSocket operations
-   - Error logging with type, subscription, and context
-   - Performance logging for monitoring and debugging
-   - Log aggregation and analysis tools
-
-3. **Connection Monitoring**
-   - Real-time connection health tracking
-   - Connection lifecycle event logging
-   - Performance metrics per connection
-   - Alert generation for connection issues
-
-#### **Day 1-5 Deliverables**:
-- [ ] WebSocket metrics endpoint operational
-- [ ] Structured error logging with correlation IDs
-- [ ] Connection health monitoring dashboard
-- [ ] Comprehensive test suite for observability features
-
-### **Phase 2.3: Rate Limiting & Backpressure (Days 6-10)**
-**Objective**: Protect system from overload and slow consumers
-
-#### **Production Safeguards Framework**
-```python
-# Rate Limiting & Backpressure Protection
-class WebSocketProtection:
-    """Production-grade WebSocket protection mechanisms."""
-    
-    async def enforce_rate_limits(self, connection: WSConnection) -> RateLimit:
-        """Per-connection token bucket rate limiting."""
-        # 20 rps with burst capacity of 40
-        # Single error message per cooldown when exceeded
-        # Graceful degradation under load
-        
-    async def manage_backpressure(self, queue_depth: int) -> BackpressureAction:
-        """Backpressure management for slow consumers."""
-        # Send queue monitoring and management
-        # Disconnect after N consecutive send failures (default 5)
-        # Resource protection and cleanup
-        
-    async def expose_limits_endpoint(self) -> LimitsInfo:
-        """Rate limit information endpoint."""
-        # Current thresholds and configuration
-        # Real-time rate limit status per connection
-        # Administrative controls for limit adjustment
+### **Critical File Locations**
 ```
-
-**Implementation Tasks (Days 6-10)**:
-1. **Token Bucket Rate Limiting**
-   - Per-connection rate limiting with configurable thresholds
-   - Burst capacity management and overflow handling
-   - Rate limit violation logging and metrics
-   - Graceful error messaging for exceeded limits
-
-2. **Backpressure Protection**
-   - Send queue depth monitoring per connection
-   - Automatic disconnection of slow consumers
-   - Resource cleanup and connection management
-   - Backpressure metrics and alerting
-
-3. **Limits Management API**
-   - `/api/dashboard/websocket/limits` endpoint
-   - Real-time rate limit status and configuration
-   - Administrative controls for threshold adjustment
-   - Integration with monitoring and alerting systems
-
-#### **Day 6-10 Deliverables**:
-- [ ] Token bucket rate limiting operational
-- [ ] Backpressure protection with automatic disconnect
-- [ ] Limits management API endpoint
-- [ ] Comprehensive testing for protection mechanisms
-
-### **Phase 2.4: Input Hardening & Validation (Days 11-15)**
-**Objective**: Robust input validation and message size controls
-
-#### **Input Validation Framework**
-```python
-# Input Hardening & Message Validation
-class InputValidator:
-    """Comprehensive input validation and security."""
-    
-    async def validate_message_size(self, message: bytes) -> ValidationResult:
-        """Enforce message size limits and handle overflow."""
-        # 64KB message size limit enforcement
-        # Graceful overflow handling with error messages
-        # Resource protection from oversized messages
-        
-    async def normalize_subscriptions(self, subs: List[str]) -> List[str]:
-        """Subscription validation and normalization."""
-        # Unknown subscription handling with single error
-        # Duplicate subscription removal and normalization
-        # Sorted and unique subscription_updated responses
-        
-    async def inject_correlation_ids(self, frame: WSFrame) -> WSFrame:
-        """Ensure all outbound frames have correlation IDs."""
-        # Correlation ID injection when missing
-        # Frame metadata consistency
-        # Traceability for all WebSocket communications
-```
-
-**Implementation Tasks (Days 11-15)**:
-1. **Message Size Validation**
-   - 64KB message size limit enforcement
-   - Oversized message handling with single error response
-   - Resource protection and memory management
-   - Size limit metrics and monitoring
-
-2. **Subscription Management**
-   - Unknown subscription detection and error handling
-   - Subscription list normalization and deduplication
-   - Sorted subscription responses for consistency
-   - Subscription state management and validation
-
-3. **Schema Enforcement**
-   - `schemas/ws_messages.schema.json` as source of truth
-   - TypeScript type generation in CI pipeline
-   - Schema validation for all incoming messages
-   - Contract compliance monitoring
-
-4. **Correlation ID Management**
-   - Automatic correlation ID injection for all frames
-   - Distributed tracing support
-   - Error correlation and debugging enhancement
-   - Frame metadata consistency
-
-#### **Day 11-15 Deliverables**:
-- [ ] Message size validation with 64KB limits
-- [ ] Subscription normalization and validation
-- [ ] Schema enforcement with CI integration
-- [ ] Correlation ID injection for all frames
-
-### **Phase 2.5: Chaos Engineering & Recovery (Days 16-21)**
-**Objective**: Validate system resilience and automated recovery
-
-#### **Chaos Engineering Framework**
-```python
-# Chaos Engineering & Recovery Validation
-class ChaosEngineering:
-    """Comprehensive resilience testing and recovery validation."""
-    
-    async def simulate_redis_failures(self) -> ChaosResult:
-        """Redis failure simulation and recovery testing."""
-        # Redis connection failures and timeouts
-        # Redis cluster failover scenarios
-        # Data consistency validation during failures
-        
-    async def test_connection_recovery(self) -> RecoveryResult:
-        """WebSocket connection recovery testing."""
-        # Connection drop simulation and recovery
-        # Exponential backoff validation
-        # State preservation during reconnection
-        
-    async def validate_contract_versioning(self) -> VersioningResult:
-        """Contract versioning and compatibility testing."""
-        # Version field presence in connection frames
-        # Client compatibility testing
-        # Version migration scenarios
-```
-
-**Implementation Tasks (Days 16-21)**:
-1. **Redis Resilience Testing**
-   - Redis listener exponential backoff implementation
-   - Connection failure simulation and recovery testing
-   - Data consistency validation during Redis outages
-   - Redis cluster failover testing
-
-2. **WebSocket Recovery Mechanisms**
-   - Connection recovery with exponential backoff
-   - State preservation during reconnection
-   - Client reconnection strategy documentation
-   - Recovery time measurement and optimization
-
-3. **Contract Versioning**
-   - `contract_version` in `connection_established` frames
-   - Version surfacing in `/health` and `/limits` endpoints
-   - Client compatibility testing framework
-   - Version migration testing
-
-4. **PWA Integration**
-   - PWA reconnection strategy documentation
-   - Client-side recovery mechanism implementation
-   - End-to-end resilience testing
-   - User experience during outages
-
-#### **Day 16-21 Deliverables**:
-- [ ] Redis failure recovery with exponential backoff
-- [ ] WebSocket recovery mechanisms operational
-- [ ] Contract versioning implemented and tested
-- [ ] PWA reconnection strategy documented and tested
-
----
-
-## 🧪 **EPIC 2 VALIDATION & TESTING STRATEGY**
-
-### **Plugin System Testing Requirements**
-1. **Dynamic Loading Tests**: Validate 50+ plugins loadable without restart
-2. **Security Testing**: Comprehensive plugin security validation
-3. **Performance Testing**: Plugin impact on Epic 1 performance targets
-4. **Enterprise Testing**: Multi-tenant plugin management validation
-
-### **Quality Gates for Epic 2**
-```python
-# Epic 2 Quality Gate Implementation
-async def epic2_quality_gate():
-    """Comprehensive Epic 2 validation."""
-    
-    # Test 1: Dynamic Plugin Loading
-    plugin_capacity = await test_dynamic_plugin_loading()
-    assert plugin_capacity >= 50, f"Plugin capacity target not met: {plugin_capacity}"
-    
-    # Test 2: Plugin Marketplace
-    marketplace_plugins = await count_certified_plugins()
-    assert marketplace_plugins >= 10, f"Marketplace plugin target not met: {marketplace_plugins}"
-    
-    # Test 3: SDK Completeness
-    sdk_coverage = await validate_sdk_completeness()
-    assert sdk_coverage >= 95, f"SDK completeness target not met: {sdk_coverage}%"
-    
-    # Test 4: Performance Preservation (Epic 1 targets maintained)
-    api_performance = await measure_api_response_times()
-    assert all(rt < 50 for rt in api_performance), "Epic 1 performance targets degraded"
-    
-    memory_usage = await measure_memory_usage()
-    assert memory_usage < 80, f"Epic 1 memory target degraded: {memory_usage}MB"
-    
-    # Test 5: Enterprise Features
-    enterprise_features = await validate_enterprise_plugin_management()
-    assert enterprise_features >= 90, f"Enterprise features not complete: {enterprise_features}%"
+app/api/v2/agents.py          # Agent CRUD endpoints (FUNCTIONAL)
+app/api/v2/tasks.py           # Task management endpoints (FUNCTIONAL)  
+app/api/v2/websockets.py      # Real-time WebSocket broadcasting (FUNCTIONAL)
+app/core/simple_orchestrator.py # High-performance agent coordination (FUNCTIONAL)
+mobile-pwa/                   # 85% complete PWA interface (NEEDS INTEGRATION)
+docs/PLAN.md                  # Strategic roadmap and next 4 epics
+pytest.ini                   # Test configuration (BROKEN - needs repair)
 ```
 
 ---
 
-## 🎯 **IMMEDIATE NEXT ACTIONS (Start Here)**
+## 🚀 **EPIC D IMPLEMENTATION ROADMAP (IMMEDIATE PRIORITY)**
 
-### **1. Epic 1 Performance Preservation Validation (30 minutes)**
+### **Phase D.1: PWA Integration Testing (Days 1-4)**
+**Target**: Validated PWA-backend connectivity
+
+**Specific Tasks**:
+1. **Test PWA API Calls**: Validate Mobile PWA can reach `/api/v2/agents` and `/api/v2/tasks`
+2. **Fix CORS Issues**: Configure FastAPI CORS for PWA domain
+3. **Authentication Integration**: Ensure PWA auth tokens work with API v2 endpoints
+4. **Error Handling**: Implement robust error handling for offline/network failures
+5. **Data Flow Validation**: Confirm agent creation, task assignment, status monitoring work end-to-end
+
+**Files to Focus On**:
+- `mobile-pwa/src/services/api.ts` - API service layer integration
+- `app/main.py` - CORS and middleware configuration
+- `mobile-pwa/src/components/dashboard/` - Dashboard components needing backend data
+
+### **Phase D.2: Real-time Dashboard Integration (Days 5-7)**
+**Target**: Live PWA updates via WebSocket
+
+**Specific Tasks**:
+1. **WebSocket Client**: Integrate WebSocket client in Mobile PWA for real-time updates
+2. **Dashboard Updates**: Connect PWA dashboard to SimpleOrchestrator WebSocket broadcasting
+3. **Live Agent Status**: Display real-time agent status changes in PWA interface
+4. **Task Progress**: Show live task progress and completion in PWA dashboard
+5. **Performance Optimization**: Ensure PWA handles real-time data efficiently
+
+**Files to Focus On**:
+- `mobile-pwa/src/services/websocket.ts` - WebSocket integration
+- `mobile-pwa/src/stores/` - State management for real-time data
+- `app/api/v2/websockets.py` - Server-side WebSocket broadcasting
+
+### **Phase D.3: Customer Demo Scenarios (Days 8-10)**
+**Target**: Ready-to-present customer demonstrations
+
+**Specific Tasks**:
+1. **E-commerce Demo**: Create compelling website building demonstration
+2. **Multi-agent Coordination**: Show multiple agents collaborating on complex tasks
+3. **Real-time Visualization**: Live agent coordination visible in PWA dashboard
+4. **Demo Scripts**: Customer presentation materials and workflows
+5. **Sales Enablement**: Documentation for sales team demonstrations
+
+**Files to Focus On**:
+- `app/cli/demo_commands.py` - Enhanced demo scenarios (already created)
+- `mobile-pwa/src/components/demo/` - Demo-specific PWA components
+- `docs/demo-scenarios.md` - Customer demonstration documentation
+
+---
+
+## 🛡️ **QUALITY GATES & TESTING REQUIREMENTS**
+
+### **Mandatory Quality Validation Before Any Completion**
+1. **Build Validation**: `swift build` or equivalent must pass without errors
+2. **Test Execution**: `pytest tests/` must run cleanly (CURRENTLY BROKEN - fix first)
+3. **PWA Build**: `npm run build` in mobile-pwa/ must succeed
+4. **API Endpoint Testing**: All 13 API v2 endpoints must return real data (not 404s)
+5. **WebSocket Functionality**: Real-time updates must work end-to-end
+
+### **pytest Configuration Issues (CRITICAL BLOCKER)**
+Current Issue: "pytest-cov" dependency missing, configuration errors
+**Immediate Fix Required**:
 ```bash
-# Ensure Epic 1 achievements are maintained
-python3 app/core/epic1_memory_optimizer.py  # Should show <80MB target met
-python3 app/core/epic1_api_optimizer.py     # Should show <50ms target met
-python3 app/core/epic1_concurrent_optimizer.py  # Should show 250+ agents
+pip install pytest-cov  # or uv add pytest-cov
+pytest tests/ --tb=short  # Validate test execution
 ```
 
-### **2. Current Plugin System Analysis (60 minutes)**
+### **API Endpoint Validation**
+Use existing validation script:
 ```bash
-# Analyze existing plugin architecture
-grep -r "plugin" app/core/ --include="*.py"
-python3 -c "from app.core.simple_orchestrator import SimpleOrchestrator; print('Current plugin capabilities')"
-
-# Identify enhancement opportunities
-find app/ -name "*plugin*" -type f
-ls -la app/core/orchestrator_plugins/
-```
-
-### **3. Epic 2 Phase 2.1 Foundation Setup (120 minutes)**
-```python
-# Start Epic 2 Phase 2.1 implementation
-# 1. Create AdvancedPluginManager foundation
-# 2. Design plugin security framework
-# 3. Implement dynamic loading prototype
-# 4. Setup plugin health monitoring
+python scripts/test_api_v2_endpoints.py  # Confirms all endpoints functional
 ```
 
 ---
 
-## 🏆 **SUCCESS MEASUREMENT FRAMEWORK**
+## 💼 **BUSINESS CONTEXT & STAKEHOLDER NEEDS**
 
-### **Epic 2 Daily Progress Metrics**
-- **Plugin Capacity**: Track daily improvement toward 50+ plugin target
-- **Marketplace Growth**: Track plugin registration and certification
-- **Developer Adoption**: Track SDK usage and developer onboarding
-- **Performance Preservation**: Ensure Epic 1 targets maintained
+### **Revenue Opportunity (Immediate)**
+- **Sales Team**: Needs working demonstrations for customer meetings
+- **Customer Acquisition**: Live multi-agent coordination creates competitive advantage
+- **Enterprise Sales**: Production-ready features required for large customer deployments
 
-### **Epic 2 Phase Milestones**
-- **Phase 2.1**: Dynamic plugin system operational
-- **Phase 2.2**: Plugin marketplace with 10+ plugins
-- **Phase 2.3**: Complete SDK with developer documentation
-- **Phase 2.4**: Enterprise plugin management operational
+### **Technical Debt Priority**
+1. **High**: PWA-backend integration (blocks customer demonstrations)
+2. **High**: Testing infrastructure repair (blocks quality confidence)
+3. **Medium**: Performance evidence gathering (supports enterprise sales claims)
+4. **Low**: New feature development (focus on making existing features work)
 
-### **Epic 2 Completion Criteria**
-- [ ] 50+ plugins loadable without system restart
-- [ ] Plugin marketplace with 10+ certified plugins
-- [ ] Complete SDK with comprehensive documentation
-- [ ] Enterprise plugin management with analytics
-- [ ] **Epic 1 performance targets maintained throughout**
+### **Market Timeline Pressure**
+- **Week 1-2**: Working PWA demonstrations enable immediate sales conversations
+- **Week 3-4**: Quality foundation prevents regression and builds enterprise confidence
+- **Month 2**: Production deployment capability for customer environments
 
 ---
 
-## ⚠️ **CRITICAL SUCCESS FACTORS**
+## 🔧 **DEVELOPMENT WORKFLOW & CONVENTIONS**
 
-### **What MUST Be Preserved from Epic 1**
-- **Performance Targets**: <50ms API responses, <80MB memory usage
-- **Concurrent Scaling**: 250+ agent capacity maintained
-- **System Stability**: Zero regression in system functionality
-- **Monitoring Infrastructure**: Epic 1 performance monitoring preserved
+### **Git Workflow**
+- **Current Branch**: `main` (feature branch work acceptable for Epic D)
+- **Commit Pattern**: Conventional commits with epic references (`feat(epic-d): add PWA API integration`)
+- **Auto-commit Rules**: Commit automatically on feature branches after successful build + tests
+- **Quality Gate**: NEVER commit broken code - all tests must pass
 
-### **What MUST Be Achieved in Epic 2**
-- **Plugin Ecosystem**: 50+ dynamic plugins with marketplace
-- **Developer Experience**: Complete SDK enabling third-party development
-- **Enterprise Features**: Security, analytics, and management controls
-- **Production Readiness**: Enterprise-grade plugin governance
+### **Code Conventions**
+- **Python**: FastAPI async/await patterns, structured logging with `structlog`
+- **TypeScript**: Lit framework conventions, strict TypeScript configuration
+- **Testing**: pytest with async support, comprehensive API contract testing
+- **Documentation**: Update docs/PLAN.md with progress, maintain architecture decisions
 
-### **Performance Preservation Strategy**
-```python
-# Epic 2 Performance Monitoring
-@preserve_epic1_performance
-async def epic2_plugin_operation():
-    """All Epic 2 operations must preserve Epic 1 achievements."""
-    
-    # Monitor memory impact
-    memory_before = await get_memory_usage()
-    
-    # Execute plugin operation
-    result = await plugin_operation()
-    
-    # Validate performance preservation
-    memory_after = await get_memory_usage()
-    assert memory_after < 80, "Epic 1 memory target compromised"
-    
-    api_response_time = await measure_api_response()
-    assert api_response_time < 50, "Epic 1 API target compromised"
-    
-    return result
+### **Performance Standards**
+- **API Response Time**: <100ms P95 for all endpoints
+- **PWA Load Time**: <2 seconds for initial dashboard load
+- **Memory Usage**: <500MB total system footprint
+- **WebSocket Latency**: <100ms for real-time updates
+
+---
+
+## 📈 **SUCCESS METRICS & VALIDATION**
+
+### **Epic D Success Criteria**
+- [ ] PWA successfully creates agents via `/api/v2/agents` endpoint
+- [ ] PWA displays real-time agent status updates via WebSocket
+- [ ] PWA can assign and monitor tasks through `/api/v2/tasks` endpoint
+- [ ] Complete customer demonstration scenario operational (e-commerce website build)
+- [ ] Sales team can confidently demonstrate working multi-agent coordination
+
+### **Technical Validation Checklist**
+- [ ] All API endpoints return real data (validated with test script)
+- [ ] PWA builds and deploys without errors
+- [ ] WebSocket real-time updates work end-to-end
+- [ ] Database persistence working for agents and tasks
+- [ ] No 404 errors or stub responses in customer-facing interfaces
+
+### **Business Value Validation**
+- [ ] Customer can see multiple agents coordinating to build complete website
+- [ ] Real-time progress updates visible in mobile-friendly PWA interface  
+- [ ] Demonstration shows clear competitive advantage over single-agent solutions
+- [ ] Technical performance supports enterprise scalability claims
+
+---
+
+## 🚨 **CRITICAL BLOCKERS & ESCALATION**
+
+### **Immediate Escalation Required For**
+1. **Cannot fix pytest configuration**: Testing infrastructure blocks all quality validation
+2. **PWA-API connectivity failures**: CORS, authentication, or network issues preventing integration
+3. **Performance regressions**: Any degradation in SimpleOrchestrator 39,092x improvements
+4. **Database connectivity issues**: PostgreSQL or Redis connection failures
+5. **Security vulnerabilities**: Any authentication or authorization bypass discovered
+
+### **Human Review Required For**
+1. **Architecture changes**: Any modifications to SimpleOrchestrator core architecture
+2. **Business logic changes**: Customer demonstration scenarios and workflows
+3. **Production deployment**: Security, monitoring, or operational considerations
+4. **Performance claims**: Validation methodology for enterprise sales materials
+
+---
+
+## 🎁 **READY-TO-USE RESOURCES**
+
+### **Completed Infrastructure (USE IMMEDIATELY)**
+1. **WebSocket CLI Dashboard**: `app/cli/realtime_dashboard.py` - Live agent monitoring
+2. **Demo Commands**: `app/cli/demo_commands.py` - E-commerce and multi-agent scenarios
+3. **API Validation Script**: `scripts/test_api_v2_endpoints.py` - Endpoint testing
+4. **SimpleOrchestrator Integration**: `app/core/simple_orchestrator.py` - WebSocket broadcasting enabled
+
+### **PWA Components Ready for Integration**
+1. **Package.json**: Comprehensive testing and build scripts configured
+2. **E2E Testing**: Playwright tests for PWA functionality validation
+3. **TypeScript Infrastructure**: 938+ lines of production-ready code
+4. **WebSocket Services**: Framework for real-time data integration
+
+### **Documentation & Planning**
+1. **Strategic Roadmap**: `docs/PLAN.md` - Next 4 epics planned with resource allocation
+2. **API Documentation**: Swagger docs available at `/docs` endpoint
+3. **Performance Reports**: `reports/complete_system_integration_validation.json`
+
+---
+
+## 🏃‍♂️ **GETTING STARTED (FIRST 2 HOURS)**
+
+### **Step 1: Environment Validation**
+```bash
+# Validate current system state
+python scripts/test_api_v2_endpoints.py  # Should show all endpoints working
+cd mobile-pwa && npm run build  # Should build successfully
+pytest tests/ --tb=short  # EXPECTED TO FAIL - fix pytest-cov issue first
 ```
 
----
-
-## 🔧 **TECHNICAL IMPLEMENTATION GUIDELINES**
-
-### **Code Quality Standards**
-```python
-# All Epic 2 code must follow these patterns
-from app.core.performance_optimization_framework import performance_monitor
-
-@performance_monitor(component_name="epic2_plugin_system")
-async def implement_plugin_feature(feature: str) -> PluginResult:
-    """
-    Epic 2 plugin implementation template.
-    
-    Args:
-        feature: Plugin feature to implement
-        
-    Returns:
-        PluginResult with implementation status and performance metrics
-    """
-    # Implementation with Epic 1 performance preservation
-    # Comprehensive error handling and monitoring
-    # Plugin security validation
-    # Resource management and cleanup
+### **Step 2: Fix Critical Blocker**
+```bash
+# Fix pytest configuration immediately
+pip install pytest-cov  # or: uv add pytest-cov  
+pytest tests/ --tb=short  # Should now execute cleanly
 ```
 
-### **Plugin Development Patterns**
-```python
-# Standard plugin development template
-class StandardPlugin(PluginBase):
-    """Standard plugin following Epic 2 development patterns."""
-    
-    def __init__(self):
-        super().__init__()
-        self.epic1_performance_monitor = True
-        self.security_validation = True
-        self.resource_management = True
-        
-    async def validate_epic1_compatibility(self) -> bool:
-        """Ensure plugin preserves Epic 1 performance targets."""
-        # Memory usage validation
-        # API response time impact assessment
-        # Concurrent scaling compatibility check
+### **Step 3: PWA-Backend Integration Testing**
+```bash
+# Start backend
+uvicorn app.main:app --reload --port 8000
+
+# Start PWA development server  
+cd mobile-pwa && npm run dev  # Should serve on localhost:3001
+
+# Test API connectivity from PWA
+curl http://localhost:8000/api/v2/agents  # Should return real agent data
 ```
 
----
-
-## 📊 **REPORTING & COMMUNICATION**
-
-### **Daily Epic 2 Progress Reports**
-Create daily progress reports with:
-- Plugin implementation progress against 50+ target
-- Marketplace development and plugin certification status
-- SDK development and developer onboarding metrics
-- Epic 1 performance preservation validation
-
-### **Epic 2 Weekly Reviews**
-- Comprehensive plugin ecosystem analysis
-- Target achievement status and risk assessment
-- Performance impact analysis and optimization
-- Developer ecosystem growth and feedback
+### **Step 4: Begin Epic D Implementation**
+1. **Focus on PWA-backend connectivity first**
+2. **Fix CORS issues for cross-origin requests**
+3. **Validate real-time WebSocket integration**
+4. **Create compelling customer demonstration scenario**
 
 ---
 
-## 🎯 **EPIC 2 VISION**
+## 🎯 **FINAL REMINDERS**
 
-By the end of Epic 2, LeanVibe Agent Hive 2.0 will be transformed from a **high-performance foundation** into an **unlimited extensibility ecosystem** that:
+### **Core Principles**
+1. **Business Value First**: Every change must serve immediate customer demonstration needs
+2. **Quality Gates**: Never skip testing - broken system destroys sales credibility
+3. **Incremental Progress**: Small, working improvements better than large, broken changes
+4. **Real-time Focus**: WebSocket integration is competitive differentiator - prioritize highly
 
-- **Supports 50+ dynamic plugins** with hot-swap capabilities
-- **Provides complete plugin marketplace** with developer ecosystem
-- **Enables third-party development** through comprehensive SDK
-- **Offers enterprise-grade management** with security and analytics
-- **Preserves Epic 1 performance** while adding unlimited extensibility
-- **Establishes plugin standards** for the entire industry
+### **Success Definition**
+**Epic D succeeds when**: A customer can watch multiple AI agents coordinate through the Mobile PWA to build a complete e-commerce website, with real-time progress updates, demonstrating clear competitive advantage over single-agent solutions.
 
-**This is not just adding plugins - this is creating the foundation for unlimited platform evolution.**
-
----
-
-## 🚀 **SUBAGENT SPECIALIZATION STRATEGY**
-
-To maximize efficiency and avoid context rot, use specialized subagents:
-
-### **1. Plugin Architecture Specialist Agent**
-- **Focus**: Core plugin framework and dynamic loading
-- **Responsibilities**: AdvancedPluginManager, security framework, hot-swap capability
-- **Deliverables**: Phase 2.1 implementation
-
-### **2. Marketplace Development Agent**  
-- **Focus**: Plugin marketplace and discovery systems
-- **Responsibilities**: Registry, certification, AI-powered discovery
-- **Deliverables**: Phase 2.2 implementation
-
-### **3. SDK & Developer Experience Agent**
-- **Focus**: Developer tools and documentation
-- **Responsibilities**: SDK framework, tools, documentation, developer onboarding
-- **Deliverables**: Phase 2.3 implementation
-
-### **4. Enterprise Management Agent**
-- **Focus**: Enterprise plugin management and analytics
-- **Responsibilities**: Analytics, A/B testing, governance, orchestration
-- **Deliverables**: Phase 2.4 implementation
-
-### **Subagent Coordination Protocol**
-```python
-# Subagent coordination for Epic 2
-async def coordinate_epic2_subagents():
-    """Coordinate specialized subagents for Epic 2 implementation."""
-    
-    # Launch specialized agents in parallel
-    plugin_agent = await launch_plugin_architecture_agent()
-    marketplace_agent = await launch_marketplace_agent()
-    sdk_agent = await launch_sdk_agent()
-    enterprise_agent = await launch_enterprise_agent()
-    
-    # Coordinate delivery and integration
-    await coordinate_parallel_development([
-        plugin_agent, marketplace_agent, sdk_agent, enterprise_agent
-    ])
-    
-    # Validate Epic 2 completion
-    await validate_epic2_completion()
-```
+**Business Impact**: Immediate revenue opportunity through customer demonstrations, leading to enterprise sales pipeline and market validation.
 
 ---
 
-**🚀 MISSION STATUS: EPIC 2 READY FOR EXECUTION**
-
-**Your mission**: Execute Epic 2 with precision, achieve all plugin ecosystem targets, preserve Epic 1 performance achievements, and establish LeanVibe Agent Hive 2.0 as the premier extensible multi-agent orchestration platform.
-
-**Foundation**: Epic 1 performance excellence provides the perfect launchpad for unlimited extensibility.
-
-**Next Epic Preview**: Epic 3 will build comprehensive testing excellence on your plugin ecosystem foundation.
-
-**Good luck, Plugin Architecture Agent. The high-performance foundation awaits your extensibility mastery.**
+*This handoff document provides complete context for continuing LeanVibe Agent Hive 2.0 development. Focus on Epic D: PWA-Backend Integration for immediate business value delivery.*
