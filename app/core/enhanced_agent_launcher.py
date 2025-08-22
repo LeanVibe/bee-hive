@@ -31,7 +31,7 @@ import libtmux
 from redis.asyncio import Redis
 
 from .config import settings
-from .short_id_generator import ShortIdGenerator
+from .short_id_generator import ShortIdGenerator, EntityType
 from .tmux_session_manager import TmuxSessionManager, SessionInfo, SessionStatus
 from .enhanced_redis_streams_manager import EnhancedRedisStreamsManager, ConsumerGroupType
 from ..models.agent import Agent, AgentStatus, AgentType
@@ -201,7 +201,7 @@ class EnhancedAgentLauncher:
         
         # Generate unique identifiers
         agent_id = str(uuid.uuid4())
-        short_agent_id = self.short_id_generator.generate_short_id("AGT")
+        short_agent_id, _ = self.short_id_generator.generate_id(EntityType.AGENT)
         
         if agent_name is None:
             agent_name = f"{config.agent_type.value}-{short_agent_id}"
