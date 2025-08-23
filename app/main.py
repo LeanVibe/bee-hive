@@ -246,6 +246,9 @@ def create_app() -> FastAPI:
     from .api.dashboard_compat import router as dashboard_compat_router
     from .api.project_index import router as project_index_router
     
+    # EPIC 1 PHASE 1.2: Include task compatibility endpoints directly at app level for CLI
+    from .api.v1.tasks_compatibility import router as tasks_compatibility_router
+    
     # NEW: Import consolidated API v2 and compatibility layer
     from .api.v2 import api_router as api_v2_router
 
@@ -363,6 +366,9 @@ def create_app() -> FastAPI:
     app.include_router(dashboard_prometheus_router, tags=["dashboard-prometheus"])
     # Legacy compatibility routes for PWA expecting /dashboard/api/* (no HTML)
     app.include_router(dashboard_compat_router)
+    
+    # EPIC 1 PHASE 1.2: Include task compatibility endpoints for CLI at root level
+    app.include_router(tasks_compatibility_router, tags=["cli-compatibility"])
     
     # Phase 2: PWA-Driven Backend - Essential endpoints for Mobile PWA
     from .api.pwa_backend import router as pwa_backend_router, agents_router, tasks_router
