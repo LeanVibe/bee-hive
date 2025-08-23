@@ -275,7 +275,6 @@ async def get_system_status(
 ) -> Dict[str, Any]:
     """Get system status from SimpleOrchestrator."""
     try:
-        
         # Get system status
         status_data = await orchestrator.get_system_status()
         
