@@ -21,6 +21,9 @@ from .v1.github_integration import router as github_router
 from .v1.websocket import router as websocket_router
 from .project_index import router as project_index_router
 
+# EPIC 1 PHASE 1.1: Add missing agent API endpoints (simplified version for CLI integration)
+from .v1.agents_simple import router as agents_router
+
 # Temporarily disabled to avoid model conflicts
 # from .coordination_endpoints import router as coordination_router
 
@@ -34,6 +37,10 @@ router.include_router(websocket_router, prefix="/ws")
 router.include_router(github_router, prefix="/api/v1")
 router.include_router(coordination_monitoring_router, prefix="/api/v1")
 router.include_router(project_index_router)  # Project Index API
+
+# EPIC 1 PHASE 1.1: Include agent API endpoints for CLI integration
+router.include_router(agents_router, prefix="/agents", tags=["agents"])
+
 # router.include_router(coordination_router)  # Temporarily disabled
 
 
