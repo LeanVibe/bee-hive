@@ -9,7 +9,7 @@ import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 import structlog
 
@@ -37,11 +37,17 @@ class AgentListResponse(BaseModel):
     total: int
 
 
-def get_simple_orchestrator():
-    """Get SimpleOrchestrator instance."""
+async def get_simple_orchestrator():
+    """Get SimpleOrchestrator instance, ensuring it's initialized."""
     try:
-        from ...core.simple_orchestrator import create_simple_orchestrator
-        return create_simple_orchestrator()
+        from ...core.simple_orchestrator import get_simple_orchestrator as get_singleton
+        orchestrator = get_singleton()
+        
+        # Ensure the orchestrator is initialized
+        if not hasattr(orchestrator, '_initialized') or not orchestrator._initialized:
+            await orchestrator.initialize()
+            
+        return orchestrator
     except Exception as e:
         logger.error("Failed to get SimpleOrchestrator", error=str(e))
         raise HTTPException(
@@ -51,12 +57,13 @@ def get_simple_orchestrator():
 
 
 @router.post("/", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
-async def create_agent(request: AgentCreateRequest) -> AgentResponse:
+async def create_agent(
+    request: AgentCreateRequest,
+    orchestrator = Depends(get_simple_orchestrator)
+) -> AgentResponse:
     """Create a new agent via SimpleOrchestrator."""
     try:
         from ...core.simple_orchestrator import AgentRole, AgentLauncherType
-        
-        orchestrator = get_simple_orchestrator()
         
         # Map request type to AgentRole
         role_mapping = {
@@ -105,10 +112,11 @@ async def create_agent(request: AgentCreateRequest) -> AgentResponse:
 
 
 @router.get("/", response_model=AgentListResponse)
-async def list_agents() -> AgentListResponse:
+async def list_agents(
+    orchestrator = Depends(get_simple_orchestrator)
+) -> AgentListResponse:
     """List all agents from SimpleOrchestrator."""
     try:
-        orchestrator = get_simple_orchestrator()
         
         # Get agents from SimpleOrchestrator
         agents_data = await orchestrator.list_agent_sessions()
@@ -144,10 +152,12 @@ async def list_agents() -> AgentListResponse:
 
 
 @router.get("/{agent_id}", response_model=AgentResponse)
-async def get_agent(agent_id: str) -> AgentResponse:
+async def get_agent(
+    agent_id: str,
+    orchestrator = Depends(get_simple_orchestrator)
+) -> AgentResponse:
     """Get a specific agent by ID."""
     try:
-        orchestrator = get_simple_orchestrator()
         
         # Get agent from SimpleOrchestrator
         agent_data = await orchestrator.get_agent_session_info(agent_id)
@@ -182,10 +192,13 @@ async def get_agent(agent_id: str) -> AgentResponse:
 
 
 @router.delete("/{agent_id}", status_code=status.HTTP_200_OK)
-async def shutdown_agent(agent_id: str, graceful: bool = True) -> Dict[str, Any]:
+async def shutdown_agent(
+    agent_id: str,
+    graceful: bool = True,
+    orchestrator = Depends(get_simple_orchestrator)
+) -> Dict[str, Any]:
     """Shutdown an agent via SimpleOrchestrator."""
     try:
-        orchestrator = get_simple_orchestrator()
         
         # Shutdown agent
         success = await orchestrator.shutdown_agent(agent_id, graceful=graceful)
@@ -216,10 +229,12 @@ async def shutdown_agent(agent_id: str, graceful: bool = True) -> Dict[str, Any]
 
 
 @router.get("/{agent_id}/status")
-async def get_agent_status(agent_id: str) -> Dict[str, Any]:
+async def get_agent_status(
+    agent_id: str,
+    orchestrator = Depends(get_simple_orchestrator)
+) -> Dict[str, Any]:
     """Get agent status from SimpleOrchestrator."""
     try:
-        orchestrator = get_simple_orchestrator()
         
         # Get agent status
         agent_data = await orchestrator.get_agent_session_info(agent_id)
@@ -255,10 +270,11 @@ async def get_agent_status(agent_id: str) -> Dict[str, Any]:
 
 # System status endpoint
 @router.get("/system/status")
-async def get_system_status() -> Dict[str, Any]:
+async def get_system_status(
+    orchestrator = Depends(get_simple_orchestrator)
+) -> Dict[str, Any]:
     """Get system status from SimpleOrchestrator."""
     try:
-        orchestrator = get_simple_orchestrator()
         
         # Get system status
         status_data = await orchestrator.get_system_status()
