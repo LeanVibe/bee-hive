@@ -106,6 +106,13 @@ class TestComprehensiveAPIValidation:
         """Test /health endpoint provides comprehensive system status."""
         response = client.get("/health")
         
+        # Debug: Print response details if not successful
+        if response.status_code != 200:
+            logger.error("Health endpoint failed", 
+                        status_code=response.status_code,
+                        response_text=response.text,
+                        response_headers=dict(response.headers))
+        
         assert response.status_code == 200
         data = response.json()
         
