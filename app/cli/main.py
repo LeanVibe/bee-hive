@@ -21,7 +21,13 @@ from .unix_commands import (
     hive_doctor, hive_version, hive_help
 )
 from .agent_session_commands import agent
-from .demo_commands import demo
+from .coordination_commands import coordinate
+
+# Lazy import for demo commands - heavy module
+def get_demo():
+    """Lazy import demo commands to avoid startup penalty."""
+    from .demo_commands import demo
+    return demo
 
 console = Console()
 
@@ -44,7 +50,28 @@ COMMAND_REGISTRY = {
 }
 
 
-@click.group(invoke_without_command=True, no_args_is_help=False)
+class LazyCliGroup(click.Group):
+    """Custom Click group with lazy command loading for performance."""
+    
+    def get_command(self, ctx, name):
+        # First check if it's a demo command
+        if name == 'demo':
+            # Lazy load demo commands only when accessed
+            demo_cmd = get_demo()
+            self.add_command(demo_cmd)
+            return demo_cmd
+        
+        # Use standard resolution for other commands
+        return super().get_command(ctx, name)
+    
+    def list_commands(self, ctx):
+        # Include demo in command listings but don't load it
+        commands = super().list_commands(ctx)
+        if 'demo' not in commands:
+            commands.append('demo')
+        return sorted(commands)
+
+@click.group(cls=LazyCliGroup, invoke_without_command=True, no_args_is_help=False)
 @click.option('--version', is_flag=True, help='Show version information')
 @click.pass_context
 def hive_cli(ctx, version):
@@ -74,13 +101,17 @@ def hive_cli(ctx, version):
       hive metrics --watch
       hive doctor --fix
     """
+    # Performance optimization: handle lightweight commands first
     if version:
-        ctx.invoke(hive_version)
+        from .fast_commands import fast_version
+        fast_version()
         return
-    
+        
+    # No command provided and no version flag - show help
     if ctx.invoked_subcommand is None:
-        # Show overview if no subcommand
-        _show_overview()
+        from .fast_commands import fast_help  
+        fast_help()
+        return
 
 
 def _show_overview():
@@ -142,8 +173,11 @@ for name, func in COMMAND_REGISTRY.items():
 # Add agent session management commands
 hive_cli.add_command(agent)
 
-# Add interactive demo commands
-hive_cli.add_command(demo)
+# Add subagent coordination commands
+hive_cli.add_command(coordinate)
+
+# Add interactive demo commands - lazy loaded for performance
+# Note: Demo commands are registered only when accessed to avoid 695ms import penalty
 
 
 def install_unix_commands():

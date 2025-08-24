@@ -15,9 +15,10 @@ from pathlib import Path
 import structlog
 from rich.console import Console
 
-from ..core.simple_orchestrator import SimpleOrchestrator, AgentRole
-from ..core.configuration_service import ConfigurationService
-from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, Priority
+# Lazy imports - only import when needed for performance optimization
+# from ..core.simple_orchestrator import SimpleOrchestrator, AgentRole
+# from ..core.configuration_service import ConfigurationService  
+# from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, Priority
 
 logger = structlog.get_logger(__name__)
 
@@ -31,8 +32,8 @@ class DirectOrchestratorBridge:
     """
     
     def __init__(self):
-        self.orchestrator: Optional[SimpleOrchestrator] = None
-        self.config_service: Optional[ConfigurationService] = None
+        self.orchestrator: Optional[Any] = None  # SimpleOrchestrator - lazy loaded
+        self.config_service: Optional[Any] = None  # ConfigurationService - lazy loaded
         self._initialized = False
         self.console = Console()
         self.logger = logger.bind(component="DirectOrchestratorBridge")
@@ -48,8 +49,20 @@ class DirectOrchestratorBridge:
             return True
         
         try:
-            # Initialize configuration service
-            self.config_service = ConfigurationService()
+            # Lazy imports for performance optimization - only import when actually needed
+            from ..core.simple_orchestrator import SimpleOrchestrator, AgentRole
+            from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, Priority
+            from .performance_cache import get_cached_config
+            
+            # Store classes for later use
+            self.SimpleOrchestrator = SimpleOrchestrator
+            self.AgentRole = AgentRole
+            self.AgentLauncherType = AgentLauncherType
+            self.AgentLaunchConfig = AgentLaunchConfig
+            self.Priority = Priority
+            
+            # Use cached configuration service for performance
+            self.config_service = get_cached_config()
             
             # Initialize SimpleOrchestrator
             self.orchestrator = SimpleOrchestrator(self.config_service)

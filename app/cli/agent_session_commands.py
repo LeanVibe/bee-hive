@@ -32,18 +32,26 @@ from rich.text import Text
 from rich import print as rprint
 
 from .unix_commands import HiveContext, ctx
-try:
-    from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, Priority
-    from ..core.short_id_generator import ShortIdGenerator
-    from .direct_orchestrator_bridge import get_bridge
-    DIRECT_ORCHESTRATOR_AVAILABLE = True
-except ImportError:
-    DIRECT_ORCHESTRATOR_AVAILABLE = False
-    # Create dummy types for CLI definition
-    from enum import Enum
-    class AgentLauncherType(Enum):
-        CLAUDE_CODE = "claude-code"
-        TMUX_SESSION = "tmux-session"
+
+# Lazy import flag - avoid heavy imports during CLI startup
+DIRECT_ORCHESTRATOR_AVAILABLE = True
+
+def get_bridge():
+    """Lazy import and return orchestrator bridge."""
+    try:
+        from .direct_orchestrator_bridge import get_bridge as _get_bridge
+        return _get_bridge()
+    except ImportError:
+        return None
+
+# Move heavy imports to functions that actually need them
+def get_agent_types():
+    """Lazy import agent launcher types."""
+    try:
+        from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, Priority
+        return AgentLauncherType, AgentLaunchConfig, Priority
+    except ImportError:
+        return None, None, None
 
 console = Console()
 
@@ -56,8 +64,8 @@ def agent():
 
 @agent.command()
 @click.option('--type', '-t', 
-              type=click.Choice([t.value for t in AgentLauncherType]), 
-              default=AgentLauncherType.CLAUDE_CODE.value,
+              type=click.Choice(['claude-code', 'tmux-session']), 
+              default='claude-code',
               help='Type of agent to spawn')
 @click.option('--task', help='Task ID to assign to the agent')
 @click.option('--workspace', help='Workspace name for the agent')
