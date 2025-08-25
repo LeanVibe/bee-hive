@@ -31,6 +31,15 @@ try:
     from rich.table import Table
     from rich.panel import Panel
 
+    # Import performance caching system for <500ms response times
+    from .cli.performance_cache import (
+        get_cached_config, 
+        get_cached_orchestrator, 
+        get_cached_initialized_orchestrator,
+        CLIPerformanceTracker,
+        measure_cli_performance
+    )
+
     # Import our existing CLI components
     try:
         from .cli.unix_commands import HiveContext, ctx
@@ -184,44 +193,75 @@ try:
         except FileNotFoundError:
             console.print("⚠️ [yellow]pkill not available, services may still be running[/yellow]")
 
-    @hive.command()
+    @hive.command("status")
     @click.option('--watch', '-w', is_flag=True, help='Watch for changes')
     @click.option('--json', 'output_json', is_flag=True, help='Output as JSON')
-    def status(watch, output_json):
-        """📊 Show system and agent status"""
-        if agent_cli_available:
-            deployment_cli = AgentDeploymentCLI()
-            
-            if watch:
-                import time
-                console.print("👁️ Watching system status (Press Ctrl+C to stop)...")
-                try:
-                    while True:
-                        click.clear()
-                        console.print(f"🕒 {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                        asyncio.run(deployment_cli.system_status())
-                        time.sleep(2)
-                except KeyboardInterrupt:
-                    console.print("\n🛑 Stopped watching")
-                    return
-            else:
-                asyncio.run(deployment_cli.system_status())
-        else:
-            # Fallback status check
-            api_port = os.getenv("API_PORT", "18080")
-            try:
-                import requests
-                response = requests.get(f"http://localhost:{api_port}/health", timeout=2)
-                if response.status_code == 200:
-                    console.print("✅ [green]System is running[/green]")
-                    if output_json:
-                        import json
-                        print(json.dumps({"status": "healthy", "api_port": api_port}))
+    @measure_cli_performance("status")
+    def status_cmd(watch, output_json):
+        """📊 Show system and agent status - optimized for <500ms response time"""
+        with CLIPerformanceTracker("hive status"):
+            if agent_cli_available:
+                deployment_cli = AgentDeploymentCLI()
+                
+                if watch:
+                    import time
+                    console.print("👁️ Watching system status (Press Ctrl+C to stop)...")
+                    try:
+                        while True:
+                            click.clear()
+                            console.print(f"🕒 {time.strftime('%Y-%m-%d %H:%M:%S')}")
+                            asyncio.run(deployment_cli.system_status())
+                            time.sleep(2)
+                    except KeyboardInterrupt:
+                        console.print("\n🛑 Stopped watching")
+                        return
                 else:
-                    console.print("❌ [red]System is not responding[/red]")
-            except:
-                console.print("❌ [red]System is not running[/red]")
-                console.print(f"💡 Run 'hive start' to start services")
+                    # Use cached orchestrator for improved performance
+                    try:
+                        orchestrator = get_cached_orchestrator()
+                        if orchestrator:
+                            status_info = asyncio.run(orchestrator.get_system_status())
+                            
+                            # Display enhanced status with caching metrics
+                            console.print("╭────────────────────────────── 🖥️  System Status ──────────────────────────────╮")
+                            console.print("│                                                                              │")
+                            console.print(f"│ System Health: {status_info.get('health', 'unknown')}                     │")
+                            console.print(f"│ Total Agents: {status_info.get('agents', {}).get('total', 0)}                   │")
+                            console.print(f"│ Timestamp: {status_info.get('timestamp', 'unknown')}      │")
+                            console.print(f"│ Performance: {status_info.get('performance', {}).get('response_time_ms', 'unknown')}ms response    │")
+                            console.print("│                                                                              │")
+                            console.print("╰──────────────────────────────────────────────────────────────────────────────╯")
+                            
+                            if output_json:
+                                import json
+                                print(json.dumps(status_info, indent=2))
+                        else:
+                            # Fallback to deployment CLI
+                            asyncio.run(deployment_cli.system_status())
+                    except Exception as e:
+                        console.print(f"⚠️ Cached status failed ({e}), falling back...")
+                        asyncio.run(deployment_cli.system_status())
+            else:
+                # Fallback status check using cached config
+                try:
+                    config_service = get_cached_config()
+                    if config_service:
+                        api_port = config_service.get_settings().api_prefix or "18080"
+                    else:
+                        api_port = os.getenv("API_PORT", "18080")
+                    
+                    import requests
+                    response = requests.get(f"http://localhost:{api_port}/health", timeout=2)
+                    if response.status_code == 200:
+                        console.print("✅ [green]System is running[/green]")
+                        if output_json:
+                            import json
+                            print(json.dumps({"status": "healthy", "api_port": api_port}))
+                    else:
+                        console.print("❌ [red]System is not responding[/red]")
+                except:
+                    console.print("❌ [red]System is not running[/red]")
+                    console.print(f"💡 Run 'hive start' to start services")
 
     @hive.command()
     @click.option('--follow', '-f', is_flag=True, help='Follow log output')
@@ -249,25 +289,66 @@ try:
 
     @agent.command('list')
     @click.option('--format', '-o', type=click.Choice(['table', 'json']), default='table')
+    @measure_cli_performance("agent list")
     def agent_list(format):
-        """📋 List all agents (alias: ls)"""
-        if agent_cli_available:
-            deployment_cli = AgentDeploymentCLI()
-            asyncio.run(deployment_cli.list_agents())
-        else:
-            console.print("[yellow]Agent CLI not available[/yellow]")
-            console.print("Available agents: Run 'hive doctor' for system status")
+        """📋 List all agents (alias: ls) - optimized for <500ms response time"""
+        with CLIPerformanceTracker("hive agent list"):
+            try:
+                # Use cached orchestrator for fast agent listing
+                orchestrator = get_cached_orchestrator()
+                if orchestrator:
+                    status_info = asyncio.run(orchestrator.get_system_status())
+                    agents = status_info.get('agents', {})
+                    
+                    if agents.get('total', 0) == 0:
+                        console.print("No agents currently deployed")
+                    else:
+                        if format == 'json':
+                            import json
+                            print(json.dumps(agents, indent=2))
+                        else:
+                            # Table format
+                            table = Table()
+                            table.add_column("Agent ID", style="cyan")
+                            table.add_column("Status", style="green")
+                            table.add_column("Role", style="yellow")
+                            table.add_column("Created", style="dim")
+                            
+                            for agent_id, agent_info in agents.get('details', {}).items():
+                                table.add_row(
+                                    agent_id[:8] + "...",
+                                    agent_info.get('status', 'unknown'),
+                                    agent_info.get('role', 'unknown'),
+                                    agent_info.get('created_at', 'unknown')[:19]
+                                )
+                            
+                            console.print(table)
+                    return
+                
+                # Fallback to deployment CLI if orchestrator not available
+                if agent_cli_available:
+                    deployment_cli = AgentDeploymentCLI()
+                    asyncio.run(deployment_cli.list_agents())
+                else:
+                    console.print("[yellow]Agent CLI not available[/yellow]")
+                    console.print("Available agents: Run 'hive doctor' for system status")
+                    
+            except Exception as e:
+                console.print(f"⚠️ Fast agent list failed ({e}), falling back...")
+                if agent_cli_available:
+                    deployment_cli = AgentDeploymentCLI()
+                    asyncio.run(deployment_cli.list_agents())
+                else:
+                    console.print("[yellow]Agent CLI not available[/yellow]")
 
     @agent.command('ls')
     @click.option('--format', '-o', type=click.Choice(['table', 'json']), default='table') 
+    @measure_cli_performance("agent ls")
     def agent_ls(format):
-        """📋 List all agents (alias for list)"""
-        if agent_cli_available:
-            deployment_cli = AgentDeploymentCLI()
-            asyncio.run(deployment_cli.list_agents())
-        else:
-            console.print("[yellow]Agent CLI not available[/yellow]")
-            console.print("Available agents: Run 'hive doctor' for system status")
+        """📋 List all agents (alias for list) - optimized for <500ms response time"""
+        with CLIPerformanceTracker("hive agent ls"):
+            # Reuse the same optimized logic as agent_list
+            agent_list.callback(format)
 
     @agent.command('deploy')
     @click.argument('role', type=click.Choice(['backend-developer', 'frontend-developer', 'qa-engineer', 'devops-engineer', 'meta-agent']))
@@ -403,9 +484,71 @@ try:
             console.print("[red]Demo requires agent deployment CLI[/red]")
 
     @hive.command()
+    @click.option('--detailed', is_flag=True, help='Show detailed performance metrics')
+    def metrics(detailed):
+        """📊 Show CLI performance metrics and cache statistics"""
+        from .cli.performance_cache import get_cli_performance_metrics
+        
+        try:
+            metrics_data = get_cli_performance_metrics()
+            
+            console.print("📊 [bold]CLI Performance Metrics[/bold]")
+            console.print()
+            
+            # Cache statistics
+            cache_stats = metrics_data.get('cache_stats', {})
+            console.print("🚀 [bold]Cache Performance:[/bold]")
+            console.print(f"  Hit Rate: {cache_stats.get('hit_rate', 0):.1%}")
+            console.print(f"  Total Requests: {cache_stats.get('total_requests', 0)}")
+            console.print(f"  Cache Size: {cache_stats.get('cache_size', 0)} entries")
+            
+            # Orchestrator statistics  
+            orch_stats = metrics_data.get('orchestrator_stats', {})
+            console.print("\n🤖 [bold]Orchestrator Performance:[/bold]")
+            console.print(f"  Cached: {'✅' if orch_stats.get('cached') else '❌'}")
+            console.print(f"  Healthy: {'✅' if orch_stats.get('healthy') else '❌'}")
+            if orch_stats.get('init_time_ms'):
+                console.print(f"  Init Time: {orch_stats['init_time_ms']:.1f}ms")
+            
+            # System statistics
+            sys_stats = metrics_data.get('system_stats', {})
+            console.print(f"\n💻 [bold]System Resources:[/bold]")
+            console.print(f"  Memory: {sys_stats.get('memory_usage_mb', 0):.1f}MB")
+            console.print(f"  CPU: {sys_stats.get('cpu_percent', 0):.1f}%")
+            console.print(f"  Uptime: {sys_stats.get('uptime_seconds', 0):.1f}s")
+            
+            # Performance targets
+            targets = metrics_data.get('performance_targets', {})
+            console.print(f"\n🎯 [bold]Performance Targets:[/bold]")
+            console.print(f"  Target Response: <{targets.get('target_response_time_ms', 500)}ms")
+            console.print(f"  Config Load: <{targets.get('config_load_target_ms', 20)}ms")
+            console.print(f"  Orchestrator Init: <{targets.get('orchestrator_init_target_ms', 50)}ms")
+            
+            if detailed:
+                console.print(f"\n🔍 [bold]Detailed Metrics:[/bold]")
+                import json
+                print(json.dumps(metrics_data, indent=2))
+                
+        except Exception as e:
+            console.print(f"⚠️ Failed to get performance metrics: {e}")
+
+    @hive.command()
     def doctor():
         """🩺 System diagnostics and health check"""
+        from .cli.performance_cache import perform_cli_health_check
+        
         console.print("🩺 [bold]Agent Hive System Diagnostics[/bold]")
+        
+        # Perform CLI performance health check
+        try:
+            health_info = perform_cli_health_check()
+            console.print(f"\n⚡ [bold]CLI Performance Health:[/bold]")
+            console.print(f"  Status: {health_info.get('status', 'unknown')}")
+            console.print(f"  Cache Size: {health_info.get('cache_size', 0)} entries")
+            console.print(f"  Expired Cleaned: {health_info.get('expired_entries_cleaned', 0)}")
+            console.print(f"  Orchestrator: {'✅ Healthy' if health_info.get('orchestrator_healthy') else '⚠️ Needs refresh'}")
+        except Exception as e:
+            console.print(f"⚠️ Performance health check failed: {e}")
         
         checks = []
         

@@ -48,10 +48,10 @@ def get_bridge():
 def get_agent_types():
     """Lazy import agent launcher types."""
     try:
-        from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig, Priority
-        return AgentLauncherType, AgentLaunchConfig, Priority
+        from ..core.enhanced_agent_launcher import AgentLauncherType, AgentLaunchConfig
+        return AgentLauncherType, AgentLaunchConfig
     except ImportError:
-        return None, None, None
+        return None, None
 
 console = Console()
 

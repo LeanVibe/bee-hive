@@ -1,0 +1,75 @@
+{
+  "overall_avg_ms": 1259.2852751413982,
+  "success_rate": 0.0,
+  "commands_meeting_target": 0,
+  "total_commands": 5,
+  "performance_improvement_percent": -67.90470335218643,
+  "meets_target": false,
+  "individual_results": {
+    "version": {
+      "command": "version",
+      "iterations": 3,
+      "successful_runs": 3,
+      "success_rate": 1.0,
+      "avg_time_ms": 717.1133359273275,
+      "median_time_ms": 719.3899154663086,
+      "min_time_ms": 689.8889541625977,
+      "max_time_ms": 742.0611381530762,
+      "performance_level": "POOR",
+      "meets_500ms_target": false,
+      "errors": 0
+    },
+    "status": {
+      "command": "status",
+      "iterations": 3,
+      "successful_runs": 3,
+      "success_rate": 1.0,
+      "avg_time_ms": 726.9725799560547,
+      "median_time_ms": 733.1619262695312,
+      "min_time_ms": 705.3940296173096,
+      "max_time_ms": 742.3617839813232,
+      "performance_level": "POOR",
+      "meets_500ms_target": false,
+      "errors": 0
+    },
+    "agent list": {
+      "command": "agent list",
+      "iterations": 3,
+      "successful_runs": 3,
+      "success_rate": 1.0,
+      "avg_time_ms": 734.6459229787191,
+      "median_time_ms": 734.2007160186768,
+      "min_time_ms": 712.5039100646973,
+      "max_time_ms": 757.2331428527832,
+      "performance_level": "POOR",
+      "meets_500ms_target": false,
+      "errors": 0
+    },
+    "metrics": {
+      "command": "metrics",
+      "iterations": 3,
+      "successful_runs": 3,
+      "success_rate": 1.0,
+      "avg_time_ms": 739.773670832316,
+      "median_time_ms": 726.1500358581543,
+      "min_time_ms": 709.846019744873,
+      "max_time_ms": 783.3249568939209,
+      "performance_level": "POOR",
+      "meets_500ms_target": false,
+      "errors": 0
+    },
+    "doctor": {
+      "command": "doctor",
+      "iterations": 3,
+      "successful_runs": 3,
+      "success_rate": 1.0,
+      "avg_time_ms": 3377.9208660125732,
+      "median_time_ms": 3390.878915786743,
+      "min_time_ms": 3342.6318168640137,
+      "max_time_ms": 3400.251865386963,
+      "performance_level": "UNACCEPTABLE",
+      "meets_500ms_target": false,
+      "errors": 0
+    }
+  }
+}

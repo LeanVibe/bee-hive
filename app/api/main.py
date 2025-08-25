@@ -196,13 +196,18 @@ if __name__ == "__main__":
         async def execute(self):
             """Execute the main script logic."""
             import uvicorn
+            from uvicorn import Config, Server
 
             # Use port from environment or default to 8100 (non-standard to avoid conflicts)
             port = int(os.getenv("PORT", 8100))
             host = os.getenv("HOST", "0.0.0.0")
 
             logger.info(f"Starting LeanVibe Agent Hive 2.0 API server on {host}:{port}")
-            uvicorn.run(app, host=host, port=port, reload=True)
+            
+            # Create server config and run within existing event loop
+            config = Config(app=app, host=host, port=port, log_level="info")
+            server = Server(config)
+            await server.serve()
             
             return {"status": "completed"}
     
