@@ -23,6 +23,8 @@ import threading
 from anthropic import AsyncAnthropic
 
 from .config import settings
+from .database import get_session, init_database, DatabaseHealthCheck
+from .redis import get_message_broker, init_redis, RedisHealthCheck
 from .storage_manager import StorageManager, get_session_cache, SessionCache, CacheManager, DatabaseManager
 from .communication_manager import CommunicationManager, Message, MessageType, MessagePriority
 from .workflow_manager import WorkflowManager, WorkflowDefinition
@@ -914,7 +916,7 @@ class AgentOrchestrator:
             }
         )
         
-        agent.status = AgentStatus.SLEEPING
+        agent.status = AgentStatus.sleeping
         
         logger.info(f"😴 Initiated sleep cycle for agent {agent_id}")
         return True
@@ -3891,3 +3893,17 @@ def get_orchestrator() -> AgentOrchestrator:
     if _orchestrator_instance is None:
         _orchestrator_instance = AgentOrchestrator()
     return _orchestrator_instance
+
+
+# Export commonly used functions to fix import issues
+__all__ = [
+    'AgentOrchestrator',
+    'AgentInstance', 
+    'AgentRole',
+    'AgentCapability',
+    'get_orchestrator',
+    'get_session',  # Re-export database session
+    'get_message_broker',  # Re-export Redis message broker
+    'init_database',  # Re-export database initialization
+    'init_redis',  # Re-export Redis initialization
+]

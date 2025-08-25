@@ -6,6 +6,7 @@ that follows kubectl/docker patterns for enterprise CLI tools.
 """
 
 import sys
+import asyncio
 import subprocess
 from pathlib import Path
 from typing import List, Optional
@@ -71,10 +72,22 @@ class LazyCliGroup(click.Group):
             commands.append('demo')
         return sorted(commands)
 
+async def ensure_system_ready():
+    """Ensure system components are initialized for CLI operations."""
+    try:
+        from ..core.initialization import ensure_initialized
+        await ensure_initialized(['redis', 'database'])
+        return True
+    except Exception as e:
+        console.print(f"[yellow]Warning: System initialization issues: {e}[/yellow]")
+        return False
+
+
 @click.group(cls=LazyCliGroup, invoke_without_command=True, no_args_is_help=False)
 @click.option('--version', is_flag=True, help='Show version information')
+@click.option('--skip-init', is_flag=True, help='Skip system initialization check')
 @click.pass_context
-def hive_cli(ctx, version):
+def hive_cli(ctx, version, skip_init):
     """
     LeanVibe Agent Hive - Unix Philosophy CLI Toolkit
     
@@ -106,6 +119,20 @@ def hive_cli(ctx, version):
         from .fast_commands import fast_version
         fast_version()
         return
+    
+    # Initialize system components unless explicitly skipped
+    if not skip_init and ctx.invoked_subcommand and ctx.invoked_subcommand not in ['version', 'help']:
+        # Run initialization asynchronously
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            system_ready = loop.run_until_complete(ensure_system_ready())
+            if not system_ready:
+                console.print("[yellow]⚠️  Some system components may not be available[/yellow]")
+        except Exception as e:
+            console.print(f"[red]❌ System initialization failed: {e}[/red]")
+        finally:
+            loop.close()
         
     # No command provided and no version flag - show help
     if ctx.invoked_subcommand is None:

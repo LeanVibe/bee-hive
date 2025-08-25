@@ -9,22 +9,72 @@ import os
 import logging
 from datetime import datetime
 from typing import Dict, List, Any
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import core initialization modules
+try:
+    from ..core.redis import init_redis, close_redis
+    from ..core.database import init_database, close_database
+except ImportError:
+    # Fallback imports for when app.core is not in PYTHONPATH
+    from app.core.redis import init_redis, close_redis
+    from app.core.database import init_database, close_database
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create FastAPI application
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle application startup and shutdown."""
+    # Startup
+    logger.info("Starting LeanVibe Agent Hive 2.0 API Server...")
+    try:
+        await init_redis()
+        logger.info("✅ Redis initialized successfully")
+    except Exception as e:
+        logger.warning(f"⚠️  Redis initialization failed: {e}")
+    
+    try:
+        await init_database()
+        logger.info("✅ Database initialized successfully")
+    except Exception as e:
+        logger.warning(f"⚠️  Database initialization failed: {e}")
+    
+    logger.info("🚀 API Server ready to accept connections")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down LeanVibe Agent Hive 2.0 API Server...")
+    try:
+        await close_redis()
+        logger.info("✅ Redis connections closed")
+    except Exception as e:
+        logger.warning(f"⚠️  Redis shutdown error: {e}")
+    
+    try:
+        await close_database()
+        logger.info("✅ Database connections closed")
+    except Exception as e:
+        logger.warning(f"⚠️  Database shutdown error: {e}")
+    
+    logger.info("👋 API Server shutdown complete")
+
+
+# Create FastAPI application with lifespan management
 app = FastAPI(
     title="LeanVibe Agent Hive 2.0",
     description="Multi-Agent Orchestration System",
     version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Add CORS middleware for development
@@ -35,6 +85,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routes
+try:
+    from .routes import router as api_router
+    app.include_router(api_router)
+    logger.info("✅ API routes loaded successfully")
+except Exception as e:
+    logger.warning(f"⚠️  Some API routes may not be available: {e}")
 
 @app.get("/")
 async def root():
@@ -198,8 +256,13 @@ if __name__ == "__main__":
             import uvicorn
             from uvicorn import Config, Server
 
-            # Use port from environment or default to 8100 (non-standard to avoid conflicts)
-            port = int(os.getenv("PORT", 8100))
+            # Use port from environment or from settings to ensure consistency
+            try:
+                from ..core.config import settings
+                port = int(os.getenv("PORT", settings.API_PORT))
+            except Exception:
+                # Fallback to default if config not available
+                port = int(os.getenv("PORT", 18080))
             host = os.getenv("HOST", "0.0.0.0")
 
             logger.info(f"Starting LeanVibe Agent Hive 2.0 API server on {host}:{port}")

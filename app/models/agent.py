@@ -28,6 +28,7 @@ class AgentStatus(Enum):
     error = "error"
     maintenance = "maintenance"
     shutting_down = "shutting_down"
+    sleeping = "sleeping"  # Added missing sleeping status
     
     # Uppercase aliases for backward compatibility with existing code
     INACTIVE = "inactive"
@@ -36,6 +37,7 @@ class AgentStatus(Enum):
     ERROR = "error"
     MAINTENANCE = "maintenance"
     SHUTTING_DOWN = "shutting_down"
+    SLEEPING = "sleeping"  # Added missing sleeping status
 
 
 class AgentType(Enum):
