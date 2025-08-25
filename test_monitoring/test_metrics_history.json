@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2025-08-25T07:12:59.332705",
+    "total_tests": 50,
+    "passed": 0,
+    "failed": 50,
+    "success_rate": 0.0,
+    "execution_time": 0.06913471221923828,
+    "performance_score": 0.0,
+    "quality_gate_passed": false
+  }
+]

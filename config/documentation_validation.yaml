@@ -1,0 +1,73 @@
+# Documentation Validation Configuration
+# Automated validation system configuration for LeanVibe Agent Hive 2.0
+
+# Validation frequency and thresholds
+validation_frequency_minutes: 30
+accuracy_threshold: 95.0
+max_drift_tolerance_hours: 4
+
+# Critical patterns to validate
+critical_patterns:
+  ports:
+    postgresql: 5432
+    redis: 6379
+    api_server: 18080
+    
+  system_state:
+    functionality_percentage: '(\d{1,2})% functional'
+    test_count: '(\d+)\+ test[s]? files?'
+    
+  infrastructure:
+    - "PostgreSQL"
+    - "Redis"
+    - "FastAPI"
+    - "tmux sessions"
+
+# Auto-correction settings
+auto_correction:
+  enabled: true
+  require_approval: false
+  backup_before_correction: true
+  
+# Document categories for consolidation
+document_categories:
+  strategic:
+    - "PLAN"
+    - "PROMPT"
+    - "ROADMAP"
+    - "STRATEGY"
+  technical:
+    - "API"
+    - "ARCHITECTURE"
+    - "TECHNICAL"
+    - "IMPLEMENTATION"
+  operational:
+    - "DEPLOYMENT"
+    - "OPERATION"
+    - "RUNBOOK"
+    - "GUIDE"
+  testing:
+    - "TEST"
+    - "VALIDATION"
+    - "BENCHMARK"
+
+# Living documentation patterns
+living_documentation:
+  enabled: true
+  sync_with_code_changes: true
+  auto_update_metrics: true
+  generate_accuracy_reports: true
+  
+# Integration settings
+integration:
+  qa_test_guardian: true
+  github_actions: true
+  pre_commit_hooks: true
+  development_workflow: true
+
+# Alert thresholds
+alerts:
+  accuracy_below: 90.0
+  documentation_drift_hours: 6
+  missing_critical_docs: true
+  port_mismatch: true
