@@ -24,14 +24,22 @@ import json
 import random
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, TYPE_CHECKING
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 
 from .base_plugin import OrchestratorPlugin, PluginMetadata, PluginError
-from ..simple_orchestrator import SimpleOrchestrator, AgentRole, AgentInstance
 from ...models.task import TaskStatus, TaskPriority
 from ..logging_service import get_component_logger
+
+# Avoid circular import by using TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..simple_orchestrator import SimpleOrchestrator, AgentRole, AgentInstance
+else:
+    # Runtime imports will be handled dynamically
+    SimpleOrchestrator = Any
+    AgentRole = Any
+    AgentInstance = Any
 
 logger = get_component_logger("demo_orchestrator_plugin")
 

@@ -25,8 +25,15 @@ from pathlib import Path
 from .config import settings
 from .logging_service import get_component_logger
 
-# Epic 2 Phase 2.1: Advanced Plugin Manager integration
-from .advanced_plugin_manager import AdvancedPluginManager, create_advanced_plugin_manager
+# Epic 2 Phase 2.1: Advanced Plugin Manager integration (with fallback)
+try:
+    from .advanced_plugin_manager import AdvancedPluginManager, create_advanced_plugin_manager
+except ImportError:
+    # Fallback if advanced plugin manager has circular import issues
+    AdvancedPluginManager = Any
+    def create_advanced_plugin_manager(orchestrator):
+        logger.warning("Advanced Plugin Manager not available due to import issues")
+        return None
 
 # Essential imports needed at runtime
 from ..models.agent import AgentStatus, AgentType

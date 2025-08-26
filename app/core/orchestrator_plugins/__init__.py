@@ -27,12 +27,13 @@ from datetime import datetime
 # Import new base classes
 from .base_plugin import OrchestratorPlugin as NewOrchestratorPlugin, PluginMetadata as NewPluginMetadata, PluginError
 
-# Import Epic 1 Phase 2.2 plugins
-from .demo_orchestrator_plugin import DemoOrchestratorPlugin, create_demo_orchestrator_plugin
-from .master_orchestrator_plugin import MasterOrchestratorPlugin, create_master_orchestrator_plugin
-from .management_orchestrator_plugin import ManagementOrchestratorPlugin, create_management_orchestrator_plugin  
-from .migration_orchestrator_plugin import MigrationOrchestratorPlugin, create_migration_orchestrator_plugin
-from .unified_orchestrator_plugin import UnifiedOrchestratorPlugin, create_unified_orchestrator_plugin
+# Import Epic 1 Phase 2.2 plugins - Commented out temporarily to fix circular imports
+# These will be loaded dynamically when needed to avoid import-time circular dependencies
+# from .demo_orchestrator_plugin import DemoOrchestratorPlugin, create_demo_orchestrator_plugin
+# from .master_orchestrator_plugin import MasterOrchestratorPlugin, create_master_orchestrator_plugin
+# from .management_orchestrator_plugin import ManagementOrchestratorPlugin, create_management_orchestrator_plugin  
+# from .migration_orchestrator_plugin import MigrationOrchestratorPlugin, create_migration_orchestrator_plugin
+# from .unified_orchestrator_plugin import UnifiedOrchestratorPlugin, create_unified_orchestrator_plugin
 
 
 class PluginType(Enum):

@@ -62,9 +62,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         from .core.error_handling_integration import (
             initialize_error_handling_integration,
         )
-        # Epic 1, Phase 2 Week 3: Migrate to unified production orchestrator
-        # Updated to use SimpleOrchestrator for better reliability and performance
-        from .core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
+        # Epic 5, Phase 1: Use Unified Orchestrator for import resolution
+        from .core.orchestrator import Orchestrator, get_orchestrator
         
         # Initialize core infrastructure
         await init_database()
@@ -122,20 +121,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if _settings.DEBUG:
             await error_config_manager.start_hot_reload()
         
-        # Start orchestrator based on configuration
-        if _settings.USE_SIMPLE_ORCHESTRATOR and _settings.ORCHESTRATOR_TYPE == "simple":
-            orchestrator = create_simple_orchestrator()
-            app.state.orchestrator = orchestrator
-            app.state.orchestrator_type = "SimpleOrchestrator"
-            logger.info("✅ SimpleOrchestrator initialized successfully")
-        else:
-            # Fallback to legacy orchestrator if needed
-            from .core.orchestrator_migration_adapter import AgentOrchestrator
-            orchestrator = AgentOrchestrator()
-            await orchestrator.start()
-            app.state.orchestrator = orchestrator
-            app.state.orchestrator_type = "LegacyOrchestrator"
-            logger.info("✅ LegacyOrchestrator initialized successfully")
+        # Initialize Unified Orchestrator for Epic 5 Phase 1
+        orchestrator = await get_orchestrator()
+        app.state.orchestrator = orchestrator
+        app.state.orchestrator_type = "UnifiedOrchestrator"
+        logger.info("✅ UnifiedOrchestrator initialized successfully")
         
         # Log orchestrator readiness
         orchestrator_type = getattr(app.state, 'orchestrator_type', 'Unknown')
@@ -168,17 +158,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             try:
                 orchestrator = app.state.orchestrator
                 
-                if orchestrator_type == "SimpleOrchestrator":
-                    # SimpleOrchestrator graceful shutdown
-                    status = await orchestrator.get_system_status()
-                    agent_ids = list(status.get("agents", {}).get("details", {}).keys())
-                    for agent_id in agent_ids:
-                        await orchestrator.shutdown_agent(agent_id, graceful=True)
-                    logger.info(f"✅ Gracefully shutdown {len(agent_ids)} agents")
-                else:
-                    # Legacy orchestrator shutdown
+                if orchestrator_type == "UnifiedOrchestrator":
+                    # UnifiedOrchestrator graceful shutdown
                     await orchestrator.shutdown()
-                    logger.info("✅ Legacy orchestrator shutdown complete")
+                    logger.info("✅ UnifiedOrchestrator shutdown complete")
+                else:
+                    # Fallback for any other orchestrator type
+                    if hasattr(orchestrator, 'shutdown'):
+                        await orchestrator.shutdown()
+                    logger.info(f"✅ {orchestrator_type} shutdown complete")
                     
             except Exception as e:
                 logger.warning(f"Warning during {orchestrator_type} shutdown: {e}")
@@ -461,21 +449,22 @@ def create_app() -> FastAPI:
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
         
-        # Check SimpleOrchestrator System
+        # Check UnifiedOrchestrator System
         try:
             # Get orchestrator from app state
             orchestrator = getattr(app.state, 'orchestrator', None)
             if orchestrator:
-                orchestrator_status = await orchestrator.get_system_status()
-                agent_count = orchestrator_status.get("agents", {}).get("total", 0)
-                orchestrator_health = orchestrator_status.get("health", "unknown")
+                orchestrator_status = await orchestrator.health_check()
+                agent_count = orchestrator_status.get("components", {}).get("simple_orchestrator", {}).get("agents_count", 0)
+                orchestrator_health = orchestrator_status.get("status", "unknown")
                 
                 health_status["components"]["orchestrator"] = {
                     "status": "healthy" if orchestrator_health in ["healthy", "no_agents"] else "degraded",
-                    "details": f"SimpleOrchestrator running ({orchestrator_health})",
+                    "details": f"UnifiedOrchestrator running ({orchestrator_health})",
                     "active_agents": agent_count,
-                    "orchestrator_type": "SimpleOrchestrator",
-                    "response_time_ms": orchestrator_status.get("performance", {}).get("response_time_ms", "unknown")
+                    "orchestrator_type": "UnifiedOrchestrator",
+                    "response_time_ms": orchestrator_status.get("performance", {}).get("response_time_ms", "unknown"),
+                    "uptime_seconds": orchestrator_status.get("uptime_seconds", 0)
                 }
                 health_status["summary"]["healthy"] += 1
             else:
@@ -484,7 +473,7 @@ def create_app() -> FastAPI:
             health_status["components"]["orchestrator"] = {
                 "status": "unhealthy",
                 "error": str(e),
-                "details": f"SimpleOrchestrator error: {str(e)}"
+                "details": f"UnifiedOrchestrator error: {str(e)}"
             }
             health_status["summary"]["unhealthy"] += 1
             health_status["status"] = "degraded"
