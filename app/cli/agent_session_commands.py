@@ -216,8 +216,9 @@ def list(sessions, status, output, watch):
         # Get agent list from API
         agents_data = ctx.api_call("agents/list")
         
-        # If API call failed and direct orchestrator is available, try direct access
-        if not agents_data and DIRECT_ORCHESTRATOR_AVAILABLE:
+        # If API call failed or returned empty results, try direct orchestrator access
+        agents_from_api = agents_data.get('agents', []) if agents_data else []
+        if (not agents_data or not agents_from_api) and DIRECT_ORCHESTRATOR_AVAILABLE:
             console.print("🔄 API unavailable, trying direct orchestrator...", style="yellow")
             try:
                 bridge = get_bridge()

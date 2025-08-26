@@ -300,6 +300,45 @@ try:
                     status_info = asyncio.run(orchestrator.get_system_status())
                     agents = status_info.get('agents', {})
                     
+                    # If no agents from orchestrator, try tmux fallback
+                    if agents.get('total', 0) == 0:
+                        console.print("🔄 No agents in orchestrator, checking tmux sessions...", style="yellow")
+                        try:
+                            # Try direct tmux fallback
+                            from .cli.direct_orchestrator_bridge import DirectOrchestratorBridge
+                            bridge = DirectOrchestratorBridge()
+                            direct_result = asyncio.run(bridge.list_agents())
+                            
+                            if direct_result.get("success") and direct_result.get("agents"):
+                                tmux_agents = direct_result.get("agents", [])
+                                console.print(f"✅ Found {len(tmux_agents)} agents in tmux sessions", style="green")
+                                
+                                # Convert tmux agents to the format expected by the table
+                                # Convert list to dictionary keyed by agent_id
+                                agent_details = {}
+                                for agent in tmux_agents:
+                                    agent_id = agent.get('agent_id', 'unknown')
+                                    agent_details[agent_id] = {
+                                        'status': agent.get('status', 'active'),
+                                        'role': agent.get('agent_type', 'tmux-agent'),
+                                        'created_at': agent.get('created_time', 'unknown'),
+                                        'session_name': agent.get('session_name', 'unknown'),
+                                        'workspace_path': agent.get('workspace_path', 'unknown')
+                                    }
+                                
+                                agents = {
+                                    'total': len(tmux_agents),
+                                    'active': len([a for a in tmux_agents if a.get('is_running', False)]),
+                                    'details': agent_details
+                                }
+                            else:
+                                console.print("No agents currently deployed")
+                                return
+                        except Exception as e:
+                            console.print(f"⚠️ Tmux fallback failed: {e}", style="red")
+                            console.print("No agents currently deployed")
+                            return
+                    
                     if agents.get('total', 0) == 0:
                         console.print("No agents currently deployed")
                     else:
