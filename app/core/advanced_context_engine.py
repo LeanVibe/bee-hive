@@ -28,9 +28,9 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 
 from .context_compression import ContextCompressor
-from .semantic_memory import SemanticMemoryService
-from .config import settings
-from .redis import get_redis, get_session_cache
+from .semantic_memory_engine import SemanticMemoryEngine
+from .config import get_settings
+from .redis import get_redis_client
 
 logger = structlog.get_logger()
 
