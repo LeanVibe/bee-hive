@@ -191,33 +191,33 @@ export default defineConfig({
     },
     proxy: {
       '/dashboard/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:18080',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:18080')
+          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:8000')
         }
       },
       '/dashboard/simple-ws': {
-        target: process.env.VITE_BACKEND_WS_URL || 'ws://localhost:18080',
+        target: process.env.VITE_BACKEND_WS_URL || 'ws://localhost:8000',
         ws: true,
         changeOrigin: true,
       },
       // Proxy API calls to backend for Tailscale access
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:18080',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:18080')
+          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:8000')
         }
       },
       '/health': {
-        target: process.env.VITE_BACKEND_URL || 'http://localhost:18080',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         headers: {
-          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:18080')
+          'Host': (process.env.VITE_BACKEND_HOST || 'localhost:8000')
         }
       }
     },

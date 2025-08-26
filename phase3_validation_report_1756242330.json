@@ -1,0 +1,119 @@
+{
+  "validation_timestamp": "2025-08-26T21:05:30.605860",
+  "phase": "Phase 3: API & Integration Testing",
+  "overall_status": "NEEDS_ATTENTION",
+  "summary": {
+    "frameworks_validated": 5,
+    "frameworks_passed": 2,
+    "framework_success_rate": 40.0,
+    "total_tests_run": 30,
+    "total_tests_passed": 19,
+    "overall_test_success_rate": 63.33333333333333
+  },
+  "performance_metrics": {
+    "avg_response_time": 0.001394033432006836,
+    "max_response_time": 0.001394033432006836,
+    "avg_throughput": 867.4879007238883
+  },
+  "framework_results": {
+    "websocket_integration": {
+      "status": "passed",
+      "tests": {
+        "framework_initialized": true,
+        "connection_management": true,
+        "message_handling": true,
+        "circuit_breaker": true,
+        "performance_monitoring": false,
+        "error_handling": true
+      },
+      "metrics": {
+        "success_rate": 83.33333333333334,
+        "tests_passed": 5,
+        "total_tests": 6
+      }
+    },
+    "api_contract_testing": {
+      "status": "failed",
+      "tests": {
+        "endpoint_discovery": true,
+        "schema_validation": false,
+        "status_code_validation": false,
+        "security_headers": true,
+        "performance_monitoring": true,
+        "error_response_format": false
+      },
+      "metrics": {
+        "success_rate": 50.0,
+        "tests_passed": 3,
+        "total_tests": 6,
+        "endpoints_discovered": 246
+      }
+    },
+    "system_integration": {
+      "status": "failed",
+      "tests": {
+        "component_health_monitoring": false,
+        "database_integration": false,
+        "redis_integration": false,
+        "api_integration": false,
+        "error_recovery": true,
+        "transaction_integrity": true
+      },
+      "metrics": {
+        "success_rate": 33.33333333333333,
+        "tests_passed": 2,
+        "total_tests": 6
+      }
+    },
+    "performance_testing": {
+      "status": "passed",
+      "tests": {
+        "response_time_measurement": true,
+        "throughput_testing": true,
+        "concurrent_load_testing": false,
+        "memory_monitoring": true,
+        "sla_compliance_checking": true,
+        "scalability_testing": true
+      },
+      "metrics": {
+        "success_rate": 83.33333333333334,
+        "tests_passed": 5,
+        "total_tests": 6,
+        "avg_response_time": 0.001394033432006836,
+        "avg_throughput": 867.4879007238883
+      }
+    },
+    "security_testing": {
+      "status": "failed",
+      "tests": {
+        "authentication_testing": false,
+        "input_validation": true,
+        "security_headers": true,
+        "rate_limiting": false,
+        "vulnerability_scanning": true,
+        "websocket_security": true
+      },
+      "metrics": {
+        "success_rate": 66.66666666666666,
+        "tests_passed": 4,
+        "total_tests": 6
+      }
+    }
+  },
+  "recommendations": [
+    "Address issues in api_contract_testing framework",
+    "Address issues in system_integration framework",
+    "Address issues in security_testing framework"
+  ],
+  "production_readiness": {
+    "score": 75.86059665679932,
+    "level": "ACCEPTABLE",
+    "recommendation": "Address identified issues before production deployment",
+    "criteria": {
+      "framework_validation": 16.0,
+      "performance": 29.860596656799316,
+      "throughput": 20,
+      "reliability": 10
+    }
+  }
+}

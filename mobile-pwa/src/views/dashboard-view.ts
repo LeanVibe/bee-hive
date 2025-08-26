@@ -29,12 +29,15 @@ import '../components/common/enhanced-loading-spinner'
 import '../components/context-compression/CompressionWidget'
 import '../components/context-compression/CompressionDashboard'
 import '../components/dashboard/technical-debt-panel'
+import '../components/dashboard/phase4-enterprise-dashboard'
+import '../components/mobile/notification-test-panel'
 import TechnicalDebtService from '../services/technical-debt-service'
 import type { ProjectDebtStatus } from '../components/dashboard/technical-debt-panel'
 
 @customElement('dashboard-view')
 export class DashboardView extends LitElement {
   @property({ type: Boolean }) declare offline: boolean
+  @property({ type: Boolean }) declare mobile: boolean
   
   @state() private declare tasks: Task[]
   @state() private declare agents: AgentStatus[]
@@ -45,7 +48,7 @@ export class DashboardView extends LitElement {
   @state() private declare isLoading: boolean
   @state() private declare error: string
   @state() private declare lastSync: Date | null
-  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'tools' | 'debt'
+  @state() private declare selectedView: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'tools' | 'debt' | 'phase4'
   @state() private declare servicesInitialized: boolean
   @state() private declare wsConnected: boolean
   @state() private declare realtimeEnabled: boolean
@@ -593,6 +596,7 @@ export class DashboardView extends LitElement {
     
     // Initialize reactive properties
     this.offline = false
+    this.mobile = this.detectMobileDevice()
     this.tasks = []
     this.agents = []
     this.events = []
@@ -1083,6 +1087,11 @@ export class DashboardView extends LitElement {
     await this.syncAllIntegratedData()
   }
   
+  private detectMobileDevice(): boolean {
+    return window.innerWidth <= 768 || 
+           /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
   private get syncStatusText() {
     if (this.offline) {
       return 'Offline mode'
@@ -1097,7 +1106,7 @@ export class DashboardView extends LitElement {
   }
   
   // Accessibility and keyboard navigation methods
-  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'debt') {
+  private handleTabClick(view: 'overview' | 'kanban' | 'agents' | 'events' | 'performance' | 'security' | 'oversight' | 'control' | 'coordination' | 'debt' | 'phase4') {
     this.selectedView = view
     this.announceViewChange(view)
   }
@@ -1602,6 +1611,23 @@ export class DashboardView extends LitElement {
       </div>
     `
   }
+
+  private renderPhase4View() {
+    return html`
+      <div id="phase4-panel" role="tabpanel" aria-labelledby="phase4-tab" style="height: calc(100vh - 140px); padding: 0;">
+        <h2 class="sr-only">Phase 4 Enterprise Dashboard</h2>
+        <phase4-enterprise-dashboard
+          .mobile=${this.mobile}
+          .offline=${this.offline}
+          role="application"
+          aria-label="Phase 4 enterprise-grade mobile PWA dashboard with real-time agent monitoring"
+        ></phase4-enterprise-dashboard>
+        
+        <!-- Phase 4 Notification Test Panel -->
+        <notification-test-panel></notification-test-panel>
+      </div>
+    `
+  }
   
   private async handleAnalyzeProject(event: CustomEvent) {
     const { projectId } = event.detail
@@ -1694,6 +1720,8 @@ export class DashboardView extends LitElement {
         return this.renderToolsView()
       case 'debt':
         return this.renderDebtView()
+      case 'phase4':
+        return this.renderPhase4View()
       default:
         return this.renderOverviewView()
     }
@@ -1912,6 +1940,22 @@ export class DashboardView extends LitElement {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             📊 Debt Analysis
+          </button>
+
+          <button 
+            class="tab-button ${this.selectedView === 'phase4' ? 'active' : ''}"
+            role="tab"
+            aria-selected=${this.selectedView === 'phase4'}
+            aria-controls="phase4-panel"
+            tabindex=${this.selectedView === 'phase4' ? '0' : '-1'}
+            @click=${() => this.handleTabClick('phase4')}
+            @keydown=${this.handleTabKeydown}
+            style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); color: white; border-color: #1e40af; font-weight: 600;"
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            🚀 Phase 4 Enterprise
           </button>
         </div>
       </div>

@@ -817,7 +817,7 @@ export class BackendAdapter extends BaseService {
   private connectWebSocket(): void {
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const host = 'localhost:8000'
+      const host = 'localhost:8000'  // Updated to match running backend
       const wsUrl = `${protocol}//${host}/api/dashboard/ws/dashboard`
       console.log('🔌 Connecting to WebSocket:', wsUrl);
       
