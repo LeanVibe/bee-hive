@@ -3,6 +3,9 @@
     "allow": [
       "WebFetch(domain:github.com)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "/Users/bogdan/work/claude-docs/"
+    ]
   }
 }
