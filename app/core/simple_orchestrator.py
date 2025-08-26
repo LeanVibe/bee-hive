@@ -13,11 +13,13 @@ Key Optimizations:
 """
 
 import asyncio
+import time
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Protocol, TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 
 # Core lightweight imports only
 from .config import settings
@@ -242,6 +244,10 @@ class SimpleOrchestrator:
         # Performance metrics
         self._operation_count = 0
         self._last_performance_check = datetime.utcnow()
+        
+        # Epic 2 Phase 2.1: Performance tracking for plugin integration
+        self._operation_times: Dict[str, List[float]] = {}
+        self._performance_plugin: Optional[Any] = None
 
     # Epic 1 Lazy Loading Methods
 
@@ -326,6 +332,29 @@ class SimpleOrchestrator:
                     logger.info("✅ Production enhancement plugin loaded")
                 except Exception as e:
                     logger.warning("Failed to load production plugin", error=str(e))
+            
+            # Epic 2 Phase 2.1: Initialize Performance Orchestrator Plugin  
+            try:
+                from .orchestrator_plugins.performance_orchestrator_plugin import create_performance_orchestrator_plugin
+                
+                # Create and initialize the plugin
+                performance_plugin = create_performance_orchestrator_plugin()
+                await performance_plugin.initialize({"orchestrator": self})
+                self._plugins.append(performance_plugin)
+                self._performance_plugin = performance_plugin
+                
+                # Register with AdvancedPluginManager for management capabilities
+                plugin_path = Path(__file__).parent / "orchestrator_plugins" / "performance_orchestrator_plugin.py"
+                await self._advanced_plugin_manager.load_plugin_dynamic(
+                    plugin_id="performance_orchestrator_plugin",
+                    version="2.1.0",
+                    source_path=plugin_path
+                )
+                
+                logger.info("✅ Performance Orchestrator Plugin loaded and registered")
+                
+            except Exception as e:
+                logger.warning("Failed to load Performance Orchestrator Plugin", error=str(e))
 
             self._initialized = True
 
@@ -372,6 +401,9 @@ class SimpleOrchestrator:
 
         operation_start_time = datetime.utcnow()
         operation_id = str(uuid.uuid4())
+
+        # Epic 2 Phase 2.1: Performance tracking
+        start_time_ms = time.time()
 
         try:
             # Generate ID if not provided
@@ -482,6 +514,11 @@ class SimpleOrchestrator:
             )
 
             self._operation_count += 1
+            
+            # Epic 2 Phase 2.1: Record performance metrics
+            operation_time_ms = (time.time() - start_time_ms) * 1000
+            self._record_operation_time("spawn_agent", operation_time_ms)
+            
             return agent_id
 
         except Exception as e:
@@ -609,6 +646,9 @@ class SimpleOrchestrator:
         Raises:
             TaskDelegationError: If no suitable agent available
         """
+        # Epic 2 Phase 2.1: Performance tracking
+        start_time_ms = time.time()
+        
         try:
             # Generate task ID
             task_id = str(uuid.uuid4())
@@ -692,6 +732,11 @@ class SimpleOrchestrator:
             )
 
             self._operation_count += 1
+            
+            # Epic 2 Phase 2.1: Record performance metrics
+            operation_time_ms = (time.time() - start_time_ms) * 1000
+            self._record_operation_time("delegate_task", operation_time_ms)
+            
             return task_id
 
         except Exception as e:
@@ -1146,6 +1191,60 @@ class SimpleOrchestrator:
 
         logger.info("✅ Enhanced SimpleOrchestrator shutdown complete")
 
+    # Epic 2 Phase 2.1: Performance tracking methods
+    
+    def _record_operation_time(self, operation: str, time_ms: float) -> None:
+        """Record operation time for performance monitoring."""
+        if operation not in self._operation_times:
+            self._operation_times[operation] = []
+        
+        times = self._operation_times[operation]
+        times.append(time_ms)
+        
+        # Keep only last 50 measurements for memory efficiency
+        if len(times) > 50:
+            times.pop(0)
+        
+        # Log performance warnings for Epic 1 targets
+        if operation == "spawn_agent" and time_ms > 100.0:
+            logger.warning("Agent registration slow", operation_time_ms=time_ms, target_ms=100.0)
+        elif operation == "delegate_task" and time_ms > 500.0:
+            logger.warning("Task delegation slow", operation_time_ms=time_ms, target_ms=500.0)
+    
+    async def get_performance_metrics(self) -> Dict[str, Any]:
+        """Get performance metrics for monitoring."""
+        metrics = {}
+        
+        for operation, times in self._operation_times.items():
+            if times:
+                import statistics
+                metrics[operation] = {
+                    "avg_ms": round(statistics.mean(times), 2),
+                    "max_ms": round(max(times), 2),
+                    "min_ms": round(min(times), 2),
+                    "count": len(times),
+                    "last_ms": round(times[-1], 2),
+                    "epic1_compliant": {
+                        "spawn_agent": statistics.mean(times) < 100.0 if operation == "spawn_agent" else None,
+                        "delegate_task": statistics.mean(times) < 500.0 if operation == "delegate_task" else None
+                    }.get(operation)
+                }
+        
+        # Add system performance if plugin available
+        if self._performance_plugin:
+            try:
+                plugin_metrics = await self._performance_plugin.get_performance_summary()
+                metrics["plugin_summary"] = plugin_metrics
+            except Exception as e:
+                logger.warning("Failed to get plugin metrics", error=str(e))
+        
+        return {
+            "operation_metrics": metrics,
+            "total_operations": self._operation_count,
+            "agents": len(self._agents),
+            "tasks": len(self._task_assignments)
+        }
+    
     # Epic C Phase C.4: WebSocket Broadcasting Methods
     
     async def _broadcast_agent_update(self, agent_id: str, update_data: Dict[str, Any]) -> None:
