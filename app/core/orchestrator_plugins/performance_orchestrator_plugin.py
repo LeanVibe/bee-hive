@@ -312,7 +312,7 @@ class PerformanceOrchestratorPlugin(OrchestratorPlugin):
             
             # Initialize Redis connection (graceful fallback)
             try:
-                self.redis = await get_redis()
+                self.redis = get_redis()
             except Exception as e:
                 logger.warning(f"Redis initialization failed, using mock: {e}")
                 self.redis = AsyncMock()  # Use mock for testing
@@ -799,14 +799,29 @@ class PerformanceOrchestratorPlugin(OrchestratorPlugin):
         n = len(recent_values)
         
         try:
-            # Calculate slope
-            slope = (n * sum(x * y for x, y in zip(x_values, recent_values)) - 
-                    sum(x_values) * sum(recent_values)) / (n * sum(x**2 for x in x_values) - sum(x_values)**2)
+            # Calculate slope using simple linear regression
+            x_sum = sum(x_values)
+            y_sum = sum(recent_values)
+            xy_sum = sum(x * y for x, y in zip(x_values, recent_values))
+            x_squared_sum = sum(x**2 for x in x_values)
             
-            # Project ahead
+            denominator = n * x_squared_sum - x_sum**2
+            if denominator == 0:
+                return False
+                
+            slope = (n * xy_sum - x_sum * y_sum) / denominator
+            
+            # Project ahead 2 time periods
             projected_value = current_value + (slope * 2)
-            return self._evaluate_condition(projected_value, rule.threshold_value, rule.comparison_operator)
-        except:
+            result = self._evaluate_condition(projected_value, rule.threshold_value, rule.comparison_operator)
+            
+            logger.debug(f"Trend analysis: slope={slope:.2f}, projected={projected_value:.2f}, threshold={rule.threshold_value}, result={result}")
+            return result
+        except ZeroDivisionError:
+            logger.debug("Trend analysis failed: division by zero")
+            return False
+        except Exception as e:
+            logger.debug(f"Trend analysis failed: {str(e)}")
             return False
     
     async def _trigger_alert(self, rule: AlertRule, metric_value: float, metrics: PerformanceMetrics) -> None:
