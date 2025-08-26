@@ -27,10 +27,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Epic 4 Components
 from .unified_context_engine import UnifiedContextEngine, get_unified_context_engine
-from .context_reasoning_engine import ContextReasoningEngine, get_context_reasoning_engine, ReasoningType
+from .context_reasoning_engine import ContextReasoningEngine, get_context_reasoning_engine
 from .intelligent_context_persistence import IntelligentContextPersistence, get_intelligent_context_persistence
-from .context_aware_agent_coordination import ContextAwareAgentCoordination, get_context_aware_coordination
-from .epic4_orchestration_integration import Epic4OrchestrationIntegration, get_epic4_orchestration_integration
+# from .context_aware_agent_coordination import ContextAwareAgentCoordination, get_context_aware_coordination
+# from .epic4_orchestration_integration import Epic4OrchestrationIntegration, get_epic4_orchestration_integration
 
 # Core imports
 from ..models.agent import Agent, AgentType, AgentStatus

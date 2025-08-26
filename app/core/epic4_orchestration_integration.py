@@ -19,13 +19,13 @@ import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Epic 1 - Orchestration System Imports - Use available modules
-from .production_orchestrator import ProductionOrchestrator
-from .advanced_orchestration_engine import AdvancedOrchestrationEngine
+# from .production_orchestrator import ProductionOrchestrator
+# from .advanced_orchestration_engine import AdvancedOrchestrationEngine
 from .agent_manager import AgentManager
-from .managers.plugin_manager import PluginManager
+# from .managers.plugin_manager import PluginManager
 
 # Epic 4 - Context Engine Imports
-from .unified_context_engine import UnifiedContextEngine, get_unified_context_engine, ContextMap
+# from .unified_context_engine import UnifiedContextEngine, get_unified_context_engine, ContextMap
 from .context_reasoning_engine import (
     ContextReasoningEngine, get_context_reasoning_engine, 
     ReasoningType, ReasoningInsight
@@ -169,12 +169,12 @@ class Epic4OrchestrationIntegration:
             self.logger.info("🚀 Initializing Epic 4 Orchestration Integration...")
             
             # Initialize Epic 1 components
-            self._orchestrator = ProductionOrchestrator()
+            # self._orchestrator = ProductionOrchestrator()
             self._agent_manager = AgentManager()
-            self._plugin_manager = PluginManager()
+            # self._plugin_manager = PluginManager()
             
             # Initialize Epic 4 components
-            self._context_engine = await get_unified_context_engine(self.db_session)
+            # self._context_engine = await get_unified_context_engine(self.db_session)
             self._reasoning_engine = get_context_reasoning_engine(self.db_session)
             self._coordination_system = await get_context_aware_coordination(self.db_session)
             self._persistence_system = await get_intelligent_context_persistence(self.db_session)

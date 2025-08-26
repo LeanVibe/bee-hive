@@ -23,12 +23,12 @@ from sqlalchemy import select, func, and_, or_
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Epic 1 Integration - Use available orchestration modules
-from .production_orchestrator import ProductionOrchestrator
-from .advanced_orchestration_engine import AdvancedOrchestrationEngine
+# from .production_orchestrator import ProductionOrchestrator
+# from .advanced_orchestration_engine import AdvancedOrchestrationEngine
 from .agent_manager import AgentManager
 
 # Epic 4 Context Engine Components
-from .unified_context_engine import UnifiedContextEngine, get_unified_context_engine
+# from .unified_context_engine import UnifiedContextEngine, get_unified_context_engine
 from .context_reasoning_engine import (
     ContextReasoningEngine, get_context_reasoning_engine, 
     ReasoningType, ReasoningInsight
@@ -169,11 +169,11 @@ class ContextAwareAgentCoordination:
             self.logger.info("🚀 Initializing Context-Aware Agent Coordination...")
             
             # Initialize Epic 1 integrations
-            self._orchestrator = ProductionOrchestrator()
+            # self._orchestrator = ProductionOrchestrator()
             self._agent_manager = AgentManager()
             
             # Initialize Epic 4 integrations
-            self._context_engine = await get_unified_context_engine(self.db_session)
+            # self._context_engine = await get_unified_context_engine(self.db_session)
             self._reasoning_engine = get_context_reasoning_engine(self.db_session)
             self._persistence_system = await get_intelligent_context_persistence(self.db_session)
             
