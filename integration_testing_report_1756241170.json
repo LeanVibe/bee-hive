@@ -1,0 +1,163 @@
+{
+  "validation_timestamp": "2025-08-26T23:46:07.899361",
+  "validation_type": "Comprehensive Integration Testing Framework",
+  "framework_version": "1.0.0",
+  "test_categories": [
+    "API-Database Integration",
+    "API-Services Integration",
+    "Database-Services Integration",
+    "Full Stack Integration"
+  ],
+  "test_results": {
+    "api_database_integration": {
+      "test_name": "API-Database Integration",
+      "test_started": "2025-08-26T23:46:07.899385",
+      "subtests": {
+        "app_creation_with_db_routes": {
+          "status": "success",
+          "duration_ms": 2182.48,
+          "db_routes_found": 63,
+          "sample_routes": [
+            "/api/v2/agents/",
+            "/api/v2/agents/",
+            "/api/v2/agents/{agent_id}",
+            "/api/v2/agents/{agent_id}/status",
+            "/api/v2/agents/{agent_id}"
+          ]
+        },
+        "models_schemas_import": {
+          "status": "success",
+          "duration_ms": 0.01,
+          "models_imported": [
+            "Agent",
+            "Task",
+            "User",
+            "AgentCreate",
+            "AgentResponse",
+            "TaskCreate",
+            "TaskResponse"
+          ],
+          "import_count": 7
+        },
+        "api_db_session_integration": {
+          "status": "failed",
+          "error": "No module named 'app.core.vertical_slice_orchestrator'",
+          "duration_ms": 3.11
+        }
+      },
+      "overall_status": "partial",
+      "success_rate": 66.67,
+      "test_completed": "2025-08-26T23:46:10.085046"
+    },
+    "api_services_integration": {
+      "test_name": "API-Services Integration",
+      "test_started": "2025-08-26T23:46:10.085062",
+      "subtests": {
+        "orchestrator_api_integration": {
+          "status": "success",
+          "duration_ms": 0.0,
+          "orchestrators_available": [
+            "Orchestrator",
+            "SimpleOrchestrator"
+          ],
+          "hive_commands_available": true
+        },
+        "semantic_memory_api_integration": {
+          "status": "success",
+          "duration_ms": 114.73,
+          "semantic_memory_service_available": true,
+          "memory_router_available": true
+        },
+        "project_management_api_integration": {
+          "status": "success",
+          "duration_ms": 19.61,
+          "project_management_service_available": true,
+          "project_router_available": true
+        }
+      },
+      "overall_status": "success",
+      "success_rate": 100.0,
+      "test_completed": "2025-08-26T23:46:10.219451"
+    },
+    "database_services_integration": {
+      "test_name": "Database-Services Integration",
+      "test_started": "2025-08-26T23:46:10.219463",
+      "subtests": {
+        "services_model_import": {
+          "status": "success",
+          "duration_ms": 0.0,
+          "service_with_models": true,
+          "models_accessible": [
+            "Agent",
+            "Context"
+          ],
+          "schemas_accessible": [
+            "AgentCreate"
+          ]
+        },
+        "services_database_session": {
+          "status": "success",
+          "duration_ms": 0.0,
+          "session_factory_available": true,
+          "service_can_access_session": true
+        },
+        "orchestrator_database_types": {
+          "status": "failed",
+          "error": "cannot import name 'AgentType' from 'app.core.database_types' (/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/database_types.py)",
+          "duration_ms": 0.01
+        }
+      },
+      "overall_status": "partial",
+      "success_rate": 66.67,
+      "test_completed": "2025-08-26T23:46:10.219492"
+    },
+    "full_stack_integration": {
+      "test_name": "Full Stack Integration",
+      "test_started": "2025-08-26T23:46:10.219500",
+      "subtests": {
+        "complete_app_creation": {
+          "status": "success",
+          "duration_ms": 58.95,
+          "total_routes": 280,
+          "api_routes": 261,
+          "health_routes": 18,
+          "app_title": "LeanVibe Agent Hive 2.0 - Consolidated API",
+          "app_version": "2.0.0"
+        },
+        "cross_layer_compatibility": {
+          "status": "success",
+          "duration_ms": 0.01,
+          "components_loaded": [
+            "api_router",
+            "Orchestrator",
+            "Agent",
+            "SemanticMemoryService",
+            "get_async_session"
+          ],
+          "layer_integration": "all_layers_compatible"
+        },
+        "integration_load_performance": {
+          "status": "success",
+          "duration_ms": 0.0,
+          "rapid_imports_completed": 9,
+          "performance_acceptable": true
+        }
+      },
+      "overall_status": "success",
+      "success_rate": 100.0,
+      "test_completed": "2025-08-26T23:46:10.278494"
+    }
+  },
+  "summary": {
+    "total_integration_tests": 4,
+    "successful_integration_tests": 2,
+    "partial_integration_tests": 2,
+    "failed_integration_tests": 0,
+    "integration_success_rate": 50.0,
+    "total_subtests": 12,
+    "successful_subtests": 10,
+    "subtest_success_rate": 83.33,
+    "overall_integration_health": "healthy",
+    "enterprise_readiness": "needs_work"
+  }
+}

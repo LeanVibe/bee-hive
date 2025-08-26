@@ -1,0 +1,217 @@
+{
+  "validation_timestamp": "2025-08-26T23:43:06.437536",
+  "validation_type": "Database Layer Component Validation",
+  "components_validated": 0,
+  "components_passed": 0,
+  "components_failed": 0,
+  "details": {
+    "database_import_validation": {
+      "app.core.database": {
+        "status": "success",
+        "import_time_ms": 171.19,
+        "module_info": "database_functions_found: 24",
+        "error": null
+      },
+      "app.core.database_models": {
+        "status": "success",
+        "import_time_ms": 115.7,
+        "module_info": "model_classes_found: 35",
+        "error": null
+      },
+      "app.core.database_types": {
+        "status": "success",
+        "import_time_ms": 0.69,
+        "module_info": "public_attributes: 23",
+        "error": null
+      },
+      "app.models": {
+        "status": "success",
+        "import_time_ms": 72.23,
+        "module_info": "model_classes_found: 83",
+        "error": null
+      },
+      "app.models.agent": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 18",
+        "error": null
+      },
+      "app.models.task": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 22",
+        "error": null
+      },
+      "app.models.user": {
+        "status": "success",
+        "import_time_ms": 2.59,
+        "module_info": "model_classes_found: 18",
+        "error": null
+      },
+      "app.models.conversation": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 17",
+        "error": null
+      },
+      "app.models.session": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 19",
+        "error": null
+      },
+      "app.models.workflow": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 19",
+        "error": null
+      },
+      "app.models.context": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 20",
+        "error": null
+      },
+      "app.models.performance_metric": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "model_classes_found: 14",
+        "error": null
+      },
+      "app.schemas": {
+        "status": "success",
+        "import_time_ms": 64.57,
+        "module_info": "schema_classes_found: 108",
+        "error": null
+      },
+      "app.schemas.agent": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "schema_classes_found: 16",
+        "error": null
+      },
+      "app.schemas.task": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "module_info": "schema_classes_found: 16",
+        "error": null
+      },
+      "app.schemas.base": {
+        "status": "success",
+        "import_time_ms": 2.28,
+        "module_info": "schema_classes_found: 10",
+        "error": null
+      }
+    },
+    "database_connection": {
+      "database_module_available": true,
+      "session_factory_available": true,
+      "connection_test": "url_configured_but_not_tested",
+      "error": null,
+      "database_url_configured": true
+    },
+    "model_validation": {
+      "models_found": {
+        "app.models.agent": [
+          "Agent"
+        ],
+        "app.models.task": [
+          "Task"
+        ],
+        "app.models.user": [
+          "User"
+        ],
+        "app.models.conversation": [
+          "Conversation"
+        ],
+        "app.models.session": [
+          "Session"
+        ],
+        "app.models.workflow": [
+          "Workflow"
+        ],
+        "app.models.context": [
+          "Context"
+        ]
+      },
+      "total_models": 7,
+      "valid_models": 7,
+      "model_relationships": {}
+    },
+    "schema_validation": {
+      "schemas_found": {
+        "app.schemas.agent": [
+          "AgentActivationRequest",
+          "AgentCapabilityCreate",
+          "AgentCreate",
+          "AgentListResponse",
+          "AgentResponse",
+          "AgentStatsResponse",
+          "AgentUpdate",
+          "BaseModel"
+        ],
+        "app.schemas.task": [
+          "BaseModel",
+          "TaskAssignmentRequest",
+          "TaskCreate",
+          "TaskListResponse",
+          "TaskResponse",
+          "TaskStatsResponse",
+          "TaskUpdate"
+        ],
+        "app.schemas.base": [
+          "BaseModel",
+          "BaseResponse",
+          "ErrorResponse",
+          "PaginatedResponse",
+          "SuccessResponse",
+          "ValidationErrorResponse"
+        ],
+        "app.schemas.context": [
+          "BaseModel",
+          "ContextCreate",
+          "ContextListResponse",
+          "ContextResponse",
+          "ContextSearchRequest",
+          "ContextUpdate"
+        ],
+        "app.schemas.workflow": [
+          "BaseModel",
+          "WorkflowCreate",
+          "WorkflowExecutionRequest",
+          "WorkflowListResponse",
+          "WorkflowProgressResponse",
+          "WorkflowResponse",
+          "WorkflowStatsResponse",
+          "WorkflowTaskAssignment",
+          "WorkflowUpdate",
+          "WorkflowValidationResponse"
+        ]
+      },
+      "total_schemas": 37,
+      "valid_schemas": 37
+    },
+    "performance_validation": {
+      "import_times": {
+        "app.models.agent": 0.0,
+        "app.models.task": 0.0,
+        "app.models.user": 0.0
+      },
+      "model_instantiation_times": {},
+      "schema_validation_times": {},
+      "performance_summary": {
+        "avg_import_time_ms": 0.0,
+        "max_import_time_ms": 0.0,
+        "min_import_time_ms": 0.0,
+        "total_modules_tested": 3
+      }
+    }
+  },
+  "summary": {
+    "total_validations": 18,
+    "successful_validations": 18,
+    "failed_validations": 0,
+    "success_rate": 100.0,
+    "database_layer_health": "healthy"
+  }
+}

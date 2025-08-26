@@ -1,0 +1,337 @@
+{
+  "validation_timestamp": "2025-08-26T23:44:32.878924",
+  "validation_type": "Services Layer Component Validation",
+  "components_validated": 0,
+  "components_passed": 0,
+  "components_failed": 0,
+  "details": {
+    "services_import_validation": {
+      "app.services.semantic_memory_service": {
+        "status": "success",
+        "import_time_ms": 853.41,
+        "service_info": "service_classes: 3, functions: 9",
+        "error": null
+      },
+      "app.services.project_management_service": {
+        "status": "success",
+        "import_time_ms": 19.5,
+        "service_info": "service_classes: 1, functions: 12",
+        "error": null
+      },
+      "app.services.customer_success_service": {
+        "status": "failed",
+        "import_time_ms": 95.5,
+        "service_info": "import_failed",
+        "error": "cannot import name 'WorkflowExecution' from 'app.models.workflow' (/Users/bogdan/work/leanvibe-dev/bee-hive/app/models/workflow.py)"
+      },
+      "app.services.team_augmentation_service": {
+        "status": "failed",
+        "import_time_ms": 3.16,
+        "service_info": "import_failed",
+        "error": "No module named 'github'"
+      },
+      "app.services.comprehensive_monitoring_analytics": {
+        "status": "failed",
+        "import_time_ms": 1035.69,
+        "service_info": "import_failed",
+        "error": "No module named 'grafana_api'"
+      },
+      "app.core.orchestrator": {
+        "status": "success",
+        "import_time_ms": 131.41,
+        "service_info": "orchestrator_classes: 6, functions: 11",
+        "error": null
+      },
+      "app.core.simple_orchestrator": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "service_info": "orchestrator_classes: 2, functions: 15",
+        "error": null
+      },
+      "app.core.unified_orchestrator": {
+        "status": "failed",
+        "import_time_ms": 0.03,
+        "service_info": "import_failed",
+        "error": "No module named 'app.core.unified_orchestrator'"
+      },
+      "app.core.production_orchestrator": {
+        "status": "failed",
+        "import_time_ms": 5.57,
+        "service_info": "import_failed",
+        "error": "No module named 'app.core.performance_orchestrator'"
+      },
+      "app.core.agent_manager": {
+        "status": "success",
+        "import_time_ms": 15.33,
+        "service_info": "agent_classes: 11, functions: 16",
+        "error": null
+      },
+      "app.core.agent_spawner": {
+        "status": "success",
+        "import_time_ms": 1.73,
+        "service_info": "agent_classes: 9, functions: 12",
+        "error": null
+      },
+      "app.core.agent_registry": {
+        "status": "success",
+        "import_time_ms": 2.53,
+        "service_info": "agent_classes: 7, functions: 14",
+        "error": null
+      },
+      "app.core.agent_lifecycle_manager": {
+        "status": "success",
+        "import_time_ms": 287.51,
+        "service_info": "agent_classes: 7, functions: 14",
+        "error": null
+      },
+      "app.core.task_execution_engine": {
+        "status": "success",
+        "import_time_ms": 2.84,
+        "service_info": "task/workflow_classes: 9, functions: 11",
+        "error": null
+      },
+      "app.core.workflow_engine": {
+        "status": "success",
+        "import_time_ms": 60.88,
+        "service_info": "task/workflow_classes: 23, functions: 13",
+        "error": null
+      },
+      "app.core.intelligent_task_router": {
+        "status": "success",
+        "import_time_ms": 6.48,
+        "service_info": "task/workflow_classes: 10, functions: 11",
+        "error": null
+      },
+      "app.core.task_scheduler": {
+        "status": "success",
+        "import_time_ms": 5.28,
+        "service_info": "task/workflow_classes: 8, functions: 11",
+        "error": null
+      },
+      "app.core.communication": {
+        "status": "success",
+        "import_time_ms": 0.72,
+        "service_info": "classes: 0, functions: 0",
+        "error": null
+      },
+      "app.core.messaging_service": {
+        "status": "success",
+        "import_time_ms": 38.92,
+        "service_info": "service_classes: 2, functions: 17",
+        "error": null
+      },
+      "app.core.coordination": {
+        "status": "success",
+        "import_time_ms": 23.4,
+        "service_info": "classes: 19, functions: 12",
+        "error": null
+      },
+      "app.core.enhanced_coordination_bridge": {
+        "status": "success",
+        "import_time_ms": 11.24,
+        "service_info": "classes: 17, functions: 18",
+        "error": null
+      },
+      "app.core.performance_monitor": {
+        "status": "success",
+        "import_time_ms": 10.46,
+        "service_info": "classes: 19, functions: 25",
+        "error": null
+      },
+      "app.core.performance_optimizer": {
+        "status": "success",
+        "import_time_ms": 21.03,
+        "service_info": "classes: 12, functions: 16",
+        "error": null
+      },
+      "app.core.health_monitor": {
+        "status": "success",
+        "import_time_ms": 8.3,
+        "service_info": "classes: 22, functions: 14",
+        "error": null
+      },
+      "app.core.metrics_collector": {
+        "status": "success",
+        "import_time_ms": 3.64,
+        "service_info": "classes: 14, functions: 18",
+        "error": null
+      },
+      "app.core.auth": {
+        "status": "success",
+        "import_time_ms": 15.32,
+        "service_info": "classes: 20, functions: 25",
+        "error": null
+      },
+      "app.core.security": {
+        "status": "success",
+        "import_time_ms": 1.54,
+        "service_info": "classes: 11, functions: 16",
+        "error": null
+      },
+      "app.core.enterprise_security_system": {
+        "status": "success",
+        "import_time_ms": 26.65,
+        "service_info": "classes: 23, functions: 18",
+        "error": null
+      },
+      "app.core.context_manager": {
+        "status": "success",
+        "import_time_ms": 3.74,
+        "service_info": "classes: 15, functions: 17",
+        "error": null
+      },
+      "app.core.enhanced_memory_manager": {
+        "status": "success",
+        "import_time_ms": 18.4,
+        "service_info": "classes: 18, functions: 24",
+        "error": null
+      },
+      "app.core.semantic_memory_engine": {
+        "status": "success",
+        "import_time_ms": 198.32,
+        "service_info": "classes: 21, functions: 24",
+        "error": null
+      },
+      "app.core.context_compression": {
+        "status": "success",
+        "import_time_ms": 0.01,
+        "service_info": "classes: 8, functions: 7",
+        "error": null
+      },
+      "app.core.config": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "service_info": "classes: 3, functions: 8",
+        "error": null
+      },
+      "app.core.logging_service": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "service_info": "service_classes: 1, functions: 6",
+        "error": null
+      },
+      "app.core.error_handling_integration": {
+        "status": "success",
+        "import_time_ms": 13.53,
+        "service_info": "classes: 10, functions: 7",
+        "error": null
+      }
+    },
+    "orchestrator_validation": {
+      "orchestrators_tested": {
+        "app.core.orchestrator": {
+          "classes_found": [
+            "AgentOrchestrator",
+            "Orchestrator",
+            "OrchestratorConfig",
+            "OrchestratorProtocol",
+            "SimpleOrchestrator",
+            "SimpleOrchestratorError"
+          ],
+          "functionality_test": "methods_available: 2/5",
+          "status": "functional"
+        },
+        "app.core.simple_orchestrator": {
+          "classes_found": [
+            "SimpleOrchestrator",
+            "SimpleOrchestratorError"
+          ],
+          "functionality_test": "methods_available: 1/5",
+          "status": "functional"
+        },
+        "app.core.unified_orchestrator": {
+          "classes_found": [],
+          "functionality_test": "error: No module named 'app.core.unified_orchestrator'",
+          "status": "failed"
+        }
+      },
+      "functional_orchestrators": 2,
+      "total_orchestrators": 3
+    },
+    "integration_validation": {
+      "integration_tests": {
+        "database_service_integration": {
+          "description": "Database and semantic memory service integration",
+          "modules_tested": [
+            "app.core.database",
+            "app.services.semantic_memory_service"
+          ],
+          "integration_score": "compatibility_indicators: 2",
+          "status": "success"
+        },
+        "redis_communication_integration": {
+          "description": "Redis and messaging service integration",
+          "modules_tested": [
+            "app.core.redis",
+            "app.core.messaging_service"
+          ],
+          "integration_score": "compatibility_indicators: 3",
+          "status": "success"
+        },
+        "orchestrator_agent_integration": {
+          "description": "Orchestrator and agent manager integration",
+          "modules_tested": [
+            "app.core.orchestrator",
+            "app.core.agent_manager"
+          ],
+          "integration_score": "compatibility_indicators: 2",
+          "status": "success"
+        },
+        "context_memory_integration": {
+          "description": "Context and memory management integration",
+          "modules_tested": [
+            "app.core.context_manager",
+            "app.core.enhanced_memory_manager"
+          ],
+          "integration_score": "compatibility_indicators: 3",
+          "status": "success"
+        }
+      },
+      "successful_integrations": 4,
+      "total_integration_tests": 4
+    },
+    "performance_validation": {
+      "import_performance": {
+        "app.core.orchestrator": 0.0,
+        "app.core.simple_orchestrator": 0.0,
+        "app.services.semantic_memory_service": 0.0,
+        "app.services.project_management_service": 0.0,
+        "app.core.logging_service": 0.0,
+        "app.core.config": 0.0,
+        "app.core.auth": 0.0
+      },
+      "service_categories": {
+        "orchestrators": {
+          "avg_import_time_ms": 0.0,
+          "max_import_time_ms": 0.0,
+          "services_tested": 2
+        },
+        "business_services": {
+          "avg_import_time_ms": 0.0,
+          "max_import_time_ms": 0.0,
+          "services_tested": 2
+        },
+        "core_utilities": {
+          "avg_import_time_ms": 0.0,
+          "max_import_time_ms": 0.0,
+          "services_tested": 3
+        }
+      },
+      "performance_summary": {
+        "total_services_tested": 7,
+        "avg_import_time_ms": 0.0,
+        "max_import_time_ms": 0.0,
+        "min_import_time_ms": 0.0,
+        "services_under_100ms": 7,
+        "services_over_1000ms": 0
+      }
+    }
+  },
+  "summary": {
+    "total_validations": 49,
+    "successful_validations": 43,
+    "failed_validations": 6,
+    "success_rate": 87.76,
+    "services_layer_health": "healthy"
+  }
+}

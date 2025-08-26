@@ -1,0 +1,3793 @@
+{
+  "validation_timestamp": "2025-08-26T20:41:46.387838",
+  "validation_type": "API Layer Component Validation",
+  "components_validated": 18,
+  "components_passed": 18,
+  "components_failed": 0,
+  "details": {
+    "import_validation": {
+      "app.api.routes": {
+        "status": "success",
+        "import_time_ms": 1125.37,
+        "error": null
+      },
+      "app.api.auth_endpoints": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      },
+      "app.api.enterprise_security": {
+        "status": "success",
+        "import_time_ms": 33.45,
+        "error": null
+      },
+      "app.api.hive_commands": {
+        "status": "success",
+        "import_time_ms": 16.07,
+        "error": null
+      },
+      "app.api.intelligence": {
+        "status": "success",
+        "import_time_ms": 24.56,
+        "error": null
+      },
+      "app.api.memory_operations": {
+        "status": "success",
+        "import_time_ms": 310.44,
+        "error": null
+      },
+      "app.api.project_index": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      },
+      "app.api.analytics": {
+        "status": "success",
+        "import_time_ms": 9.26,
+        "error": null
+      },
+      "app.api.monitoring_reporting": {
+        "status": "success",
+        "import_time_ms": 5.6,
+        "error": null
+      },
+      "app.api.sleep_management": {
+        "status": "success",
+        "import_time_ms": 7.02,
+        "error": null
+      },
+      "app.api.v1.agents_simple": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      },
+      "app.api.v1.tasks_compatibility": {
+        "status": "success",
+        "import_time_ms": 2.77,
+        "error": null
+      },
+      "app.api.v1.coordination": {
+        "status": "success",
+        "import_time_ms": 94.17,
+        "error": null
+      },
+      "app.api.v1.github_integration": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      },
+      "app.api.v1.websocket": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      },
+      "app.api.v2.agents": {
+        "status": "success",
+        "import_time_ms": 13.6,
+        "error": null
+      },
+      "app.api.v2.tasks": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      },
+      "app.api.v2.websockets": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "error": null
+      }
+    },
+    "service_validation": {
+      "app.core.config": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "config_accessible",
+        "error": null
+      },
+      "app.core.database": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "database_session_available",
+        "error": null
+      },
+      "app.core.redis": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "redis_client_available",
+        "error": null
+      },
+      "app.core.orchestrator": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "orchestrator_class_available",
+        "error": null
+      },
+      "app.core.simple_orchestrator": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "orchestrator_class_available",
+        "error": null
+      },
+      "app.core.logging_service": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "basic_import_successful",
+        "error": null
+      },
+      "app.core.auth": {
+        "status": "success",
+        "import_time_ms": 0.0,
+        "functionality": "basic_import_successful",
+        "error": null
+      },
+      "app.core.security": {
+        "status": "success",
+        "import_time_ms": 0.01,
+        "functionality": "basic_import_successful",
+        "error": null
+      },
+      "app.models": {
+        "status": "success",
+        "import_time_ms": 0.04,
+        "functionality": "basic_import_successful",
+        "error": null
+      },
+      "app.schemas": {
+        "status": "success",
+        "import_time_ms": 0.03,
+        "functionality": "basic_import_successful",
+        "error": null
+      }
+    },
+    "app_creation": {
+      "status": "success",
+      "creation_time_ms": 488.25,
+      "route_count": 280,
+      "title": "LeanVibe Agent Hive 2.0 - Consolidated API",
+      "version": "2.0.0",
+      "error": null
+    },
+    "endpoint_structure": {
+      "status": "success",
+      "analysis": {
+        "total_endpoints": 265,
+        "health_endpoints": [
+          {
+            "path": "/api/v2/agents/{agent_id}/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_health"
+          },
+          {
+            "path": "/api/v1/api/v1/github/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_github_integration_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_error_handling_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/circuit-breakers",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_circuit_breaker_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/graceful-degradation",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_graceful_degradation_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/workflow-error-handling",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_workflow_error_handling_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/configuration",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_configuration_health"
+          },
+          {
+            "path": "/api/v1/global-coordination/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          },
+          {
+            "path": "/api/v1/sleep/diagnostics/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "comprehensive_health_check"
+          },
+          {
+            "path": "/analytics/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_analytics_health"
+          },
+          {
+            "path": "/api/v1/intelligence/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          },
+          {
+            "path": "/api/v1/security/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "security_health_check"
+          },
+          {
+            "path": "/api/v1/memory/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          },
+          {
+            "path": "/api/dashboard/system/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_comprehensive_system_health"
+          },
+          {
+            "path": "/api/dashboard/websocket/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "websocket_health_check"
+          },
+          {
+            "path": "/api/dashboard/metrics/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "metrics_health_check"
+          },
+          {
+            "path": "/dashboard/api/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_pwa_backend_health"
+          },
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          }
+        ],
+        "api_v1_endpoints": [
+          {
+            "path": "/api/v1/auth/login",
+            "methods": [
+              "POST"
+            ],
+            "name": "login_user"
+          },
+          {
+            "path": "/api/v1/auth/me",
+            "methods": [
+              "GET"
+            ],
+            "name": "me"
+          },
+          {
+            "path": "/api/v1/auth/refresh",
+            "methods": [
+              "POST"
+            ],
+            "name": "refresh"
+          },
+          {
+            "path": "/api/v1/auth/logout",
+            "methods": [
+              "POST"
+            ],
+            "name": "logout"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_enterprise_pilot"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_enterprise_pilots"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/{pilot_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_enterprise_pilot"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/{pilot_id}/status",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_pilot_status"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/{pilot_id}/roi-metrics",
+            "methods": [
+              "POST"
+            ],
+            "name": "record_roi_metrics"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/{pilot_id}/development-tasks",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_development_task"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/{pilot_id}/analytics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_pilot_analytics"
+          },
+          {
+            "path": "/api/v1/ws/websocket/stats",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_stats"
+          },
+          {
+            "path": "/api/v1/api/v1/github/repository/setup",
+            "methods": [
+              "POST"
+            ],
+            "name": "setup_repository"
+          },
+          {
+            "path": "/api/v1/api/v1/github/repository/{repository_id}/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_repository_status"
+          },
+          {
+            "path": "/api/v1/api/v1/github/work-tree/sync",
+            "methods": [
+              "POST"
+            ],
+            "name": "sync_work_tree"
+          },
+          {
+            "path": "/api/v1/api/v1/github/work-tree/list",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agent_work_trees"
+          },
+          {
+            "path": "/api/v1/api/v1/github/branch/create",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_agent_branch"
+          },
+          {
+            "path": "/api/v1/api/v1/github/branch/sync",
+            "methods": [
+              "POST"
+            ],
+            "name": "sync_branch_with_main"
+          },
+          {
+            "path": "/api/v1/api/v1/github/branch/list",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agent_branches"
+          },
+          {
+            "path": "/api/v1/api/v1/github/pull-request/create",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_pull_request"
+          },
+          {
+            "path": "/api/v1/api/v1/github/pull-request/list",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agent_pull_requests"
+          },
+          {
+            "path": "/api/v1/api/v1/github/pull-request/{pr_id}/status",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_pull_request_status"
+          },
+          {
+            "path": "/api/v1/api/v1/github/issue/assign",
+            "methods": [
+              "POST"
+            ],
+            "name": "assign_issue_to_agent"
+          },
+          {
+            "path": "/api/v1/api/v1/github/issue/progress",
+            "methods": [
+              "POST"
+            ],
+            "name": "update_issue_progress"
+          },
+          {
+            "path": "/api/v1/api/v1/github/issue/{issue_id}/close",
+            "methods": [
+              "POST"
+            ],
+            "name": "close_issue"
+          },
+          {
+            "path": "/api/v1/api/v1/github/issue/list",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agent_issues"
+          },
+          {
+            "path": "/api/v1/api/v1/github/issue/recommendations",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_issue_recommendations"
+          },
+          {
+            "path": "/api/v1/api/v1/github/repository/{repository_id}/sync-issues",
+            "methods": [
+              "POST"
+            ],
+            "name": "sync_repository_issues"
+          },
+          {
+            "path": "/api/v1/api/v1/github/code-review/create",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_code_review"
+          },
+          {
+            "path": "/api/v1/api/v1/github/code-review/statistics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_code_review_statistics"
+          },
+          {
+            "path": "/api/v1/api/v1/github/webhook",
+            "methods": [
+              "POST"
+            ],
+            "name": "handle_github_webhook"
+          },
+          {
+            "path": "/api/v1/api/v1/github/webhook/setup",
+            "methods": [
+              "POST"
+            ],
+            "name": "setup_repository_webhook"
+          },
+          {
+            "path": "/api/v1/api/v1/github/webhook/statistics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_webhook_statistics"
+          },
+          {
+            "path": "/api/v1/api/v1/github/statistics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_github_integration_statistics"
+          },
+          {
+            "path": "/api/v1/api/v1/github/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_github_integration_health"
+          },
+          {
+            "path": "/api/v1/api/v1/github/repository/validate",
+            "methods": [
+              "POST"
+            ],
+            "name": "validate_repository_access"
+          },
+          {
+            "path": "/api/v1/api/v1/github/performance",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_performance_metrics"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/dashboard",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_coordination_dashboard"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/record-coordination-result",
+            "methods": [
+              "POST"
+            ],
+            "name": "record_coordination_result"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/recovery-actions/restart-agent/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "restart_agent_action"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/recovery-actions/reset-coordination",
+            "methods": [
+              "POST"
+            ],
+            "name": "reset_coordination_system"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/task-distribution/reassign/{task_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "reassign_task"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/test/generate-coordination-data",
+            "methods": [
+              "POST"
+            ],
+            "name": "generate_test_coordination_data"
+          },
+          {
+            "path": "/api/v1/api/project-index/create",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_project_index"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_project_index"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}/refresh",
+            "methods": [
+              "PUT"
+            ],
+            "name": "refresh_project_index"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "delete_project_index"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}/files",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_project_files"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}/files/{file_path:path}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_file_analysis"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}/analyze",
+            "methods": [
+              "POST"
+            ],
+            "name": "analyze_project"
+          },
+          {
+            "path": "/api/v1/api/project-index/{project_id}/dependencies",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_project_dependencies"
+          },
+          {
+            "path": "/api/v1/api/project-index/ws/stats",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_stats"
+          },
+          {
+            "path": "/api/v1/agents/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_agent"
+          },
+          {
+            "path": "/api/v1/agents/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agents"
+          },
+          {
+            "path": "/api/v1/agents/{agent_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent"
+          },
+          {
+            "path": "/api/v1/agents/{agent_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "shutdown_agent"
+          },
+          {
+            "path": "/api/v1/agents/{agent_id}/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_status"
+          },
+          {
+            "path": "/api/v1/agents/system/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_system_status"
+          },
+          {
+            "path": "/api/v1/",
+            "methods": [
+              "GET"
+            ],
+            "name": "api_root"
+          },
+          {
+            "path": "/api/v1/protected/ping",
+            "methods": [
+              "GET"
+            ],
+            "name": "protected_ping"
+          },
+          {
+            "path": "/api/v1/protected/admin",
+            "methods": [
+              "GET"
+            ],
+            "name": "protected_admin_route"
+          },
+          {
+            "path": "/api/v1/error-handling/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_error_handling_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/circuit-breakers",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_circuit_breaker_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/graceful-degradation",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_graceful_degradation_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/workflow-error-handling",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_workflow_error_handling_health"
+          },
+          {
+            "path": "/api/v1/error-handling/health/configuration",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_configuration_health"
+          },
+          {
+            "path": "/api/v1/error-handling/metrics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_error_handling_metrics"
+          },
+          {
+            "path": "/api/v1/error-handling/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_error_handling_status"
+          },
+          {
+            "path": "/api/v1/error-handling/reset-metrics",
+            "methods": [
+              "POST"
+            ],
+            "name": "reset_error_handling_metrics"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/patterns/execute",
+            "methods": [
+              "POST"
+            ],
+            "name": "execute_coordination_pattern"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/teams/form",
+            "methods": [
+              "POST"
+            ],
+            "name": "form_multi_agent_team"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/collaborate",
+            "methods": [
+              "POST"
+            ],
+            "name": "initiate_agent_collaboration"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_enhanced_coordination_status"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/patterns",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_coordination_patterns"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/agents",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_specialized_agents"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/collaborations/{collaboration_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_collaboration_details"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/demonstration",
+            "methods": [
+              "POST"
+            ],
+            "name": "run_coordination_demonstration"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/analytics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_coordination_analytics"
+          },
+          {
+            "path": "/api/v1/global-coordination/deployment/coordinate",
+            "methods": [
+              "POST"
+            ],
+            "name": "coordinate_global_deployment"
+          },
+          {
+            "path": "/api/v1/global-coordination/strategy/execute",
+            "methods": [
+              "POST"
+            ],
+            "name": "execute_strategic_initiative"
+          },
+          {
+            "path": "/api/v1/global-coordination/operations/timezone-coordination",
+            "methods": [
+              "POST"
+            ],
+            "name": "setup_timezone_coordination"
+          },
+          {
+            "path": "/api/v1/global-coordination/operations/cultural-adaptation",
+            "methods": [
+              "POST"
+            ],
+            "name": "implement_cultural_adaptation"
+          },
+          {
+            "path": "/api/v1/global-coordination/operations/compliance-management",
+            "methods": [
+              "POST"
+            ],
+            "name": "manage_regulatory_compliance"
+          },
+          {
+            "path": "/api/v1/global-coordination/executive/dashboard",
+            "methods": [
+              "GET"
+            ],
+            "name": "generate_executive_dashboard"
+          },
+          {
+            "path": "/api/v1/global-coordination/executive/decision-support",
+            "methods": [
+              "POST"
+            ],
+            "name": "provide_strategic_decision_support"
+          },
+          {
+            "path": "/api/v1/global-coordination/executive/crisis-management",
+            "methods": [
+              "POST"
+            ],
+            "name": "activate_crisis_management"
+          },
+          {
+            "path": "/api/v1/global-coordination/performance/global-metrics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_global_performance_metrics"
+          },
+          {
+            "path": "/api/v1/global-coordination/optimization/resource-allocation",
+            "methods": [
+              "GET"
+            ],
+            "name": "optimize_global_resource_allocation"
+          },
+          {
+            "path": "/api/v1/global-coordination/status/coordination/{coordination_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_coordination_status"
+          },
+          {
+            "path": "/api/v1/global-coordination/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          },
+          {
+            "path": "/api/v1/sleep/cycle/start",
+            "methods": [
+              "POST"
+            ],
+            "name": "start_sleep_cycle"
+          },
+          {
+            "path": "/api/v1/sleep/cycle/wake",
+            "methods": [
+              "POST"
+            ],
+            "name": "wake_agent"
+          },
+          {
+            "path": "/api/v1/sleep/bulk/sleep",
+            "methods": [
+              "POST"
+            ],
+            "name": "bulk_sleep_operation"
+          },
+          {
+            "path": "/api/v1/sleep/schedule/create",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_schedule"
+          },
+          {
+            "path": "/api/v1/sleep/schedule/list",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_schedules"
+          },
+          {
+            "path": "/api/v1/sleep/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_system_status"
+          },
+          {
+            "path": "/api/v1/sleep/configuration/update",
+            "methods": [
+              "POST"
+            ],
+            "name": "update_system_configuration"
+          },
+          {
+            "path": "/api/v1/sleep/emergency/shutdown",
+            "methods": [
+              "POST"
+            ],
+            "name": "emergency_shutdown"
+          },
+          {
+            "path": "/api/v1/sleep/optimization/run",
+            "methods": [
+              "POST"
+            ],
+            "name": "run_system_optimization"
+          },
+          {
+            "path": "/api/v1/sleep/diagnostics/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "comprehensive_health_check"
+          },
+          {
+            "path": "/api/v1/sleep/recovery/history",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_recovery_history"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/patterns/analyze",
+            "methods": [
+              "POST"
+            ],
+            "name": "analyze_activity_patterns"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/schedule/optimize",
+            "methods": [
+              "POST"
+            ],
+            "name": "generate_optimal_schedule"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/configuration/adaptive",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_adaptive_configuration"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/conflicts/resolve",
+            "methods": [
+              "POST"
+            ],
+            "name": "resolve_schedule_conflicts"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/predictions/forecast",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_predictive_forecast"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/learning/train",
+            "methods": [
+              "POST"
+            ],
+            "name": "trigger_model_training"
+          },
+          {
+            "path": "/api/v1/intelligent-scheduling/performance/metrics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_scheduling_performance_metrics"
+          },
+          {
+            "path": "/api/v1/monitoring/realtime/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_realtime_system_status"
+          },
+          {
+            "path": "/api/v1/monitoring/alerts/active",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_active_alerts"
+          },
+          {
+            "path": "/api/v1/monitoring/alerts/configure",
+            "methods": [
+              "POST"
+            ],
+            "name": "configure_alert"
+          },
+          {
+            "path": "/api/v1/monitoring/reports/generate",
+            "methods": [
+              "POST"
+            ],
+            "name": "generate_report"
+          },
+          {
+            "path": "/api/v1/monitoring/reports/{report_id}/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_report_status"
+          },
+          {
+            "path": "/api/v1/monitoring/dashboard/data",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_dashboard_data"
+          },
+          {
+            "path": "/api/v1/monitoring/dashboard/configure",
+            "methods": [
+              "POST"
+            ],
+            "name": "configure_dashboard"
+          },
+          {
+            "path": "/api/v1/monitoring/diagnostics/performance",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_performance_diagnostics"
+          },
+          {
+            "path": "/api/v1/intelligence/alerts/analyze",
+            "methods": [
+              "POST"
+            ],
+            "name": "analyze_alert"
+          },
+          {
+            "path": "/api/v1/intelligence/alerts/metrics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_alert_metrics"
+          },
+          {
+            "path": "/api/v1/intelligence/alerts/patterns",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_alert_patterns"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_user_preferences"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}/notifications",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_notification_preferences"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}/dashboard",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_dashboard_preferences"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}/usage",
+            "methods": [
+              "POST"
+            ],
+            "name": "track_usage"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}/dashboard-config",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_personalized_dashboard_config"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}/insights",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_productivity_insights"
+          },
+          {
+            "path": "/api/v1/intelligence/preferences/{user_id}/notification-check",
+            "methods": [
+              "POST"
+            ],
+            "name": "check_notification_preferences"
+          },
+          {
+            "path": "/api/v1/intelligence/ml/collect-data",
+            "methods": [
+              "POST"
+            ],
+            "name": "collect_ml_data"
+          },
+          {
+            "path": "/api/v1/intelligence/ml/predict",
+            "methods": [
+              "POST"
+            ],
+            "name": "get_intelligence_prediction"
+          },
+          {
+            "path": "/api/v1/intelligence/ml/measure-signal-relevance",
+            "methods": [
+              "POST"
+            ],
+            "name": "measure_signal_relevance"
+          },
+          {
+            "path": "/api/v1/intelligence/ml/insights",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_intelligence_insights"
+          },
+          {
+            "path": "/api/v1/intelligence/performance/trends",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_performance_trends"
+          },
+          {
+            "path": "/api/v1/intelligence/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_intelligence_system_status"
+          },
+          {
+            "path": "/api/v1/intelligence/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          },
+          {
+            "path": "/api/v1/security/login",
+            "methods": [
+              "POST"
+            ],
+            "name": "login_user"
+          },
+          {
+            "path": "/api/v1/security/register",
+            "methods": [
+              "POST"
+            ],
+            "name": "register_user"
+          },
+          {
+            "path": "/api/v1/security/logout",
+            "methods": [
+              "POST"
+            ],
+            "name": "logout_user"
+          },
+          {
+            "path": "/api/v1/security/mfa/setup",
+            "methods": [
+              "POST"
+            ],
+            "name": "setup_mfa"
+          },
+          {
+            "path": "/api/v1/security/mfa/verify",
+            "methods": [
+              "POST"
+            ],
+            "name": "verify_mfa"
+          },
+          {
+            "path": "/api/v1/security/api-keys",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_api_key"
+          },
+          {
+            "path": "/api/v1/security/api-keys",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_api_keys"
+          },
+          {
+            "path": "/api/v1/security/api-keys/{key_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "revoke_api_key"
+          },
+          {
+            "path": "/api/v1/security/events",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_security_events"
+          },
+          {
+            "path": "/api/v1/security/rate-limit/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_rate_limit_status"
+          },
+          {
+            "path": "/api/v1/security/config",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_security_config"
+          },
+          {
+            "path": "/api/v1/security/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "security_health_check"
+          },
+          {
+            "path": "/api/v1/memory/sleep",
+            "methods": [
+              "POST"
+            ],
+            "name": "initiate_sleep_cycle"
+          },
+          {
+            "path": "/api/v1/memory/wake",
+            "methods": [
+              "POST"
+            ],
+            "name": "initiate_wake_cycle"
+          },
+          {
+            "path": "/api/v1/memory/consolidate",
+            "methods": [
+              "POST"
+            ],
+            "name": "perform_consolidation"
+          },
+          {
+            "path": "/api/v1/memory/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_system_status"
+          },
+          {
+            "path": "/api/v1/memory/metrics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_performance_metrics"
+          },
+          {
+            "path": "/api/v1/memory/config/thresholds",
+            "methods": [
+              "POST"
+            ],
+            "name": "configure_thresholds"
+          },
+          {
+            "path": "/api/v1/memory/autonomous/start",
+            "methods": [
+              "POST"
+            ],
+            "name": "start_autonomous_learning"
+          },
+          {
+            "path": "/api/v1/memory/autonomous/stop/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "stop_autonomous_learning"
+          },
+          {
+            "path": "/api/v1/memory/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "health_check"
+          }
+        ],
+        "api_v2_endpoints": [
+          {
+            "path": "/api/v2/agents/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_agent"
+          },
+          {
+            "path": "/api/v2/agents/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agents"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}/status",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_agent_status"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "delete_agent"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_health"
+          },
+          {
+            "path": "/api/v2/tasks/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_task"
+          },
+          {
+            "path": "/api/v2/tasks/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_tasks"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_task"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}/status",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_task_status"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "delete_task"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}/assign/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "assign_task_to_agent"
+          }
+        ],
+        "agent_endpoints": [
+          {
+            "path": "/api/v2/agents/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_agent"
+          },
+          {
+            "path": "/api/v2/agents/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agents"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}/status",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_agent_status"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "delete_agent"
+          },
+          {
+            "path": "/api/v2/agents/{agent_id}/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_health"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}/assign/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "assign_task_to_agent"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/recovery-actions/restart-agent/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "restart_agent_action"
+          },
+          {
+            "path": "/api/v1/agents/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_agent"
+          },
+          {
+            "path": "/api/v1/agents/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_agents"
+          },
+          {
+            "path": "/api/v1/agents/{agent_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent"
+          },
+          {
+            "path": "/api/v1/agents/{agent_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "shutdown_agent"
+          },
+          {
+            "path": "/api/v1/agents/{agent_id}/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_status"
+          },
+          {
+            "path": "/api/v1/agents/system/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_system_status"
+          },
+          {
+            "path": "/api/v1/enhanced-coordination/agents",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_specialized_agents"
+          },
+          {
+            "path": "/analytics/efficiency/{agent_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_efficiency_metrics"
+          },
+          {
+            "path": "/analytics/trends/{agent_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_consolidation_trends"
+          },
+          {
+            "path": "/analytics/quick/agent/{agent_id}/summary",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_quick_summary"
+          },
+          {
+            "path": "/api/agents/activate",
+            "methods": [
+              "POST"
+            ],
+            "name": "activate_agent_system"
+          },
+          {
+            "path": "/api/agents/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_system_status"
+          },
+          {
+            "path": "/api/agents/spawn/{role}",
+            "methods": [
+              "POST"
+            ],
+            "name": "spawn_specific_agent"
+          },
+          {
+            "path": "/api/agents/deactivate",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "deactivate_agent_system"
+          },
+          {
+            "path": "/api/agents/capabilities",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_capabilities"
+          },
+          {
+            "path": "/api/mobile/agent-update",
+            "methods": [
+              "POST"
+            ],
+            "name": "update_mobile_agent_status"
+          },
+          {
+            "path": "/api/debug/agent-flows",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_flows"
+          },
+          {
+            "path": "/api/debug/track-agent-step",
+            "methods": [
+              "POST"
+            ],
+            "name": "track_agent_step"
+          },
+          {
+            "path": "/api/v1/memory/autonomous/stop/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "stop_autonomous_learning"
+          },
+          {
+            "path": "/api/dashboard/agents/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agents_status"
+          },
+          {
+            "path": "/api/dashboard/agents/{agent_id}/metrics",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_metrics"
+          },
+          {
+            "path": "/api/dashboard/agents/{agent_id}/restart",
+            "methods": [
+              "POST"
+            ],
+            "name": "restart_agent"
+          },
+          {
+            "path": "/api/dashboard/agents/heartbeat",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agents_heartbeat"
+          },
+          {
+            "path": "/api/dashboard/metrics/agents",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_metrics"
+          },
+          {
+            "path": "/api/agents/status",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_status"
+          },
+          {
+            "path": "/api/agents/activate",
+            "methods": [
+              "POST"
+            ],
+            "name": "activate_agents"
+          },
+          {
+            "path": "/api/agents/deactivate",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "deactivate_agents"
+          },
+          {
+            "path": "/debug-agents",
+            "methods": [
+              "GET"
+            ],
+            "name": "debug_agents"
+          }
+        ],
+        "task_endpoints": [
+          {
+            "path": "/api/v2/tasks/",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_task"
+          },
+          {
+            "path": "/api/v2/tasks/",
+            "methods": [
+              "GET"
+            ],
+            "name": "list_tasks"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_task"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}/status",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_task_status"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}",
+            "methods": [
+              "DELETE"
+            ],
+            "name": "delete_task"
+          },
+          {
+            "path": "/api/v2/tasks/{task_id}/assign/{agent_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "assign_task_to_agent"
+          },
+          {
+            "path": "/api/v1/api/v1/pilots/{pilot_id}/development-tasks",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_development_task"
+          },
+          {
+            "path": "/api/v1/api/v1/coordination-monitoring/task-distribution/reassign/{task_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "reassign_task"
+          },
+          {
+            "path": "/api/dashboard/tasks/queue",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_task_queue_status"
+          },
+          {
+            "path": "/api/dashboard/tasks/{task_id}/reassign",
+            "methods": [
+              "POST"
+            ],
+            "name": "reassign_task"
+          },
+          {
+            "path": "/api/dashboard/tasks/distribution",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_task_distribution_visualization"
+          },
+          {
+            "path": "/api/dashboard/tasks/{task_id}/retry",
+            "methods": [
+              "POST"
+            ],
+            "name": "retry_failed_task"
+          },
+          {
+            "path": "/api/tasks/active",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_active_tasks"
+          },
+          {
+            "path": "/api/tasks",
+            "methods": [
+              "POST"
+            ],
+            "name": "create_task_cli"
+          },
+          {
+            "path": "/api/tasks/{task_id}",
+            "methods": [
+              "PUT"
+            ],
+            "name": "update_task_cli"
+          }
+        ],
+        "websocket_endpoints": [
+          {
+            "path": "/api/v1/ws/websocket/stats",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_stats"
+          },
+          {
+            "path": "/api/v1/api/project-index/ws/stats",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_stats"
+          },
+          {
+            "path": "/api/debug/agent-flows",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_agent_flows"
+          },
+          {
+            "path": "/api/dashboard/websocket/stats",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_stats"
+          },
+          {
+            "path": "/api/dashboard/websocket/broadcast",
+            "methods": [
+              "POST"
+            ],
+            "name": "broadcast_message"
+          },
+          {
+            "path": "/api/dashboard/websocket/disconnect/{connection_id}",
+            "methods": [
+              "POST"
+            ],
+            "name": "disconnect_websocket_client"
+          },
+          {
+            "path": "/api/dashboard/websocket/health",
+            "methods": [
+              "GET"
+            ],
+            "name": "websocket_health_check"
+          },
+          {
+            "path": "/api/dashboard/websocket/limits",
+            "methods": [
+              "GET"
+            ],
+            "name": "websocket_limits"
+          },
+          {
+            "path": "/api/dashboard/websocket/contract",
+            "methods": [
+              "GET"
+            ],
+            "name": "websocket_contract_info"
+          },
+          {
+            "path": "/api/dashboard/metrics/websockets",
+            "methods": [
+              "GET"
+            ],
+            "name": "websocket_metrics"
+          },
+          {
+            "path": "/api/dashboard/metrics/websockets",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_metrics"
+          },
+          {
+            "path": "/api/workflows/active",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_active_workflows"
+          },
+          {
+            "path": "/api/project-index/ws/stats",
+            "methods": [
+              "GET"
+            ],
+            "name": "get_websocket_stats"
+          }
+        ]
+      },
+      "endpoints": [
+        {
+          "path": "/openapi.json",
+          "methods": [
+            "HEAD",
+            "GET"
+          ],
+          "name": "openapi"
+        },
+        {
+          "path": "/docs",
+          "methods": [
+            "HEAD",
+            "GET"
+          ],
+          "name": "swagger_ui_html"
+        },
+        {
+          "path": "/docs/oauth2-redirect",
+          "methods": [
+            "HEAD",
+            "GET"
+          ],
+          "name": "swagger_ui_redirect"
+        },
+        {
+          "path": "/redoc",
+          "methods": [
+            "HEAD",
+            "GET"
+          ],
+          "name": "redoc_html"
+        },
+        {
+          "path": "/api/v2/agents/",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_agent"
+        },
+        {
+          "path": "/api/v2/agents/",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_agents"
+        },
+        {
+          "path": "/api/v2/agents/{agent_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent"
+        },
+        {
+          "path": "/api/v2/agents/{agent_id}/status",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_agent_status"
+        },
+        {
+          "path": "/api/v2/agents/{agent_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "delete_agent"
+        },
+        {
+          "path": "/api/v2/agents/{agent_id}/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_health"
+        },
+        {
+          "path": "/api/v2/tasks/",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_task"
+        },
+        {
+          "path": "/api/v2/tasks/",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_tasks"
+        },
+        {
+          "path": "/api/v2/tasks/{task_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_task"
+        },
+        {
+          "path": "/api/v2/tasks/{task_id}/status",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_task_status"
+        },
+        {
+          "path": "/api/v2/tasks/{task_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "delete_task"
+        },
+        {
+          "path": "/api/v2/tasks/{task_id}/assign/{agent_id}",
+          "methods": [
+            "POST"
+          ],
+          "name": "assign_task_to_agent"
+        },
+        {
+          "path": "/api/v1/auth/login",
+          "methods": [
+            "POST"
+          ],
+          "name": "login_user"
+        },
+        {
+          "path": "/api/v1/auth/me",
+          "methods": [
+            "GET"
+          ],
+          "name": "me"
+        },
+        {
+          "path": "/api/v1/auth/refresh",
+          "methods": [
+            "POST"
+          ],
+          "name": "refresh"
+        },
+        {
+          "path": "/api/v1/auth/logout",
+          "methods": [
+            "POST"
+          ],
+          "name": "logout"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_enterprise_pilot"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_enterprise_pilots"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/{pilot_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_enterprise_pilot"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/{pilot_id}/status",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_pilot_status"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/{pilot_id}/roi-metrics",
+          "methods": [
+            "POST"
+          ],
+          "name": "record_roi_metrics"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/{pilot_id}/development-tasks",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_development_task"
+        },
+        {
+          "path": "/api/v1/api/v1/pilots/{pilot_id}/analytics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_pilot_analytics"
+        },
+        {
+          "path": "/api/v1/ws/websocket/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_websocket_stats"
+        },
+        {
+          "path": "/api/v1/api/v1/github/repository/setup",
+          "methods": [
+            "POST"
+          ],
+          "name": "setup_repository"
+        },
+        {
+          "path": "/api/v1/api/v1/github/repository/{repository_id}/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_repository_status"
+        },
+        {
+          "path": "/api/v1/api/v1/github/work-tree/sync",
+          "methods": [
+            "POST"
+          ],
+          "name": "sync_work_tree"
+        },
+        {
+          "path": "/api/v1/api/v1/github/work-tree/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_agent_work_trees"
+        },
+        {
+          "path": "/api/v1/api/v1/github/branch/create",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_agent_branch"
+        },
+        {
+          "path": "/api/v1/api/v1/github/branch/sync",
+          "methods": [
+            "POST"
+          ],
+          "name": "sync_branch_with_main"
+        },
+        {
+          "path": "/api/v1/api/v1/github/branch/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_agent_branches"
+        },
+        {
+          "path": "/api/v1/api/v1/github/pull-request/create",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_pull_request"
+        },
+        {
+          "path": "/api/v1/api/v1/github/pull-request/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_agent_pull_requests"
+        },
+        {
+          "path": "/api/v1/api/v1/github/pull-request/{pr_id}/status",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_pull_request_status"
+        },
+        {
+          "path": "/api/v1/api/v1/github/issue/assign",
+          "methods": [
+            "POST"
+          ],
+          "name": "assign_issue_to_agent"
+        },
+        {
+          "path": "/api/v1/api/v1/github/issue/progress",
+          "methods": [
+            "POST"
+          ],
+          "name": "update_issue_progress"
+        },
+        {
+          "path": "/api/v1/api/v1/github/issue/{issue_id}/close",
+          "methods": [
+            "POST"
+          ],
+          "name": "close_issue"
+        },
+        {
+          "path": "/api/v1/api/v1/github/issue/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_agent_issues"
+        },
+        {
+          "path": "/api/v1/api/v1/github/issue/recommendations",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_issue_recommendations"
+        },
+        {
+          "path": "/api/v1/api/v1/github/repository/{repository_id}/sync-issues",
+          "methods": [
+            "POST"
+          ],
+          "name": "sync_repository_issues"
+        },
+        {
+          "path": "/api/v1/api/v1/github/code-review/create",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_code_review"
+        },
+        {
+          "path": "/api/v1/api/v1/github/code-review/statistics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_code_review_statistics"
+        },
+        {
+          "path": "/api/v1/api/v1/github/webhook",
+          "methods": [
+            "POST"
+          ],
+          "name": "handle_github_webhook"
+        },
+        {
+          "path": "/api/v1/api/v1/github/webhook/setup",
+          "methods": [
+            "POST"
+          ],
+          "name": "setup_repository_webhook"
+        },
+        {
+          "path": "/api/v1/api/v1/github/webhook/statistics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_webhook_statistics"
+        },
+        {
+          "path": "/api/v1/api/v1/github/statistics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_github_integration_statistics"
+        },
+        {
+          "path": "/api/v1/api/v1/github/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_github_integration_health"
+        },
+        {
+          "path": "/api/v1/api/v1/github/repository/validate",
+          "methods": [
+            "POST"
+          ],
+          "name": "validate_repository_access"
+        },
+        {
+          "path": "/api/v1/api/v1/github/performance",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_performance_metrics"
+        },
+        {
+          "path": "/api/v1/api/v1/coordination-monitoring/dashboard",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_dashboard"
+        },
+        {
+          "path": "/api/v1/api/v1/coordination-monitoring/record-coordination-result",
+          "methods": [
+            "POST"
+          ],
+          "name": "record_coordination_result"
+        },
+        {
+          "path": "/api/v1/api/v1/coordination-monitoring/recovery-actions/restart-agent/{agent_id}",
+          "methods": [
+            "POST"
+          ],
+          "name": "restart_agent_action"
+        },
+        {
+          "path": "/api/v1/api/v1/coordination-monitoring/recovery-actions/reset-coordination",
+          "methods": [
+            "POST"
+          ],
+          "name": "reset_coordination_system"
+        },
+        {
+          "path": "/api/v1/api/v1/coordination-monitoring/task-distribution/reassign/{task_id}",
+          "methods": [
+            "POST"
+          ],
+          "name": "reassign_task"
+        },
+        {
+          "path": "/api/v1/api/v1/coordination-monitoring/test/generate-coordination-data",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate_test_coordination_data"
+        },
+        {
+          "path": "/api/v1/api/project-index/create",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_project_index"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_project_index"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}/refresh",
+          "methods": [
+            "PUT"
+          ],
+          "name": "refresh_project_index"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "delete_project_index"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}/files",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_project_files"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}/files/{file_path:path}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_file_analysis"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_project"
+        },
+        {
+          "path": "/api/v1/api/project-index/{project_id}/dependencies",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_project_dependencies"
+        },
+        {
+          "path": "/api/v1/api/project-index/ws/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_websocket_stats"
+        },
+        {
+          "path": "/api/v1/agents/",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_agent"
+        },
+        {
+          "path": "/api/v1/agents/",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_agents"
+        },
+        {
+          "path": "/api/v1/agents/{agent_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent"
+        },
+        {
+          "path": "/api/v1/agents/{agent_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "shutdown_agent"
+        },
+        {
+          "path": "/api/v1/agents/{agent_id}/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_status"
+        },
+        {
+          "path": "/api/v1/agents/system/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_status"
+        },
+        {
+          "path": "/api/v1/",
+          "methods": [
+            "GET"
+          ],
+          "name": "api_root"
+        },
+        {
+          "path": "/api/v1/protected/ping",
+          "methods": [
+            "GET"
+          ],
+          "name": "protected_ping"
+        },
+        {
+          "path": "/api/v1/protected/admin",
+          "methods": [
+            "GET"
+          ],
+          "name": "protected_admin_route"
+        },
+        {
+          "path": "/api/v1/error-handling/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_error_handling_health"
+        },
+        {
+          "path": "/api/v1/error-handling/health/circuit-breakers",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_circuit_breaker_health"
+        },
+        {
+          "path": "/api/v1/error-handling/health/graceful-degradation",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_graceful_degradation_health"
+        },
+        {
+          "path": "/api/v1/error-handling/health/workflow-error-handling",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_workflow_error_handling_health"
+        },
+        {
+          "path": "/api/v1/error-handling/health/configuration",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_configuration_health"
+        },
+        {
+          "path": "/api/v1/error-handling/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_error_handling_metrics"
+        },
+        {
+          "path": "/api/v1/error-handling/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_error_handling_status"
+        },
+        {
+          "path": "/api/v1/error-handling/reset-metrics",
+          "methods": [
+            "POST"
+          ],
+          "name": "reset_error_handling_metrics"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/patterns/execute",
+          "methods": [
+            "POST"
+          ],
+          "name": "execute_coordination_pattern"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/teams/form",
+          "methods": [
+            "POST"
+          ],
+          "name": "form_multi_agent_team"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/collaborate",
+          "methods": [
+            "POST"
+          ],
+          "name": "initiate_agent_collaboration"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_enhanced_coordination_status"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/patterns",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_coordination_patterns"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/agents",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_specialized_agents"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/collaborations/{collaboration_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_collaboration_details"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/demonstration",
+          "methods": [
+            "POST"
+          ],
+          "name": "run_coordination_demonstration"
+        },
+        {
+          "path": "/api/v1/enhanced-coordination/analytics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_analytics"
+        },
+        {
+          "path": "/api/v1/global-coordination/deployment/coordinate",
+          "methods": [
+            "POST"
+          ],
+          "name": "coordinate_global_deployment"
+        },
+        {
+          "path": "/api/v1/global-coordination/strategy/execute",
+          "methods": [
+            "POST"
+          ],
+          "name": "execute_strategic_initiative"
+        },
+        {
+          "path": "/api/v1/global-coordination/operations/timezone-coordination",
+          "methods": [
+            "POST"
+          ],
+          "name": "setup_timezone_coordination"
+        },
+        {
+          "path": "/api/v1/global-coordination/operations/cultural-adaptation",
+          "methods": [
+            "POST"
+          ],
+          "name": "implement_cultural_adaptation"
+        },
+        {
+          "path": "/api/v1/global-coordination/operations/compliance-management",
+          "methods": [
+            "POST"
+          ],
+          "name": "manage_regulatory_compliance"
+        },
+        {
+          "path": "/api/v1/global-coordination/executive/dashboard",
+          "methods": [
+            "GET"
+          ],
+          "name": "generate_executive_dashboard"
+        },
+        {
+          "path": "/api/v1/global-coordination/executive/decision-support",
+          "methods": [
+            "POST"
+          ],
+          "name": "provide_strategic_decision_support"
+        },
+        {
+          "path": "/api/v1/global-coordination/executive/crisis-management",
+          "methods": [
+            "POST"
+          ],
+          "name": "activate_crisis_management"
+        },
+        {
+          "path": "/api/v1/global-coordination/performance/global-metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_global_performance_metrics"
+        },
+        {
+          "path": "/api/v1/global-coordination/optimization/resource-allocation",
+          "methods": [
+            "GET"
+          ],
+          "name": "optimize_global_resource_allocation"
+        },
+        {
+          "path": "/api/v1/global-coordination/status/coordination/{coordination_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_status"
+        },
+        {
+          "path": "/api/v1/global-coordination/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "health_check"
+        },
+        {
+          "path": "/api/v1/sleep/cycle/start",
+          "methods": [
+            "POST"
+          ],
+          "name": "start_sleep_cycle"
+        },
+        {
+          "path": "/api/v1/sleep/cycle/wake",
+          "methods": [
+            "POST"
+          ],
+          "name": "wake_agent"
+        },
+        {
+          "path": "/api/v1/sleep/bulk/sleep",
+          "methods": [
+            "POST"
+          ],
+          "name": "bulk_sleep_operation"
+        },
+        {
+          "path": "/api/v1/sleep/schedule/create",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_schedule"
+        },
+        {
+          "path": "/api/v1/sleep/schedule/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_schedules"
+        },
+        {
+          "path": "/api/v1/sleep/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_status"
+        },
+        {
+          "path": "/api/v1/sleep/configuration/update",
+          "methods": [
+            "POST"
+          ],
+          "name": "update_system_configuration"
+        },
+        {
+          "path": "/api/v1/sleep/emergency/shutdown",
+          "methods": [
+            "POST"
+          ],
+          "name": "emergency_shutdown"
+        },
+        {
+          "path": "/api/v1/sleep/optimization/run",
+          "methods": [
+            "POST"
+          ],
+          "name": "run_system_optimization"
+        },
+        {
+          "path": "/api/v1/sleep/diagnostics/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "comprehensive_health_check"
+        },
+        {
+          "path": "/api/v1/sleep/recovery/history",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_recovery_history"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/patterns/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_activity_patterns"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/schedule/optimize",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate_optimal_schedule"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/configuration/adaptive",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_adaptive_configuration"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/conflicts/resolve",
+          "methods": [
+            "POST"
+          ],
+          "name": "resolve_schedule_conflicts"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/predictions/forecast",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_predictive_forecast"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/learning/train",
+          "methods": [
+            "POST"
+          ],
+          "name": "trigger_model_training"
+        },
+        {
+          "path": "/api/v1/intelligent-scheduling/performance/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_scheduling_performance_metrics"
+        },
+        {
+          "path": "/api/v1/monitoring/realtime/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_realtime_system_status"
+        },
+        {
+          "path": "/api/v1/monitoring/alerts/active",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_active_alerts"
+        },
+        {
+          "path": "/api/v1/monitoring/alerts/configure",
+          "methods": [
+            "POST"
+          ],
+          "name": "configure_alert"
+        },
+        {
+          "path": "/api/v1/monitoring/reports/generate",
+          "methods": [
+            "POST"
+          ],
+          "name": "generate_report"
+        },
+        {
+          "path": "/api/v1/monitoring/reports/{report_id}/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_report_status"
+        },
+        {
+          "path": "/api/v1/monitoring/dashboard/data",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_dashboard_data"
+        },
+        {
+          "path": "/api/v1/monitoring/dashboard/configure",
+          "methods": [
+            "POST"
+          ],
+          "name": "configure_dashboard"
+        },
+        {
+          "path": "/api/v1/monitoring/diagnostics/performance",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_performance_diagnostics"
+        },
+        {
+          "path": "/analytics/dashboard",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_analytics_dashboard"
+        },
+        {
+          "path": "/analytics/efficiency/{agent_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_efficiency_metrics"
+        },
+        {
+          "path": "/analytics/efficiency",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_efficiency_metrics"
+        },
+        {
+          "path": "/analytics/trends/{agent_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_consolidation_trends"
+        },
+        {
+          "path": "/analytics/trends",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_consolidation_trends"
+        },
+        {
+          "path": "/analytics/cycles/{cycle_id}/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_cycle_metrics"
+        },
+        {
+          "path": "/analytics/update-daily",
+          "methods": [
+            "POST"
+          ],
+          "name": "update_daily_analytics"
+        },
+        {
+          "path": "/analytics/export",
+          "methods": [
+            "GET"
+          ],
+          "name": "export_analytics_report"
+        },
+        {
+          "path": "/analytics/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_analytics_health"
+        },
+        {
+          "path": "/analytics/quick/agent/{agent_id}/summary",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_quick_summary"
+        },
+        {
+          "path": "/analytics/quick/system/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_quick_status"
+        },
+        {
+          "path": "/api/agents/activate",
+          "methods": [
+            "POST"
+          ],
+          "name": "activate_agent_system"
+        },
+        {
+          "path": "/api/agents/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_system_status"
+        },
+        {
+          "path": "/api/agents/spawn/{role}",
+          "methods": [
+            "POST"
+          ],
+          "name": "spawn_specific_agent"
+        },
+        {
+          "path": "/api/agents/deactivate",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "deactivate_agent_system"
+        },
+        {
+          "path": "/api/agents/capabilities",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_capabilities"
+        },
+        {
+          "path": "/api/hive/execute",
+          "methods": [
+            "POST"
+          ],
+          "name": "execute_command"
+        },
+        {
+          "path": "/api/hive/list",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_commands"
+        },
+        {
+          "path": "/api/hive/help/{command_name}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_command_help"
+        },
+        {
+          "path": "/api/hive/quick/{command_name}",
+          "methods": [
+            "POST"
+          ],
+          "name": "quick_execute_command"
+        },
+        {
+          "path": "/api/hive/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_command_system_status"
+        },
+        {
+          "path": "/api/hive/mobile/execute",
+          "methods": [
+            "POST"
+          ],
+          "name": "execute_mobile_command"
+        },
+        {
+          "path": "/api/hive/mobile/performance",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_mobile_performance_metrics"
+        },
+        {
+          "path": "/api/hive/mobile/optimize",
+          "methods": [
+            "POST"
+          ],
+          "name": "optimize_mobile_performance"
+        },
+        {
+          "path": "/api/hive/mobile/cache/clear",
+          "methods": [
+            "GET"
+          ],
+          "name": "clear_mobile_cache"
+        },
+        {
+          "path": "/api/v1/intelligence/alerts/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_alert"
+        },
+        {
+          "path": "/api/v1/intelligence/alerts/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_alert_metrics"
+        },
+        {
+          "path": "/api/v1/intelligence/alerts/patterns",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_alert_patterns"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_user_preferences"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}/notifications",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_notification_preferences"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}/dashboard",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_dashboard_preferences"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}/usage",
+          "methods": [
+            "POST"
+          ],
+          "name": "track_usage"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}/dashboard-config",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_personalized_dashboard_config"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}/insights",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_productivity_insights"
+        },
+        {
+          "path": "/api/v1/intelligence/preferences/{user_id}/notification-check",
+          "methods": [
+            "POST"
+          ],
+          "name": "check_notification_preferences"
+        },
+        {
+          "path": "/api/v1/intelligence/ml/collect-data",
+          "methods": [
+            "POST"
+          ],
+          "name": "collect_ml_data"
+        },
+        {
+          "path": "/api/v1/intelligence/ml/predict",
+          "methods": [
+            "POST"
+          ],
+          "name": "get_intelligence_prediction"
+        },
+        {
+          "path": "/api/v1/intelligence/ml/measure-signal-relevance",
+          "methods": [
+            "POST"
+          ],
+          "name": "measure_signal_relevance"
+        },
+        {
+          "path": "/api/v1/intelligence/ml/insights",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_intelligence_insights"
+        },
+        {
+          "path": "/api/v1/intelligence/performance/trends",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_performance_trends"
+        },
+        {
+          "path": "/api/v1/intelligence/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_intelligence_system_status"
+        },
+        {
+          "path": "/api/v1/intelligence/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "health_check"
+        },
+        {
+          "path": "/api/claude/session-start",
+          "methods": [
+            "POST"
+          ],
+          "name": "start_claude_session"
+        },
+        {
+          "path": "/api/claude/session-resume",
+          "methods": [
+            "POST"
+          ],
+          "name": "resume_claude_session"
+        },
+        {
+          "path": "/api/mobile/notifications",
+          "methods": [
+            "POST"
+          ],
+          "name": "send_mobile_notification"
+        },
+        {
+          "path": "/api/mobile/agent-update",
+          "methods": [
+            "POST"
+          ],
+          "name": "update_mobile_agent_status"
+        },
+        {
+          "path": "/api/mobile/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_mobile_dashboard_status"
+        },
+        {
+          "path": "/api/mobile/qr-code",
+          "methods": [
+            "GET"
+          ],
+          "name": "generate_mobile_qr_code"
+        },
+        {
+          "path": "/api/debug/agent-flows",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_flows"
+        },
+        {
+          "path": "/api/debug/performance",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_performance_metrics"
+        },
+        {
+          "path": "/api/debug/track-agent-step",
+          "methods": [
+            "POST"
+          ],
+          "name": "track_agent_step"
+        },
+        {
+          "path": "/api/debug/system-diagnosis",
+          "methods": [
+            "GET"
+          ],
+          "name": "diagnose_system"
+        },
+        {
+          "path": "/api/debug/real-time-metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "stream_real_time_metrics"
+        },
+        {
+          "path": "/api/v1/security/login",
+          "methods": [
+            "POST"
+          ],
+          "name": "login_user"
+        },
+        {
+          "path": "/api/v1/security/register",
+          "methods": [
+            "POST"
+          ],
+          "name": "register_user"
+        },
+        {
+          "path": "/api/v1/security/logout",
+          "methods": [
+            "POST"
+          ],
+          "name": "logout_user"
+        },
+        {
+          "path": "/api/v1/security/mfa/setup",
+          "methods": [
+            "POST"
+          ],
+          "name": "setup_mfa"
+        },
+        {
+          "path": "/api/v1/security/mfa/verify",
+          "methods": [
+            "POST"
+          ],
+          "name": "verify_mfa"
+        },
+        {
+          "path": "/api/v1/security/api-keys",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_api_key"
+        },
+        {
+          "path": "/api/v1/security/api-keys",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_api_keys"
+        },
+        {
+          "path": "/api/v1/security/api-keys/{key_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "revoke_api_key"
+        },
+        {
+          "path": "/api/v1/security/events",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_security_events"
+        },
+        {
+          "path": "/api/v1/security/rate-limit/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_rate_limit_status"
+        },
+        {
+          "path": "/api/v1/security/config",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_security_config"
+        },
+        {
+          "path": "/api/v1/security/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "security_health_check"
+        },
+        {
+          "path": "/api/v1/memory/sleep",
+          "methods": [
+            "POST"
+          ],
+          "name": "initiate_sleep_cycle"
+        },
+        {
+          "path": "/api/v1/memory/wake",
+          "methods": [
+            "POST"
+          ],
+          "name": "initiate_wake_cycle"
+        },
+        {
+          "path": "/api/v1/memory/consolidate",
+          "methods": [
+            "POST"
+          ],
+          "name": "perform_consolidation"
+        },
+        {
+          "path": "/api/v1/memory/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_status"
+        },
+        {
+          "path": "/api/v1/memory/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_performance_metrics"
+        },
+        {
+          "path": "/api/v1/memory/config/thresholds",
+          "methods": [
+            "POST"
+          ],
+          "name": "configure_thresholds"
+        },
+        {
+          "path": "/api/v1/memory/autonomous/start",
+          "methods": [
+            "POST"
+          ],
+          "name": "start_autonomous_learning"
+        },
+        {
+          "path": "/api/v1/memory/autonomous/stop/{agent_id}",
+          "methods": [
+            "POST"
+          ],
+          "name": "stop_autonomous_learning"
+        },
+        {
+          "path": "/api/v1/memory/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "health_check"
+        },
+        {
+          "path": "/api/dashboard/agents/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agents_status"
+        },
+        {
+          "path": "/api/dashboard/agents/{agent_id}/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_metrics"
+        },
+        {
+          "path": "/api/dashboard/agents/{agent_id}/restart",
+          "methods": [
+            "POST"
+          ],
+          "name": "restart_agent"
+        },
+        {
+          "path": "/api/dashboard/agents/heartbeat",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agents_heartbeat"
+        },
+        {
+          "path": "/api/dashboard/coordination/success-rate",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_success_rate"
+        },
+        {
+          "path": "/api/dashboard/coordination/failures",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_failures"
+        },
+        {
+          "path": "/api/dashboard/coordination/reset",
+          "methods": [
+            "POST"
+          ],
+          "name": "reset_coordination_system"
+        },
+        {
+          "path": "/api/dashboard/coordination/diagnostics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_diagnostics"
+        },
+        {
+          "path": "/api/dashboard/coordination/enhanced-metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_enhanced_coordination_metrics_endpoint"
+        },
+        {
+          "path": "/api/dashboard/tasks/queue",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_task_queue_status"
+        },
+        {
+          "path": "/api/dashboard/tasks/{task_id}/reassign",
+          "methods": [
+            "POST"
+          ],
+          "name": "reassign_task"
+        },
+        {
+          "path": "/api/dashboard/tasks/distribution",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_task_distribution_visualization"
+        },
+        {
+          "path": "/api/dashboard/tasks/{task_id}/retry",
+          "methods": [
+            "POST"
+          ],
+          "name": "retry_failed_task"
+        },
+        {
+          "path": "/api/dashboard/system/emergency-override",
+          "methods": [
+            "POST"
+          ],
+          "name": "emergency_system_override"
+        },
+        {
+          "path": "/api/dashboard/system/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_comprehensive_system_health"
+        },
+        {
+          "path": "/api/dashboard/recovery/auto-heal",
+          "methods": [
+            "POST"
+          ],
+          "name": "trigger_automatic_recovery"
+        },
+        {
+          "path": "/api/dashboard/logs/coordination",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_error_logs"
+        },
+        {
+          "path": "/api/dashboard/websocket/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_websocket_stats"
+        },
+        {
+          "path": "/api/dashboard/websocket/broadcast",
+          "methods": [
+            "POST"
+          ],
+          "name": "broadcast_message"
+        },
+        {
+          "path": "/api/dashboard/websocket/disconnect/{connection_id}",
+          "methods": [
+            "POST"
+          ],
+          "name": "disconnect_websocket_client"
+        },
+        {
+          "path": "/api/dashboard/websocket/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "websocket_health_check"
+        },
+        {
+          "path": "/api/dashboard/websocket/limits",
+          "methods": [
+            "GET"
+          ],
+          "name": "websocket_limits"
+        },
+        {
+          "path": "/api/dashboard/websocket/contract",
+          "methods": [
+            "GET"
+          ],
+          "name": "websocket_contract_info"
+        },
+        {
+          "path": "/api/dashboard/metrics/websockets",
+          "methods": [
+            "GET"
+          ],
+          "name": "websocket_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_prometheus_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/coordination",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_coordination_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/agents",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/system",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_system_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/config",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_metrics_configuration"
+        },
+        {
+          "path": "/api/dashboard/metrics/cache/clear",
+          "methods": [
+            "POST"
+          ],
+          "name": "clear_metrics_cache"
+        },
+        {
+          "path": "/api/dashboard/metrics/analytics",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_analytics_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/security",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_security_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/business",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_business_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/websockets",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_websocket_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/mobile",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_mobile_metrics"
+        },
+        {
+          "path": "/api/dashboard/metrics/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "metrics_health_check"
+        },
+        {
+          "path": "/dashboard/api/live-data",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_live_data_compat"
+        },
+        {
+          "path": "/api/tasks/active",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_active_tasks"
+        },
+        {
+          "path": "/api/workflows/active",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_active_workflows"
+        },
+        {
+          "path": "/api/tasks",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_task_cli"
+        },
+        {
+          "path": "/api/tasks/{task_id}",
+          "methods": [
+            "PUT"
+          ],
+          "name": "update_task_cli"
+        },
+        {
+          "path": "/dashboard/api/live-data",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_live_data"
+        },
+        {
+          "path": "/dashboard/api/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_pwa_backend_health"
+        },
+        {
+          "path": "/api/agents/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_agent_status"
+        },
+        {
+          "path": "/api/agents/activate",
+          "methods": [
+            "POST"
+          ],
+          "name": "activate_agents"
+        },
+        {
+          "path": "/api/agents/deactivate",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "deactivate_agents"
+        },
+        {
+          "path": "/api/project-index/create",
+          "methods": [
+            "POST"
+          ],
+          "name": "create_project_index"
+        },
+        {
+          "path": "/api/project-index/{project_id}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_project_index"
+        },
+        {
+          "path": "/api/project-index/{project_id}/refresh",
+          "methods": [
+            "PUT"
+          ],
+          "name": "refresh_project_index"
+        },
+        {
+          "path": "/api/project-index/{project_id}",
+          "methods": [
+            "DELETE"
+          ],
+          "name": "delete_project_index"
+        },
+        {
+          "path": "/api/project-index/{project_id}/files",
+          "methods": [
+            "GET"
+          ],
+          "name": "list_project_files"
+        },
+        {
+          "path": "/api/project-index/{project_id}/files/{file_path:path}",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_file_analysis"
+        },
+        {
+          "path": "/api/project-index/{project_id}/analyze",
+          "methods": [
+            "POST"
+          ],
+          "name": "analyze_project"
+        },
+        {
+          "path": "/api/project-index/{project_id}/dependencies",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_project_dependencies"
+        },
+        {
+          "path": "/api/project-index/ws/stats",
+          "methods": [
+            "GET"
+          ],
+          "name": "get_websocket_stats"
+        },
+        {
+          "path": "/debug-agents",
+          "methods": [
+            "GET"
+          ],
+          "name": "debug_agents"
+        },
+        {
+          "path": "/health",
+          "methods": [
+            "GET"
+          ],
+          "name": "health_check"
+        },
+        {
+          "path": "/status",
+          "methods": [
+            "GET"
+          ],
+          "name": "system_status"
+        },
+        {
+          "path": "/metrics",
+          "methods": [
+            "GET"
+          ],
+          "name": "system_metrics"
+        }
+      ],
+      "error": null
+    }
+  },
+  "summary": {
+    "total_validations": 30,
+    "successful_validations": 30,
+    "failed_validations": 0,
+    "success_rate": 100.0
+  }
+}
