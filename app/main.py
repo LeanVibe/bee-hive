@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     try:
         # Import heavy dependencies lazily to avoid import-time side effects
-        from .core.database import init_database
+        from .core.database import init_database, get_session
         from .core.redis import init_redis, get_redis
         from .core.event_processor import (
             initialize_event_processor,
@@ -392,7 +392,7 @@ def create_app() -> FastAPI:
     async def health_check():
         """Comprehensive health check endpoint aggregating all component status."""
         from .api.ws_utils import WS_CONTRACT_VERSION
-        from .core.database import get_async_session
+        from .core.database import get_session
         from .core.redis import get_redis
         from datetime import datetime
         import json
@@ -413,7 +413,7 @@ def create_app() -> FastAPI:
         # Check Database
         try:
             from sqlalchemy import text
-            async for session in get_async_session():
+            async with get_session() as session:
                 result = await session.execute(text("SELECT 1"))
                 assert result.scalar() == 1
                 health_status["components"]["database"] = {
@@ -422,7 +422,6 @@ def create_app() -> FastAPI:
                     "response_time_ms": "<5"
                 }
                 health_status["summary"]["healthy"] += 1
-                break
         except Exception as e:
             health_status["components"]["database"] = {
                 "status": "unhealthy", 
@@ -545,7 +544,7 @@ def create_app() -> FastAPI:
     @app.get("/status")
     async def system_status():
         """System-wide status endpoint for component monitoring."""
-        from .core.database import get_async_session
+        from .core.database import get_session
         from .core.redis import get_redis
         from datetime import datetime
         
@@ -565,7 +564,7 @@ def create_app() -> FastAPI:
         # Database status
         try:
             from sqlalchemy import text
-            async for session in get_async_session():
+            async with get_session() as session:
                 # Check table count
                 result = await session.execute(text("""
                     SELECT COUNT(*) FROM information_schema.tables 
@@ -577,7 +576,6 @@ def create_app() -> FastAPI:
                     "tables": table_count,
                     "migrations_current": True
                 }
-                break
         except Exception:
             status["components"]["database"]["connected"] = False
         
