@@ -156,10 +156,7 @@ class WebhookSetupRequest(BaseModel):
     events: List[str] = Field(default=["push", "pull_request", "issues"], description="Webhook events")
 
 
-# Dependency functions
-async def get_github_client() -> GitHubAPIClient:
-    """Get GitHub API client."""
-    return github_client
+# Dependency functions - removed duplicate async function (using lazy loading pattern above)
 
 
 async def get_authenticated_agent(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
@@ -258,7 +255,7 @@ async def setup_repository(
             await db.refresh(repository)
             
         # Create work tree for agent
-        work_tree = await work_tree_manager.create_agent_work_tree(
+        work_tree = await get_work_tree_manager().create_agent_work_tree(
             request.agent_id,
             repository
         )
@@ -266,7 +263,7 @@ async def setup_repository(
         # Set up webhook in background
         webhook_url = f"{settings.BASE_URL}/api/v1/github/webhook"
         background_tasks.add_task(
-            webhook_processor.setup_repository_webhook,
+            get_webhook_processor().setup_repository_webhook,
             repository,
             webhook_url
         )
@@ -308,10 +305,10 @@ async def get_repository_status(
             raise HTTPException(status_code=404, detail="Repository not found")
             
         # Get work tree for current agent
-        work_tree = await work_tree_manager.get_agent_work_tree(agent_id, repository_id)
+        work_tree = await get_work_tree_manager().get_agent_work_tree(agent_id, repository_id)
         work_tree_status = None
         if work_tree:
-            work_tree_status = await work_tree_manager.get_work_tree_status(work_tree)
+            work_tree_status = await get_work_tree_manager().get_work_tree_status(work_tree)
             
         return {
             "repository": repository.to_dict(),
@@ -336,11 +333,11 @@ async def sync_work_tree(
     """Sync agent work tree with upstream repository."""
     
     try:
-        work_tree = await work_tree_manager.get_agent_work_tree(agent_id, repository_id)
+        work_tree = await get_work_tree_manager().get_agent_work_tree(agent_id, repository_id)
         if not work_tree:
             raise HTTPException(status_code=404, detail="Work tree not found")
             
-        sync_result = await work_tree_manager.sync_work_tree(work_tree)
+        sync_result = await get_work_tree_manager().sync_work_tree(work_tree)
         
         return {
             "success": True,
@@ -360,7 +357,7 @@ async def list_agent_work_trees(
     """List all work trees for the authenticated agent."""
     
     try:
-        work_trees = await work_tree_manager.list_agent_work_trees(agent_id)
+        work_trees = await get_work_tree_manager().list_agent_work_trees(agent_id)
         return work_trees
         
     except Exception as e:
@@ -390,7 +387,7 @@ async def create_agent_branch(
         if not repository:
             raise HTTPException(status_code=404, detail="Repository not found")
             
-        branch_result = await branch_manager.create_agent_branch(
+        branch_result = await get_branch_manager().create_agent_branch(
             agent_id,
             repository,
             branch_name,
@@ -416,7 +413,7 @@ async def sync_branch_with_main(
     """Sync agent branch with main branch changes."""
     
     try:
-        work_tree = await work_tree_manager.get_agent_work_tree(agent_id, repository_id)
+        work_tree = await get_work_tree_manager().get_agent_work_tree(agent_id, repository_id)
         if not work_tree:
             raise HTTPException(status_code=404, detail="Work tree not found")
             
@@ -425,7 +422,7 @@ async def sync_branch_with_main(
         merge_strategy = MergeStrategy(strategy)
         conflict_resolution_strategy = ConflictResolutionStrategy(conflict_strategy)
         
-        sync_result = await branch_manager.sync_branch_with_main(
+        sync_result = await get_branch_manager().sync_branch_with_main(
             work_tree,
             merge_strategy,
             conflict_resolution_strategy
@@ -446,7 +443,7 @@ async def list_agent_branches(
     """List all branches for the authenticated agent."""
     
     try:
-        branches = await branch_manager.list_agent_branches(agent_id, repository_id)
+        branches = await get_branch_manager().list_agent_branches(agent_id, repository_id)
         return branches
         
     except Exception as e:
@@ -466,7 +463,7 @@ async def create_pull_request(
     
     try:
         # Get work tree and repository
-        work_tree = await work_tree_manager.get_agent_work_tree(request.agent_id, request.repository_id)
+        work_tree = await get_work_tree_manager().get_agent_work_tree(request.agent_id, request.repository_id)
         if not work_tree:
             raise HTTPException(status_code=404, detail="Work tree not found")
             
@@ -479,7 +476,7 @@ async def create_pull_request(
             raise HTTPException(status_code=404, detail="Repository not found")
             
         # Create pull request
-        pr_result = await pr_automator.create_pull_request(
+        pr_result = await get_pr_automator().create_pull_request(
             request.agent_id,
             work_tree,
             repository,
@@ -495,7 +492,7 @@ async def create_pull_request(
         # Schedule automated code review
         if pr_result["success"] and not request.draft:
             background_tasks.add_task(
-                code_review_assistant.perform_comprehensive_review,
+                get_code_review_assistant().perform_comprehensive_review,
                 pr_result["pr_id"]
             )
             
@@ -522,7 +519,7 @@ async def list_agent_pull_requests(
         if status:
             pr_status = PullRequestStatus(status)
             
-        pull_requests = await pr_automator.list_agent_pull_requests(
+        pull_requests = await get_pr_automator().list_agent_pull_requests(
             agent_id,
             repository_id,
             pr_status,
@@ -549,7 +546,7 @@ async def update_pull_request_status(
         from ...models.github_integration import PullRequestStatus
         
         pr_status = PullRequestStatus(status)
-        result = await pr_automator.update_pull_request_status(pr_id, pr_status, context)
+        result = await get_pr_automator().update_pull_request_status(pr_id, pr_status, context)
         
         return result
         
@@ -567,7 +564,7 @@ async def assign_issue_to_agent(
     """Assign issue to agent or auto-assign to best available agent."""
     
     try:
-        assignment_result = await issue_manager.assign_issue_to_agent(
+        assignment_result = await get_issue_manager().assign_issue_to_agent(
             request.issue_id,
             request.agent_id,
             request.auto_assign
@@ -588,7 +585,7 @@ async def update_issue_progress(
     """Update issue progress with agent comment."""
     
     try:
-        progress_result = await issue_manager.update_issue_progress(
+        progress_result = await get_issue_manager().update_issue_progress(
             request.issue_id,
             request.agent_id,
             request.status,
@@ -613,7 +610,7 @@ async def close_issue(
     """Close issue with resolution details."""
     
     try:
-        close_result = await issue_manager.close_issue(
+        close_result = await get_issue_manager().close_issue(
             issue_id,
             agent_id,
             resolution,
@@ -643,7 +640,7 @@ async def list_agent_issues(
         if state:
             issue_state = IssueState(state)
             
-        issues = await issue_manager.list_agent_issues(
+        issues = await get_issue_manager().list_agent_issues(
             agent_id,
             issue_state,
             repository_id,
@@ -665,7 +662,7 @@ async def get_issue_recommendations(
     """Get issue recommendations for agent based on capabilities."""
     
     try:
-        recommendations = await issue_manager.get_issue_recommendations(agent_id, limit)
+        recommendations = await get_issue_manager().get_issue_recommendations(agent_id, limit)
         return recommendations
         
     except Exception as e:
@@ -690,7 +687,7 @@ async def sync_repository_issues(
         if not repository:
             raise HTTPException(status_code=404, detail="Repository not found")
             
-        sync_result = await issue_manager.sync_repository_issues(repository)
+        sync_result = await get_issue_manager().sync_repository_issues(repository)
         
         return sync_result
         
@@ -721,7 +718,7 @@ async def create_code_review(
             
         # Start comprehensive review in background
         background_tasks.add_task(
-            code_review_assistant.perform_comprehensive_review,
+            get_code_review_assistant().perform_comprehensive_review,
             pull_request,
             request.review_types
         )
@@ -746,7 +743,7 @@ async def get_code_review_statistics(
     """Get code review statistics."""
     
     try:
-        statistics = await code_review_assistant.get_review_statistics(days)
+        statistics = await get_code_review_assistant().get_review_statistics(days)
         return statistics
         
     except Exception as e:
@@ -764,7 +761,7 @@ async def handle_github_webhook(
     
     try:
         # Process webhook in background for better response time
-        result = await webhook_processor.process_webhook(request)
+        result = await get_webhook_processor().process_webhook(request)
         
         return result
         
@@ -790,7 +787,7 @@ async def setup_repository_webhook(
         if not repository:
             raise HTTPException(status_code=404, detail="Repository not found")
             
-        setup_result = await webhook_processor.setup_repository_webhook(
+        setup_result = await get_webhook_processor().setup_repository_webhook(
             repository,
             request.webhook_url,
             request.events
@@ -810,7 +807,7 @@ async def get_webhook_statistics(
     """Get webhook processing statistics."""
     
     try:
-        statistics = await webhook_processor.get_processing_statistics()
+        statistics = await get_webhook_processor().get_processing_statistics()
         return statistics
         
     except Exception as e:
@@ -829,12 +826,12 @@ async def get_github_integration_statistics(
     
     try:
         # Gather statistics from all components
-        pr_stats = await pr_automator.performance_report(days)
-        issue_stats = await issue_manager.get_issue_statistics(repository_id, days)
-        review_stats = await code_review_assistant.get_review_statistics(days)
-        branch_stats = await branch_manager.health_check()
-        webhook_stats = await webhook_processor.get_processing_statistics()
-        work_tree_health = await work_tree_manager.health_check()
+        pr_stats = await get_pr_automator().performance_report(days)
+        issue_stats = await get_issue_manager().get_issue_statistics(repository_id, days)
+        review_stats = await get_code_review_assistant().get_review_statistics(days)
+        branch_stats = await get_branch_manager().health_check()
+        webhook_stats = await get_webhook_processor().get_processing_statistics()
+        work_tree_health = await get_work_tree_manager().health_check()
         
         return {
             "period_days": days,
@@ -867,9 +864,9 @@ async def get_github_integration_health(
     
     try:
         # Check all component health
-        github_health = await github_client.health_check()
-        work_tree_health = await work_tree_manager.health_check()
-        branch_health = await branch_manager.health_check()
+        github_health = await get_github_client().health_check()
+        work_tree_health = await get_work_tree_manager().health_check()
+        branch_health = await get_branch_manager().health_check()
         
         overall_health = (
             github_health and
@@ -886,7 +883,7 @@ async def get_github_integration_health(
                 },
                 "work_trees": work_tree_health,
                 "branch_management": branch_health,
-                "rate_limits": await github_client.check_rate_limits()
+                "rate_limits": await get_github_client().check_rate_limits()
             },
             "last_checked": datetime.utcnow().isoformat()
         }
@@ -919,7 +916,7 @@ async def validate_repository_access(
         owner, repo = parts[0], parts[1]
         
         # Check repository accessibility
-        repo_info = await github_client.get_repository(owner, repo)
+        repo_info = await get_github_client().get_repository(owner, repo)
         
         # Check user permissions (this would need proper authentication)
         permissions = {
@@ -961,7 +958,7 @@ async def get_performance_metrics(
     
     try:
         # Get rate limit information
-        rate_limits = await github_client.check_rate_limits()
+        rate_limits = await get_github_client().check_rate_limits()
         
         # Calculate average response times (would need actual tracking)
         performance_metrics = {

@@ -26,7 +26,7 @@ import libtmux
 import psutil
 import structlog
 
-from .config import settings
+from .configuration_service import get_config
 from .database import get_session
 from ..models.agent import Agent
 from ..models.session import Session
@@ -1166,7 +1166,7 @@ class WorkspaceManager:
     
     def __init__(self):
         self.workspaces: Dict[str, AgentWorkspace] = {}
-        self.base_workspace_path = Path(settings.WORKSPACE_DIR)
+        self.base_workspace_path = Path(get_config().workspace_dir)
         self.base_workspace_path.mkdir(parents=True, exist_ok=True)
         
         # Enhanced tmux session management
