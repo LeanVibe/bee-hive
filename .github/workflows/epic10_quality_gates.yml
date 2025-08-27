@@ -1,0 +1,150 @@
+name: Epic 10 Quality Gates - <5 Minute Test Suite
+
+on:
+  push:
+    branches: [ main, feature/*, epic/epic10 ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  epic10-quality-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10  # Epic 10 should complete in <5 minutes
+    
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: 📦 Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: 🔧 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+        pip install pytest-xdist pytest-benchmark
+    
+    - name: 🚀 Epic 10 Parallel Test Execution
+      run: |
+        echo "🎯 Starting Epic 10: <5 Minute Test Suite"
+        start_time=$(date +%s)
+        
+        # Run Epic 10 optimized test suite
+        python epic10_parallel_test_framework.py
+        
+        end_time=$(date +%s)
+        execution_time=$((end_time - start_time))
+        
+        echo "⏱️ Epic 10 Execution Time: ${execution_time}s"
+        
+        # Validate <5 minute target
+        if [ $execution_time -gt 300 ]; then
+          echo "❌ Epic 10 FAILED: Execution time ${execution_time}s exceeds 5 minute target"
+          exit 1
+        else
+          echo "✅ Epic 10 SUCCESS: <5 minute target achieved!"
+        fi
+    
+    - name: 🔍 Epic 7-8-9 Regression Prevention
+      run: |
+        echo "🛡️ Validating Epic 7-8-9 preservation..."
+        python epic10_cicd_quality_gates.py --validate-epics
+    
+    - name: 📊 Generate Quality Report
+      run: |
+        python epic10_cicd_quality_gates.py --generate-report
+      if: always()
+    
+    - name: 📈 Upload Test Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: epic10-quality-gate-results-${{ matrix.python-version }}
+        path: |
+          epic10_*.json
+          epic10_*.html
+      if: always()
+    
+    - name: 💬 Comment PR with Results
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const results = JSON.parse(fs.readFileSync('epic10_quality_gate_results.json', 'utf8'));
+            
+            const comment = `## 🎯 Epic 10 Quality Gate Results
+            
+            **⏱️ Test Suite Execution:** ${results.execution_time}s (Target: <300s)
+            **✅ Tests Passed:** ${results.tests_passed}
+            **❌ Tests Failed:** ${results.tests_failed}  
+            **📈 Reliability Score:** ${results.reliability_score}%
+            
+            ### Epic Preservation Status:
+            - **Epic 7 (94.4% Success Rate):** ${results.epic7_preserved ? '✅ Preserved' : '❌ At Risk'}
+            - **Epic 8 (99.9% Uptime):** ${results.epic8_preserved ? '✅ Preserved' : '❌ At Risk'}
+            - **Epic 9 (87.4% Docs Quality):** ${results.epic9_preserved ? '✅ Preserved' : '❌ At Risk'}
+            
+            ${results.overall_success ? '🎉 **All Quality Gates PASSED!**' : '⚠️ **Quality Gate Failures Detected**'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.error('Failed to post comment:', error);
+          }
+
+  # Nightly comprehensive validation
+  nightly-epic-validation:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - name: 🔧 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+        pip install pytest-xdist pytest-benchmark locust
+    
+    - name: 🌙 Comprehensive Epic Validation
+      run: |
+        echo "🌙 Nightly Epic 10 Comprehensive Validation"
+        python epic10_comprehensive_validation.py --full-suite --performance-benchmarks
+    
+    - name: 📊 Generate Nightly Report
+      run: |
+        python generate_epic10_nightly_report.py
+      if: always()
+    
+    - name: 📧 Notify on Failures
+      if: failure()
+      run: |
+        echo "⚠️ Nightly Epic validation failed - manual review required"
+        # Add notification logic (Slack, email, etc.)

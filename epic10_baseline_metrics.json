@@ -1,0 +1,8 @@
+{
+  "pre_epic10_execution_time": 900.0,
+  "pre_epic10_reliability": 85.0,
+  "pre_epic10_parallel_efficiency": 1.0,
+  "target_execution_time": 300.0,
+  "target_reliability": 100.0,
+  "target_parallel_efficiency": 3.0
+}
