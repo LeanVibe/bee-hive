@@ -1,0 +1,587 @@
+# Epic 8: 99.9% Uptime SLA Monitoring System
+# Comprehensive monitoring and alerting for production uptime guarantees
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@leanvibe.com'
+      smtp_auth_username: 'alerts@leanvibe.com'
+      smtp_auth_password: 'smtp-password'  # From secret
+      resolve_timeout: 5m
+      
+    templates:
+      - '/etc/alertmanager/templates/*.tmpl'
+      
+    route:
+      group_by: ['epic', 'severity', 'alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: 'epic8-uptime-team'
+      routes:
+      
+      # Critical SLA breaches - immediate escalation
+      - match:
+          severity: critical
+          epic: "8"
+        receiver: 'sla-critical-team'
+        group_wait: 10s
+        repeat_interval: 15m
+        continue: true
+        
+      # Epic 7 performance regressions
+      - match:
+          epic: "7"
+        receiver: 'epic7-performance-team'
+        group_wait: 1m
+        repeat_interval: 2h
+        
+      # Infrastructure alerts
+      - match_re:
+          alertname: '(HighCPUUtilization|HighMemoryPressure|DiskSpaceRunningLow)'
+        receiver: 'infrastructure-team'
+        group_wait: 2m
+        repeat_interval: 1h
+        
+      # Database alerts
+      - match_re:
+          alertname: '(PostgreSQL.*|Redis.*)'
+        receiver: 'database-team'
+        group_wait: 1m
+        repeat_interval: 30m
+    
+    receivers:
+    # Primary Epic 8 uptime team
+    - name: 'epic8-uptime-team'
+      email_configs:
+      - to: 'epic8-team@leanvibe.com'
+        subject: '[Epic 8] {{ .GroupLabels.alertname }} - {{ .GroupLabels.severity }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Epic: {{ .Labels.epic }}
+          Severity: {{ .Labels.severity }}
+          Started: {{ .StartsAt | date "2006-01-02 15:04:05" }}
+          {{ end }}
+          
+          Grafana Dashboard: https://grafana.leanvibe.com/d/epic8-overview
+          
+      slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#epic8-alerts'
+        title: 'Epic 8 Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert*: {{ .Annotations.summary }}
+          *Description*: {{ .Annotations.description }}
+          *Epic*: {{ .Labels.epic }}
+          *Severity*: {{ .Labels.severity }}
+          {{ end }}
+    
+    # Critical SLA team with immediate escalation
+    - name: 'sla-critical-team'
+      email_configs:
+      - to: 'sre-oncall@leanvibe.com,cto@leanvibe.com'
+        subject: '🚨 CRITICAL SLA BREACH - {{ .GroupLabels.alertname }}'
+        body: |
+          CRITICAL: 99.9% UPTIME SLA BREACH DETECTED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Started: {{ .StartsAt | date "2006-01-02 15:04:05" }}
+          {{ end }}
+          
+          IMMEDIATE ACTION REQUIRED
+          Dashboard: https://grafana.leanvibe.com/d/sla-monitoring
+          Runbook: https://wiki.leanvibe.com/sre/sla-breach-runbook
+          
+      pagerduty_configs:
+      - routing_key: 'YOUR_PAGERDUTY_INTEGRATION_KEY'
+        description: '99.9% Uptime SLA Breach: {{ .GroupLabels.alertname }}'
+        severity: 'critical'
+        client: 'Epic 8 Monitoring'
+        client_url: 'https://grafana.leanvibe.com/d/sla-monitoring'
+    
+    # Epic 7 performance team
+    - name: 'epic7-performance-team'
+      email_configs:
+      - to: 'performance-team@leanvibe.com'
+        subject: '[Epic 7 Regression] {{ .GroupLabels.alertname }}'
+        body: |
+          Epic 7 Performance Achievement Regression Detected
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Baseline: Epic 7 achieved {{ .Annotations.baseline }}
+          Current: {{ .Annotations.current }}
+          {{ end }}
+          
+          Epic 7 Achievements:
+          - Response Time: <2ms
+          - Throughput: 618.7 req/s
+          - Memory: 221MB
+          - Test Pass Rate: 94.4%
+          
+          Dashboard: https://grafana.leanvibe.com/d/epic7-performance
+    
+    # Infrastructure team
+    - name: 'infrastructure-team'
+      email_configs:
+      - to: 'infrastructure@leanvibe.com'
+        subject: '[Infrastructure] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    
+    # Database team
+    - name: 'database-team'
+      email_configs:
+      - to: 'database@leanvibe.com'
+        subject: '[Database] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    
+    inhibit_rules:
+    # Inhibit redundant alerts
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'epic']
+
+  # Alert templates for professional formatting
+  alert-templates.tmpl: |
+    {{ define "epic8.title" }}
+    [Epic 8 - 99.9% Uptime] {{ .GroupLabels.alertname }}
+    {{ end }}
+    
+    {{ define "epic8.description" }}
+    **Epic 8 Production Alert**
+    
+    **Service:** LeanVibe Agent Hive 2.0
+    **Environment:** Production
+    **SLA Target:** 99.9% Uptime
+    
+    {{ range .Alerts }}
+    **Alert:** {{ .Annotations.summary }}
+    **Details:** {{ .Annotations.description }}
+    **Severity:** {{ .Labels.severity }}
+    **Started:** {{ .StartsAt | date "2006-01-02 15:04:05 UTC" }}
+    {{ if .Labels.epic }}**Epic:** {{ .Labels.epic }}{{ end }}
+    {{ end }}
+    
+    **Quick Links:**
+    - [SLA Dashboard](https://grafana.leanvibe.com/d/sla-monitoring)
+    - [Production Overview](https://grafana.leanvibe.com/d/epic8-overview)
+    - [SRE Runbook](https://wiki.leanvibe.com/sre/incident-response)
+    {{ end }}
+    
+    {{ define "sla.critical.title" }}
+    🚨 CRITICAL: 99.9% UPTIME SLA BREACH
+    {{ end }}
+
+---
+# AlertManager secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-secrets
+  namespace: monitoring
+type: Opaque
+data:
+  smtp-password: c210cC1wYXNzd29yZA==  # smtp-password
+  pagerduty-key: cGFnZXJkdXR5LWtleQ==  # pagerduty-key
+  slack-webhook: c2xhY2std2ViaG9vaw==  # slack-webhook
+
+---
+# AlertManager StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    environment: production
+    epic: "8"
+spec:
+  serviceName: alertmanager-headless
+  replicas: 3  # HA for critical alerting
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+        environment: production
+        epic: "8"
+    spec:
+      serviceAccountName: prometheus-sa
+      priorityClassName: monitoring-priority
+      
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
+        runAsGroup: 65534
+      
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - monitoring
+                - production
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: alertmanager
+            topologyKey: kubernetes.io/hostname
+      
+      tolerations:
+      - key: "node-role.kubernetes.io/monitoring"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.25.0
+        ports:
+        - containerPort: 9093
+          name: alertmanager
+        - containerPort: 9094
+          name: cluster
+        
+        args:
+        - --config.file=/etc/alertmanager/alertmanager.yml
+        - --storage.path=/alertmanager
+        - --data.retention=72h
+        - --web.external-url=https://alertmanager.leanvibe.com
+        - --web.route-prefix=/
+        - --cluster.listen-address=0.0.0.0:9094
+        - --cluster.peer=alertmanager-0.alertmanager-headless:9094
+        - --cluster.peer=alertmanager-1.alertmanager-headless:9094
+        - --cluster.peer=alertmanager-2.alertmanager-headless:9094
+        - --log.level=info
+        
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        
+        volumeMounts:
+        - name: alertmanager-config
+          mountPath: /etc/alertmanager
+        - name: alertmanager-data
+          mountPath: /alertmanager
+        
+        startupProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 20
+        
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9093
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      
+      volumes:
+      - name: alertmanager-config
+        configMap:
+          name: alertmanager-config
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: alertmanager-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: prometheus-ssd
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# AlertManager service
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  ports:
+  - name: alertmanager
+    port: 9093
+    targetPort: 9093
+  - name: cluster
+    port: 9094
+    targetPort: 9094
+  selector:
+    app: alertmanager
+
+---
+# AlertManager headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-headless
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: alertmanager
+    port: 9093
+    targetPort: 9093
+  - name: cluster
+    port: 9094
+    targetPort: 9094
+  selector:
+    app: alertmanager
+
+---
+# SLA Monitoring CronJob - Daily uptime calculation
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sla-calculator
+  namespace: monitoring
+  labels:
+    app: sla-calculator
+    epic: "8"
+spec:
+  # Run every hour to calculate rolling 24h uptime
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: sla-calculator
+            epic: "8"
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: prometheus-sa
+          
+          containers:
+          - name: sla-calculator
+            image: prom/prometheus:v2.45.0
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Calculate 99.9% uptime SLA compliance
+              PROMETHEUS_URL="http://prometheus:9090"
+              
+              # Query for service availability over last 24h
+              UPTIME_QUERY="(1 - (increase(up{job=\"leanvibe-api\"}[24h]) == 0) / increase(up{job=\"leanvibe-api\"}[24h])) * 100"
+              
+              # Execute query
+              UPTIME=$(wget -qO- "${PROMETHEUS_URL}/api/v1/query?query=${UPTIME_QUERY}" | grep -o '"value":\[[^,]*,[^]]*\]' | cut -d'"' -f4 | cut -d'[' -f2 | cut -d',' -f2)
+              
+              echo "Current 24h uptime: ${UPTIME}%"
+              
+              # Check SLA compliance
+              if [ $(echo "${UPTIME} < 99.9" | bc -l) -eq 1 ]; then
+                echo "🚨 SLA BREACH: Uptime ${UPTIME}% is below 99.9% target"
+                # This would trigger additional alerting mechanisms
+                exit 1
+              else
+                echo "✅ SLA COMPLIANT: Uptime ${UPTIME}% meets 99.9% target"
+              fi
+            
+            env:
+            - name: TZ
+              value: "UTC"
+            
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+              limits:
+                memory: "128Mi"
+                cpu: "100m"
+
+---
+# ServiceMonitor for SLA monitoring components
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sla-monitoring
+  namespace: monitoring
+  labels:
+    app: sla-monitoring
+    epic: "8"
+spec:
+  selector:
+    matchLabels:
+      app: alertmanager
+  endpoints:
+  - port: alertmanager
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+
+---
+# PrometheusRule for SLA-specific monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: epic8-sla-rules
+  namespace: monitoring
+  labels:
+    app: prometheus
+    epic: "8"
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: epic8.sla.uptime
+    interval: 30s
+    rules:
+    # Real-time uptime calculation
+    - record: leanvibe:uptime_percentage_24h
+      expr: |
+        100 * (
+          1 - (
+            (
+              sum(up{job="leanvibe-api"} == 0) * 15
+            ) / (24 * 60 * 60)
+          )
+        )
+    
+    # SLA breach detection with 5-minute window
+    - alert: UptimeSLABreach
+      expr: leanvibe:uptime_percentage_24h < 99.9
+      for: 5m
+      labels:
+        severity: critical
+        epic: "8"
+        sla: "breach"
+      annotations:
+        summary: "99.9% uptime SLA breach detected"
+        description: "Current 24h uptime: {{ $value | printf \"%.3f\" }}% (below 99.9% SLA)"
+        runbook_url: "https://wiki.leanvibe.com/sre/sla-breach-runbook"
+        dashboard_url: "https://grafana.leanvibe.com/d/sla-monitoring"
+    
+    # Approaching SLA breach (early warning)
+    - alert: UptimeSLAWarning
+      expr: leanvibe:uptime_percentage_24h < 99.95
+      for: 2m
+      labels:
+        severity: warning
+        epic: "8"
+        sla: "warning"
+      annotations:
+        summary: "Approaching 99.9% uptime SLA threshold"
+        description: "Current 24h uptime: {{ $value | printf \"%.3f\" }}% (approaching 99.9% SLA limit)"
+        
+    # Service completely down
+    - alert: ServiceCompletelyDown
+      expr: sum(up{job="leanvibe-api"}) == 0
+      for: 30s
+      labels:
+        severity: critical
+        epic: "8"
+        sla: "complete-outage"
+      annotations:
+        summary: "Complete service outage detected"
+        description: "All LeanVibe API instances are down"
+        
+    # Insufficient healthy instances
+    - alert: CriticallyLowInstances
+      expr: sum(up{job="leanvibe-api"}) < 2
+      for: 1m
+      labels:
+        severity: critical
+        epic: "8"
+        sla: "low-availability"
+      annotations:
+        summary: "Critically low number of healthy instances"
+        description: "Only {{ $value }} healthy instances remaining (minimum: 3 for HA)"
+
+  - name: epic8.sla.performance
+    interval: 15s
+    rules:
+    # Track Epic 7 performance baselines in production
+    - record: leanvibe:response_time_p95_1m
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="leanvibe-api"}[1m]))
+    
+    - record: leanvibe:request_rate_1m
+      expr: rate(http_requests_total{job="leanvibe-api"}[1m])
+    
+    - record: leanvibe:memory_usage_mb
+      expr: container_memory_usage_bytes{container="leanvibe-api"} / 1024 / 1024
+    
+    # Performance SLA tracking
+    - alert: ResponseTimeSLABreach
+      expr: leanvibe:response_time_p95_1m > 0.1  # 100ms SLA (degraded from Epic 7's <2ms)
+      for: 3m
+      labels:
+        severity: warning
+        epic: "8"
+        sla: "performance"
+      annotations:
+        summary: "Response time SLA breach"
+        description: "95th percentile response time: {{ $value | printf \"%.3f\" }}s (SLA: 100ms)"
+        
+    # Throughput SLA
+    - alert: ThroughputSLABreach
+      expr: leanvibe:request_rate_1m < 500  # Minimum viable throughput
+      for: 5m
+      labels:
+        severity: warning
+        epic: "8"
+        sla: "throughput"
+      annotations:
+        summary: "Throughput below minimum SLA"
+        description: "Current throughput: {{ $value | printf \"%.1f\" }} req/s (minimum: 500 req/s)"

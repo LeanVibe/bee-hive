@@ -1,0 +1,181 @@
+# Epic 8: Production-Grade Kubernetes Cluster Configuration
+# Designed for 99.9% uptime SLA with enterprise-grade reliability
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-config
+  namespace: kube-system
+data:
+  cluster-name: "leanvibe-production"
+  environment: "production"
+  sla-target: "99.9"
+  target-rps: "867.5"
+  
+---
+# Node pool configuration for high availability
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-pool-config
+  namespace: kube-system
+data:
+  node-pool-config.yaml: |
+    # Production node pool configuration
+    node_pools:
+      - name: "production-pool-1"
+        machine_type: "e2-standard-4"  # 4 vCPU, 16GB RAM
+        disk_size: "100GB"
+        disk_type: "pd-ssd"
+        min_nodes: 3
+        max_nodes: 20
+        availability_zones: ["us-central1-a", "us-central1-b", "us-central1-c"]
+        labels:
+          node-role: "production"
+          workload-type: "application"
+        taints:
+          - key: "node-role.kubernetes.io/production"
+            value: "true"
+            effect: "NoSchedule"
+      
+      - name: "monitoring-pool"
+        machine_type: "e2-standard-2"  # 2 vCPU, 8GB RAM
+        disk_size: "50GB"
+        disk_type: "pd-ssd"
+        min_nodes: 2
+        max_nodes: 5
+        availability_zones: ["us-central1-a", "us-central1-b"]
+        labels:
+          node-role: "monitoring"
+          workload-type: "observability"
+        taints:
+          - key: "node-role.kubernetes.io/monitoring"
+            value: "true"
+            effect: "NoSchedule"
+
+---
+# Network policy for cluster-wide security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Cluster-wide resource quotas
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: production-quota
+  namespace: leanvibe-production
+spec:
+  hard:
+    requests.cpu: "20"
+    requests.memory: "40Gi"
+    limits.cpu: "40"
+    limits.memory: "80Gi"
+    persistentvolumeclaims: "10"
+    count/deployments.apps: "20"
+    count/services: "20"
+
+---
+# Priority class for critical workloads
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: production-high-priority
+value: 1000
+globalDefault: false
+description: "High priority class for production-critical workloads"
+
+---
+# Priority class for monitoring workloads
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: monitoring-priority
+value: 800
+globalDefault: false
+description: "Priority class for monitoring and observability workloads"
+
+---
+# Pod security policy for production workloads
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: production-psp
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  runAsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1000
+        max: 65535
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: true
+
+---
+# Cluster role for production PSP
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: production-psp-user
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs: ['use']
+  resourceNames:
+  - production-psp
+
+---
+# Cluster role binding for production PSP
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: production-psp-binding
+roleRef:
+  kind: ClusterRole
+  name: production-psp-user
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Cluster autoscaler configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-autoscaler-status
+  namespace: kube-system
+data:
+  nodes.max: "25"
+  nodes.min: "5"
+  scale-down-enabled: "true"
+  scale-down-delay-after-add: "10m"
+  scale-down-unneeded-time: "10m"
+  scale-down-utilization-threshold: "0.5"
+  skip-nodes-with-local-storage: "false"
+  skip-nodes-with-system-pods: "false"
+  max-node-provision-time: "15m"

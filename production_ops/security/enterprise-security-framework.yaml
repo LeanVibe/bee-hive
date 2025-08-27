@@ -1,0 +1,820 @@
+# Epic 8: Enterprise Security Framework
+# Comprehensive RBAC, network policies, and compliance for production operations
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security
+  labels:
+    name: security
+    environment: production
+    component: security
+
+---
+# Enterprise RBAC Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enterprise-rbac-config
+  namespace: security
+data:
+  rbac-policies.yaml: |
+    # Epic 8: Enterprise RBAC Policies
+    
+    # Role definitions for production environment
+    production_roles:
+      - name: "epic8-sre-admin"
+        description: "Full production access for SRE team"
+        permissions:
+          - cluster-admin
+          - monitoring-admin
+          - security-admin
+        namespaces: ["*"]
+        
+      - name: "epic8-developer"
+        description: "Limited production access for developers"
+        permissions:
+          - pod-reader
+          - log-viewer
+          - metrics-viewer
+        namespaces: ["leanvibe-production", "monitoring"]
+        
+      - name: "epic8-operator"
+        description: "Production operations access"
+        permissions:
+          - deployment-manager
+          - service-manager
+          - configmap-manager
+        namespaces: ["leanvibe-production", "cicd-pipeline"]
+        
+      - name: "epic8-security-auditor"
+        description: "Security auditing and compliance"
+        permissions:
+          - security-reader
+          - audit-log-reader
+          - policy-reader
+        namespaces: ["*"]
+    
+    # Service account definitions
+    service_accounts:
+      - name: "leanvibe-production-sa"
+        namespace: "leanvibe-production"
+        role: "epic8-operator"
+        
+      - name: "monitoring-sa"
+        namespace: "monitoring"
+        role: "monitoring-admin"
+        
+      - name: "cicd-pipeline-sa"
+        namespace: "cicd-pipeline"
+        role: "epic8-operator"
+
+  # Network security policies
+  network-policies.yaml: |
+    # Epic 8: Zero-trust network security
+    
+    default_policies:
+      # Deny all traffic by default
+      - name: "default-deny-all"
+        action: "deny"
+        direction: "ingress,egress"
+        applies_to: "all-pods"
+      
+      # Allow DNS resolution
+      - name: "allow-dns"
+        action: "allow"
+        direction: "egress"
+        ports: [53]
+        protocols: ["TCP", "UDP"]
+        applies_to: "all-pods"
+    
+    production_policies:
+      # LeanVibe API access rules
+      - name: "leanvibe-api-ingress"
+        namespace: "leanvibe-production"
+        allow_from:
+          - namespace: "ingress-nginx"
+          - namespace: "monitoring"
+        ports: [8000, 9090]
+        
+      # Database access rules
+      - name: "database-access"
+        namespace: "postgresql-production"
+        allow_from:
+          - namespace: "leanvibe-production"
+        ports: [5432]
+        
+      # Redis access rules
+      - name: "redis-access"
+        namespace: "redis-production"
+        allow_from:
+          - namespace: "leanvibe-production"
+        ports: [6379]
+
+---
+# Epic 8 SRE Admin ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: epic8-sre-admin
+  labels:
+    epic: "8"
+    role-type: "admin"
+rules:
+# Full cluster access for SRE team
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+# Special permissions for Epic 8 operations
+- nonResourceURLs: ["/metrics", "/logs/*", "/api/*"]
+  verbs: ["get", "list"]
+
+---
+# Epic 8 Developer Role (limited production access)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: epic8-developer
+  labels:
+    epic: "8"
+    role-type: "developer"
+rules:
+# Read-only access to production resources
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+# Metrics and logs access
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+# Epic 8 Operator Role (production operations)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: epic8-operator
+  labels:
+    epic: "8"
+    role-type: "operator"
+rules:
+# Deployment management
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# Service management
+- apiGroups: [""]
+  resources: ["services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# Auto-scaling management
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers", "verticalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# Monitoring resources
+- apiGroups: ["monitoring.coreos.com"]
+  resources: ["prometheusrules", "servicemonitors"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+---
+# Epic 8 Security Auditor Role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: epic8-security-auditor
+  labels:
+    epic: "8"
+    role-type: "auditor"
+rules:
+# Security policy access
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["policy"]
+  resources: ["podsecuritypolicies"]
+  verbs: ["get", "list", "watch"]
+# RBAC inspection
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+  verbs: ["get", "list", "watch"]
+# Security scanning results
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Production namespace network policy (default deny)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: leanvibe-production
+  labels:
+    epic: "8"
+    security-level: "strict"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# LeanVibe API network policy (controlled access)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-api-access
+  namespace: leanvibe-production
+  labels:
+    epic: "8"
+    security-level: "controlled"
+spec:
+  podSelector:
+    matchLabels:
+      app: leanvibe-api
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow traffic from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow monitoring scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+  
+  # Allow health checks from system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  egress:
+  # Allow database connections
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: postgresql-production
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow Redis connections  
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: redis-production
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow external API calls (HTTPS)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
+# Database network policy (restricted access)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgresql-access-control
+  namespace: postgresql-production
+  labels:
+    epic: "8"
+    security-level: "restricted"
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Only allow LeanVibe API access
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-production
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9187
+  
+  # Allow PostgreSQL replication
+  - from:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  egress:
+  # Allow replication traffic
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Redis network policy (restricted access)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-access-control
+  namespace: redis-production
+  labels:
+    epic: "8"
+    security-level: "restricted"
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Only allow LeanVibe API access
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-production
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9121
+  
+  # Allow Redis Sentinel access
+  - from:
+    - podSelector:
+        matchLabels:
+          app: redis-sentinel
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow Redis replication
+  - from:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  egress:
+  # Allow replication
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Monitoring network policy (selective access)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-access-control
+  namespace: monitoring
+  labels:
+    epic: "8"
+    security-level: "monitoring"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow access from ingress for dashboards
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  
+  # Allow internal monitoring communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+  
+  egress:
+  # Allow scraping all namespaces
+  - to: []
+  
+  # Allow external alerting
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 587  # SMTP
+
+---
+# Pod Security Policy for production workloads
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: epic8-production-psp
+  labels:
+    epic: "8"
+    security-level: "production"
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  
+  # Required security context
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  runAsGroup:
+    rule: 'MustRunAs'
+    ranges:
+    - min: 1000
+      max: 65535
+  
+  # Filesystem restrictions
+  readOnlyRootFilesystem: true
+  
+  # Volume restrictions
+  volumes:
+  - 'configMap'
+  - 'emptyDir'
+  - 'projected'
+  - 'secret'
+  - 'downwardAPI'
+  - 'persistentVolumeClaim'
+  
+  # Capability restrictions
+  requiredDropCapabilities:
+  - ALL
+  allowedCapabilities:
+  - NET_BIND_SERVICE
+  
+  # Host restrictions
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  
+  # SELinux
+  seLinux:
+    rule: 'RunAsAny'
+  
+  # Supplemental groups
+  supplementalGroups:
+    rule: 'RunAsAny'
+  
+  # FSGroup
+  fsGroup:
+    rule: 'RunAsAny'
+
+---
+# ClusterRole for production PSP usage
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: epic8-psp-user
+  labels:
+    epic: "8"
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs: ['use']
+  resourceNames:
+  - epic8-production-psp
+
+---
+# Bind production PSP to service accounts
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: epic8-psp-binding
+  labels:
+    epic: "8"
+roleRef:
+  kind: ClusterRole
+  name: epic8-psp-user
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: leanvibe-production-sa
+  namespace: leanvibe-production
+- kind: ServiceAccount
+  name: postgresql-sa
+  namespace: postgresql-production
+- kind: ServiceAccount
+  name: redis-sa
+  namespace: redis-production
+
+---
+# Security scanning CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: security-scanner
+  namespace: security
+  labels:
+    app: security-scanner
+    epic: "8"
+spec:
+  # Run security scan every 6 hours
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: security-scanner
+            epic: "8"
+        spec:
+          serviceAccountName: epic8-security-auditor-sa
+          restartPolicy: OnFailure
+          
+          containers:
+          - name: scanner
+            image: aquasec/trivy:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Epic 8 Security Scanning
+              echo "🔍 Epic 8 Production Security Scan"
+              
+              # Scan production images
+              trivy image leanvibe/agent-hive:2.0.0-production --format json --output /tmp/scan-results.json
+              
+              # Check for HIGH and CRITICAL vulnerabilities
+              HIGH_COUNT=$(cat /tmp/scan-results.json | jq '.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH") | length' | wc -l)
+              CRITICAL_COUNT=$(cat /tmp/scan-results.json | jq '.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL") | length' | wc -l)
+              
+              echo "Security scan results:"
+              echo "  Critical vulnerabilities: $CRITICAL_COUNT"
+              echo "  High vulnerabilities: $HIGH_COUNT"
+              
+              # Fail if critical vulnerabilities found
+              if [ "$CRITICAL_COUNT" -gt 0 ]; then
+                echo "❌ CRITICAL vulnerabilities found - security breach!"
+                exit 1
+              fi
+              
+              # Warn about high vulnerabilities
+              if [ "$HIGH_COUNT" -gt 5 ]; then
+                echo "⚠️  High number of HIGH vulnerabilities: $HIGH_COUNT"
+              fi
+              
+              echo "✅ Security scan completed"
+            
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+
+---
+# Security auditor service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: epic8-security-auditor-sa
+  namespace: security
+
+---
+# Bind security auditor role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: epic8-security-auditor-binding
+  labels:
+    epic: "8"
+roleRef:
+  kind: ClusterRole
+  name: epic8-security-auditor
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: epic8-security-auditor-sa
+  namespace: security
+
+---
+# Network policy for security namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: security-namespace-policy
+  namespace: security
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow monitoring access
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+  
+  egress:
+  # Allow access to scan all namespaces
+  - to: []
+  
+  # Allow external vulnerability database access
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# Compliance validation service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-validator
+  namespace: security
+  labels:
+    app: compliance-validator
+    epic: "8"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: compliance-validator
+  template:
+    metadata:
+      labels:
+        app: compliance-validator
+        epic: "8"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: epic8-security-auditor-sa
+      
+      containers:
+      - name: validator
+        image: python:3.11-slim
+        ports:
+        - containerPort: 8080
+          name: metrics
+        
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # Install dependencies
+          pip install kubernetes prometheus_client requests
+          
+          # Epic 8 Compliance Validation Service
+          python3 - <<'EOF'
+          from kubernetes import client, config
+          from prometheus_client import start_http_server, Gauge, Info
+          import time
+          import json
+          
+          # Prometheus metrics
+          compliance_score = Gauge('epic8_compliance_score', 'Compliance score percentage')
+          security_policy_count = Gauge('epic8_security_policies_active', 'Number of active security policies')
+          rbac_roles_count = Gauge('epic8_rbac_roles_count', 'Number of RBAC roles configured')
+          
+          info = Info('epic8_compliance_info', 'Epic 8 compliance information')
+          info.info({
+            'epic': '8',
+            'target_uptime': '99.9',
+            'security_level': 'enterprise',
+            'compliance_frameworks': 'SOC2,GDPR'
+          })
+          
+          def validate_compliance():
+            try:
+              config.load_incluster_config()
+              
+              v1 = client.CoreV1Api()
+              rbac_v1 = client.RbacAuthorizationV1Api()
+              networking_v1 = client.NetworkingV1Api()
+              
+              # Count RBAC roles
+              roles = rbac_v1.list_cluster_role()
+              epic8_roles = [r for r in roles.items if 'epic8' in r.metadata.name]
+              rbac_roles_count.set(len(epic8_roles))
+              
+              # Count network policies
+              policies = networking_v1.list_network_policy_for_all_namespaces()
+              security_policy_count.set(len(policies.items))
+              
+              # Calculate compliance score
+              score = min(100, (len(epic8_roles) * 10) + (len(policies.items) * 5))
+              compliance_score.set(score)
+              
+              print(f"Epic 8 Compliance Score: {score}%")
+              print(f"RBAC Roles: {len(epic8_roles)}")
+              print(f"Network Policies: {len(policies.items)}")
+              
+            except Exception as e:
+              print(f"Compliance validation error: {e}")
+              compliance_score.set(0)
+          
+          # Start metrics server
+          start_http_server(8080)
+          print("Epic 8 Compliance Validator started on port 8080")
+          
+          # Run validation loop
+          while True:
+            validate_compliance()
+            time.sleep(300)  # Run every 5 minutes
+          EOF
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+
+---
+# Service for compliance validator
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-validator
+  namespace: security
+  labels:
+    app: compliance-validator
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: compliance-validator

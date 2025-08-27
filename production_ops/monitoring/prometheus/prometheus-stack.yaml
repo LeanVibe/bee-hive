@@ -1,0 +1,812 @@
+# Epic 8: Comprehensive Prometheus Monitoring Stack
+# Production-grade monitoring for 99.9% uptime SLA achievement
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    name: monitoring
+    environment: production
+    component: observability
+
+---
+# Prometheus configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      scrape_timeout: 10s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: leanvibe-production
+        replica: prometheus-replica
+        environment: production
+        epic: "8"
+    
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+    
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets:
+          - alertmanager:9093
+        scheme: http
+        timeout: 10s
+        api_version: v2
+    
+    scrape_configs:
+    # Prometheus itself
+    - job_name: 'prometheus'
+      scrape_interval: 30s
+      static_configs:
+      - targets: ['localhost:9090']
+      
+    # Kubernetes API server
+    - job_name: 'kubernetes-apiservers'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - default
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+    
+    # Kubernetes nodes
+    - job_name: 'kubernetes-nodes'
+      kubernetes_sd_configs:
+      - role: node
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        insecure_skip_verify: true
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
+    
+    # Kubernetes pods
+    - job_name: 'kubernetes-pods'
+      kubernetes_sd_configs:
+      - role: pod
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+    
+    # LeanVibe API - Primary monitoring target
+    - job_name: 'leanvibe-api'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - leanvibe-production
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: leanvibe-api-production
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: metrics
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: kubernetes_service
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: kubernetes_pod
+      scrape_interval: 15s
+      scrape_timeout: 10s
+      metrics_path: /metrics
+    
+    # PostgreSQL monitoring
+    - job_name: 'postgresql'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - postgresql-production
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: postgresql-.*
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: metrics
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: kubernetes_service
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: kubernetes_pod
+      scrape_interval: 30s
+    
+    # Redis monitoring
+    - job_name: 'redis'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - redis-production
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        action: keep
+        regex: redis-.*
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: metrics
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: kubernetes_service
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: kubernetes_pod
+      scrape_interval: 30s
+    
+    # Node Exporter
+    - job_name: 'node-exporter'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - monitoring
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_endpoints_name]
+        action: keep
+        regex: node-exporter
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: kubernetes_node
+      scrape_interval: 30s
+    
+    # kube-state-metrics
+    - job_name: 'kube-state-metrics'
+      static_configs:
+      - targets: ['kube-state-metrics:8080']
+      scrape_interval: 30s
+
+  # Epic 8: 99.9% Uptime SLA Rules
+  uptime_sla_rules.yml: |
+    groups:
+    - name: epic8.uptime.sla
+      rules:
+      # 99.9% uptime SLA monitoring
+      - alert: UptimeSLABreach
+        expr: |
+          (
+            (time() - (time() - 86400)) - 
+            (
+              increase(up{job="leanvibe-api"}[24h]) == 0
+            ) * 15
+          ) / 86400 < 0.999
+        for: 1m
+        labels:
+          severity: critical
+          epic: "8"
+          sla: "99.9"
+        annotations:
+          summary: "99.9% uptime SLA breach detected"
+          description: "LeanVibe API uptime over last 24h: {{ $value | humanizePercentage }}"
+      
+      # Service availability
+      - alert: ServiceDown
+        expr: up{job="leanvibe-api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          epic: "8"
+        annotations:
+          summary: "LeanVibe API service is down"
+          description: "{{ $labels.kubernetes_pod }} has been down for more than 30 seconds"
+      
+      # High availability check
+      - alert: InsufficientReplicas
+        expr: count(up{job="leanvibe-api"} == 1) < 3
+        for: 2m
+        labels:
+          severity: critical
+          epic: "8"
+        annotations:
+          summary: "Insufficient healthy replicas"
+          description: "Only {{ $value }} healthy replicas available (minimum: 3)"
+
+  # Epic 7: Performance monitoring rules based on achievements
+  performance_rules.yml: |
+    groups:
+    - name: epic7.performance
+      rules:
+      # Response time monitoring (Epic 7: <2ms achieved)
+      - alert: ResponseTimeRegression
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="leanvibe-api"}[5m])) > 0.002
+        for: 2m
+        labels:
+          severity: warning
+          epic: "7"
+        annotations:
+          summary: "Response time regression from Epic 7 baseline"
+          description: "95th percentile response time: {{ $value }}s (Epic 7 achieved <2ms)"
+      
+      # Throughput monitoring (Epic 7: 618.7 req/s baseline, target: 867.5 req/s)
+      - alert: ThroughputBelowBaseline
+        expr: rate(http_requests_total{job="leanvibe-api"}[5m]) < 600
+        for: 3m
+        labels:
+          severity: warning
+          epic: "7"
+        annotations:
+          summary: "Throughput below Epic 7 baseline"
+          description: "Current throughput: {{ $value }} req/s (Epic 7 baseline: 618.7 req/s)"
+      
+      # Memory efficiency (Epic 7: 221MB, target: <500MB)
+      - alert: MemoryEfficiencyRegression
+        expr: container_memory_usage_bytes{container="leanvibe-api"} / 1024 / 1024 > 500
+        for: 5m
+        labels:
+          severity: warning
+          epic: "7"
+        annotations:
+          summary: "Memory usage above Epic 7 target"
+          description: "Memory usage: {{ $value }}MB (Epic 7 target: <500MB)"
+      
+      # Test pass rate integration (Epic 7: 94.4%)
+      - record: epic7_test_pass_rate
+        expr: 0.944  # Static record of Epic 7 achievement
+
+  # Infrastructure and scaling rules
+  infrastructure_rules.yml: |
+    groups:
+    - name: epic8.infrastructure
+      rules:
+      # CPU utilization for auto-scaling
+      - alert: HighCPUUtilization
+        expr: rate(container_cpu_usage_seconds_total{container="leanvibe-api"}[5m]) / container_spec_cpu_quota * container_spec_cpu_period > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          epic: "8"
+        annotations:
+          summary: "High CPU utilization detected"
+          description: "CPU utilization: {{ $value | humanizePercentage }} on {{ $labels.kubernetes_pod }}"
+      
+      # Memory pressure
+      - alert: HighMemoryPressure
+        expr: container_memory_working_set_bytes{container="leanvibe-api"} / container_spec_memory_limit_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          epic: "8"
+        annotations:
+          summary: "High memory pressure detected"
+          description: "Memory usage: {{ $value | humanizePercentage }} on {{ $labels.kubernetes_pod }}"
+      
+      # Disk space monitoring
+      - alert: DiskSpaceRunningLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          epic: "8"
+        annotations:
+          summary: "Disk space running low"
+          description: "Available disk space: {{ $value | humanizePercentage }} on {{ $labels.kubernetes_node }}"
+
+  # Database monitoring rules
+  database_rules.yml: |
+    groups:
+    - name: epic8.database
+      rules:
+      # PostgreSQL connection monitoring
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_database_numbackends{datname="leanvibe"} / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          epic: "8"
+        annotations:
+          summary: "PostgreSQL connection usage high"
+          description: "Connection usage: {{ $value }}% of max connections"
+      
+      # PostgreSQL replication lag
+      - alert: PostgreSQLReplicationLag
+        expr: pg_stat_replication_replay_lag > 30
+        for: 2m
+        labels:
+          severity: critical
+          epic: "8"
+        annotations:
+          summary: "PostgreSQL replication lag too high"
+          description: "Replication lag: {{ $value }}s"
+      
+      # Redis memory usage
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          epic: "8"
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Memory usage: {{ $value | humanizePercentage }}"
+
+---
+# Prometheus service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-sa
+  namespace: monitoring
+
+---
+# Prometheus RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-role
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["get"]
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-role
+subjects:
+- kind: ServiceAccount
+  name: prometheus-sa
+  namespace: monitoring
+
+---
+# Prometheus storage class
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: prometheus-ssd
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+  replication-type: regional-pd
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+
+---
+# Prometheus StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+    environment: production
+    epic: "8"
+spec:
+  serviceName: prometheus-headless
+  replicas: 2  # HA setup
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        environment: production
+        epic: "8"
+    spec:
+      serviceAccountName: prometheus-sa
+      priorityClassName: monitoring-priority
+      
+      securityContext:
+        fsGroup: 65534
+        runAsUser: 65534
+        runAsGroup: 65534
+      
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - monitoring
+                - production
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: prometheus
+            topologyKey: kubernetes.io/hostname
+      
+      tolerations:
+      - key: "node-role.kubernetes.io/monitoring"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.45.0
+        ports:
+        - containerPort: 9090
+          name: prometheus
+        
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --storage.tsdb.path=/prometheus
+        - --storage.tsdb.retention.time=30d
+        - --storage.tsdb.retention.size=50GB
+        - --web.console.libraries=/etc/prometheus/console_libraries
+        - --web.console.templates=/etc/prometheus/consoles
+        - --web.enable-lifecycle
+        - --web.external-url=https://prometheus.leanvibe.com
+        - --web.route-prefix=/
+        - --log.level=info
+        - --query.max-concurrency=50
+        - --query.timeout=30s
+        
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+        - name: prometheus-data
+          mountPath: /prometheus
+        
+        startupProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+            ephemeral-storage: "10Gi"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+            ephemeral-storage: "20Gi"
+      
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: prometheus-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: prometheus-ssd
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+# Prometheus service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  ports:
+  - name: prometheus
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
+
+---
+# Prometheus headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-headless
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: prometheus
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
+
+---
+# Node Exporter DaemonSet
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+    environment: production
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+        environment: production
+    spec:
+      serviceAccountName: prometheus-sa
+      hostNetwork: true
+      hostPID: true
+      
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+      
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:v1.6.0
+        ports:
+        - containerPort: 9100
+          name: metrics
+        
+        args:
+        - --path.procfs=/host/proc
+        - --path.sysfs=/host/sys
+        - --path.rootfs=/host/root
+        - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+        
+        volumeMounts:
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: sys
+          mountPath: /host/sys
+          readOnly: true
+        - name: root
+          mountPath: /host/root
+          readOnly: true
+        
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9100
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9100
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: root
+        hostPath:
+          path: /
+
+---
+# Node Exporter service
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9100"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9100
+    targetPort: 9100
+  selector:
+    app: node-exporter
+
+---
+# Kube-state-metrics deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app: kube-state-metrics
+    environment: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-state-metrics
+  template:
+    metadata:
+      labels:
+        app: kube-state-metrics
+        environment: production
+    spec:
+      serviceAccountName: prometheus-sa
+      
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+      
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - monitoring
+                - production
+      
+      tolerations:
+      - key: "node-role.kubernetes.io/monitoring"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      containers:
+      - name: kube-state-metrics
+        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.9.2
+        ports:
+        - containerPort: 8080
+          name: metrics
+        - containerPort: 8081
+          name: telemetry
+        
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+
+---
+# Kube-state-metrics service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app: kube-state-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+  - name: telemetry
+    port: 8081
+    targetPort: 8081
+  selector:
+    app: kube-state-metrics

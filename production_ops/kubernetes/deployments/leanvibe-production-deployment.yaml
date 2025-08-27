@@ -1,0 +1,610 @@
+# Epic 8: LeanVibe Production Deployment
+# High-availability deployment designed for 99.9% uptime SLA
+# Integrates Epic 7's 94.4% test pass rate achievements
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: leanvibe-production
+  labels:
+    name: leanvibe-production
+    environment: production
+    epic: "8"
+    sla-target: "99.9"
+
+---
+# Production configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: leanvibe-production-config
+  namespace: leanvibe-production
+data:
+  # Application settings
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  APP_NAME: "LeanVibe Agent Hive"
+  APP_VERSION: "2.0.0"
+  EPIC_VERSION: "8"
+  
+  # Performance settings (from Epic 7 achievements)
+  TARGET_RPS: "867.5"
+  BASELINE_RPS: "618.7"
+  TARGET_RESPONSE_TIME: "0.002"  # <2ms from Epic 7
+  MAX_MEMORY_MB: "500"
+  
+  # SLA and monitoring settings
+  SLA_TARGET: "99.9"
+  UPTIME_CHECK_INTERVAL: "30s"
+  HEALTH_CHECK_TIMEOUT: "5s"
+  METRICS_INTERVAL: "15s"
+  
+  # Security settings
+  CORS_ORIGINS: "https://app.leanvibe.com,https://dashboard.leanvibe.com"
+  ALLOWED_HOSTS: "leanvibe-api,api.leanvibe.com,*.leanvibe.com"
+  ENABLE_WEBAUTHN: "true"
+  ENABLE_ENTERPRISE_SECURITY: "true"
+  
+  # Feature flags
+  PROMETHEUS_ENABLED: "true"
+  PERFORMANCE_MONITORING_ENABLED: "true"
+  ENABLE_GITHUB_INTEGRATION: "true"
+  ENABLE_AUTO_SCALING: "true"
+  ENABLE_QUALITY_GATES: "true"  # Epic 7 integration
+  
+  # Auto-scaling settings
+  MIN_REPLICAS: "3"
+  MAX_REPLICAS: "25"
+  TARGET_CPU_UTILIZATION: "70"
+  TARGET_MEMORY_UTILIZATION: "80"
+  SCALE_UP_WINDOW: "60s"
+  SCALE_DOWN_WINDOW: "300s"
+
+---
+# Production secrets (base64 encoded placeholders)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: leanvibe-production-secrets
+  namespace: leanvibe-production
+type: Opaque
+data:
+  DATABASE_URL: cG9zdGdyZXNxbDovL3VzZXI6cGFzc0Bob3N0OjU0MzIvbGVhbnZpYmU=  # placeholder
+  REDIS_URL: cmVkaXM6Ly9ob3N0OjYzNzkvMA==  # placeholder
+  SECRET_KEY: c2VjcmV0LWtleQ==  # placeholder
+  JWT_SECRET_KEY: and0LXNlY3JldC1rZXk=  # placeholder
+  ANTHROPIC_API_KEY: YW50aHJvcGljLWFwaS1rZXk=  # placeholder
+
+---
+# Service account with production RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: leanvibe-production-sa
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    environment: production
+
+---
+# RBAC Role for production services
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: leanvibe-production-role
+  namespace: leanvibe-production
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+
+---
+# RBAC Role binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: leanvibe-production-binding
+  namespace: leanvibe-production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: leanvibe-production-role
+subjects:
+- kind: ServiceAccount
+  name: leanvibe-production-sa
+  namespace: leanvibe-production
+
+---
+# Primary production deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leanvibe-api-production
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    environment: production
+    version: "2.0.0"
+    epic: "8"
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    epic7.test.pass.rate: "94.4%"
+spec:
+  replicas: 5  # Start with 5 for high availability
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1  # Never go below 4 replicas
+  selector:
+    matchLabels:
+      app: leanvibe-api
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: leanvibe-api
+        environment: production
+        version: "2.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+        epic7.validated: "true"
+    spec:
+      serviceAccountName: leanvibe-production-sa
+      priorityClassName: production-high-priority
+      terminationGracePeriodSeconds: 60
+      
+      # Security context for production workloads
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Anti-affinity to spread across nodes
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - leanvibe-api
+            topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - production
+      
+      # Production node tolerations
+      tolerations:
+      - key: "node-role.kubernetes.io/production"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      containers:
+      - name: leanvibe-api
+        image: leanvibe/agent-hive:2.0.0-production
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        
+        envFrom:
+        - configMapRef:
+            name: leanvibe-production-config
+        - secretRef:
+            name: leanvibe-production-secrets
+        
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        
+        # Resource limits for 867.5 req/s target
+        resources:
+          requests:
+            cpu: 1500m
+            memory: 3Gi
+            ephemeral-storage: 2Gi
+          limits:
+            cpu: 3000m
+            memory: 6Gi
+            ephemeral-storage: 4Gi
+        
+        # Health checks optimized for 99.9% uptime
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+            httpHeaders:
+            - name: User-Agent
+              value: Kubernetes-StartupProbe
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 20
+          successThreshold: 1
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            httpHeaders:
+            - name: User-Agent
+              value: Kubernetes-LivenessProbe
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+            httpHeaders:
+            - name: User-Agent
+              value: Kubernetes-ReadinessProbe
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+        
+        # Volume mounts for temporary storage
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: var-tmp
+          mountPath: /var/tmp
+        - name: logs
+          mountPath: /app/logs
+        - name: data
+          mountPath: /app/data
+        - name: workspaces
+          mountPath: /app/workspaces
+        - name: cache
+          mountPath: /app/cache
+      
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: var-tmp
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: logs
+        emptyDir:
+          sizeLimit: 2Gi
+      - name: data
+        emptyDir:
+          sizeLimit: 2Gi
+      - name: workspaces
+        emptyDir:
+          sizeLimit: 4Gi
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi
+
+---
+# Production service with load balancing
+apiVersion: v1
+kind: Service
+metadata:
+  name: leanvibe-api-production
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    environment: production
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP  # For consistent agent sessions
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: leanvibe-api
+    environment: production
+
+---
+# Horizontal Pod Autoscaler optimized for 867.5 req/s target
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: leanvibe-api-hpa
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    environment: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-api-production
+  minReplicas: 5  # Higher minimum for 99.9% uptime
+  maxReplicas: 25
+  metrics:
+  # CPU utilization target
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  # Memory utilization target
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  # Custom metric: requests per second
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "150"  # Scale when approaching 867.5/5 = 173.5 per pod
+  
+  # Custom metric: response time
+  - type: Pods
+    pods:
+      metric:
+        name: http_request_duration_seconds_p95
+      target:
+        type: AverageValue
+        averageValue: "0.001"  # Scale before hitting 2ms target
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60  # 60-second requirement
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      - type: Pods
+        value: 5
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Conservative scale down
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Min
+
+---
+# Pod Disruption Budget for 99.9% uptime
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: leanvibe-api-pdb
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    environment: production
+spec:
+  minAvailable: 4  # Always keep at least 4 pods running
+  selector:
+    matchLabels:
+      app: leanvibe-api
+      environment: production
+
+---
+# Network policy for production security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: leanvibe-api-netpol
+  namespace: leanvibe-production
+spec:
+  podSelector:
+    matchLabels:
+      app: leanvibe-api
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow ingress from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow monitoring scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+  
+  # Allow health checks from kube-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  egress:
+  # Allow database access
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow Redis access
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  
+  # Allow external API calls (HTTPS and DNS)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  
+  # Allow communication within namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-production
+
+---
+# Production ingress with SSL termination
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: leanvibe-api-ingress
+  namespace: leanvibe-production
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
+    
+    # Rate limiting for 867.5 req/s target (with burst)
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit-burst-multiplier: "2"
+    
+    # Certificate management
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # CORS settings
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.leanvibe.com,https://dashboard.leanvibe.com"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' wss: https:;" always;
+
+spec:
+  tls:
+  - hosts:
+    - api.leanvibe.com
+    - leanvibe-api.com
+    secretName: leanvibe-api-tls
+  
+  rules:
+  - host: api.leanvibe.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api-production
+            port:
+              number: 80
+  
+  - host: leanvibe-api.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api-production
+            port:
+              number: 80

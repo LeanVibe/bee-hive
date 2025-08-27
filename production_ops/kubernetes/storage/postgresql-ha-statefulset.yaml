@@ -1,0 +1,786 @@
+# Epic 8: Production PostgreSQL High-Availability StatefulSet
+# Designed for 99.9% uptime with streaming replication and automated failover
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgresql-production
+  labels:
+    name: postgresql-production
+    environment: production
+    component: database
+
+---
+# PostgreSQL configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-config
+  namespace: postgresql-production
+data:
+  postgresql.conf: |
+    # Connection and authentication
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 500
+    shared_preload_libraries = 'vector,pg_stat_statements'
+    
+    # Memory settings optimized for production workload
+    shared_buffers = 2GB
+    effective_cache_size = 6GB
+    work_mem = 32MB
+    maintenance_work_mem = 256MB
+    
+    # WAL and replication settings for HA
+    wal_level = replica
+    max_wal_senders = 10
+    max_replication_slots = 10
+    wal_keep_size = 1GB
+    hot_standby = on
+    hot_standby_feedback = on
+    
+    # WAL archiving for point-in-time recovery
+    archive_mode = on
+    archive_command = 'test ! -f /backup/wal/%f && cp %p /backup/wal/%f'
+    
+    # Checkpoints and WAL
+    wal_buffers = 32MB
+    checkpoint_completion_target = 0.9
+    checkpoint_timeout = 10min
+    max_wal_size = 2GB
+    min_wal_size = 128MB
+    
+    # Performance tuning
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    synchronous_commit = on
+    
+    # Logging for production monitoring
+    log_min_duration_statement = 5000  # Log slow queries > 5s
+    log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h,session=%c,txn=%x,query=%i '
+    log_statement = 'ddl'
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    log_temp_files = 10MB
+    
+    # Autovacuum tuning
+    autovacuum_max_workers = 6
+    autovacuum_naptime = 30s
+    autovacuum_vacuum_threshold = 50
+    autovacuum_analyze_threshold = 50
+    autovacuum_vacuum_scale_factor = 0.1
+    autovacuum_analyze_scale_factor = 0.05
+    
+    # Vector extension settings
+    vector.max_size = 16000
+  
+  pg_hba.conf: |
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    local   all             postgres                                peer
+    local   all             all                                     md5
+    host    all             all             127.0.0.1/32            md5
+    host    all             all             ::1/128                 md5
+    
+    # Replication connections
+    host    replication     replicator      10.0.0.0/8              md5
+    host    replication     replicator      172.16.0.0/12           md5
+    host    replication     replicator      192.168.0.0/16          md5
+    
+    # Application connections
+    host    all             leanvibe        10.0.0.0/8              md5
+    host    all             leanvibe        172.16.0.0/12           md5
+    host    all             leanvibe        192.168.0.0/16          md5
+    
+    # Allow connections from within cluster
+    host    all             all             10.244.0.0/16           md5
+
+---
+# PostgreSQL secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-secrets
+  namespace: postgresql-production
+type: Opaque
+data:
+  POSTGRES_PASSWORD: cG9zdGdyZXNfcGFzcw==  # postgres_pass (base64)
+  POSTGRES_USER: bGVhbnZpYmU=  # leanvibe (base64)
+  POSTGRES_DB: bGVhbnZpYmU=  # leanvibe (base64)
+  REPLICATOR_PASSWORD: cmVwbGljYXRvcl9wYXNz  # replicator_pass (base64)
+  DATABASE_URL: cG9zdGdyZXNxbDovL2xlYW52aWJlOnBhc3NAcG9zdGdyZXNxbC1tYXN0ZXI6NTQzMi9sZWFudmliZQ==  # Full DB URL
+
+---
+# Service account for PostgreSQL
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: postgresql-sa
+  namespace: postgresql-production
+
+---
+# Storage class for high-performance SSDs
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: postgresql-ssd
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+  replication-type: regional-pd
+  zones: us-central1-a,us-central1-b,us-central1-c
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+---
+# PostgreSQL Master StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql-master
+  namespace: postgresql-production
+  labels:
+    app: postgresql
+    role: master
+    environment: production
+spec:
+  serviceName: postgresql-master
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+      role: master
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        role: master
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+    spec:
+      serviceAccountName: postgresql-sa
+      priorityClassName: production-high-priority
+      
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - production
+      
+      tolerations:
+      - key: "node-role.kubernetes.io/production"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      initContainers:
+      # Initialize the database with proper permissions
+      - name: init-db
+        image: pgvector/pgvector:pg15
+        command:
+          - /bin/bash
+          - -c
+          - |
+            if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+              echo "Initializing database..."
+              initdb -D /var/lib/postgresql/data --auth-host=md5 --auth-local=peer
+              echo "Database initialized"
+            fi
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      
+      containers:
+      # Main PostgreSQL container
+      - name: postgresql
+        image: pgvector/pgvector:pg15
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_DB
+        - name: POSTGRES_REPLICATION_USER
+          value: replicator
+        - name: POSTGRES_REPLICATION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: REPLICATOR_PASSWORD
+        
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgresql-config
+          mountPath: /etc/postgresql/postgresql.conf
+          subPath: postgresql.conf
+        - name: postgresql-config
+          mountPath: /etc/postgresql/pg_hba.conf
+          subPath: pg_hba.conf
+        - name: backup-storage
+          mountPath: /backup
+        
+        command:
+          - postgres
+          - -c
+          - config_file=/etc/postgresql/postgresql.conf
+        
+        startupProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h localhost
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+            ephemeral-storage: "10Gi"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+            ephemeral-storage: "20Gi"
+      
+      # PostgreSQL Exporter for monitoring
+      - name: postgresql-exporter
+        image: prometheuscommunity/postgres-exporter:latest
+        ports:
+        - containerPort: 9187
+          name: metrics
+        env:
+        - name: DATA_SOURCE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: DATABASE_URL
+        - name: PG_EXPORTER_EXTEND_QUERY_PATH
+          value: /etc/postgres_exporter/queries.yaml
+        
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9187
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9187
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        
+        volumeMounts:
+        - name: postgres-exporter-config
+          mountPath: /etc/postgres_exporter
+      
+      volumes:
+      - name: postgresql-config
+        configMap:
+          name: postgresql-config
+      - name: backup-storage
+        emptyDir:
+          sizeLimit: 50Gi
+      - name: postgres-exporter-config
+        configMap:
+          name: postgres-exporter-config
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: postgresql-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: postgresql-ssd
+      resources:
+        requests:
+          storage: 200Gi
+
+---
+# PostgreSQL Replica StatefulSet for read scaling
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql-replica
+  namespace: postgresql-production
+  labels:
+    app: postgresql
+    role: replica
+    environment: production
+spec:
+  serviceName: postgresql-replica
+  replicas: 2  # Two read replicas for HA
+  selector:
+    matchLabels:
+      app: postgresql
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        role: replica
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+    spec:
+      serviceAccountName: postgresql-sa
+      priorityClassName: production-high-priority
+      
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - production
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: postgresql
+              topologyKey: kubernetes.io/hostname
+      
+      tolerations:
+      - key: "node-role.kubernetes.io/production"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      initContainers:
+      # Initialize replica from master
+      - name: init-replica
+        image: pgvector/pgvector:pg15
+        command:
+          - /bin/bash
+          - -c
+          - |
+            if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+              echo "Setting up streaming replication from master..."
+              PGPASSWORD=$POSTGRES_REPLICATION_PASSWORD pg_basebackup -h postgresql-master -D /var/lib/postgresql/data -U replicator -P -W --wal-method=stream
+              echo "primary_conninfo = 'host=postgresql-master port=5432 user=replicator'" >> /var/lib/postgresql/data/recovery.conf
+              echo "standby_mode = 'on'" >> /var/lib/postgresql/data/recovery.conf
+              echo "Replica setup complete"
+            fi
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data
+        - name: POSTGRES_REPLICATION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: REPLICATOR_PASSWORD
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      
+      containers:
+      # PostgreSQL replica container
+      - name: postgresql
+        image: pgvector/pgvector:pg15
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_PASSWORD
+        
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgresql-config
+          mountPath: /etc/postgresql/postgresql.conf
+          subPath: postgresql.conf
+        - name: postgresql-config
+          mountPath: /etc/postgresql/pg_hba.conf
+          subPath: pg_hba.conf
+        
+        command:
+          - postgres
+          - -c
+          - config_file=/etc/postgresql/postgresql.conf
+        
+        startupProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pg_isready -U $POSTGRES_USER -h localhost
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
+        
+        livenessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pg_isready -U $POSTGRES_USER -h localhost
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - pg_isready -U $POSTGRES_USER -h localhost && [ -f /var/lib/postgresql/data/recovery.conf ]
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+            ephemeral-storage: "5Gi"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+            ephemeral-storage: "10Gi"
+      
+      # PostgreSQL Exporter for replica monitoring
+      - name: postgresql-exporter
+        image: prometheuscommunity/postgres-exporter:latest
+        ports:
+        - containerPort: 9187
+          name: metrics
+        env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-secrets
+              key: POSTGRES_DB
+        
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9187
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9187
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+      
+      volumes:
+      - name: postgresql-config
+        configMap:
+          name: postgresql-config
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: postgresql-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: postgresql-ssd
+      resources:
+        requests:
+          storage: 200Gi
+
+---
+# Master service for write operations
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-master
+  namespace: postgresql-production
+  labels:
+    app: postgresql
+    role: master
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9187"
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+  - name: metrics
+    port: 9187
+    targetPort: 9187
+  selector:
+    app: postgresql
+    role: master
+
+---
+# Replica service for read operations
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-replica
+  namespace: postgresql-production
+  labels:
+    app: postgresql
+    role: replica
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9187"
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+  - name: metrics
+    port: 9187
+    targetPort: 9187
+  selector:
+    app: postgresql
+    role: replica
+
+---
+# Headless service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-headless
+  namespace: postgresql-production
+  labels:
+    app: postgresql
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+  selector:
+    app: postgresql
+
+---
+# PostgreSQL exporter configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-exporter-config
+  namespace: postgresql-production
+data:
+  queries.yaml: |
+    # Custom queries for LeanVibe monitoring
+    leanvibe_agent_count:
+      query: "SELECT COUNT(*) as agents FROM agents WHERE active = true"
+      master: true
+      metrics:
+        - agents:
+            usage: "GAUGE"
+            description: "Number of active agents"
+    
+    leanvibe_task_count:
+      query: "SELECT status, COUNT(*) as tasks FROM tasks GROUP BY status"
+      master: true
+      metrics:
+        - tasks:
+            usage: "GAUGE"
+            description: "Number of tasks by status"
+            key_labels:
+              - status
+    
+    leanvibe_connection_pool:
+      query: "SELECT state, COUNT(*) as connections FROM pg_stat_activity GROUP BY state"
+      master: true
+      metrics:
+        - connections:
+            usage: "GAUGE"
+            description: "Connection pool status"
+            key_labels:
+              - state
+
+---
+# Network policy for PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgresql-netpol
+  namespace: postgresql-production
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow connections from application namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: leanvibe-production
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9187
+  
+  # Allow replication between PostgreSQL instances
+  - from:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  egress:
+  # Allow outbound connections for replication
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+  
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

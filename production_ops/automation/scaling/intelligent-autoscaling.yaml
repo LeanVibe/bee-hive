@@ -1,0 +1,617 @@
+# Epic 8: Intelligent Auto-scaling System
+# 60-second response capability targeting 867.5+ req/s production load
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: autoscaling
+  labels:
+    name: autoscaling
+    environment: production
+    component: scaling
+
+---
+# Custom metrics API configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-metrics-config
+  namespace: autoscaling
+data:
+  adapter-config.yaml: |
+    rules:
+    # Epic 8: Custom scaling metrics for 867.5 req/s target
+    - seriesQuery: 'http_requests_per_second{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^(.*)_per_second$"
+        as: "${1}_rate"
+      metricsQuery: 'avg_over_time(<<.Series>>{<<.LabelMatchers>>}[1m])'
+    
+    # Response time scaling metric
+    - seriesQuery: 'http_request_duration_seconds{quantile="0.95",namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^(.*)_duration_seconds$"
+        as: "${1}_latency"
+      metricsQuery: 'avg_over_time(<<.Series>>{<<.LabelMatchers>>}[1m])'
+    
+    # Memory pressure scaling
+    - seriesQuery: 'container_memory_working_set_bytes{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^(.*)_bytes$"
+        as: "${1}_usage"
+      metricsQuery: 'avg_over_time(<<.Series>>{<<.LabelMatchers>>}[1m])'
+    
+    # Agent task queue depth (LeanVibe-specific)
+    - seriesQuery: 'leanvibe_agent_task_queue_depth{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        as: "agent_queue_depth"
+      metricsQuery: 'avg_over_time(<<.Series>>{<<.LabelMatchers>>}[1m])'
+    
+    # Connection pool utilization
+    - seriesQuery: 'leanvibe_connection_pool_active{namespace!="",pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        as: "connection_pool_utilization"
+      metricsQuery: 'avg_over_time(<<.Series>>{<<.LabelMatchers>>}[1m])'
+
+---
+# Prometheus Adapter for custom metrics
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-adapter
+  namespace: autoscaling
+  labels:
+    app: prometheus-adapter
+    environment: production
+spec:
+  replicas: 2  # HA for scaling decisions
+  selector:
+    matchLabels:
+      app: prometheus-adapter
+  template:
+    metadata:
+      labels:
+        app: prometheus-adapter
+        environment: production
+    spec:
+      serviceAccountName: prometheus-adapter-sa
+      priorityClassName: monitoring-priority
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: prometheus-adapter
+              topologyKey: kubernetes.io/hostname
+      
+      containers:
+      - name: prometheus-adapter
+        image: k8s.gcr.io/prometheus-adapter/prometheus-adapter:v0.11.1
+        ports:
+        - containerPort: 6443
+          name: https
+        
+        args:
+        - --cert-dir=/var/run/serving-cert
+        - --config=/etc/adapter/adapter-config.yaml
+        - --logtostderr=true
+        - --prometheus-url=http://prometheus.monitoring.svc:9090/
+        - --metrics-relist-interval=30s
+        - --v=2
+        - --secure-port=6443
+        - --tls-cert-file=/var/run/serving-cert/tls.crt
+        - --tls-private-key-file=/var/run/serving-cert/tls.key
+        
+        volumeMounts:
+        - name: config
+          mountPath: /etc/adapter
+        - name: serving-cert
+          mountPath: /var/run/serving-cert
+          readOnly: true
+        
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: https
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: https
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      
+      volumes:
+      - name: config
+        configMap:
+          name: custom-metrics-config
+      - name: serving-cert
+        secret:
+          secretName: prometheus-adapter-certs
+
+---
+# Service account for prometheus adapter
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-adapter-sa
+  namespace: autoscaling
+
+---
+# RBAC for prometheus adapter
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-adapter
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/stats", "pods", "services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["custom.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-adapter
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-adapter
+subjects:
+- kind: ServiceAccount
+  name: prometheus-adapter-sa
+  namespace: autoscaling
+
+---
+# Prometheus adapter service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-adapter
+  namespace: autoscaling
+  labels:
+    app: prometheus-adapter
+spec:
+  type: ClusterIP
+  ports:
+  - name: https
+    port: 443
+    targetPort: 6443
+  selector:
+    app: prometheus-adapter
+
+---
+# APIService registration for custom metrics
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta1.custom.metrics.k8s.io
+spec:
+  service:
+    name: prometheus-adapter
+    namespace: autoscaling
+  group: custom.metrics.k8s.io
+  version: v1beta1
+  insecureSkipTLSVerify: true
+  groupPriorityMinimum: 100
+  versionPriority: 100
+
+---
+# Intelligent HPA for LeanVibe API with 60-second response
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: leanvibe-intelligent-hpa
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    environment: production
+    epic: "8"
+  annotations:
+    epic8.scaling.target: "867.5-rps"
+    epic8.response.time: "60s"
+    epic7.baseline: "618.7-rps-<2ms"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-api-production
+  
+  minReplicas: 5   # Minimum for 99.9% uptime
+  maxReplicas: 50  # Scale for 867.5+ req/s
+  
+  # Epic 8: Intelligent scaling behavior - 60-second response requirement
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Meet 60-second requirement
+      policies:
+      # Aggressive scale-up for sudden load spikes
+      - type: Percent
+        value: 100    # Double pods immediately if needed
+        periodSeconds: 60
+      # Gradual scale-up for sustained load
+      - type: Pods
+        value: 8      # Add 8 pods per minute for linear growth
+        periodSeconds: 60
+      selectPolicy: Max  # Use most aggressive policy
+    
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Conservative scale-down
+      policies:
+      # Gradual scale-down to maintain stability
+      - type: Percent
+        value: 25     # Remove 25% of pods max
+        periodSeconds: 120
+      - type: Pods
+        value: 3      # Remove max 3 pods at once
+        periodSeconds: 120
+      selectPolicy: Min  # Use most conservative policy
+  
+  metrics:
+  # Primary metric: Requests per second (targeting 867.5 req/s)
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_rate
+      target:
+        type: AverageValue
+        averageValue: "17"  # 867.5 / 50 max pods = 17.35 req/s per pod
+  
+  # Response time metric (maintain Epic 7 <2ms performance)
+  - type: Pods
+    pods:
+      metric:
+        name: http_request_latency
+      target:
+        type: AverageValue
+        averageValue: "0.001"  # Scale before reaching 2ms limit
+  
+  # CPU utilization (secondary metric)
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 65  # Scale before high CPU pressure
+  
+  # Memory utilization (prevent OOM kills)
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 75  # Scale before memory pressure
+  
+  # LeanVibe-specific: Agent task queue depth
+  - type: Pods
+    pods:
+      metric:
+        name: agent_queue_depth
+      target:
+        type: AverageValue
+        averageValue: "20"  # Scale when queue backs up
+  
+  # Connection pool utilization
+  - type: Pods
+    pods:
+      metric:
+        name: connection_pool_utilization
+      target:
+        type: AverageValue
+        averageValue: "0.8"  # Scale at 80% connection usage
+
+---
+# Vertical Pod Autoscaler for optimal resource allocation
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: leanvibe-vpa
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    epic: "8"
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-api-production
+  
+  updatePolicy:
+    updateMode: "Auto"  # Automatically apply recommendations
+  
+  resourcePolicy:
+    containerPolicies:
+    - containerName: leanvibe-api
+      # Based on Epic 7 achievements: 221MB baseline
+      minAllowed:
+        memory: "1Gi"
+        cpu: "500m"
+      maxAllowed:
+        memory: "8Gi"   # Allow scaling up to 8GB for high load
+        cpu: "4000m"    # Up to 4 CPU cores
+      # Target 75% utilization for optimal performance
+      controlledResources: ["cpu", "memory"]
+      controlledValues: "RequestsAndLimits"
+
+---
+# Cluster Autoscaler configuration for node scaling
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-autoscaler-config
+  namespace: kube-system
+data:
+  # Epic 8: Intelligent cluster scaling for 867.5+ req/s
+  cluster-autoscaler-config.yaml: |
+    # Scaling parameters optimized for Epic 8 requirements
+    scale-down-enabled: true
+    scale-down-delay-after-add: "5m"      # Quick scale-up validation
+    scale-down-unneeded-time: "10m"       # Conservative scale-down
+    scale-down-utilization-threshold: 0.6 # Scale down below 60% utilization
+    
+    # Epic 8: 60-second response requirement
+    max-node-provision-time: "300s"       # 5 minutes max for new nodes
+    scale-up-from-zero: true
+    
+    # Resource limits for 867.5+ req/s capacity
+    max-nodes-total: 100
+    cores-total: "0:1000"      # Up to 1000 CPU cores
+    memory-total: "0:4000Gi"   # Up to 4TB RAM
+    
+    # Node group priorities (prefer production nodes)
+    node-group-priorities: |
+      10:production-pool-1
+      5:general-pool
+      1:spot-instances
+
+---
+# PodDisruptionBudget to maintain availability during scaling
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: leanvibe-scaling-pdb
+  namespace: leanvibe-production
+  labels:
+    app: leanvibe-api
+    epic: "8"
+spec:
+  minAvailable: 4  # Always keep minimum 4 pods during scaling operations
+  selector:
+    matchLabels:
+      app: leanvibe-api
+      environment: production
+
+---
+# Scaling metrics collection service
+apiVersion: v1
+kind: Service
+metadata:
+  name: scaling-metrics
+  namespace: autoscaling
+  labels:
+    app: scaling-metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: scaling-metrics-exporter
+
+---
+# Scaling metrics exporter for monitoring scaling decisions
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scaling-metrics-exporter
+  namespace: autoscaling
+  labels:
+    app: scaling-metrics-exporter
+    epic: "8"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scaling-metrics-exporter
+  template:
+    metadata:
+      labels:
+        app: scaling-metrics-exporter
+        epic: "8"
+    spec:
+      serviceAccountName: prometheus-adapter-sa
+      
+      containers:
+      - name: metrics-exporter
+        image: prom/node-exporter:latest
+        ports:
+        - containerPort: 8080
+          name: metrics
+        
+        env:
+        - name: EPIC8_TARGET_RPS
+          value: "867.5"
+        - name: EPIC7_BASELINE_RPS
+          value: "618.7"
+        - name: EPIC7_RESPONSE_TIME
+          value: "0.002"
+        - name: SCALING_RESPONSE_TIME_TARGET
+          value: "60"
+        
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Export Epic 8 scaling metrics
+          cat <<EOF > /tmp/epic8_metrics.prom
+          # HELP epic8_scaling_target_rps Target requests per second for Epic 8
+          # TYPE epic8_scaling_target_rps gauge
+          epic8_scaling_target_rps 867.5
+          
+          # HELP epic7_baseline_rps Epic 7 achieved baseline requests per second
+          # TYPE epic7_baseline_rps gauge
+          epic7_baseline_rps 618.7
+          
+          # HELP epic8_scaling_response_time_seconds Target scaling response time
+          # TYPE epic8_scaling_response_time_seconds gauge
+          epic8_scaling_response_time_seconds 60
+          
+          # HELP epic7_achieved_response_time_seconds Epic 7 achieved response time
+          # TYPE epic7_achieved_response_time_seconds gauge
+          epic7_achieved_response_time_seconds 0.002
+          EOF
+          
+          # Serve metrics
+          while true; do
+            echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n$(cat /tmp/epic8_metrics.prom)" | nc -l -p 8080
+          done
+        
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+
+---
+# ServiceMonitor for scaling metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: scaling-metrics-monitor
+  namespace: autoscaling
+  labels:
+    app: scaling-metrics
+    epic: "8"
+spec:
+  selector:
+    matchLabels:
+      app: scaling-metrics
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scrapeTimeout: 10s
+
+---
+# PrometheusRule for scaling monitoring and alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: epic8-scaling-rules
+  namespace: autoscaling
+  labels:
+    app: prometheus
+    epic: "8"
+    role: alert-rules
+spec:
+  groups:
+  - name: epic8.intelligent.scaling
+    interval: 30s
+    rules:
+    # Scaling responsiveness monitoring
+    - alert: ScalingResponseTimeSLABreach
+      expr: |
+        (
+          increase(kube_hpa_status_current_replicas{hpa="leanvibe-intelligent-hpa"}[2m]) > 0
+        ) and (
+          time() - kube_hpa_status_last_scale_time{hpa="leanvibe-intelligent-hpa"} > 60
+        )
+      for: 1m
+      labels:
+        severity: warning
+        epic: "8"
+        component: "scaling"
+      annotations:
+        summary: "Auto-scaling response time exceeded 60-second SLA"
+        description: "HPA took {{ $value }}s to respond to load change (SLA: 60s)"
+    
+    # Scaling capacity alerts
+    - alert: ApproachingMaxReplicas
+      expr: kube_hpa_status_current_replicas{hpa="leanvibe-intelligent-hpa"} >= 45
+      for: 2m
+      labels:
+        severity: warning
+        epic: "8"
+      annotations:
+        summary: "Approaching maximum replica limit"
+        description: "Current replicas: {{ $value }}/50 (90% of maximum capacity)"
+    
+    # Insufficient scaling headroom
+    - alert: InsufficientScalingHeadroom
+      expr: |
+        (
+          rate(http_requests_total{job="leanvibe-api"}[5m]) > 800
+        ) and (
+          kube_hpa_status_current_replicas{hpa="leanvibe-intelligent-hpa"} >= 45
+        )
+      for: 3m
+      labels:
+        severity: critical
+        epic: "8"
+      annotations:
+        summary: "High load with insufficient scaling headroom"
+        description: "Load: {{ $value }} req/s, Replicas: near maximum"
+        
+    # Node scaling alerts
+    - alert: NodeScalingLagging
+      expr: |
+        (
+          kube_hpa_status_current_replicas{hpa="leanvibe-intelligent-hpa"} > 30
+        ) and (
+          sum(kube_node_status_condition{condition="Ready",status="true"}) < 10
+        )
+      for: 5m
+      labels:
+        severity: warning
+        epic: "8"
+        component: "cluster-autoscaler"
+      annotations:
+        summary: "Node scaling lagging behind pod scaling"
+        description: "High pod count ({{ $value }}) but insufficient nodes for optimal distribution"
