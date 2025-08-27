@@ -204,3 +204,32 @@ class DatabaseHealthCheck:
             stats["invalidated"] = "not_available"
             
         return stats
+
+
+# ============================================================================
+# INTERFACE CONSOLIDATION: Exports for test compatibility
+# ============================================================================
+
+# Export engine for test compatibility (tests expect 'engine' not '_engine')
+@property
+def engine() -> Optional[AsyncEngine]:
+    """Get the current database engine (for test compatibility)."""
+    return _engine
+
+# Export session factory for test compatibility  
+@property
+def AsyncSessionLocal() -> Optional[async_sessionmaker[AsyncSession]]:
+    """Get the session factory (for test compatibility)."""
+    return _session_factory
+
+# Export standard get_async_session interface (tests expect this name)
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """Get database session (test-compatible interface)."""
+    async with get_session() as session:
+        yield session
+
+# Make these available as module-level attributes
+import sys
+current_module = sys.modules[__name__]
+current_module.engine = engine
+current_module.AsyncSessionLocal = AsyncSessionLocal

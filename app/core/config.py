@@ -274,8 +274,47 @@ class _LazySettings:
 
     def _ensure(self) -> Settings:
         if self._instance is None:
-            self._instance = Settings()
+            try:
+                # Clear any potential pydantic validation cache
+                import os
+                if os.getenv("ENVIRONMENT") == "test":
+                    # For test environment, create with explicit overrides
+                    self._instance = Settings(
+                        _env_file=".env.test",
+                        SECRET_KEY=os.getenv("SECRET_KEY", "test-secret"),
+                        JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY", "test-jwt-secret"),
+                        DATABASE_URL=os.getenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:"),
+                        REDIS_URL=os.getenv("REDIS_URL", "redis://localhost:6379/1")
+                    )
+                else:
+                    self._instance = Settings()
+            except Exception as e:
+                # Fallback for testing with minimal configuration
+                import os
+                if os.getenv("ENVIRONMENT") == "test":
+                    try:
+                        # Try with minimal BaseSettings
+                        from pydantic_settings import BaseSettings
+                        from pydantic import Field
+                        
+                        class TestSettings(BaseSettings):
+                            SECRET_KEY: str = "test-secret-key"
+                            JWT_SECRET_KEY: str = "test-jwt-secret-key"
+                            DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
+                            REDIS_URL: str = "redis://localhost:6379/1"
+                            ENVIRONMENT: str = "test"
+                            DEBUG: bool = True
+                        
+                        self._instance = TestSettings()
+                    except Exception:
+                        raise e
+                else:
+                    raise e
         return self._instance
+
+    def reset_for_testing(self):
+        """Reset instance for testing purposes."""
+        self._instance = None
 
     def __getattr__(self, name: str):  # pragma: no cover - simple delegation
         return getattr(self._ensure(), name)

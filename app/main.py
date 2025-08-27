@@ -235,6 +235,10 @@ def create_app() -> FastAPI:
     from .api.dashboard_compat import router as dashboard_compat_router
     from .api.project_index import router as project_index_router
     
+    # EPIC 6 PHASE 2: RBAC and User Management
+    from .api.rbac import router as rbac_router
+    from .api.onboarding import router as onboarding_router
+    
     # EPIC 1 PHASE 1.2: Include task compatibility endpoints directly at app level for CLI
     from .api.v1.tasks_compatibility import router as tasks_compatibility_router
     
@@ -373,6 +377,10 @@ def create_app() -> FastAPI:
     
     # Project Index API for intelligent code analysis and context optimization
     app.include_router(project_index_router, tags=["project-index"])
+    
+    # EPIC 6 PHASE 2: RBAC and User Management System
+    app.include_router(rbac_router, tags=["rbac"])
+    app.include_router(onboarding_router, tags=["onboarding"])
     
     @app.get("/debug-agents")
     async def debug_agents():
