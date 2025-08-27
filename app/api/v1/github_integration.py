@@ -43,14 +43,65 @@ router = APIRouter(prefix="/github", tags=["GitHub Integration"])
 # Security
 security = HTTPBearer()
 
-# Initialize GitHub Integration components
-github_client = GitHubAPIClient()
-work_tree_manager = WorkTreeManager(github_client)
-branch_manager = BranchManager(github_client, work_tree_manager)
-pr_automator = PullRequestAutomator(github_client, branch_manager)
-issue_manager = IssueManager(github_client)
-code_review_assistant = CodeReviewAssistant(github_client)
-webhook_processor = GitHubWebhookProcessor(github_client)
+# Initialize GitHub Integration components (lazy initialization for testing)
+_github_client = None
+_work_tree_manager = None
+_branch_manager = None
+_pr_automator = None
+_issue_manager = None
+_code_review_assistant = None
+_webhook_processor = None
+
+def get_github_client():
+    """Get or create GitHub client instance (lazy initialization)."""
+    global _github_client
+    if _github_client is None:
+        _github_client = GitHubAPIClient()
+    return _github_client
+
+def get_work_tree_manager():
+    """Get or create work tree manager instance."""
+    global _work_tree_manager
+    if _work_tree_manager is None:
+        _work_tree_manager = WorkTreeManager(get_github_client())
+    return _work_tree_manager
+
+def get_branch_manager():
+    """Get or create branch manager instance."""
+    global _branch_manager
+    if _branch_manager is None:
+        _branch_manager = BranchManager(get_github_client(), get_work_tree_manager())
+    return _branch_manager
+
+def get_pr_automator():
+    """Get or create PR automator instance."""
+    global _pr_automator
+    if _pr_automator is None:
+        _pr_automator = PullRequestAutomator(get_github_client(), get_branch_manager())
+    return _pr_automator
+
+def get_issue_manager():
+    """Get or create issue manager instance."""
+    global _issue_manager
+    if _issue_manager is None:
+        _issue_manager = IssueManager(get_github_client())
+    return _issue_manager
+
+def get_code_review_assistant():
+    """Get or create code review assistant instance."""
+    global _code_review_assistant
+    if _code_review_assistant is None:
+        _code_review_assistant = CodeReviewAssistant(get_github_client())
+    return _code_review_assistant
+
+def get_webhook_processor():
+    """Get or create webhook processor instance."""
+    global _webhook_processor
+    if _webhook_processor is None:
+        _webhook_processor = GitHubWebhookProcessor(get_github_client())
+    return _webhook_processor
+
+# Module-level instances will be created on first access to avoid import-time initialization issues
 
 
 # Request/Response Models

@@ -291,16 +291,35 @@ class _LazySettings:
             except Exception as e:
                 # Final fallback for testing if test_config fails
                 if os.getenv("ENVIRONMENT") in ("test", "testing"):
-                    # Create minimal mock settings for testing
+                    # Create comprehensive mock settings for testing
                     from types import SimpleNamespace
                     test_settings = SimpleNamespace()
+                    # Core application settings
+                    test_settings.APP_NAME = "LeanVibe Agent Hive 2.0 Test"
                     test_settings.SECRET_KEY = "test-secret-key"
                     test_settings.JWT_SECRET_KEY = "test-jwt-secret-key"
                     test_settings.DATABASE_URL = "sqlite+aiosqlite:///:memory:"
                     test_settings.REDIS_URL = "redis://localhost:6379/1"
                     test_settings.ENVIRONMENT = "testing"
                     test_settings.DEBUG = True
-                    test_settings.APP_NAME = "LeanVibe Agent Hive 2.0 Test"
+                    # GitHub integration (mocked for testing)
+                    test_settings.GITHUB_TOKEN = "test-github-token"
+                    test_settings.GITHUB_USERNAME = "test-user"
+                    test_settings.GITHUB_REPO_OWNER = "test-owner"
+                    test_settings.GITHUB_REPO_NAME = "test-repo"
+                    # API configuration
+                    test_settings.ANTHROPIC_API_KEY = "test-anthropic-key"
+                    test_settings.OPENAI_API_KEY = "test-openai-key"
+                    # Orchestrator settings
+                    test_settings.USE_SIMPLE_ORCHESTRATOR = True
+                    test_settings.MAX_CONCURRENT_AGENTS = 3
+                    test_settings.ORCHESTRATOR_TYPE = "simple"
+                    # Common settings
+                    test_settings.API_HOST = "localhost"
+                    test_settings.API_PORT = 18080
+                    test_settings.LOG_LEVEL = "DEBUG"
+                    test_settings.CORS_ORIGINS = ["http://localhost:3000"]
+                    test_settings.ALLOWED_HOSTS = ["localhost"]
                     self._instance = test_settings
                 else:
                     raise e
@@ -322,6 +341,45 @@ settings = _LazySettings()
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """Return a cached Settings instance (explicit access pattern)."""
+    import os
+    if os.getenv("ENVIRONMENT") in ("test", "testing"):
+        # For testing, use the same consolidated approach as _LazySettings
+        try:
+            from .test_config import test_settings
+            return test_settings
+        except Exception:
+            # Final fallback for testing with comprehensive attributes
+            from types import SimpleNamespace
+            test_config = SimpleNamespace()
+            # Core application settings
+            test_config.APP_NAME = "LeanVibe Agent Hive 2.0 Test"
+            test_config.SECRET_KEY = "test-secret-key"
+            test_config.JWT_SECRET_KEY = "test-jwt-secret-key" 
+            test_config.DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+            test_config.REDIS_URL = "redis://localhost:6379/1"
+            test_config.ENVIRONMENT = "testing"
+            test_config.DEBUG = True
+            # GitHub integration (mocked for testing)
+            test_config.GITHUB_TOKEN = "test-github-token"
+            test_config.GITHUB_USERNAME = "test-user"
+            test_config.GITHUB_REPO_OWNER = "test-owner"
+            test_config.GITHUB_REPO_NAME = "test-repo"
+            # API configuration
+            test_config.ANTHROPIC_API_KEY = "test-anthropic-key"
+            test_config.OPENAI_API_KEY = "test-openai-key"
+            # Orchestrator settings
+            test_config.USE_SIMPLE_ORCHESTRATOR = True
+            test_config.MAX_CONCURRENT_AGENTS = 3
+            test_config.ORCHESTRATOR_TYPE = "simple"
+            # Common missing attributes
+            test_config.API_HOST = "localhost"
+            test_config.API_PORT = 18080
+            test_config.LOG_LEVEL = "DEBUG"
+            test_config.CORS_ORIGINS = ["http://localhost:3000"]
+            test_config.ALLOWED_HOSTS = ["localhost"]
+            return test_config
+    
+    # Production/development path
     if isinstance(settings, _LazySettings) and settings._instance is not None:
         return cast(Settings, settings._instance)
     return Settings()
