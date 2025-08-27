@@ -207,6 +207,7 @@ def create_app() -> FastAPI:
     from .api.intelligent_scheduling import router as intelligent_scheduling_router
     from .api.monitoring_reporting import router as monitoring_router
     from .api.analytics import router as analytics_router
+    from .api.business_analytics import router as business_analytics_router
     from .observability.middleware import (
         ObservabilityMiddleware,
         ObservabilityHookMiddleware,
@@ -335,6 +336,10 @@ def create_app() -> FastAPI:
     app.include_router(intelligent_scheduling_router)
     app.include_router(monitoring_router)
     app.include_router(analytics_router)
+    
+    # Epic 5: Business Intelligence & Analytics Engine
+    app.include_router(business_analytics_router, tags=["business-intelligence"])
+    
     # Removed legacy server-rendered dashboard; keep API/WebSocket endpoints under /api/dashboard/*
     app.include_router(agent_activation_router, prefix="/api/agents", tags=["agent-activation"])
     app.include_router(hive_commands_router, prefix="/api/hive", tags=["hive-commands"])

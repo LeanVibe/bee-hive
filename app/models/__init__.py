@@ -40,6 +40,10 @@ from .project_index import (
     ProjectIndex, FileEntry, DependencyRelationship, IndexSnapshot, AnalysisSession,
     ProjectStatus, FileType, DependencyType, SnapshotType, AnalysisSessionType, AnalysisStatus
 )
+from .business_intelligence import (
+    BusinessMetric, UserSession, UserJourneyEvent, AgentPerformanceMetric,
+    BusinessAlert, BusinessForecast, BusinessDashboardConfig, MetricType, AlertLevel
+)
 
 __all__ = [
     "Agent", "AgentStatus", "AgentType",
@@ -67,5 +71,7 @@ __all__ = [
     "EnhancedCoordinationEvent", "AgentCollaboration", "CoordinationPattern", "CoordinationPatternType", 
     "SpecializedAgentRole", "TaskComplexity",
     "ProjectIndex", "FileEntry", "DependencyRelationship", "IndexSnapshot", "AnalysisSession",
-    "ProjectStatus", "FileType", "DependencyType", "SnapshotType", "AnalysisSessionType", "AnalysisStatus"
+    "ProjectStatus", "FileType", "DependencyType", "SnapshotType", "AnalysisSessionType", "AnalysisStatus",
+    "BusinessMetric", "UserSession", "UserJourneyEvent", "AgentPerformanceMetric",
+    "BusinessAlert", "BusinessForecast", "BusinessDashboardConfig", "MetricType", "AlertLevel"
 ]
