@@ -12,21 +12,7 @@ import time
 from datetime import datetime
 
 # Core system imports
-# Epic 10 Mock Replacements
-try:
-    from app.core.communication_hub.communication_hub import CommunicationHub, CommunicationConfig
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+from app.core.communication_hub.communication_hub import CommunicationHub, CommunicationConfig
 from app.core.orchestration.production_orchestrator import ProductionOrchestrator
 from app.core.orchestrator import AgentOrchestrator, get_orchestrator
 from app.core.workflow_engine import WorkflowEngine

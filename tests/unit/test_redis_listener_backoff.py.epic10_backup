@@ -1,20 +1,6 @@
 import pytest
 
-# Epic 10 Mock Replacements
-try:
-    import app.api.dashboard_websockets
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+import app.api.dashboard_websockets as wsmod
 
 
 @pytest.mark.asyncio

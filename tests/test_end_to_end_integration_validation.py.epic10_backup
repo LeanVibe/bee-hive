@@ -31,21 +31,7 @@ from app.core.integrated_security_system import IntegratedSecuritySystem, Securi
 from app.core.oauth_provider_system import OAuthProviderSystem, OAuthConfig
 from app.core.api_security_middleware import APISecurityMiddleware
 from app.core.security_monitoring_system import SecurityMonitoringSystem
-# Epic 10 Mock Replacements
-try:
-    from app.core.context_engine_integration import ContextEngineIntegration
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+from app.core.context_engine_integration import ContextEngineIntegration
 from app.core.enhanced_context_consolidator import EnhancedContextConsolidator
 from app.core.context_lifecycle_manager import ContextLifecycleManager
 from app.core.sleep_wake_context_optimizer import SleepWakeContextOptimizer

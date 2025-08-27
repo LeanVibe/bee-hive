@@ -24,21 +24,7 @@ from app.main import app
 from app.core.orchestrator import UnifiedOrchestrator
 from app.core.database import get_database_session
 from app.core.redis import get_redis
-# Epic 10 Mock Replacements
-try:
-    from app.api.dashboard_websockets import websocket_manager
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+from app.api.dashboard_websockets import websocket_manager
 
 logger = structlog.get_logger(__name__)
 

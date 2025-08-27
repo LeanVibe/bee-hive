@@ -172,21 +172,7 @@ async def test_performance_benchmarks():
     print("\n🏁 Testing Performance Benchmarks...")
     
     try:
-# Epic 10 Mock Replacements
-try:
-    from app.core.performance_monitor import get_performance_monitor
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+        from app.core.performance_monitor import get_performance_monitor
         
         monitor = get_performance_monitor()
         

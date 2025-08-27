@@ -21,21 +21,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from unittest.mock import AsyncMock, MagicMock, patch, call
 
-# Epic 10 Mock Replacements
-try:
-    from app.core.real_agent_implementations import ClaudeAgent, AgentPersona
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+from app.core.real_agent_implementations import ClaudeAgent, AgentPersona
 from app.core.agent_persona_system import AgentPersonaSystem
 from app.core.capability_matcher import CapabilityMatcher
 from app.core.intelligent_task_router import IntelligentTaskRouter

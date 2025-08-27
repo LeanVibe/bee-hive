@@ -28,21 +28,7 @@ from concurrent.futures import ThreadPoolExecutor
 from app.core.orchestrator import AgentOrchestrator
 from app.services.semantic_memory_service import SemanticMemoryService
 from app.core.context_compression_engine import ContextCompressionEngine
-# Epic 10 Mock Replacements
-try:
-    from app.api.dashboard_websockets import WebSocketManager
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+from app.api.dashboard_websockets import WebSocketManager
 from app.core.intelligent_task_router import IntelligentTaskRouter
 
 
