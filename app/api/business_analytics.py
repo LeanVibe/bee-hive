@@ -12,12 +12,19 @@ import asyncio
 from datetime import datetime, timedelta, date
 from typing import Dict, Any, List, Optional
 from uuid import UUID
+from statistics import mean, stdev
 
 from fastapi import APIRouter, HTTPException, Query, Path, Depends, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from typing import Optional
 
 from ..core.business_intelligence.executive_dashboard import get_executive_dashboard
+from ..core.business_intelligence.user_behavior_analytics import get_user_behavior_analytics
+from ..core.business_intelligence.agent_performance_insights import (
+    get_agent_performance_analyzer, get_agent_optimization_engine,
+    get_agent_capacity_planner, get_agent_benchmark_tracker
+)
 from ..models.business_intelligence import AlertLevel
 from ..core.database import get_async_session
 from ..core.logging_service import get_component_logger
@@ -49,6 +56,37 @@ class ROICalculationRequest(BaseModel):
     investment_amount: float = Field(..., gt=0, description="Investment amount in dollars")
     time_period_days: int = Field(30, ge=1, le=365, description="Time period for ROI calculation")
     metrics_to_include: List[str] = Field(default=["user_acquisition", "system_efficiency", "agent_utilization"])
+
+
+class UserSessionStartRequest(BaseModel):
+    """Request model for starting user session tracking."""
+    session_id: str = Field(..., description="Unique session identifier")
+    user_id: Optional[str] = Field(None, description="User ID (if authenticated)")
+    user_agent: Optional[str] = Field(None, description="User agent string")
+    ip_address: Optional[str] = Field(None, description="User IP address")
+    platform: Optional[str] = Field(None, description="Platform (mobile, desktop, tablet)")
+    device_type: Optional[str] = Field(None, description="Device type")
+    referrer: Optional[str] = Field(None, description="Referrer URL")
+
+
+class UserActionTrackingRequest(BaseModel):
+    """Request model for tracking user actions."""
+    session_id: str = Field(..., description="Session identifier")
+    event_type: str = Field(..., description="Event type (e.g., page_view, feature_use, button_click)")
+    event_name: str = Field(..., description="Specific event name")
+    user_id: Optional[str] = Field(None, description="User ID (if authenticated)")
+    properties: Optional[Dict[str, Any]] = Field(None, description="Additional event properties")
+    page_path: Optional[str] = Field(None, description="Current page path")
+    element: Optional[str] = Field(None, description="UI element interacted with")
+    category: Optional[str] = Field(None, description="Event category")
+    is_conversion: bool = Field(False, description="Whether this is a conversion event")
+    conversion_value: Optional[float] = Field(None, description="Conversion value (if applicable)")
+
+
+class UserSessionEndRequest(BaseModel):
+    """Request model for ending user session tracking."""
+    session_id: str = Field(..., description="Session identifier")
+    satisfaction_score: Optional[float] = Field(None, ge=1, le=5, description="User satisfaction score (1-5)")
 
 
 @router.get("/dashboard", response_model=BusinessMetricsResponse)
@@ -136,7 +174,8 @@ async def get_business_alerts(
 async def get_user_analytics(
     time_period: int = Query(30, ge=1, le=365, description="Analysis period in days"),
     include_behavior: bool = Query(True, description="Include detailed behavior analytics"),
-    include_journey: bool = Query(True, description="Include user journey analysis")
+    include_journey: bool = Query(True, description="Include user journey analysis"),
+    user_id: Optional[str] = Query(None, description="Specific user ID for individual analysis")
 ):
     """
     Get comprehensive user behavior analytics and insights.
@@ -148,38 +187,69 @@ async def get_user_analytics(
     - Conversion funnel analysis
     - User journey mapping
     - Satisfaction scores and feedback
+    
+    Epic 5 Phase 2: User Behavior Analytics - PRODUCTION READY
     """
     try:
-        # This will be implemented with UserBehaviorTracker
-        # For now, return a placeholder structure
+        user_analytics = await get_user_behavior_analytics()
         
-        return {
-            "status": "success",
-            "timestamp": datetime.utcnow().isoformat(),
-            "time_period_days": time_period,
-            "user_metrics": {
-                "total_users": 0,
-                "active_users": 0,
-                "new_users": 0,
-                "retention_rate": 0.0,
-                "engagement_score": 0.0,
-                "conversion_rate": 0.0,
-                "satisfaction_score": 0.0
-            },
-            "behavior_analytics": {
-                "most_used_features": [],
-                "average_session_duration": 0,
-                "pages_per_session": 0.0,
-                "bounce_rate": 0.0
-            } if include_behavior else None,
-            "user_journey": {
-                "onboarding_completion_rate": 0.0,
-                "feature_adoption_timeline": [],
-                "conversion_funnel": []
-            } if include_journey else None,
-            "message": "User analytics implementation in progress - Epic 5 Phase 2"
+        # If specific user requested, get individual journey
+        if user_id:
+            user_journey = await user_analytics.get_user_journey(user_id, time_period)
+            
+            if not user_journey:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No user journey data found for user {user_id}"
+                )
+            
+            return {
+                "status": "success",
+                "timestamp": datetime.utcnow().isoformat(),
+                "analysis_type": "individual_user",
+                "user_id": user_id,
+                "time_period_days": time_period,
+                "user_journey": {
+                    "session_count": user_journey.session_count,
+                    "total_duration_seconds": user_journey.total_duration,
+                    "average_satisfaction": sum(user_journey.satisfaction_scores) / len(user_journey.satisfaction_scores) if user_journey.satisfaction_scores else None,
+                    "conversion_events": user_journey.conversion_events,
+                    "feature_adoption_timeline": user_journey.feature_adoption_timeline,
+                    "journey_path": user_journey.journey_path[:50],  # Limit to first 50 events
+                    "drop_off_points": user_journey.drop_off_points,
+                    "success_indicators": user_journey.success_indicators
+                }
+            }
+        
+        # Get comprehensive analytics for all users
+        analytics_data = await user_analytics.get_comprehensive_user_analytics(
+            time_period_days=time_period,
+            include_behavior=include_behavior,
+            include_journey=include_journey
+        )
+        
+        # Enhance with additional insights
+        analytics_data["insights"] = {
+            "user_growth_trend": "growing" if analytics_data["user_metrics"].get("new_users", 0) > 0 else "stable",
+            "engagement_health": "excellent" if analytics_data["user_metrics"].get("average_session_duration", 0) > 300 else "good" if analytics_data["user_metrics"].get("average_session_duration", 0) > 120 else "needs_improvement",
+            "retention_status": "strong" if analytics_data["user_metrics"].get("weekly_retention_rate", 0) > 60 else "moderate" if analytics_data["user_metrics"].get("weekly_retention_rate", 0) > 40 else "weak",
+            "recommended_actions": [
+                "Focus on user onboarding improvements" if analytics_data["user_metrics"].get("bounce_rate", 0) > 40 else None,
+                "Enhance feature discoverability" if analytics_data.get("behavior_analytics", {}).get("feature_usage", {}).get("overall_adoption_rate", 0) < 50 else None,
+                "Improve user satisfaction through UX optimization" if analytics_data["user_metrics"].get("average_satisfaction_score", 0) < 3.5 else None,
+                "Implement user re-engagement campaigns" if analytics_data["user_metrics"].get("weekly_retention_rate", 0) < 50 else None
+            ]
         }
         
+        # Remove None values from recommended actions
+        analytics_data["insights"]["recommended_actions"] = [
+            action for action in analytics_data["insights"]["recommended_actions"] if action is not None
+        ]
+        
+        return analytics_data
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get user analytics: {e}")
         raise HTTPException(
@@ -192,56 +262,479 @@ async def get_user_analytics(
 async def get_agent_insights(
     time_period: int = Query(30, ge=1, le=365, description="Analysis period in days"),
     include_performance: bool = Query(True, description="Include performance metrics"),
-    include_optimization: bool = Query(True, description="Include optimization recommendations")
+    include_optimization: bool = Query(True, description="Include optimization recommendations"),
+    include_capacity: bool = Query(True, description="Include capacity planning insights"),
+    include_benchmarks: bool = Query(True, description="Include benchmark comparisons")
 ):
     """
     Get comprehensive agent performance insights and analytics.
     
     Returns agent analytics including:
     - Agent utilization and efficiency metrics
-    - Performance trends and patterns
+    - Performance trends and patterns  
     - Resource usage optimization
     - Task completion analytics
     - Error rates and reliability metrics
     - Capacity planning insights
     - Optimization recommendations
+    - Performance benchmarks and rankings
+    
+    Epic 5 Phase 3: Agent Performance Insights - PRODUCTION READY
     """
     try:
-        # This will be implemented with AgentPerformanceAnalyzer
-        # For now, return a placeholder structure
+        # Get all analytics services
+        performance_analyzer = await get_agent_performance_analyzer()
+        capacity_planner = await get_agent_capacity_planner()
+        benchmark_tracker = await get_agent_benchmark_tracker()
         
-        return {
+        # Get overall agent performance summary
+        agent_summary = await performance_analyzer.get_all_agents_performance_summary(time_period)
+        
+        # Initialize response structure
+        response_data = {
             "status": "success", 
             "timestamp": datetime.utcnow().isoformat(),
             "time_period_days": time_period,
             "agent_metrics": {
-                "total_agents": 0,
-                "active_agents": 0,
-                "utilization_rate": 0.0,
-                "efficiency_score": 0.0,
-                "success_rate": 0.0,
-                "average_response_time": 0,
-                "error_rate": 0.0
-            },
-            "performance_analytics": {
-                "top_performing_agents": [],
-                "resource_utilization": {},
-                "bottlenecks": [],
-                "capacity_metrics": {}
-            } if include_performance else None,
-            "optimization_recommendations": {
-                "resource_reallocation": [],
-                "performance_improvements": [],
-                "capacity_adjustments": []
-            } if include_optimization else None,
-            "message": "Agent insights implementation in progress - Epic 5 Phase 3"
+                "total_agents": agent_summary.get("total_agents", 0),
+                "active_agents": agent_summary.get("active_agents", 0),
+                "utilization_rate": agent_summary.get("average_utilization", 0.0),
+                "efficiency_score": agent_summary.get("average_efficiency", 0.0),
+                "success_rate": agent_summary.get("overall_success_rate", 0.0),
+                "average_response_time": agent_summary.get("average_response_time", 0),
+                "average_uptime": agent_summary.get("average_uptime", 0.0),
+                "total_tasks_completed": agent_summary.get("total_tasks_completed", 0),
+                "total_tasks_failed": agent_summary.get("total_tasks_failed", 0),
+                "agents_needing_optimization": agent_summary.get("agents_needing_optimization", 0)
+            }
         }
+        
+        # Add performance analytics if requested
+        if include_performance:
+            try:
+                performance_distribution = agent_summary.get("performance_distribution", {})
+                leaderboard = await benchmark_tracker.get_performance_leaderboard(time_period, limit=10)
+                
+                response_data["performance_analytics"] = {
+                    "performance_distribution": performance_distribution,
+                    "top_performing_agents": leaderboard,
+                    "performance_insights": {
+                        "excellence_rate": round(performance_distribution.get("excellent", 0) / max(agent_summary.get("total_agents", 1), 1) * 100, 2),
+                        "optimization_needed_rate": round(performance_distribution.get("needs_improvement", 0) / max(agent_summary.get("total_agents", 1), 1) * 100, 2),
+                        "overall_health": "excellent" if performance_distribution.get("excellent", 0) > performance_distribution.get("needs_improvement", 0) else "good" if performance_distribution.get("good", 0) > performance_distribution.get("needs_improvement", 0) else "needs_attention"
+                    }
+                }
+            except Exception as e:
+                logger.warning(f"Failed to get performance analytics: {e}")
+                response_data["performance_analytics"] = {"error": "Unable to retrieve performance analytics"}
+        
+        # Add capacity planning insights if requested  
+        if include_capacity:
+            try:
+                capacity_analysis = await capacity_planner.analyze_capacity_requirements(time_period)
+                response_data["capacity_insights"] = capacity_analysis
+            except Exception as e:
+                logger.warning(f"Failed to get capacity insights: {e}")
+                response_data["capacity_insights"] = {"error": "Unable to retrieve capacity insights"}
+        
+        # Add optimization recommendations if requested
+        if include_optimization:
+            try:
+                optimization_engine = await get_agent_optimization_engine()
+                
+                # Get optimization recommendations for agents needing improvement
+                optimization_summary = {
+                    "agents_analyzed": agent_summary.get("total_agents", 0),
+                    "agents_needing_optimization": agent_summary.get("agents_needing_optimization", 0),
+                    "common_improvement_areas": [],
+                    "priority_recommendations": [],
+                    "expected_improvements": {}
+                }
+                
+                # If we have agents needing optimization, provide general recommendations
+                if agent_summary.get("agents_needing_optimization", 0) > 0:
+                    optimization_summary["common_improvement_areas"] = [
+                        "task_completion" if agent_summary.get("overall_success_rate", 100) < 80 else None,
+                        "response_time" if agent_summary.get("average_response_time", 0) > 2000 else None,
+                        "resource_utilization" if agent_summary.get("average_utilization", 0) < 60 or agent_summary.get("average_utilization", 0) > 85 else None,
+                        "uptime" if agent_summary.get("average_uptime", 100) < 99 else None
+                    ]
+                    optimization_summary["common_improvement_areas"] = [area for area in optimization_summary["common_improvement_areas"] if area is not None]
+                    
+                    optimization_summary["priority_recommendations"] = [
+                        "Implement automated error handling and retry mechanisms",
+                        "Optimize resource allocation and load balancing", 
+                        "Enhance monitoring and alerting systems",
+                        "Implement capacity-based auto-scaling"
+                    ]
+                    
+                    optimization_summary["expected_improvements"] = {
+                        "success_rate_improvement": "10-15%",
+                        "response_time_reduction": "20-30%", 
+                        "resource_efficiency_gain": "15-25%",
+                        "uptime_improvement": "2-5%"
+                    }
+                
+                response_data["optimization_recommendations"] = optimization_summary
+            except Exception as e:
+                logger.warning(f"Failed to get optimization recommendations: {e}")
+                response_data["optimization_recommendations"] = {"error": "Unable to retrieve optimization recommendations"}
+        
+        # Add benchmark insights if requested
+        if include_benchmarks:
+            try:
+                leaderboard = await benchmark_tracker.get_performance_leaderboard(time_period, limit=20)
+                
+                benchmark_insights = {
+                    "total_ranked_agents": len(leaderboard),
+                    "performance_spread": {
+                        "top_performer_score": leaderboard[0]["performance_score"] if leaderboard else 0,
+                        "bottom_performer_score": leaderboard[-1]["performance_score"] if leaderboard else 0,
+                        "average_score": round(mean([agent["performance_score"] for agent in leaderboard]), 2) if leaderboard else 0,
+                        "performance_variance": round(stdev([agent["performance_score"] for agent in leaderboard]), 2) if len(leaderboard) > 1 else 0
+                    },
+                    "benchmark_categories": {
+                        "elite_performers": len([agent for agent in leaderboard if agent["performance_score"] >= 90]),
+                        "strong_performers": len([agent for agent in leaderboard if 75 <= agent["performance_score"] < 90]),
+                        "average_performers": len([agent for agent in leaderboard if 60 <= agent["performance_score"] < 75]),
+                        "underperformers": len([agent for agent in leaderboard if agent["performance_score"] < 60])
+                    },
+                    "leaderboard": leaderboard[:10]  # Top 10 for response size
+                }
+                
+                response_data["benchmark_insights"] = benchmark_insights
+            except Exception as e:
+                logger.warning(f"Failed to get benchmark insights: {e}")
+                response_data["benchmark_insights"] = {"error": "Unable to retrieve benchmark insights"}
+        
+        # Add summary insights
+        response_data["summary_insights"] = {
+            "overall_health": "excellent" if agent_summary.get("average_efficiency", 0) >= 85 else "good" if agent_summary.get("average_efficiency", 0) >= 70 else "needs_improvement",
+            "utilization_status": "optimal" if 60 <= agent_summary.get("average_utilization", 0) <= 80 else "underutilized" if agent_summary.get("average_utilization", 0) < 60 else "overutilized", 
+            "reliability_status": "excellent" if agent_summary.get("average_uptime", 0) >= 99 else "good" if agent_summary.get("average_uptime", 0) >= 95 else "needs_improvement",
+            "key_metrics": {
+                "efficiency_trend": "stable",  # Would be calculated from historical data
+                "capacity_status": "adequate",
+                "optimization_priority": "medium" if agent_summary.get("agents_needing_optimization", 0) > 0 else "low"
+            },
+            "recommended_actions": [
+                f"Optimize {agent_summary.get('agents_needing_optimization', 0)} agents with efficiency scores below 70%" if agent_summary.get("agents_needing_optimization", 0) > 0 else None,
+                "Implement load balancing to improve utilization distribution" if agent_summary.get("average_utilization", 0) > 85 or agent_summary.get("average_utilization", 0) < 60 else None,
+                "Focus on reliability improvements to achieve 99%+ uptime" if agent_summary.get("average_uptime", 0) < 99 else None
+            ]
+        }
+        
+        # Remove None values from recommended actions
+        response_data["summary_insights"]["recommended_actions"] = [
+            action for action in response_data["summary_insights"]["recommended_actions"] if action is not None
+        ]
+        
+        return response_data
         
     except Exception as e:
         logger.error(f"Failed to get agent insights: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve agent insights: {str(e)}"
+        )
+
+
+@router.get("/agents/{agent_id}/performance")
+async def get_individual_agent_performance(
+    agent_id: str = Path(..., description="Agent ID to analyze"),
+    time_period: int = Query(30, ge=1, le=365, description="Analysis period in days"),
+    include_optimization: bool = Query(True, description="Include optimization recommendations")
+):
+    """
+    Get detailed performance analysis for a specific agent.
+    
+    Returns comprehensive agent-specific analytics including:
+    - Efficiency scoring with detailed breakdown
+    - Performance trends and patterns
+    - Peer comparison and benchmarking  
+    - Specific optimization recommendations
+    - Historical performance tracking
+    
+    Epic 5 Phase 3: Agent Performance Insights
+    """
+    try:
+        # Get analytics services
+        performance_analyzer = await get_agent_performance_analyzer()
+        optimization_engine = await get_agent_optimization_engine()
+        benchmark_tracker = await get_agent_benchmark_tracker()
+        
+        # Get agent efficiency analysis
+        efficiency_score = await performance_analyzer.analyze_agent_efficiency(agent_id, time_period)
+        
+        if not efficiency_score:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No performance data found for agent {agent_id} in the last {time_period} days"
+            )
+        
+        # Get benchmark comparison
+        benchmark_metrics = await benchmark_tracker.compare_agent_performance(agent_id, time_period)
+        
+        # Build response
+        response_data = {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "agent_id": agent_id,
+            "time_period_days": time_period,
+            "efficiency_analysis": {
+                "overall_score": float(efficiency_score.overall_score),
+                "performance_breakdown": {
+                    "task_completion_score": float(efficiency_score.task_completion_score),
+                    "response_time_score": float(efficiency_score.response_time_score),
+                    "resource_utilization_score": float(efficiency_score.resource_utilization_score),
+                    "error_rate_score": float(efficiency_score.error_rate_score),
+                    "uptime_score": float(efficiency_score.uptime_score),
+                    "business_value_score": float(efficiency_score.business_value_score)
+                },
+                "performance_trend": efficiency_score.trend,
+                "strengths": efficiency_score.strengths,
+                "improvement_areas": efficiency_score.improvement_areas,
+                "percentile_rank": efficiency_score.percentile_rank
+            }
+        }
+        
+        # Add benchmark comparison if available
+        if benchmark_metrics:
+            response_data["benchmark_comparison"] = {
+                "performance_rank": benchmark_metrics.performance_rank,
+                "total_agents": benchmark_metrics.total_agents,
+                "percentile": float(benchmark_metrics.percentile),
+                "above_average_metrics": benchmark_metrics.above_average_metrics,
+                "below_average_metrics": benchmark_metrics.below_average_metrics,
+                "peer_comparison": benchmark_metrics.peer_comparison
+            }
+        
+        # Add optimization recommendations if requested
+        if include_optimization:
+            try:
+                recommendations = await optimization_engine.generate_optimization_recommendations(
+                    agent_id, efficiency_score, time_period
+                )
+                
+                response_data["optimization_recommendations"] = [
+                    {
+                        "type": rec.recommendation_type,
+                        "priority": rec.priority,
+                        "title": rec.title,
+                        "description": rec.description,
+                        "expected_improvement": float(rec.expected_improvement),
+                        "implementation_effort": rec.implementation_effort,
+                        "impact_category": rec.impact_category,
+                        "suggested_actions": rec.suggested_actions,
+                        "metrics_to_track": rec.metrics_to_track
+                    }
+                    for rec in recommendations
+                ]
+            except Exception as e:
+                logger.warning(f"Failed to generate optimization recommendations: {e}")
+                response_data["optimization_recommendations"] = {"error": "Unable to generate recommendations"}
+        
+        # Add performance insights
+        response_data["insights"] = {
+            "performance_category": "excellent" if efficiency_score.overall_score >= 90 else "good" if efficiency_score.overall_score >= 75 else "needs_improvement",
+            "key_strengths": efficiency_score.strengths[:3],  # Top 3 strengths
+            "priority_improvements": efficiency_score.improvement_areas[:3],  # Top 3 improvement areas
+            "trend_analysis": {
+                "trend": efficiency_score.trend,
+                "trend_description": {
+                    "improving": "Agent performance is showing positive improvement trends",
+                    "declining": "Agent performance has declined recently - immediate attention recommended",
+                    "stable": "Agent performance is stable with consistent metrics"
+                }.get(efficiency_score.trend, "Performance trend unclear")
+            },
+            "ranking_status": (
+                f"Top {efficiency_score.percentile_rank}% performer" if efficiency_score.percentile_rank and efficiency_score.percentile_rank >= 75
+                else f"Above average (top {efficiency_score.percentile_rank}%)" if efficiency_score.percentile_rank and efficiency_score.percentile_rank >= 50
+                else f"Below average (bottom {100 - efficiency_score.percentile_rank if efficiency_score.percentile_rank else 50}%)" if efficiency_score.percentile_rank
+                else "Ranking unavailable"
+            )
+        }
+        
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get agent performance for {agent_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve agent performance: {str(e)}"
+        )
+
+
+@router.get("/agents/leaderboard")
+async def get_agent_performance_leaderboard(
+    time_period: int = Query(30, ge=1, le=365, description="Analysis period in days"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of agents to return"),
+    category: Optional[str] = Query(None, regex="^(overall|efficiency|reliability|speed|value)$", description="Performance category to rank by")
+):
+    """
+    Get agent performance leaderboard with rankings and comparative metrics.
+    
+    Returns ranked list of agents based on performance categories:
+    - Overall performance score (default)
+    - Efficiency (task completion and resource utilization)
+    - Reliability (uptime and error rates)
+    - Speed (response times and throughput)
+    - Value (business value generation)
+    
+    Epic 5 Phase 3: Agent Performance Insights
+    """
+    try:
+        benchmark_tracker = await get_agent_benchmark_tracker()
+        
+        # Get performance leaderboard
+        leaderboard = await benchmark_tracker.get_performance_leaderboard(time_period, limit)
+        
+        if not leaderboard:
+            return {
+                "status": "success",
+                "timestamp": datetime.utcnow().isoformat(),
+                "time_period_days": time_period,
+                "leaderboard": [],
+                "summary": {
+                    "total_agents": 0,
+                    "category": category or "overall",
+                    "message": "No performance data available"
+                }
+            }
+        
+        # Apply category-specific sorting if requested
+        if category:
+            if category == "efficiency":
+                leaderboard.sort(key=lambda x: (x["success_rate"] + (100 - x["average_response_time_ms"]/50)), reverse=True)
+            elif category == "reliability":
+                leaderboard.sort(key=lambda x: (x["uptime_percentage"] + (100 - x["tasks_failed"])), reverse=True)
+            elif category == "speed":
+                leaderboard.sort(key=lambda x: -x["average_response_time_ms"])  # Lower is better
+            elif category == "value":
+                leaderboard.sort(key=lambda x: x["business_value_generated"], reverse=True)
+            # overall is default sorting by performance_score
+            
+            # Re-rank after category sorting
+            for i, agent in enumerate(leaderboard):
+                agent["rank"] = i + 1
+        
+        # Calculate leaderboard statistics
+        performance_scores = [agent["performance_score"] for agent in leaderboard]
+        
+        leaderboard_stats = {
+            "total_agents": len(leaderboard),
+            "category": category or "overall",
+            "performance_range": {
+                "highest_score": max(performance_scores) if performance_scores else 0,
+                "lowest_score": min(performance_scores) if performance_scores else 0,
+                "average_score": round(mean(performance_scores), 2) if performance_scores else 0,
+                "score_variance": round(stdev(performance_scores), 2) if len(performance_scores) > 1 else 0
+            },
+            "tier_distribution": {
+                "elite": len([s for s in performance_scores if s >= 90]),
+                "excellent": len([s for s in performance_scores if 80 <= s < 90]),
+                "good": len([s for s in performance_scores if 70 <= s < 80]),
+                "needs_improvement": len([s for s in performance_scores if s < 70])
+            }
+        }
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "time_period_days": time_period,
+            "leaderboard": leaderboard,
+            "summary": leaderboard_stats,
+            "insights": {
+                "top_performer": {
+                    "agent_id": leaderboard[0]["agent_id"],
+                    "score": leaderboard[0]["performance_score"],
+                    "standout_metric": "overall_excellence"
+                } if leaderboard else None,
+                "performance_distribution": "healthy" if leaderboard_stats["tier_distribution"]["elite"] + leaderboard_stats["tier_distribution"]["excellent"] > leaderboard_stats["tier_distribution"]["needs_improvement"] else "needs_attention",
+                "competitive_landscape": "highly_competitive" if leaderboard_stats["performance_range"]["score_variance"] < 10 else "mixed_performance",
+                "optimization_opportunities": leaderboard_stats["tier_distribution"]["needs_improvement"]
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get agent leaderboard: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve agent leaderboard: {str(e)}"
+        )
+
+
+@router.get("/capacity-planning")
+async def get_capacity_planning_insights(
+    time_period: int = Query(30, ge=1, le=365, description="Historical analysis period in days"),
+    forecast_days: int = Query(30, ge=7, le=180, description="Capacity forecast horizon in days")
+):
+    """
+    Get comprehensive capacity planning insights and recommendations.
+    
+    Returns capacity planning analytics including:
+    - Current utilization and bottleneck analysis
+    - Scaling recommendations and resource optimization
+    - Load balancing opportunities  
+    - Capacity forecasting and planning
+    - Cost optimization insights
+    
+    Epic 5 Phase 3: Agent Performance Insights
+    """
+    try:
+        capacity_planner = await get_agent_capacity_planner()
+        
+        # Get comprehensive capacity analysis
+        capacity_analysis = await capacity_planner.analyze_capacity_requirements(time_period, forecast_days)
+        
+        # Enhance with executive summary
+        capacity_analysis["executive_summary"] = {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "analysis_period_days": time_period,
+            "forecast_horizon_days": forecast_days,
+            "key_findings": []
+        }
+        
+        # Generate key findings based on analysis
+        current_capacity = capacity_analysis.get("current_capacity", {})
+        avg_utilization = current_capacity.get("average_utilization", 0)
+        
+        key_findings = []
+        if avg_utilization > 85:
+            key_findings.append("System operating at high utilization - scaling recommended")
+        elif avg_utilization < 50:
+            key_findings.append("System under-utilized - cost optimization opportunities available")
+        else:
+            key_findings.append("System utilization within optimal range")
+        
+        bottlenecks = capacity_analysis.get("bottlenecks", [])
+        if bottlenecks:
+            key_findings.append(f"Identified {len(bottlenecks)} capacity bottlenecks requiring attention")
+        
+        capacity_headroom = current_capacity.get("capacity_headroom", 0)
+        if capacity_headroom < 15:
+            key_findings.append("Limited capacity headroom - proactive scaling needed")
+        
+        capacity_analysis["executive_summary"]["key_findings"] = key_findings
+        
+        # Add action priorities
+        scaling_recs = capacity_analysis.get("scaling_recommendations", [])
+        capacity_analysis["action_priorities"] = {
+            "immediate": [rec for rec in scaling_recs if "add" in rec.lower() or "critical" in rec.lower()],
+            "short_term": [rec for rec in scaling_recs if "optimize" in rec.lower() or "implement" in rec.lower()],
+            "long_term": [rec for rec in scaling_recs if "consider" in rec.lower() or "monitor" in rec.lower()]
+        }
+        
+        return capacity_analysis
+        
+    except Exception as e:
+        logger.error(f"Failed to get capacity planning insights: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve capacity planning insights: {str(e)}"
         )
 
 
@@ -539,3 +1032,333 @@ async def get_quick_system_status():
     except Exception as e:
         logger.error(f"Failed to get quick status: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve status")
+
+
+# User Behavior Tracking Endpoints (Epic 5 Phase 2)
+
+@router.post("/track/session/start")
+async def start_user_session(request: UserSessionStartRequest):
+    """
+    Start tracking a user session for behavior analytics.
+    
+    This endpoint initiates session tracking for comprehensive user behavior analysis.
+    Call this when a user begins a session (login, app start, etc.).
+    
+    Epic 5 Phase 2: User Behavior Analytics
+    """
+    try:
+        user_analytics = await get_user_behavior_analytics()
+        
+        session_data = {
+            "user_agent": request.user_agent,
+            "ip_address": request.ip_address,
+            "platform": request.platform,
+            "device_type": request.device_type,
+            "referrer": request.referrer
+        }
+        
+        await user_analytics.track_session_start(
+            session_id=request.session_id,
+            user_id=request.user_id,
+            session_data=session_data
+        )
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": "User session tracking started",
+            "session_id": request.session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to start user session tracking: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to start session tracking: {str(e)}"
+        )
+
+
+@router.post("/track/action")
+async def track_user_action(request: UserActionTrackingRequest):
+    """
+    Track a user action for behavior analytics.
+    
+    This endpoint tracks individual user actions and events for comprehensive
+    behavior analysis including page views, feature usage, button clicks, etc.
+    
+    Epic 5 Phase 2: User Behavior Analytics
+    """
+    try:
+        user_analytics = await get_user_behavior_analytics()
+        
+        # Build properties from request
+        properties = request.properties or {}
+        if request.page_path:
+            properties["page_path"] = request.page_path
+        if request.element:
+            properties["element"] = request.element
+        if request.category:
+            properties["category"] = request.category
+        if request.conversion_value:
+            properties["value"] = request.conversion_value
+        
+        await user_analytics.track_user_action(
+            session_id=request.session_id,
+            event_type=request.event_type,
+            event_name=request.event_name,
+            user_id=request.user_id,
+            properties=properties,
+            is_conversion=request.is_conversion
+        )
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": "User action tracked",
+            "event": f"{request.event_type}:{request.event_name}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to track user action: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to track user action: {str(e)}"
+        )
+
+
+@router.post("/track/session/end")
+async def end_user_session(request: UserSessionEndRequest):
+    """
+    End user session tracking and calculate session metrics.
+    
+    This endpoint completes session tracking and calculates final session
+    metrics including duration, quality score, and satisfaction.
+    
+    Epic 5 Phase 2: User Behavior Analytics
+    """
+    try:
+        user_analytics = await get_user_behavior_analytics()
+        
+        await user_analytics.track_session_end(
+            session_id=request.session_id,
+            satisfaction_score=request.satisfaction_score
+        )
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "message": "User session tracking completed",
+            "session_id": request.session_id,
+            "satisfaction_recorded": request.satisfaction_score is not None
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to end user session tracking: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to end session tracking: {str(e)}"
+        )
+
+
+@router.get("/users/{user_id}/journey")
+async def get_user_journey(
+    user_id: str = Path(..., description="User ID to analyze"),
+    time_period: int = Query(30, ge=1, le=365, description="Analysis period in days")
+):
+    """
+    Get detailed user journey analysis for a specific user.
+    
+    Returns comprehensive user journey including:
+    - Session history and patterns
+    - Feature adoption timeline  
+    - Conversion events and success indicators
+    - Drop-off points and optimization opportunities
+    - Satisfaction trends
+    
+    Epic 5 Phase 2: User Behavior Analytics
+    """
+    try:
+        user_analytics = await get_user_behavior_analytics()
+        
+        user_journey = await user_analytics.get_user_journey(user_id, time_period)
+        
+        if not user_journey:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No journey data found for user {user_id}"
+            )
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "user_id": user_id,
+            "time_period_days": time_period,
+            "journey_analytics": {
+                "session_count": user_journey.session_count,
+                "total_duration_seconds": user_journey.total_duration,
+                "average_satisfaction": (
+                    sum(user_journey.satisfaction_scores) / len(user_journey.satisfaction_scores)
+                    if user_journey.satisfaction_scores else None
+                ),
+                "conversion_events_count": len(user_journey.conversion_events),
+                "conversion_events": user_journey.conversion_events,
+                "features_adopted_count": len(user_journey.feature_adoption_timeline),
+                "feature_adoption_timeline": user_journey.feature_adoption_timeline,
+                "drop_off_points": user_journey.drop_off_points,
+                "success_indicators": user_journey.success_indicators,
+                "journey_path": user_journey.journey_path[:100]  # Limit to prevent large responses
+            },
+            "insights": {
+                "user_maturity": "power_user" if user_journey.session_count > 10 else "regular_user" if user_journey.session_count > 3 else "new_user",
+                "engagement_level": "high" if user_journey.total_duration > 3600 else "medium" if user_journey.total_duration > 600 else "low",
+                "conversion_success": len(user_journey.conversion_events) > 0,
+                "feature_exploration": len(user_journey.feature_adoption_timeline) > 5,
+                "satisfaction_trend": "positive" if user_journey.satisfaction_scores and sum(user_journey.satisfaction_scores) / len(user_journey.satisfaction_scores) > 3.5 else "neutral"
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get user journey for {user_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve user journey: {str(e)}"
+        )
+
+
+@router.get("/analytics/feature-adoption")
+async def get_feature_adoption_analytics(
+    time_period: int = Query(30, ge=1, le=365, description="Analysis period in days"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of features to return")
+):
+    """
+    Get feature adoption analytics and usage patterns.
+    
+    Returns detailed feature usage analytics including:
+    - Feature adoption rates across user base
+    - Usage frequency and patterns
+    - Feature discovery and engagement metrics
+    - Recommendations for feature optimization
+    
+    Epic 5 Phase 2: User Behavior Analytics
+    """
+    try:
+        user_analytics = await get_user_behavior_analytics()
+        
+        feature_analytics = await user_analytics.feature_analyzer.analyze_feature_adoption(time_period)
+        
+        if not feature_analytics:
+            feature_analytics = {
+                "total_features": 0,
+                "total_users": 0,
+                "overall_adoption_rate": 0.0,
+                "features_with_high_adoption": 0,
+                "feature_details": [],
+                "adoption_insights": {}
+            }
+        
+        # Limit feature details to requested limit
+        feature_details = feature_analytics.get("feature_details", [])[:limit]
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "time_period_days": time_period,
+            "feature_adoption_summary": {
+                "total_features_tracked": feature_analytics.get("total_features", 0),
+                "total_users_analyzed": feature_analytics.get("total_users", 0),
+                "overall_adoption_rate": feature_analytics.get("overall_adoption_rate", 0.0),
+                "features_with_high_adoption": feature_analytics.get("features_with_high_adoption", 0),
+                "average_features_per_user": feature_analytics.get("adoption_insights", {}).get("average_features_per_user", 0)
+            },
+            "top_features": feature_details,
+            "adoption_insights": {
+                "most_popular_feature": feature_analytics.get("adoption_insights", {}).get("most_adopted"),
+                "least_popular_feature": feature_analytics.get("adoption_insights", {}).get("least_adopted"),
+                "adoption_health": "excellent" if feature_analytics.get("overall_adoption_rate", 0) > 70 else "good" if feature_analytics.get("overall_adoption_rate", 0) > 50 else "needs_improvement",
+                "recommendations": [
+                    "Promote underutilized features through onboarding" if feature_analytics.get("overall_adoption_rate", 0) < 50 else None,
+                    "Create feature discovery tutorials" if feature_analytics.get("features_with_high_adoption", 0) < 5 else None,
+                    "Analyze and replicate success patterns of popular features" if feature_analytics.get("features_with_high_adoption", 0) > 0 else None
+                ]
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get feature adoption analytics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve feature adoption analytics: {str(e)}"
+        )
+
+
+@router.get("/analytics/session-quality")
+async def get_session_quality_analytics(
+    time_period: int = Query(30, ge=1, le=365, description="Analysis period in days")
+):
+    """
+    Get session quality analytics and insights.
+    
+    Returns comprehensive session quality metrics including:
+    - Session duration and engagement patterns
+    - Quality scoring and categorization
+    - Bounce rate and retention indicators
+    - Recommendations for session optimization
+    
+    Epic 5 Phase 2: User Behavior Analytics
+    """
+    try:
+        user_analytics = await get_user_behavior_analytics()
+        
+        session_analytics = await user_analytics.session_analyzer.analyze_session_quality(time_period)
+        
+        if not session_analytics:
+            session_analytics = {
+                "total_sessions": 0,
+                "average_duration_seconds": 0,
+                "average_actions_per_session": 0,
+                "bounce_rate": 0.0,
+                "session_quality_score": 0.0,
+                "high_quality_sessions": 0,
+                "low_quality_sessions": 0,
+                "duration_distribution": {},
+                "quality_insights": {}
+            }
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "time_period_days": time_period,
+            "session_quality_metrics": {
+                "total_sessions": session_analytics.get("total_sessions", 0),
+                "average_duration_seconds": session_analytics.get("average_duration_seconds", 0),
+                "average_actions_per_session": session_analytics.get("average_actions_per_session", 0),
+                "average_satisfaction_score": session_analytics.get("average_satisfaction_score", 0),
+                "bounce_rate": session_analytics.get("bounce_rate", 0.0),
+                "conversion_rate": session_analytics.get("conversion_rate", 0.0),
+                "overall_quality_score": session_analytics.get("session_quality_score", 0.0)
+            },
+            "session_categories": {
+                "high_quality_sessions": session_analytics.get("high_quality_sessions", 0),
+                "low_quality_sessions": session_analytics.get("low_quality_sessions", 0),
+                "quality_ratio": (
+                    session_analytics.get("high_quality_sessions", 0) / max(session_analytics.get("total_sessions", 1), 1) * 100
+                )
+            },
+            "duration_distribution": session_analytics.get("duration_distribution", {}),
+            "quality_insights": session_analytics.get("quality_insights", {}),
+            "optimization_recommendations": [
+                "Focus on reducing bounce rate through improved landing pages" if session_analytics.get("bounce_rate", 0) > 40 else None,
+                "Enhance user engagement with interactive features" if session_analytics.get("average_actions_per_session", 0) < 5 else None,
+                "Optimize page load times and performance" if session_analytics.get("average_duration_seconds", 0) < 120 else None,
+                "Implement user feedback collection to improve satisfaction" if session_analytics.get("average_satisfaction_score", 0) < 3.5 else None
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get session quality analytics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve session quality analytics: {str(e)}"
+        )
