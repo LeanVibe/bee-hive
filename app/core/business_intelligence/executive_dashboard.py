@@ -25,7 +25,7 @@ from ...models.business_intelligence import (
 from ...models.agent import Agent, AgentStatus
 from ...models.user import User
 from ...models.task import Task, TaskStatus
-from ...core.database import get_async_session
+from ...core.database import get_session
 from ...core.logging_service import get_component_logger
 
 logger = get_component_logger("executive_dashboard")
@@ -81,7 +81,7 @@ class ExecutiveDashboard:
     async def get_current_metrics(self) -> BusinessMetrics:
         """Get real-time executive business metrics."""
         try:
-            async for session in get_async_session():
+            async with get_session() as session:
                 # Parallel data collection for performance
                 metrics_data = await asyncio.gather(
                     self._get_user_metrics(session),
@@ -551,7 +551,7 @@ class ExecutiveDashboard:
     async def get_alerts(self, level: Optional[AlertLevel] = None) -> List[Dict[str, Any]]:
         """Get business alerts with optional filtering by level."""
         try:
-            async for session in get_async_session():
+            async with get_session() as session:
                 query = select(BusinessAlert).where(BusinessAlert.is_active == True)
                 
                 if level:

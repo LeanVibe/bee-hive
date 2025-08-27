@@ -25,6 +25,9 @@ from ..core.business_intelligence.agent_performance_insights import (
     get_agent_performance_analyzer, get_agent_optimization_engine,
     get_agent_capacity_planner, get_agent_benchmark_tracker
 )
+from ..core.business_intelligence.predictive_business_modeling import (
+    get_predictive_business_modeling_service
+)
 from ..models.business_intelligence import AlertLevel
 from ..core.database import get_async_session
 from ..core.logging_service import get_component_logger
@@ -745,58 +748,93 @@ async def get_business_forecasts(
         default=["revenue", "users", "capacity"],
         description="Metrics to forecast (revenue, users, capacity, efficiency)"
     ),
-    confidence_level: float = Query(0.95, ge=0.5, le=0.99, description="Confidence level for predictions")
+    confidence_level: float = Query(0.95, ge=0.5, le=0.99, description="Confidence level for predictions"),
+    include_anomaly_detection: bool = Query(True, description="Include anomaly detection in results")
 ):
     """
-    Get business forecasting and predictive analytics.
+    Get comprehensive business forecasting and predictive analytics.
     
-    Returns predictive business modeling including:
-    - Revenue growth projections
-    - User acquisition forecasts
-    - System capacity planning
-    - Resource requirement predictions
-    - Market trend analysis
-    - Seasonal adjustment factors
-    - Risk and opportunity analysis
+    Returns advanced predictive business modeling including:
+    - Revenue growth projections with confidence intervals
+    - User acquisition forecasts and trends
+    - System capacity planning and resource predictions
+    - Business growth modeling and strategic insights
+    - Anomaly detection and risk assessment
+    - Actionable recommendations for decision making
+    
+    Epic 5 Phase 4: Predictive Business Modeling - PRODUCTION READY
     """
     try:
-        # This will be implemented with PredictiveBusinessModel
-        # For now, return a placeholder structure
+        # Get the comprehensive predictive business modeling service
+        predictive_service = await get_predictive_business_modeling_service()
         
-        forecast_date = datetime.utcnow() + timedelta(days=forecast_horizon)
+        # Get comprehensive predictions with all modeling capabilities
+        predictions = await predictive_service.get_comprehensive_predictions(
+            forecast_horizon_days=forecast_horizon,
+            confidence_level=confidence_level,
+            include_anomaly_detection=include_anomaly_detection
+        )
         
-        return {
-            "status": "success",
-            "timestamp": datetime.utcnow().isoformat(),
-            "forecast_horizon_days": forecast_horizon,
-            "forecast_date": forecast_date.isoformat(),
-            "confidence_level": confidence_level,
-            "forecasts": {
-                metric: {
-                    "predicted_value": 0.0,
-                    "lower_bound": 0.0,
-                    "upper_bound": 0.0,
-                    "trend": "stable",
-                    "confidence": confidence_level,
-                    "model_accuracy": 0.0,
-                    "influencing_factors": []
-                }
-                for metric in metrics
-            },
-            "business_insights": {
-                "growth_opportunities": [],
-                "risk_factors": [],
-                "recommended_actions": [],
-                "scenario_analysis": {}
-            },
-            "message": "Predictive modeling implementation in progress - Epic 5 Phase 4"
+        if predictions.get("status") == "error":
+            raise HTTPException(
+                status_code=500,
+                detail=predictions.get("message", "Failed to generate predictions")
+            )
+        
+        # Enhance response with executive summary
+        enhanced_response = {
+            **predictions,
+            "executive_summary": {
+                "forecast_period": f"{forecast_horizon} days ahead",
+                "confidence_rating": "high" if predictions.get("predictive_insights", {}).get("overall_confidence", 0) > 0.8 else "medium" if predictions.get("predictive_insights", {}).get("overall_confidence", 0) > 0.6 else "low",
+                "key_predictions": [],
+                "business_impact": "positive" if any("growth" in trend.lower() or "increasing" in trend.lower() for trend in predictions.get("predictive_insights", {}).get("key_trends", [])) else "neutral",
+                "action_required": len(predictions.get("anomaly_alerts", [])) > 0 or len(predictions.get("recommendations", {}).get("immediate_actions", [])) > 0
+            }
         }
         
+        # Extract key predictions for executive summary
+        growth_forecast = predictions.get("business_growth_forecast")
+        capacity_prediction = predictions.get("capacity_prediction")
+        
+        if growth_forecast:
+            enhanced_response["executive_summary"]["key_predictions"].extend([
+                f"Revenue growth predicted: {growth_forecast['revenue_growth']['predicted_value']:.1f}%",
+                f"User growth forecast: {growth_forecast['user_growth']['predicted_value']:.1f}%"
+            ])
+        
+        if capacity_prediction:
+            enhanced_response["executive_summary"]["key_predictions"].append(
+                f"Agent capacity needed: {capacity_prediction['agent_capacity_needed']} agents"
+            )
+        
+        # Add metric-specific forecasts for requested metrics
+        metric_forecasts = {}
+        for metric in metrics:
+            if metric == "revenue" and growth_forecast:
+                metric_forecasts[metric] = growth_forecast["revenue_growth"]
+            elif metric == "users" and growth_forecast:
+                metric_forecasts[metric] = growth_forecast["user_growth"]  
+            elif metric == "capacity" and capacity_prediction:
+                metric_forecasts[metric] = {
+                    "predicted_value": capacity_prediction["agent_capacity_needed"],
+                    "confidence_level": capacity_prediction["confidence_level"] * 100,
+                    "trend_direction": "increasing",
+                    "resource_requirements": capacity_prediction["resource_requirements"],
+                    "cost_projections": capacity_prediction["cost_projections"]
+                }
+        
+        enhanced_response["metric_forecasts"] = metric_forecasts
+        
+        return enhanced_response
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get business forecasts: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve forecasts: {str(e)}"
+            detail=f"Failed to retrieve predictive analytics: {str(e)}"
         )
 
 

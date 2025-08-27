@@ -18,9 +18,17 @@ from .agent_performance_insights import (
     get_agent_performance_analyzer, get_agent_optimization_engine,
     get_agent_capacity_planner, get_agent_benchmark_tracker
 )
+from .predictive_business_modeling import (
+    PredictiveAnalyticsEngine, BusinessGrowthModeler, CapacityForecastingEngine,
+    AnomalyDetectionEngine, PredictiveBusinessModelingService,
+    PredictiveMetric, BusinessGrowthForecast, CapacityPrediction, AnomalyAlert,
+    TrendDirection, ForecastAccuracy,
+    get_predictive_analytics_engine, get_business_growth_modeler,
+    get_capacity_forecasting_engine, get_anomaly_detection_engine,
+    get_predictive_business_modeling_service
+)
 
-# Placeholder imports - will be implemented in subsequent phases
-# from .predictive_business_model import PredictiveBusinessModel, BusinessForecast
+# Future components for additional phases:
 # from .business_intelligence_engine import BusinessIntelligenceEngine
 
 __all__ = [
@@ -48,8 +56,23 @@ __all__ = [
     "get_agent_optimization_engine",
     "get_agent_capacity_planner",
     "get_agent_benchmark_tracker",
-    # Future components for Epic 5 phase 4:
-    # "PredictiveBusinessModel",
-    # "BusinessForecast",
+    # Epic 5 Phase 4: Predictive Business Modeling (✅ Complete)
+    "PredictiveAnalyticsEngine",
+    "BusinessGrowthModeler",
+    "CapacityForecastingEngine",
+    "AnomalyDetectionEngine",
+    "PredictiveBusinessModelingService",
+    "PredictiveMetric",
+    "BusinessGrowthForecast", 
+    "CapacityPrediction",
+    "AnomalyAlert",
+    "TrendDirection",
+    "ForecastAccuracy",
+    "get_predictive_analytics_engine",
+    "get_business_growth_modeler",
+    "get_capacity_forecasting_engine",
+    "get_anomaly_detection_engine",
+    "get_predictive_business_modeling_service",
+    # Future components for additional phases:
     # "BusinessIntelligenceEngine"
 ]

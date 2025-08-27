@@ -29,7 +29,7 @@ from ..models.sleep_wake import (
 )
 from ..models.agent import Agent
 from ..models.performance_metric import PerformanceMetric
-from ..core.database import get_async_session
+from ..core.database import get_session
 from ..core.config import get_settings
 
 
@@ -182,7 +182,7 @@ class SleepAnalyticsEngine:
                 "metrics": {}
             }
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 # Get cycle data
                 cycle = await session.get(SleepWakeCycle, cycle_id)
                 if not cycle:
@@ -248,7 +248,7 @@ class SleepAnalyticsEngine:
             
             start_dt, end_dt = time_range.to_datetime_range()
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 # Build base query
                 query = select(SleepWakeCycle).where(
                     and_(
@@ -300,7 +300,7 @@ class SleepAnalyticsEngine:
             start_dt = datetime.combine(start_date, datetime.min.time())
             end_dt = datetime.combine(end_date, datetime.max.time())
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 # Get cycles for analysis
                 query = select(SleepWakeCycle).where(
                     and_(
@@ -353,7 +353,7 @@ class SleepAnalyticsEngine:
             start_dt = datetime.combine(target_date, datetime.min.time())
             end_dt = datetime.combine(target_date, datetime.max.time())
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 # Get all agents with cycles on this date
                 agents_query = select(SleepWakeCycle.agent_id).where(
                     and_(
@@ -393,7 +393,7 @@ class SleepAnalyticsEngine:
             current_time = datetime.utcnow()
             window_start = current_time - timedelta(hours=self.real_time_window_hours)
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 # Active cycles
                 active_cycles = await self._get_active_cycles(session, agent_id)
                 
@@ -1091,7 +1091,7 @@ class SleepAnalyticsEngine:
         try:
             start_dt, end_dt = time_range.to_datetime_range()
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 query = select(SleepWakeCycle).where(
                     and_(
                         SleepWakeCycle.created_at >= start_dt,
@@ -1155,7 +1155,7 @@ class SleepAnalyticsEngine:
         try:
             start_dt, end_dt = time_range.to_datetime_range()
             
-            async with get_async_session() as session:
+            async with get_session() as session:
                 # Get daily analytics for the period
                 analytics_query = select(SleepWakeAnalytics).where(
                     and_(
