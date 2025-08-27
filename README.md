@@ -91,20 +91,31 @@ Environment configuration:
 
 ## 📚 Documentation
 
-### Core Documentation
-- [Getting Started](docs/GETTING_STARTED.md) - Setup and installation
-- [Core Overview](docs/CORE.md) - System architecture and concepts
-- [Architecture](docs/ARCHITECTURE.md) - Technical implementation details
-- [Navigation Index](docs/NAV_INDEX.md) - Complete documentation map
+**Epic 9 Consolidated Documentation** - Choose your journey:
 
-### Implementation Guides
-- [Context Compression](docs/implementation/context-compression.md) - Intelligent conversation compression
-- [Validation Framework](docs/reference/validation-framework.md) - Testing and validation
-- [Mobile PWA](docs/guides/MOBILE_PWA_IMPLEMENTATION_GUIDE.md) - Frontend development
+### 🚀 Quick Start Journey (5 minutes)
+- **[Setup Guide](UV_INSTALLATION_GUIDE.md)** - Get running fast with uv installation
+- **[CLI Commands](CLI_USAGE_GUIDE.md)** - Essential commands for daily use
+- **Ready to go!** 🎉
 
-### Operations
-- [Agent Consolidation Prompt](docs/AGENT_PROMPT_CONSOLIDATION.md) - Debt cleanup guidance
-- [Troubleshooting](docs/runbooks/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md) - Problem resolution
+### 👨‍💻 Developer Journey (30 minutes)
+- **[Developer Onboarding](DEVELOPER_ONBOARDING_30MIN.md)** - Complete developer setup
+- **[System Architecture](ARCHITECTURE_CONSOLIDATED.md)** - Understand the unified architecture
+- **[API Reference](API_REFERENCE_CONSOLIDATED.md)** - Complete API documentation
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute code
+- **Ready to develop!** ⚡
+
+### 🏢 Enterprise Journey (60 minutes)
+- **[Production Deployment](DEPLOYMENT_CHECKLIST.md)** - Enterprise deployment procedures
+- **[Enterprise Features](docs/guides/ENTERPRISE_USER_GUIDE.md)** - Advanced enterprise capabilities
+- **[Operations Runbook](docs/OPERATIONAL_RUNBOOK.md)** - Production operations guide
+- **[Troubleshooting](docs/runbooks/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md)** - Problem resolution
+- **Ready for production!** 🏭
+
+### 📖 Complete Documentation Map
+- **[Navigation Index](docs/NAV_INDEX.md)** - Complete documentation index
+- **[Implementation Guides](docs/guides/)** - Detailed implementation guides
+- **[API & Reference](docs/reference/)** - Technical reference materials
 
 ## 🛠️ Development
 

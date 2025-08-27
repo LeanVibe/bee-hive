@@ -1,0 +1,3929 @@
+{
+  "timestamp": "2025-08-27T19:09:09.331105",
+  "total_files": 50,
+  "link_validation": {
+    "README.md": {
+      "total_links": 19,
+      "broken_links": [
+        {
+          "text": "Deployment Guide",
+          "url": "docs/guides/deployment-guide.md"
+        }
+      ],
+      "valid_links": 18
+    },
+    "ARCHITECTURE_CONSOLIDATED.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "API_REFERENCE_CONSOLIDATED.md": {
+      "total_links": 5,
+      "broken_links": [],
+      "valid_links": 5
+    },
+    "CLI_USAGE_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "DEVELOPER_ONBOARDING_30MIN.md": {
+      "total_links": 6,
+      "broken_links": [],
+      "valid_links": 6
+    },
+    "UV_INSTALLATION_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "CONTRIBUTING.md": {
+      "total_links": 3,
+      "broken_links": [],
+      "valid_links": 3
+    },
+    "DEPLOYMENT_CHECKLIST.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/GETTING_STARTED.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/CORE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/TECHNICAL_SPECIFICATIONS.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/PRODUCTION_DEPLOYMENT_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/NAV_INDEX.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/OPERATIONAL_RUNBOOK.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/paths/EXECUTIVE_PATH.md": {
+      "total_links": 11,
+      "broken_links": [
+        {
+          "text": "Schedule 15-minute demo",
+          "url": "https://calendly.com/leanvibe-demo"
+        },
+        {
+          "text": "Download ROI calculator",
+          "url": "../enterprise/roi-calculator.xlsx"
+        },
+        {
+          "text": "Review pilot program guide",
+          "url": "../implementation/pilot-program-guide.md"
+        },
+        {
+          "text": "Technical Due Diligence",
+          "url": "../enterprise/technical-due-diligence.md"
+        },
+        {
+          "text": "Security Assessment",
+          "url": "../enterprise/security-assessment.md"
+        },
+        {
+          "text": "Compliance Review",
+          "url": "../enterprise/compliance-review.md"
+        },
+        {
+          "text": "Case Studies",
+          "url": "../enterprise/case-studies.md"
+        },
+        {
+          "text": "Schedule Executive Demo",
+          "url": "https://calendly.com/leanvibe-executive-demo"
+        },
+        {
+          "text": "Request Custom ROI Analysis",
+          "url": "mailto:roi@leanvibe.com"
+        },
+        {
+          "text": "Download Business Case Template",
+          "url": "../enterprise/business-case-template.pdf"
+        },
+        {
+          "text": "LeanVibe Agent Hive 2.0",
+          "url": "../../WELCOME.md"
+        }
+      ],
+      "valid_links": 0
+    },
+    "docs/paths/DEVELOPER_PATH.md": {
+      "total_links": 12,
+      "broken_links": [
+        {
+          "text": "Production Deployment Guide",
+          "url": "../PRODUCTION_DEPLOYMENT_RUNBOOK.md"
+        },
+        {
+          "text": "Enterprise Assessment Path",
+          "url": "ENTERPRISE_PATH.md"
+        },
+        {
+          "text": "Troubleshooting Guide",
+          "url": "../TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md"
+        },
+        {
+          "text": "Hook Integration",
+          "url": "../HOOK_INTEGRATION_GUIDE.md"
+        },
+        {
+          "text": "Multi-Agent Coordination",
+          "url": "../MULTI_AGENT_COORDINATION_GUIDE.md"
+        },
+        {
+          "text": "GitHub Discussions",
+          "url": "https://github.com/LeanVibe/bee-hive/discussions"
+        },
+        {
+          "text": "LeanVibe Agent Hive 2.0",
+          "url": "../../WELCOME.md"
+        }
+      ],
+      "valid_links": 5
+    },
+    "docs/paths/ADVANCED_DEVELOPER_PATH.md": {
+      "total_links": 17,
+      "broken_links": [
+        {
+          "text": "USER_TUTORIAL_COMPREHENSIVE.md",
+          "url": "USER_TUTORIAL_COMPREHENSIVE.md"
+        },
+        {
+          "text": "MULTI_AGENT_COORDINATION_GUIDE.md",
+          "url": "MULTI_AGENT_COORDINATION_GUIDE.md"
+        },
+        {
+          "text": "TOPIC_KNOWLEDGE_MAP.md",
+          "url": "TOPIC_KNOWLEDGE_MAP.md"
+        },
+        {
+          "text": "AGENT_SPECIALIZATION_TEMPLATES.md",
+          "url": "AGENT_SPECIALIZATION_TEMPLATES.md"
+        },
+        {
+          "text": "EXTERNAL_TOOLS_GUIDE.md",
+          "url": "EXTERNAL_TOOLS_GUIDE.md"
+        },
+        {
+          "text": "GITHUB_INTEGRATION_API_COMPREHENSIVE.md",
+          "url": "GITHUB_INTEGRATION_API_COMPREHENSIVE.md"
+        },
+        {
+          "text": "API_REFERENCE_COMPREHENSIVE.md",
+          "url": "API_REFERENCE_COMPREHENSIVE.md"
+        },
+        {
+          "text": "DEVELOPER_GUIDE.md",
+          "url": "DEVELOPER_GUIDE.md"
+        },
+        {
+          "text": "PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md",
+          "url": "PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md"
+        },
+        {
+          "text": "WORKFLOW_ORCHESTRATION_OPTIMIZATION.md",
+          "url": "WORKFLOW_ORCHESTRATION_OPTIMIZATION.md"
+        },
+        {
+          "text": "ENTERPRISE_SECURITY_COMPREHENSIVE_GUIDE.md",
+          "url": "ENTERPRISE_SECURITY_COMPREHENSIVE_GUIDE.md"
+        },
+        {
+          "text": "implementation/security-implementation-guide.md",
+          "url": "implementation/security-implementation-guide.md"
+        },
+        {
+          "text": "ENTERPRISE_SYSTEM_ARCHITECTURE.md",
+          "url": "ENTERPRISE_SYSTEM_ARCHITECTURE.md"
+        },
+        {
+          "text": "PRODUCTION_DEPLOYMENT_RUNBOOK.md",
+          "url": "PRODUCTION_DEPLOYMENT_RUNBOOK.md"
+        },
+        {
+          "text": "MULTI_AGENT_COORDINATION_GUIDE.md",
+          "url": "MULTI_AGENT_COORDINATION_GUIDE.md"
+        },
+        {
+          "text": "DEVELOPER_EXPERIENCE_ENHANCEMENT.md",
+          "url": "DEVELOPER_EXPERIENCE_ENHANCEMENT.md"
+        }
+      ],
+      "valid_links": 1
+    },
+    "docs/tutorials/USER_TUTORIAL_COMPREHENSIVE.md": {
+      "total_links": 10,
+      "broken_links": [],
+      "valid_links": 10
+    },
+    "docs/tutorials/AUTONOMOUS_DEVELOPMENT_DEMO.md": {
+      "total_links": 1,
+      "broken_links": [
+        {
+          "text": "Anthropic Console",
+          "url": "https://console.anthropic.com/"
+        }
+      ],
+      "valid_links": 0
+    },
+    "docs/product/PRODUCT_VISION.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/product/VALUE_PROPOSITION.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/product/TARGET_USER_ANALYSIS.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/competitive-advantages.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/guides/MULTI_AGENT_COORDINATION_GUIDE.md": {
+      "total_links": 2,
+      "broken_links": [
+        {
+          "text": "Real-time Dashboard Guide",
+          "url": "./DASHBOARD_GUIDE.md"
+        },
+        {
+          "text": "Advanced Workflows Documentation",
+          "url": "./ADVANCED_WORKFLOWS.md"
+        }
+      ],
+      "valid_links": 0
+    },
+    "docs/guides/EXTERNAL_TOOLS_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/guides/MOBILE_PWA_IMPLEMENTATION_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/guides/ENTERPRISE_USER_GUIDE.md": {
+      "total_links": 9,
+      "broken_links": [],
+      "valid_links": 9
+    },
+    "docs/guides/PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/guides/QUALITY_GATES_AUTOMATION.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/guides/SANDBOX_MODE_GUIDE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/implementation/context-compression.md": {
+      "total_links": 3,
+      "broken_links": [
+        {
+          "text": "Session Management",
+          "url": "../core/session-management.md"
+        }
+      ],
+      "valid_links": 2
+    },
+    "docs/integrations/HOOK_INTEGRATION_GUIDE.md": {
+      "total_links": 4,
+      "broken_links": [
+        {
+          "text": "System Architecture",
+          "url": "./system-architecture.md"
+        },
+        {
+          "text": "API Documentation",
+          "url": "./api-documentation.md"
+        },
+        {
+          "text": "Deployment Guide",
+          "url": "./deployment-guide.md"
+        },
+        {
+          "text": "Security Guidelines",
+          "url": "./security-guidelines.md"
+        }
+      ],
+      "valid_links": 0
+    },
+    "docs/integrations/claude/hooks-guide.md": {
+      "total_links": 7,
+      "broken_links": [
+        {
+          "text": "Hooks reference",
+          "url": "/en/docs/claude-code/hooks"
+        },
+        {
+          "text": "Security Considerations",
+          "url": "/en/docs/claude-code/hooks#security-considerations"
+        },
+        {
+          "text": "slash command",
+          "url": "/en/docs/claude-code/slash-commands"
+        },
+        {
+          "text": "Hooks reference",
+          "url": "/en/docs/claude-code/hooks"
+        },
+        {
+          "text": "Security Considerations",
+          "url": "/en/docs/claude-code/hooks#security-considerations"
+        },
+        {
+          "text": "Debugging",
+          "url": "/en/docs/claude-code/hooks#debugging"
+        }
+      ],
+      "valid_links": 1
+    },
+    "docs/integrations/HIVE_SLASH_COMMANDS.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/design/ENTERPRISE_SYSTEM_ARCHITECTURE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/reference/API_REFERENCE_COMPREHENSIVE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/reference/validation-framework.md": {
+      "total_links": 3,
+      "broken_links": [
+        {
+          "text": "Installation Guide",
+          "url": "../guides/PROJECT_INDEX_INSTALLATION.md"
+        }
+      ],
+      "valid_links": 2
+    },
+    "docs/reference/DASHBOARD_API_DOCUMENTATION.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/reference/GITHUB_INTEGRATION_API_COMPREHENSIVE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/reference/SEMANTIC_MEMORY_API.md": {
+      "total_links": 8,
+      "broken_links": [],
+      "valid_links": 8
+    },
+    "docs/reference/OBSERVABILITY_EVENT_SCHEMA.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/reference/AGENT_SPECIALIZATION_TEMPLATES.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/core/system-architecture.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/core/product-requirements.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/runbooks/PRODUCTION_DEPLOYMENT_RUNBOOK.md": {
+      "total_links": 12,
+      "broken_links": [],
+      "valid_links": 12
+    },
+    "docs/runbooks/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md": {
+      "total_links": 14,
+      "broken_links": [],
+      "valid_links": 14
+    },
+    "docs/reports/SYSTEM_VALIDATION_COMPREHENSIVE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/reports/STATUS_COMPREHENSIVE.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/migrations/SANDBOX_TO_PRODUCTION_MIGRATION.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    },
+    "docs/enterprise/market-strategy.md": {
+      "total_links": 0,
+      "broken_links": [],
+      "valid_links": 0
+    }
+  },
+  "code_validation": {
+    "README.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Global installation (recommended)\nuv tool install -e .\n\n# Now use hive command anywhere\nhive doctor           # System diagnostics\nhive start           # Start the platform  \nhive agent deploy backe...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Infrastructure\ndocker compose up -d postgres redis\n\n# Backend API\nuvicorn app.main:app --host 0.0.0.0 --port 8000 --reload\n\n# Frontend PWA\ncd mobile-pwa && npm ci && npm run dev",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "cd scripts/performance\nmake smoke BACKEND_WS_URL=ws://localhost:18080/api/dashboard/ws/dashboard ACCESS_TOKEN=dev-token",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "hive doctor                          # System diagnostics\nhive start                           # Start platform services  \nhive agent deploy <role>             # Deploy agents\nhive status --watch     ...",
+          "valid": false,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 4,
+        "passed": 3,
+        "failed": 1
+      }
+    },
+    "ARCHITECTURE_CONSOLIDATED.md": {
+      "bash_examples": [],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "class UniversalOrchestrator:\n    \"\"\"Manages 55+ specialized agents with intelligent load balancing\"\"\"\n    \n    def __init__(self):\n        self.active_agents = {}\n        self.load_balancer = Intellig...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "class ResourceManager:\n    \"\"\"System resource allocation and optimization\"\"\"\n    \n    def allocate_resources(self, agent_type: str) -> ResourceAllocation:\n        \"\"\"Smart resource allocation based on...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "class ContextManager:\n    \"\"\"Intelligent conversation context handling\"\"\"\n    \n    def compress_context(self, conversation: List[Message]) -> CompressedContext:\n        \"\"\"Advanced context compression...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "class SecurityManager:\n    \"\"\"Enterprise-grade security and compliance\"\"\"\n    \n    def validate_agent_permissions(self, agent: Agent, action: str) -> bool:\n        \"\"\"RBAC-based permission validation\"...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "class TaskManager:\n    \"\"\"Advanced task scheduling and execution\"\"\"\n    \n    def schedule_task(self, task: Task) -> TaskExecution:\n        \"\"\"Intelligent task scheduling with dependency resolution\"\"\"\n...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "class CommunicationManager:\n    \"\"\"Inter-agent and external communication\"\"\"\n    \n    def route_message(self, message: Message) -> None:\n        \"\"\"Intelligent message routing with delivery guarantees...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "# Agent status tracking\nREDIS_KEYS = {\n    'agent_status': 'agents:status:{agent_id}',    # Hash\n    'system_metrics': 'metrics:system',            # Stream  \n    'task_queue': 'tasks:queue:{priority}...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "# Semantic memory and context management\nclass VectorStore:\n    def store_conversation_context(self, conversation: List[Message]):\n        \"\"\"Store conversation embeddings for semantic search\"\"\"\n     ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 8,
+          "code": "class SecurityArchitecture:\n    \"\"\"Multi-layered security implementation\"\"\"\n    \n    authentication = {\n        'jwt_tokens': 'Primary authentication method',\n        'api_keys': 'Service-to-service a...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 9,
+          "code": "# Redis Streams for real-time events\nclass EventStreamArchitecture:\n    def __init__(self):\n        self.streams = {\n            'agent_events': 'Agent status changes and activities',\n            'sys...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 10,
+          "code": "# Unified configuration system\nclass UnifiedConfiguration:\n    def __init__(self):\n        self.orchestrator_config = OrchestratorConfig()\n        self.manager_configs = {\n            'resource': Reso...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 11,
+          "code": "AGENT_SPECIFICATIONS = {\n    'backend-developer': {\n        'specializations': ['FastAPI', 'PostgreSQL', 'Redis', 'Python'],\n        'capabilities': ['api_design', 'database_modeling', 'testing', 'opt...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 12,
+          "code": "# Prometheus metrics integration\nfrom prometheus_client import Counter, Histogram, Gauge\n\n# Custom metrics\nagent_deployments = Counter('agent_deployments_total', 'Total agent deployments', ['agent_typ...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 13,
+        "passed": 13,
+        "failed": 0
+      }
+    },
+    "API_REFERENCE_CONSOLIDATED.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Most endpoints work without authentication in development\ncurl http://localhost:18080/health",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# JWT Token Authentication\ncurl -H \"Authorization: Bearer <jwt_token>\" \\\n     http://localhost:18080/api/agents\n\n# API Key Authentication  \ncurl -H \"X-API-Key: <api_key>\" \\\n     http://localhost:18080...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "curl -X POST http://localhost:18080/api/auth/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"username\": \"admin\",\n    \"password\": \"your-password\"\n  }'",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Health check\ncurl http://localhost:18080/health\n\n# List agents\ncurl http://localhost:18080/api/agents\n\n# Deploy new agent  \ncurl -X POST http://localhost:18080/api/agents/deploy \\\n  -H \"Content-Type...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import requests\nimport websocket\n\n# API client example\nresponse = requests.get('http://localhost:18080/api/agents')\nagents = response.json()\n\n# WebSocket client example\ndef on_message(ws, message):\n  ...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0
+      }
+    },
+    "CLI_USAGE_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Make CLI executable\nchmod +x hive\n\n# Check system health\npython hive doctor\n\n# Start the platform\npython hive start",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Quick health check\npython hive doctor\n\n# Start all services\npython hive start\n\n# Or start in background\npython hive start --background\n\n# Check status\npython hive status",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Deploy a backend developer agent\npython hive agent deploy backend-developer --task \"Implement API endpoints\"\n\n# List all active agents\npython hive agent list\n\n# Deploy multiple agents\npython hive ag...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Watch system status (updates every 2s)\npython hive status --watch\n\n# Follow logs in real-time\npython hive logs --follow\n\n# Open web dashboard\npython hive dashboard",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Complete development workflow\npython hive demo\n\n# Start system and deploy agents\npython hive up\npython hive agent deploy backend-developer\npython hive dashboard",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Deploy with custom task\npython hive agent deploy backend-developer --task \"Build authentication API\"\n\n# Deploy with custom name\npython hive agent deploy frontend-developer --name \"ui-specialist\"\n\n# ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Watch system status with real-time updates\npython hive status --watch\n\n# JSON output for scripting\npython hive status --json\n\n# View last 100 log lines\npython hive logs --lines 100\n\n# Follow logs co...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Docker-compose style\npython hive up          # Start services in background\npython hive down        # Stop all services\n\n# Docker ps style\npython hive agent ps    # Show running agents\n\n# kubectl st...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "   python hive doctor  # Check system health\n   python hive start   # Start services\n   ```\n\n2. **Port conflicts**\n   ```bash\n   python hive doctor  # Check port status\n   # Default ports: 8000 (API),...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "#!/bin/bash\n# deployment-script.sh\n\nset -e\n\necho \"\ud83d\ude80 Starting Agent Hive deployment...\"\n\n# Health check\npython hive doctor\n\n# Start system\npython hive up\n\n# Deploy agents\npython hive agent deploy backe...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "python hive --help              # Main help\npython hive agent --help        # Agent management help\npython hive agent deploy --help # Deployment options help\npython hive start --help        # Start co...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "python hive status              # Human-readable table\npython hive status --json       # JSON output for scripts\npython hive agent list          # Table format\npython hive agent list --format json  # ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "python hive status --watch      # Live status updates\npython hive logs --follow       # Live log streaming",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# Check system version\npython hive version\n\n# Run diagnostics\npython hive doctor\n\n# Restart services\npython hive down && python hive up",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 14,
+        "passed": 13,
+        "failed": 1
+      }
+    },
+    "DEVELOPER_ONBOARDING_30MIN.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Clone the repository\ngit clone <repository-url>\ncd bee-hive\n\n# Install globally with uv (recommended)\nuv tool install -e .\n\n# Verify installation\nhive --help",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Start core infrastructure (Postgres + Redis)\ndocker compose up -d postgres redis\n\n# Verify services are running\ndocker compose ps",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# System health check\nhive doctor\n\n# Start all platform services\nhive start\n\n# Check system status\nhive status",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Deploy your first AI agent\nhive agent deploy backend-developer --task \"Create a simple health check API\"\n\n# List running agents\nhive agent ps\n\n# Monitor in real-time\nhive status --watch",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "hive agent deploy backend-developer     # Backend development\nhive agent deploy qa-engineer          # Testing and QA\nhive agent deploy frontend-developer    # UI/Frontend work\nhive agent deploy devop...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Real-time dashboard\nhive dashboard\n\n# Follow logs\nhive logs --follow\n\n# Agent status\nhive agent list",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Start everything quickly\nhive up\n\n# Deploy multiple agents for a feature\nhive agent deploy backend-developer --task \"Implement user authentication API\"\nhive agent deploy qa-engineer --task \"Create a...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# System management (similar to docker/kubectl)\nhive start                    # Start all services\nhive stop                     # Stop all services\nhive status                   # Show system status\n...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# System diagnostics\nhive doctor                   # Comprehensive health check\n\n# Real-time monitoring  \nhive status --watch          # Live status updates\nhive logs --follow           # Live log str...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "uv tool list                    # Check if installed\nuv tool install -e . --force    # Reinstall",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "hive doctor                     # Comprehensive diagnostics\ndocker compose ps               # Check infrastructure\nhive stop && hive start         # Restart system",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# System uses non-standard ports to avoid conflicts:\n# API: 18080, PWA: 18443, Postgres: 15432, Redis: 16379",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "hive status                     # Check system health\nhive agent list                 # Verify agent registry\nhive logs --follow              # Debug with live logs",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# Add useful aliases to ~/.bashrc or ~/.zshrc\nalias h='hive'\nalias hs='hive status'\nalias ha='hive agent'\nalias hd='hive dashboard'",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "# Background operations\nhive start --background        # Start services in background\nhive status --watch           # Monitor system continuously\n\n# JSON integration\nhive status --json | jq '.agents.t...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "# Deploy a complete development team\nhive agent deploy backend-developer --task \"API development\"\nhive agent deploy frontend-developer --task \"UI implementation\" \nhive agent deploy qa-engineer --task ...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 16,
+        "passed": 14,
+        "failed": 2
+      }
+    },
+    "UV_INSTALLATION_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Install as a global uv tool (adds to PATH automatically)\nuv tool install -e .\n\n# Now hive is available globally\nhive --help\nhive doctor\nhive status",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Install in development mode\nuv pip install -e .\n\n# Activate virtual environment\nsource .venv/bin/activate\n\n# Or use direct path\n.venv/bin/hive --help",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Run directly with uv (no installation needed)\nuv run -m app.hive_cli --help\nuv run -m app.hive_cli status\nuv run -m app.hive_cli agent deploy backend-developer",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "hive doctor           # System diagnostics\nhive start           # Start all services  \nhive status          # Show system status\nhive status --watch  # Real-time monitoring\nhive stop            # Stop...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "hive agent list                           # List all agents\nhive agent ps                            # Docker ps style\nhive agent deploy backend-developer      # Deploy backend agent\nhive agent deploy...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "hive dashboard       # Open web dashboard\nhive logs --follow   # Follow logs\nhive demo           # Run complete demo\nhive version        # Version info",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "hive up             # Quick start services\nhive down           # Quick stop services  ",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Clone and setup\ngit clone <repository>\ncd bee-hive\n\n# Install globally with uv\nuv tool install -e .\n\n# Check system health\nhive doctor",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# Start the platform\nhive start\n\n# Deploy agents for development\nhive agent deploy backend-developer --task \"Implement user authentication\"\nhive agent deploy qa-engineer --task \"Create integration tes...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "hive up                                    # Quick start\nhive agent deploy backend-developer        # Deploy agent\nhive dashboard                             # Monitor progress",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# If 'hive' command not found after uv tool install:\nuv tool list                    # Check if installed\nuv tool install -e . --force    # Reinstall\n\n# Alternative: use direct path\n~/.local/bin/hive ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Ensure uv tool directory is in PATH\necho $PATH | grep -E \"(\\.local/bin|uv)\"\n\n# Add to shell profile if needed (bash/zsh)\necho 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc\nsource ~/.bashrc",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "# Check system health\nhive doctor\n\n# Verify all services\nhive status\n\n# Reset system\nhive down && hive up",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# Reinstall after code changes\nuv tool install -e . --force\n\n# Or for development mode\nuv pip install -e . --force-reinstall",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "# Remove global tool installation\nuv tool uninstall leanvibe-agent-hive\n\n# Or remove from virtual environment\nuv pip uninstall leanvibe-agent-hive",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "# ~/.bashrc or ~/.zshrc\nalias h='hive'\nalias hs='hive status' \nalias ha='hive agent'\nalias hd='hive dashboard'",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 16,
+          "code": "# Get system status as JSON\nhive status --json\n\n# Use with jq for filtering\nhive status --json | jq '.agents.total'",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 17,
+          "code": "# Start services in background\nhive start --background\n\n# Monitor with watch mode\nhive status --watch",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 18,
+        "passed": 17,
+        "failed": 1
+      }
+    },
+    "CONTRIBUTING.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# 1. Clone your fork\ngit clone https://github.com/yourusername/bee-hive.git\ncd bee-hive\n\n# 2. Set up Python environment\npython -m venv venv\nsource venv/bin/activate  # On Windows: venv\\Scripts\\activat...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Backend\nuvicorn app.main:app --reload\n\n# Frontend (Vue.js)\ncd frontend && npm run dev\n\n# Mobile PWA\ncd mobile-pwa && npm run dev",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Format code\nblack app/ tests/\n\n# Check linting\nruff check app/ tests/\n\n# Type checking\nmypy app/\n\n# Run tests\npytest -v --cov=app",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Mobile PWA\ncd mobile-pwa\nnpm run lint        # ESLint\nnpm run type-check  # TypeScript checking\nnpm test           # Unit tests\n\n# Vue.js Frontend\ncd frontend\nnpm run lint\nnpm run type-check\nnpm tes...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Backend unit tests\npytest tests/unit/\n\n# Backend integration tests\npytest tests/integration/\n\n# Backend E2E tests\npytest tests/e2e/\n\n# Frontend unit tests\ncd frontend && npm test\n\n# Mobile PWA unit ...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import pytest\nfrom httpx import AsyncClient\n\n@pytest.mark.asyncio\nasync def test_create_agent(client: AsyncClient):\n    response = await client.post(\"/api/v1/agents/\", json={\n        \"name\": \"test-age...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 6,
+        "passed": 6,
+        "failed": 0
+      }
+    },
+    "DEPLOYMENT_CHECKLIST.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Execute in production database\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/001_add_short_id_indexes.sql\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/002_search_optimization_inde...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Deploy enhanced CLI and API code\nkubectl apply -f k8s/bee-hive-api-v2.yaml\nkubectl rollout status deployment/bee-hive-api\n\n# Verify deployment\nkubectl get pods -l app=bee-hive-api\nkubectl logs -l ap...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Enable short ID features gradually\nhive config feature.short_id_lookup true\nhive config feature.enhanced_project_cli true\n\n# Test basic functionality\nhive project list\nhive task list --format json",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Execute schema enhancement migrations\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/003_agent_project_assignment.sql\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/004_task_orchestr...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Populate new columns with default values\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/006_short_id_backfill.sql\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/007_default_value_pop...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Deploy enhanced orchestrator\nkubectl apply -f k8s/simple-orchestrator-v2.yaml\nkubectl rollout status deployment/simple-orchestrator\n\n# Enable multi-project features\nhive config feature.multi_project...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Apply advanced performance optimizations\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/008_advanced_performance_indexes.sql\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f migrations/009_databa...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Enable advanced multi-project features\nhive config feature.advanced_tmux_orchestration true\nhive config feature.cross_project_dependencies true\nhive config feature.enterprise_coordination true\n\n# Te...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# Monitor key performance indicators\nwatch 'hive metrics --category performance | grep -E \"(response_time|query_duration|session_creation)\"'\n\n# Database performance\nwatch 'psql -c \"SELECT * FROM pg_st...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# Monitor feature usage\nwatch 'hive analytics --feature short_id_usage'\nwatch 'hive analytics --feature multi_project_coordination'\n\n# Success rates\nhive metrics --category success_rates",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# Disable all new features immediately\nhive config feature.short_id_lookup false\nhive config feature.multi_project_orchestration false\nhive config feature.enhanced_tmux_orchestration false\n\n# Restart ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Execute prepared rollback scripts\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f rollback/rollback_phase_3.sql\npsql -h $DB_HOST -U $DB_USER -d $DB_NAME -f rollback/rollback_phase_2.sql\npsql -h $DB_HOST...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "# Restore from backup if necessary\npg_restore --host=$DB_HOST --username=$DB_USER --dbname=$DB_NAME backup_pre_migration.dump\n\n# Redeploy previous stable version\nkubectl apply -f k8s/bee-hive-stable-b...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 13,
+        "passed": 13,
+        "failed": 0
+      }
+    },
+    "docs/GETTING_STARTED.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Start core infrastructure\ndocker compose up -d postgres redis\n\n# Verify services are running\ndocker compose ps",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Install Python dependencies\npython -m pip install --upgrade pip\npip install -e .[dev]\n\n# Initialize unified configuration (optional - uses defaults)\npython -c \"from app.config.unified_config import ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "cd mobile-pwa\nnpm ci\nnpm run dev\n# Open the dev URL printed by Vite (e.g., http://localhost:5173)",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Python tests\npytest -q tests/smoke\n\n# Frontend tests (from mobile-pwa directory)\nnpm test\n\n# Configuration validation\npython scripts/migrate_configurations.py --validate-only",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Development configuration (default)\nexport ENVIRONMENT=development\nexport DEBUG=true\nexport HOT_RELOAD_ENABLED=true\n\n# Production-ready configuration\nexport ENVIRONMENT=production\nexport DEBUG=false...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Create backup and migrate configurations\npython scripts/migrate_configurations.py --environment development --backup\n\n# View migration results\nls config_backups/",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Lint with Ruff (fixes most issues automatically)\nruff check . --fix\n\n# Type checking (focus on changed modules)\nmypy app\n\n# Comprehensive test suite\npytest tests/unit tests/integration --cov=app --c...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Validate system performance\npython scripts/performance_validation.py\n\n# Test configuration hot-reload\npython scripts/test_hot_reload.py",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# 1. Create feature branch\ngit checkout -b feature/your-feature-name\n\n# 2. Make changes with unified architecture principles\n# - Use existing managers/engines where possible\n# - Add configuration to u...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# View system metrics\ncurl http://localhost:8000/api/observability/metrics\n\n# Check component health\ncurl http://localhost:8000/api/observability/health\n\n# WebSocket dashboard monitoring\n# Connect to:...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# Environment-specific deployment\nexport ENVIRONMENT=production\nexport DATABASE_URL=postgresql://prod-user:pass@prod-host:5432/prod-db\nexport REDIS_URL=redis://prod-host:6379/0\n\n# Initialize productio...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Development startup\ndocker compose up -d postgres redis\nuvicorn app.main:app --host 0.0.0.0 --port 8000 --reload\ncd mobile-pwa && npm run dev\n\n# Configuration management\npython scripts/migrate_confi...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Configuration structure\nfrom app.config.unified_config import get_unified_config\n\nconfig = get_unified_config()\n\n# Access different component configurations\norchestrator_config = config.orchestrator...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Example: Agent management\nfrom app.core.orchestrator import get_universal_orchestrator\n\norchestrator = get_universal_orchestrator()\n# Orchestrator manages all 55 agents with load balancing",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "# Resource Manager - handles system resources\nfrom app.core.resource_manager import ResourceManager\n\n# Context Manager - handles context compression\nfrom app.core.context_manager import ContextManager...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "# Enable hot-reload in development\nfrom app.config.unified_config import get_config_manager\n\nconfig_manager = get_config_manager()\nawait config_manager.start_hot_reload()\n\n# Configuration changes are ...",
+          "valid": false,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 16,
+        "passed": 15,
+        "failed": 1
+      }
+    },
+    "docs/CORE.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/TECHNICAL_SPECIFICATIONS.md": {
+      "bash_examples": [],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "async def execute_task(self, task: AgentTask) -> AgentResult:\n    \"\"\"\n    IMPLEMENTATION REQUIRED:\n    1. Validate task against capabilities and security constraints\n    2. Translate universal task to...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "def _translate_task_to_command(self, task: AgentTask) -> ClaudeCodeCommand:\n    \"\"\"\n    Map CapabilityType to Claude Code commands:\n    - CODE_ANALYSIS \u2192 \"claude analyze [files] --output=json\"\n    - C...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "async def _execute_claude_command(self, command: ClaudeCodeCommand, context: ExecutionContext):\n    \"\"\"\n    Required implementation:\n    1. Set up isolated environment (worktree path, env vars)\n    2....",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "async def get_capabilities(self) -> List[AgentCapability]:\n    \"\"\"\n    IMPLEMENTATION REQUIRED:\n    Return dynamic capability assessment based on:\n    1. CLI tool availability and version\n    2. Curre...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "async def health_check(self) -> HealthStatus:\n    \"\"\"\n    IMPLEMENTATION REQUIRED:\n    1. Check CLI availability: `claude --version`\n    2. Measure response time and resource usage\n    3. Assess curre...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "class WorktreeManager:\n    \"\"\"Manages isolated git worktrees for agent execution\"\"\"\n    \n    async def create_worktree(self, agent_id: str, branch_name: str, base_path: str) -> WorktreeContext:\n      ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "class PathValidator:\n    \"\"\"Security layer for path access validation\"\"\"\n    \n    def validate_file_access(self, worktree_path: str, file_path: str) -> bool:\n        \"\"\"\n        IMPLEMENTATION REQUIRE...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "class UniversalOrchestrator:\n    \"\"\"Multi-CLI agent orchestration engine\"\"\"\n    \n    async def delegate_task(self, task: Task, preferred_agent_type: Optional[str] = None, \n                          wo...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 8,
+          "code": "class MultiCLIProtocol:\n    \"\"\"Enhanced protocol for multi-CLI coordination\"\"\"\n    \n    async def translate_message(self, message: AgentMessage, target_cli_type: str) -> Dict[str, Any]:\n        \"\"\"\n  ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 9,
+          "code": "# Security validation\nasync def test_path_traversal_prevention():\n    \"\"\"Verify agents cannot access files outside worktree\"\"\"\n    \n# Multi-agent coordination\nasync def test_sequential_workflow():\n   ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 10,
+          "code": "# End-to-end workflow test\nasync def test_feature_development_workflow():\n    \"\"\"\n    Test complete workflow:\n    1. Claude Code: Analyze requirements \u2192 generate plan\n    2. Cursor: Implement feature ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 11,
+          "code": "# Security penetration test\nasync def test_security_boundaries():\n    \"\"\"\n    Verify security constraints:\n    1. Path traversal attacks blocked\n    2. System file access prevented\n    3. Resource lim...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0
+      }
+    },
+    "docs/PRODUCTION_DEPLOYMENT_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Clone and navigate to deployment directory\ncd /opt/leanvibe\ngit clone <repository-url> .\ncd deploy/production\n\n# Create required directories\nmkdir -p logs data backups ssl secrets config\n\n# Set up e...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# PostgreSQL setup\ncreatedb leanvibe_production\npsql -d leanvibe_production -f ../../database/schema.sql\npsql -d leanvibe_production -f ../../database/initial_data.sql",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Initialize Redis cluster\ndocker-compose -f docker-compose.production.yml up -d redis-cluster-node1 redis-cluster-node2 redis-cluster-node3\n\n# Create cluster\ndocker exec redis-cluster-node1 redis-cli...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Place SSL certificates\ncp your-domain.crt ssl/\ncp your-domain.key ssl/\ncp ca-bundle.crt ssl/\n\n# Set proper permissions\nchmod 600 ssl/*.key\nchmod 644 ssl/*.crt",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Deploy complete system\ndocker-compose -f docker-compose.production.yml up -d\n\n# Verify deployment\n./scripts/health-check.sh\n\n# Run post-deployment validation\npython ../../scripts/production_readines...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Execute zero-downtime migration\n../migration/zero-downtime-migration.sh migrate\n\n# Monitor migration progress\ntail -f ../../logs/migration-*.log\n\n# Verify migration success\n../migration/zero-downtim...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# System integration validation\npython ../../scripts/validate_system_integration.py --phase all\n\n# Production readiness check\npython ../../scripts/production_readiness_check.py --environment productio...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Check system status\ndocker ps --format \"table {{.Names}}\\t{{.Status}}\\t{{.Ports}}\"\n\n# Monitor resource usage\ndocker stats --no-stream\n\n# Check application health\ncurl -s http://localhost:8081/health...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# View real-time metrics\nopen http://your-domain:3000  # Grafana dashboard\n\n# Check key performance indicators\ncurl -s http://localhost:9090/api/v1/query?query=leanvibe_task_assignment_duration_ms\n\n# ...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# Update system components\ndocker-compose -f docker-compose.production.yml pull\ndocker-compose -f docker-compose.production.yml up -d\n\n# Database maintenance\npsql -d leanvibe_production -c \"VACUUM ANA...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# Database backup\npg_dump leanvibe_production | gzip > backups/db-$(date +%Y%m%d).sql.gz\n\n# Configuration backup\ntar -czf backups/config-$(date +%Y%m%d).tar.gz config/ ssl/\n\n# Volume backup\ndocker run...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Update base images\ndocker-compose -f docker-compose.production.yml pull\n\n# Security scan\ndocker scan leanvibe/agent-hive:orchestrator-2.0\n\n# SSL certificate renewal\ncertbot renew --nginx",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "# Generate monthly performance report\npython ../../scripts/generate_performance_report.py --month $(date +%Y-%m)\n\n# Capacity planning analysis\npython ../../scripts/capacity_analysis.py --forecast 3mon...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# Check logs\ndocker logs leanvibe-universal-orchestrator\n\n# Common solutions\ndocker restart leanvibe-universal-orchestrator\ndocker-compose -f docker-compose.production.yml restart universal-orchestrat...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "# Check PostgreSQL status\ndocker logs leanvibe-postgres-primary\n\n# Test connection\npsql -h localhost -U leanvibe -d leanvibe_production -c \"SELECT version();\"\n\n# Reset connections\ndocker restart leanv...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "# Check system resources\ndocker stats\n\n# Scale orchestrator\ndocker-compose -f docker-compose.production.yml up -d --scale universal-orchestrator=3\n\n# Check database performance\npsql -d leanvibe_produc...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 16,
+          "code": "# Check memory usage by component\ndocker stats --format \"table {{.Name}}\\t{{.MemUsage}}\\t{{.MemPerc}}\"\n\n# Restart high-memory components\ndocker restart leanvibe-specialized-engines\n\n# Analyze memory l...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 17,
+          "code": "# Check CommunicationHub status\ndocker logs leanvibe-communication-hub\n\n# Verify Redis cluster\ndocker exec redis-cluster-node1 redis-cli cluster nodes\n\n# Scale communication components\ndocker-compose ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 18,
+          "code": "# Immediate rollback to legacy (if available)\n../migration/zero-downtime-migration.sh rollback\n\n# Or stop current system\ndocker-compose -f docker-compose.production.yml down\n\n# Restore from backup\n./s...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 19,
+          "code": "# Restore database from backup\ngunzip backups/db-YYYYMMDD.sql.gz\npsql -d leanvibe_production < backups/db-YYYYMMDD.sql\n\n# Restore configuration\ntar -xzf backups/config-YYYYMMDD.tar.gz\n\n# Restart syste...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 20,
+          "code": "# Check for failed authentication attempts\ndocker logs leanvibe-nginx | grep \"40[13]\"\n\n# Review audit logs\ntail -f logs/audit.log | grep -E \"(FAIL|ERROR|WARN)\"\n\n# Verify SSL certificate status\nopenssl...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 21,
+        "passed": 19,
+        "failed": 2
+      }
+    },
+    "docs/NAV_INDEX.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/OPERATIONAL_RUNBOOK.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Core application\nexport ENVIRONMENT=production\nexport DEBUG=false\nexport LOG_LEVEL=INFO\nexport SECRET_KEY=$(openssl rand -hex 32)\nexport JWT_SECRET_KEY=$(openssl rand -hex 64)\n\n# Database configurat...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Validate production configuration\npython scripts/migrate_configurations.py --environment production --validate-only\n\n# Migrate to unified configuration with backup\npython scripts/migrate_configurati...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Use production compose configuration\ndocker compose -f docker-compose.production.yml up -d\n\n# Verify all services are healthy\ndocker compose -f docker-compose.production.yml ps",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Build production image\ndocker build -t leanvibe-hive:production .\n\n# Deploy with configuration\ndocker run -d \\\n  --name leanvibe-production \\\n  --env-file .env.production \\\n  -p 8000:8000 \\\n  --rest...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Core system health\ncurl -f http://localhost:8000/health || exit 1\n\n# Component health verification\ncurl -f http://localhost:8000/api/observability/health\n\n# Configuration system health\ncurl -f http:...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Load test critical endpoints\nab -n 1000 -c 10 http://localhost:8000/health\nab -n 500 -c 5 http://localhost:8000/api/agents/\n\n# WebSocket connection test\nwscat -c ws://localhost:8000/api/dashboard/ws...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Import pre-configured dashboards\ncurl -X POST http://admin:admin@grafana:3000/api/dashboards/db \\\n  -H \"Content-Type: application/json\" \\\n  -d @monitoring/grafana/leanvibe-dashboard.json",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# ELK Stack configuration\ndocker run -d \\\n  --name elasticsearch \\\n  -p 9200:9200 \\\n  -e \"discovery.type=single-node\" \\\n  elasticsearch:7.17.0\n\ndocker run -d \\\n  --name logstash \\\n  -p 5044:5044 \\\n  l...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# SOC2 compliance check\ncurl -f http://localhost:8000/api/security/compliance/soc2\n\n# GDPR compliance check\ncurl -f http://localhost:8000/api/security/compliance/gdpr\n\n# Security audit\ncurl -f http://...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# Security events monitoring\ntail -f logs/security_audit.log | grep -i \"threat\\|alert\\|violation\"\n\n# Failed authentication attempts\ngrep \"authentication_failed\" logs/app.log | tail -20\n\n# Suspicious a...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "   # Check system health\n   curl -f http://localhost:8000/health || echo \"SYSTEM DOWN\"\n   \n   # Check all components\n   docker compose -f docker-compose.production.yml ps\n   \n   # Check logs for error...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Database maintenance\npsql $DATABASE_URL -c \"VACUUM ANALYZE;\"\n\n# Redis memory optimization\nredis-cli -u $REDIS_URL MEMORY PURGE\n\n# Performance baseline\npython scripts/performance_validation.py --base...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "# Security updates\napt update && apt upgrade -y\ndocker pull leanvibe-hive:latest\n\n# Database optimization\npsql $DATABASE_URL -c \"REINDEX DATABASE leanvibe_prod;\"\n\n# SSL certificate renewal\ncertbot ren...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# List available backups\nls -la config_backups/\n\n# Rollback to specific backup\npython scripts/migrate_configurations.py --rollback config_backup_20240101_120000.json\n\n# Verify rollback success\npython ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "# Create backup\npg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql\n\n# Restore from backup\npsql $DATABASE_URL < backup_20240101_120000.sql\n\n# Point-in-time recovery\npg_restore --clean --if-exist...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "# Scale up application instances\ndocker compose -f docker-compose.production.yml up -d --scale app=5\n\n# Load balancer configuration\nnginx -s reload",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 16,
+          "code": "# Read replica setup\npg_basebackup -h primary-db -D /var/lib/postgresql/replica -U replicator -v -P\n\n# Connection pooling with PgBouncer\ndocker run -d --name pgbouncer -p 5432:5432 pgbouncer/pgbouncer",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 17,
+          "code": "# Problem: Configuration validation fails\n# Solution: Check environment variables and migrate\npython scripts/migrate_configurations.py --validate-only\nexport MISSING_VAR=value\npython scripts/migrate_c...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 18,
+          "code": "# Problem: High response times\n# Solution: Check resource usage and scale\ndocker stats\ndocker compose -f docker-compose.production.yml up -d --scale app=3\n\n# Problem: Database connection pool exhausti...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 19,
+          "code": "# Problem: Authentication failures\n# Solution: Check JWT configuration\ncurl http://localhost:8000/api/security/jwt/validate\n\n# Problem: Rate limiting too aggressive\n# Solution: Adjust rate limits\nexpo...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 20,
+          "code": "#!/bin/bash\n# emergency_recovery.sh\n\necho \"\ud83d\udea8 Starting emergency recovery...\"\n\n# 1. Stop all services\ndocker compose -f docker-compose.production.yml down\n\n# 2. Backup current state\npython scripts/migr...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Logging configuration in unified config\nconfig.monitoring.structured_logging = True\nconfig.monitoring.log_format = \"json\"\nconfig.monitoring.log_level = \"INFO\"",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Enable hot-reload in production (use with caution)\nfrom app.config.unified_config import get_config_manager\n\nconfig_manager = get_config_manager()\nawait config_manager.start_hot_reload()",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "# Auto-scaling settings in unified config\nconfig.performance.auto_scaling_enabled = True\nconfig.performance.max_concurrent_agents = 200  # Scale limit\nconfig.performance.target_response_time_ms = 150",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 24,
+        "passed": 22,
+        "failed": 2
+      }
+    },
+    "docs/paths/EXECUTIVE_PATH.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/paths/DEVELOPER_PATH.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# 1. Clone and setup (one command handles everything)\ngit clone https://github.com/LeanVibe/bee-hive.git && cd bee-hive\n./setup-fast.sh\n\n# 2. Add your API key (required for AI agents)\necho \"ANTHROPIC_...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Watch AI agents coordinate to build complete features\npython scripts/demos/autonomous_development_demo.py",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Look at the main orchestrator logic\ncat app/core/orchestrator.py | head -50\n\n# See how agents communicate\ncat app/core/communication.py | head -30\n\n# Understand the context memory system\ncat app/cor...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Create custom agent\ncurl -X POST \"http://localhost:8000/api/v1/agents/\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\": \"my-agent\", \"role\": \"specialist\", \"capabilities\": [\"custom\"]}'\n\n# Ass...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Test your changes\npytest -v --cov=app\n\n# Code quality checks\nblack app/ tests/\nruff check app/ tests/\n\n# Performance validation\n./validate-setup-performance.sh\n\n# System health monitoring\n./health-c...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# app/schemas/agent.py\nclass CustomAgentCreate(BaseModel):\n    name: str = \"domain-expert\"\n    role: str = \"specialist\"\n    capabilities: List[str] = [\"domain-knowledge\", \"validation\"]\n    persona: st...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# app/core/custom_agent.py\nclass CustomAgent(BaseAgent):\n    async def process_task(self, task: Task) -> TaskResult:\n        # Your custom logic here\n        return await self.coordinate_with_other_ag...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "# Register your agent type with the system\norchestrator.register_agent_type(\"domain-expert\", CustomAgent)",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "# app/core/external_tools.py\nclass GitHubIntegration:\n    async def create_pull_request(self, code: str, description: str):\n        # Automatic PR creation from agent output\n        \nclass JiraIntegra...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "# app/workflow/custom_workflow.py\nclass FeatureDevelopmentWorkflow:\n    stages = [\n        \"requirements_analysis\",    # Architect agent\n        \"technical_design\",        # Architect + Developer agen...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 10,
+        "passed": 9,
+        "failed": 1
+      }
+    },
+    "docs/paths/ADVANCED_DEVELOPER_PATH.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/tutorials/USER_TUTORIAL_COMPREHENSIVE.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/tutorials/AUTONOMOUS_DEVELOPMENT_DEMO.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Clone the repository\ngit clone <repository-url>\ncd bee-hive\n\n# Install dependencies\npip install anthropic\n\n# Set your API key\nexport ANTHROPIC_API_KEY=\"your_api_key_here\"",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Run with default Fibonacci task\npython scripts/demos/standalone_autonomous_demo.py\n\n# The demo will:\n# 1. Create a temporary workspace\n# 2. Generate code, tests, and documentation\n# 3. Validate the ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Run with default task\npython scripts/demos/autonomous_development_demo.py\n\n# Run with custom task\npython scripts/demos/autonomous_development_demo.py \"Create a temperature converter\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "export ANTHROPIC_API_KEY=\"your_key_here\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "pip install anthropic",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "export DEBUG=true\npython scripts/demos/standalone_autonomous_demo.py",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "def fibonacci_sequence(n):\n    \"\"\"Generate Fibonacci sequence up to n terms.\n    \n    Args:\n        n (int): Number of terms to generate\n        \n    Returns:\n        list: List of Fibonacci numbers\n ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "import unittest\nfrom solution import fibonacci_sequence\n\nclass TestFibonacciSequence(unittest.TestCase):\n    \n    def test_fibonacci_single_term(self):\n        \"\"\"Test single term Fibonacci sequence.\"...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "from solution import fibonacci_sequence\n\n# Generate first 10 Fibonacci numbers\nnumbers = fibonacci_sequence(10)\nprint(numbers)  # [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 9,
+        "passed": 8,
+        "failed": 1
+      }
+    },
+    "docs/product/PRODUCT_VISION.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/product/VALUE_PROPOSITION.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/product/TARGET_USER_ANALYSIS.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/competitive-advantages.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/guides/MULTI_AGENT_COORDINATION_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Open the coordination dashboard in your browser\nhttp://localhost:8000/dashboard/\n\n# Or access dashboard data via API\nGET /api/v1/dashboard/api/data",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "from app.core.coordination import coordination_engine\n\n# Initialize the coordination engine\nawait coordination_engine.initialize()",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Register an agent with specialized capabilities\nawait coordination_engine.agent_registry.register_agent(\n    agent_id=\"agent-backend-specialist\",\n    capabilities=[\"python\", \"fastapi\", \"postgresql\",...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "from app.core.coordination import CoordinationMode\nfrom datetime import datetime, timedelta\n\n# Create a complex multi-agent project\nproject_id = await coordination_engine.create_coordinated_project(\n ...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "# Best for: Feature development, component building, testing\ncoordination_mode=CoordinationMode.PARALLEL",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "# Best for: Sequential workflows, pipeline processing\ncoordination_mode=CoordinationMode.SEQUENTIAL",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "# Best for: Complex problem solving, architectural decisions\ncoordination_mode=CoordinationMode.COLLABORATIVE",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "# Best for: Large projects, complex coordination\ncoordination_mode=CoordinationMode.HIERARCHICAL",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "# Create coordinated project via API\nPOST /api/v1/coordination/projects\n{\n    \"name\": \"AI-Powered Analytics Dashboard\",\n    \"description\": \"Build comprehensive analytics dashboard with ML insights\",\n ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 8,
+          "code": "# Register agent for coordination\nPOST /api/v1/coordination/agents/register\n{\n    \"agent_id\": \"agent-ml-specialist\",\n    \"capabilities\": [\"python\", \"tensorflow\", \"data_analysis\", \"visualization\"],\n   ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 9,
+          "code": "# Reassign task to different agent\nPOST /api/v1/coordination/tasks/reassign\n{\n    \"project_id\": \"proj-123\",\n    \"task_id\": \"task-456\", \n    \"new_agent_id\": \"agent-backup-specialist\",\n    \"reason\": \"Or...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 10,
+          "code": "# List active conflicts\nGET /api/v1/coordination/conflicts\n\n# Get conflict details\nGET /api/v1/coordination/conflicts/{conflict_id}\n\n# Manually resolve conflict\nPOST /api/v1/coordination/conflicts/{co...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 11,
+          "code": "# Complete startup development with coordinated agents\nproject_id = await coordination_engine.create_coordinated_project(\n    name=\"AI SaaS Startup MVP\",\n    description=\"Build complete SaaS platform ...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 12,
+          "code": "# Coordinate modernization of legacy system\nmodernization_project = await coordination_engine.create_coordinated_project(\n    name=\"Legacy Java Monolith to Microservices\",\n    description=\"Gradual mig...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 13,
+          "code": "# High-velocity feature development\nfeature_project = await coordination_engine.create_coordinated_project(\n    name=\"Real-time Collaboration Features\",\n    description=\"Add WebSocket-based real-time ...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 14,
+          "code": "# Optimize agent assignments based on task requirements\nclass AgentSpecializationOptimizer:\n    \n    def optimize_assignments(self, project_requirements, available_agents):\n        \"\"\"Optimize task as...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 15,
+          "code": "# Proactive conflict prevention strategies\nconflict_prevention_config = {\n    \"sync_frequency\": 60,  # Sync every minute for high-activity projects\n    \"conflict_prediction\": True,  # Enable AI-based ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 16,
+          "code": "# Get comprehensive coordination metrics\nGET /api/v1/coordination/metrics/coordination\n\n# Response includes:\n{\n    \"coordination_metrics\": {\n        \"projects_completed\": 45,\n        \"conflicts_resolv...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 17,
+          "code": "# System health checks\nGET /api/v1/coordination/health\n\n# Response includes:\n{\n    \"status\": \"healthy\",\n    \"health_score\": 0.95,\n    \"coordination_engine\": {\n        \"status\": \"online\",\n        \"acti...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 18,
+          "code": "# Solution: Adjust sync frequency and coordination mode\nproject.sync_frequency = 30  # More frequent syncing\nproject.coordination_mode = CoordinationMode.COLLABORATIVE  # Higher coordination",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 19,
+          "code": "# Solution: Better task distribution and workload balancing\nmax_tasks_per_agent = 3  # Limit concurrent tasks\nenable_dynamic_redistribution = True  # Auto-rebalance workload",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 20,
+          "code": "# Solution: Optimize agent assignments and reduce overhead\nuse_intelligent_caching = True\noptimize_sync_operations = True\nenable_performance_monitoring = True",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 22,
+        "passed": 16,
+        "failed": 6
+      }
+    },
+    "docs/guides/EXTERNAL_TOOLS_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# GitHub Integration\nGITHUB_TOKEN=your_github_personal_access_token\nGITHUB_API_URL=https://api.github.com\n\n# Docker Configuration\nDOCKER_HOST=unix:///var/run/docker.sock\nDOCKER_REGISTRY=docker.io\n\n# G...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Check tool health\nGET /api/v1/tools/health\n\n# Get operation status\nGET /api/v1/tools/operations/{operation_id}\n\n# View agent tool summary\nGET /api/v1/tools/agents/{agent_id}/tools-summary",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Via API\nPOST /api/v1/tools/git/clone\n{\n    \"agent_id\": \"agent-123\",\n    \"repository_url\": \"https://github.com/user/repo.git\",\n    \"target_directory\": \"my-project\",\n    \"branch\": \"main\"\n}\n\n# Response...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Via API\nPOST /api/v1/tools/github/pull-request\n{\n    \"repository_id\": \"repo-456\",\n    \"title\": \"Feature: Add new authentication system\",\n    \"body\": \"This PR implements JWT-based authentication with...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "# Via API\nPOST /api/v1/tools/docker/build\n{\n    \"agent_id\": \"agent-123\",\n    \"dockerfile_path\": \"Dockerfile\",\n    \"image_name\": \"my-app:latest\",\n    \"context_path\": \".\",\n    \"build_args\": {\n        \"N...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "from app.core.external_tools import external_tools\n\nclass DeveloperAgent:\n    def __init__(self, agent_id: str):\n        self.agent_id = agent_id\n        self.tools = external_tools\n    \n    async def...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "# Example: Restricting agent access to specific repositories\nALLOWED_REPOSITORIES = [\n    \"https://github.com/company/project-a.git\",\n    \"https://github.com/company/project-b.git\"\n]\n\n# Example: Role-...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "# Example: Monitoring tool usage\nGET /api/v1/tools/agents/{agent_id}/tools-summary\n\n# Response\n{\n    \"agent_id\": \"agent-123\",\n    \"repositories\": {\n        \"total\": 3,\n        \"details\": [...]\n    },\n...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "# Example: Automatic retry with exponential backoff\nasync def retry_operation(operation_func, max_retries=3):\n    for attempt in range(max_retries):\n        try:\n            return await operation_fun...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "class TerraformIntegration:\n    async def apply_infrastructure(self, config_path: str):\n        # Implementation here\n        pass",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      }
+    },
+    "docs/guides/MOBILE_PWA_IMPLEMENTATION_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Required tools\nnode >= 18.0.0\nnpm >= 8.0.0\n# Backend API running on localhost:8000",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# 1. Navigate to mobile PWA directory\ncd mobile-pwa\n\n# 2. Install dependencies\nnpm install\n\n# 3. Start development server\nnpm run dev\n\n# 4. Build for production\nnpm run build\n\n# 5. Run E2E tests\nnpm r...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "docs/guides/ENTERPRISE_USER_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "   curl -H \"Authorization: Bearer your-access-token\" \\\n        https://your-domain.com/api/v1/agents\n   ```\n\n### Role-Based Access Control (RBAC)\n\n#### Available Roles\n\n| Role | Permissions | Descript...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "   curl -X POST https://your-domain.com/api/v1/auth/tokens \\\n        -H \"Authorization: Bearer your-oauth-token\" \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"name\": \"my-api...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "curl -X POST https://your-domain.com/api/v1/orchestration/agents \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n       \"name\": \"senior-developer-a...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# List all agents\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/orchestration/agents\n\n# Get specific agent details\ncurl -H \"Authorization: Bearer your-token\" \\\n     ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# View capacity planning\ncurl -H \"Authorization: Bearer your-token\" \\\n     \"https://your-domain.com/api/v1/orchestration/capacity/planning?forecast_hours=48\"\n\n# Adjust agent capacity\ncurl -X PUT https...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "curl -X POST https://your-domain.com/api/v1/orchestration/tasks \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n       \"title\": \"Implement user aut...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Monitor task progress\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/orchestration/tasks/task-id\n\n# View task routing decisions\ncurl -H \"Authorization: Bearer your-...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "   curl -X POST https://your-domain.com/api/v1/github/repositories/connect \\\n        -H \"Authorization: Bearer your-token\" \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"owne...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "curl -X POST https://your-domain.com/api/v1/github/repositories/owner/repo/pulls \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n       \"title\": \"f...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# Trigger comprehensive code review\ncurl -X POST https://your-domain.com/api/v1/github/repositories/owner/repo/pulls/123/reviews/automated \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Conte...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# Create issue\ncurl -X POST https://your-domain.com/api/v1/github/repositories/owner/repo/issues \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n  ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "curl -X POST https://your-domain.com/api/v1/context/compress \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n       \"agent_id\": \"senior-developer-a...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "curl -X POST https://your-domain.com/api/v1/context/search/semantic \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n       \"query\": \"How do we hand...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# Get context usage analytics\ncurl -H \"Authorization: Bearer your-token\" \\\n     \"https://your-domain.com/api/v1/context/analytics/agent-id?period=7d\"\n\n# Memory optimization recommendations\ncurl -H \"Au...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "# Initiate intelligent sleep cycle\ncurl -X POST https://your-domain.com/api/v1/sleep-wake/cycles/agent-id/initiate \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/jso...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "# Get real-time system metrics\ncurl -H \"Authorization: Bearer your-token\" \\\n     \"https://your-domain.com/api/v1/observability/metrics/realtime?metrics=cpu,memory,network,database\"\n\n# Agent-specific p...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 16,
+          "code": "# Full system health check\ncurl -H \"Authorization: Bearer your-token\" \\\n     \"https://your-domain.com/api/v1/observability/health/comprehensive?include_dependencies=true\"\n\n# Component-specific health\n...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 17,
+          "code": "curl -X POST https://your-domain.com/api/v1/observability/alerts/configure \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\n       \"alert_rules\": [\n...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 18,
+          "code": "# Create coordinated development task\ncurl -X POST https://your-domain.com/api/v1/workflows/multi-agent \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 19,
+          "code": "# Monitor workflow progress\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/workflows/workflow-id/status\n\n# Get collaboration analytics\ncurl -H \"Authorization: Bearer ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 20,
+          "code": "# Check OAuth configuration\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/auth/oauth/config\n\n# Verify token validity\ncurl -H \"Authorization: Bearer your-token\" \\\n   ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 21,
+          "code": "# Check agent health\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/orchestration/agents/agent-id/health\n\n# Monitor communication channels\ncurl -H \"Authorization: Bea...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 22,
+          "code": "# Get performance diagnostics\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/observability/diagnostics/performance\n\n# Check resource utilization\ncurl -H \"Authorizatio...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 23,
+          "code": "# Enable debug mode\ncurl -X POST https://your-domain.com/api/v1/system/debug \\\n     -H \"Authorization: Bearer your-token\" \\\n     -H \"Content-Type: application/json\" \\\n     -d '{\"enabled\": true, \"level...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 24,
+          "code": "# System health dashboard\ncurl -H \"Authorization: Bearer your-token\" \\\n     https://your-domain.com/api/v1/observability/health/dashboard\n\n# Export health report\ncurl -H \"Authorization: Bearer your-to...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "from leanvibe import AgentHive, Agent, Task\nimport asyncio\n\nasync def main():\n    # Initialize LeanVibe client\n    hive = AgentHive(\n        base_url=\"https://your-domain.com\",\n        auth_token=\"you...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 26,
+        "passed": 23,
+        "failed": 3
+      }
+    },
+    "docs/guides/PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/guides/QUALITY_GATES_AUTOMATION.md": {
+      "bash_examples": [],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "class QualityGateController:\n    \"\"\"\n    Central quality gate orchestration and management\n    \"\"\"\n    \n    async def orchestrate_quality_validation(\n        self,\n        workflow_context: WorkflowCo...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "class ContinuousQualityValidator:\n    \"\"\"\n    Real-time continuous quality validation system\n    \"\"\"\n    \n    async def validate_incremental_changes(\n        self,\n        code_changes: CodeChanges,\n ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "class ProgressiveQualityManager:\n    \"\"\"\n    Progressive quality requirements management\n    \"\"\"\n    \n    async def define_phase_quality_requirements(\n        self,\n        project_phase: ProjectPhase...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "class AutomatedQualityFixer:\n    \"\"\"\n    Intelligent automated quality issue resolution\n    \"\"\"\n    \n    async def fix_code_quality_issues(\n        self,\n        quality_issues: List[CodeQualityIssue]...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "class CodeQualityEngine:\n    \"\"\"\n    Comprehensive code quality validation\n    \"\"\"\n    \n    async def validate_code_standards(\n        self,\n        code_files: List[CodeFile],\n        quality_standar...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "class TestValidationEngine:\n    \"\"\"\n    Comprehensive test coverage and effectiveness validation\n    \"\"\"\n    \n    async def validate_test_coverage(\n        self,\n        test_results: TestResults,\n   ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "class SecurityValidationEngine:\n    \"\"\"\n    Comprehensive security validation and compliance\n    \"\"\"\n    \n    async def validate_security_standards(\n        self,\n        codebase: Codebase,\n        s...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "class PerformanceValidationEngine:\n    \"\"\"\n    Comprehensive performance validation and optimization\n    \"\"\"\n    \n    async def validate_performance_requirements(\n        self,\n        application: Ap...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 8,
+          "code": "class QualityWorkflowIntegration:\n    \"\"\"\n    Seamless integration with workflow orchestration\n    \"\"\"\n    \n    async def integrate_quality_gates(\n        self,\n        workflow_definition: WorkflowDe...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 9,
+          "code": "class QualityPerformanceOptimizer:\n    \"\"\"\n    Intelligent optimization of quality validation performance\n    \"\"\"\n    \n    async def optimize_validation_performance(\n        self,\n        validation_w...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      }
+    },
+    "docs/guides/SANDBOX_MODE_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Start sandbox demo in under 2 minutes (from repo root)\n./start-sandbox-demo.sh\n\n# Demo will be available at: http://localhost:8080",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# 1. Create virtual environment\npython3 -m venv venv\nsource venv/bin/activate  # or venv\\Scripts\\activate on Windows\n\n# 2. Install minimal dependencies\npip install fastapi uvicorn pydantic structlog\n\n...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "GET /api/demo/sandbox/status",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "GET /api/demo/sandbox/scenarios",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "POST /api/demo/sandbox/start\nContent-Type: application/json\n\n{\n  \"session_id\": \"demo-session-123\",\n  \"task\": {\n    \"description\": \"Create a Fibonacci calculator\",\n    \"complexity\": \"simple\",\n    \"requ...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "GET /api/demo/sandbox/session/{session_id}",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Check Python version (3.8+ required)\npython --version\n\n# Check dependencies\npip list | grep -E \"(fastapi|uvicorn|pydantic)\"\n\n# Check environment variables\necho $SANDBOX_MODE",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Ensure you're in the project directory\npwd\nls -la app/core/sandbox/\n\n# Check Python path\npython -c \"import sys; print(sys.path)\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# Check if port 8080 is in use\nlsof -i :8080\n\n# Use different port\nexport DEMO_PORT=9000\n./start-sandbox-demo.sh",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "git clone https://github.com/leanvibe/agent-hive.git\ncd agent-hive  \n./start-sandbox-demo.sh",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Automatically detects task type and generates appropriate response\nTask: \"Create a Fibonacci calculator\"\n\u2192 Mock client provides: Algorithm analysis, implementation plan, working code\n\nTask: \"Build u...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "import requests\nimport time\n\ndef run_sandbox_demo(task_description):\n    # Start demo\n    response = requests.post('/api/demo/sandbox/start', json={\n        'session_id': f'demo-{int(time.time())}',\n ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "# Create custom scenario\nfrom app.core.sandbox.demo_scenarios import DemoScenario, ScenarioComplexity, ScenarioCategory\n\ncustom_scenario = DemoScenario(\n    id=\"custom-calculator\",\n    title=\"Scientif...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "# Extend mock client with custom responses\nfrom app.core.sandbox.mock_anthropic_client import MockAnthropicClient\n\nclass CustomMockClient(MockAnthropicClient):\n    def _generate_custom_response(self, ...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 14,
+        "passed": 12,
+        "failed": 2
+      }
+    },
+    "docs/implementation/context-compression.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "/hive:compact [session_id] [--level=light|standard|aggressive] [--target-tokens=N] [--preserve-decisions] [--preserve-patterns]",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Compress current session with standard settings\n/hive:compact\n\n# Compress specific session\n/hive:compact session_123",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Light compression preserving decisions\n/hive:compact --level=light --preserve-decisions\n\n# Aggressive compression with target token count\n/hive:compact --level=aggressive --target-tokens=1000\n\n# Pre...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import requests\n\n# Compress session via API\nresponse = requests.post(\n    \"http://localhost:8000/api/v1/sessions/session_123/compact\",\n    json={\n        \"compression_level\": \"standard\",\n        \"pres...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      }
+    },
+    "docs/integrations/HOOK_INTEGRATION_GUIDE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "export LEANVIBE_HOOK_API_URL=\"http://localhost:8000\"\nexport LEANVIBE_SESSION_ID=$(uuidgen)\nexport LEANVIBE_AGENT_ID=$(uuidgen)\nexport LEANVIBE_ENABLE_HOOKS=\"true\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# 1. Install dependencies\npip install -r requirements.txt\n\n# 2. Set up environment variables\nexport LEANVIBE_HOOK_API_URL=\"https://your-domain.com\"\nexport LEANVIBE_SESSION_ID=$(uuidgen)\nexport LEANVIB...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Check system health\ncurl http://localhost:8000/api/v1/observability/health\n\n# Test hook endpoint\ncurl -X POST http://localhost:8000/api/v1/observability/hook-events \\\n  -H \"Content-Type: application...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Run all hook integration tests\npython -m pytest tests/test_hook_integration.py -v\n\n# Test specific components\npython -m pytest tests/test_hook_integration.py::TestPIIRedactor -v\npython -m pytest tes...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Test complete workflow\npython -m pytest tests/test_hook_integration.py::TestIntegrationEndToEnd -v\n\n# Test API endpoints\npython -m pytest tests/test_hook_integration.py::TestHookAPIEndpoints -v\n\n# T...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Performance test with sample events\npython -c \"\nimport asyncio\nimport aiohttp\nimport time\nfrom datetime import datetime\n\nasync def send_event(session, event_data):\n    async with session.post(\n     ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "export LEANVIBE_LOG_LEVEL=\"DEBUG\"\nexport LEANVIBE_HOOK_DEBUG=\"true\"",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import cProfile\nimport pstats\nfrom app.core.hook_processor import HookEventProcessor\n\n# Profile event processing\nprofiler = cProfile.Profile()\nprofiler.enable()\n\n# Process test events\n# ... your test ...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0
+      }
+    },
+    "docs/integrations/claude/hooks-guide.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "jq -r '\"\\(.tool_input.command) - \\(.tool_input.description // \"No description\")\"' >> ~/.claude/bash-command-log.txt",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "cat ~/.claude/bash-command-log.txt",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "docs/integrations/HIVE_SLASH_COMMANDS.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Execute via curl\ncurl -X POST http://localhost:8000/api/hive/execute \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"command\": \"/hive:status --detailed\"}' | jq .\n\n# Quick execute\ncurl -X POST \"htt...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import requests\n\ndef execute_hive_command(command: str):\n    response = requests.post(\n        'http://localhost:8000/api/hive/execute',\n        json={'command': command}\n    )\n    return response.jso...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "class HiveCustomCommand(HiveSlashCommand):\n    def __init__(self):\n        super().__init__(\n            name=\"custom\",\n            description=\"Custom meta-agent operation\",\n            usage=\"/hive:...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "def validate_args(self, args: List[str]) -> bool:\n    \"\"\"Validate command arguments.\"\"\"\n    if not args or len(args) < 1:\n        return False\n    return True",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      }
+    },
+    "docs/design/ENTERPRISE_SYSTEM_ARCHITECTURE.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/reference/API_REFERENCE_COMPREHENSIVE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "Authorization: Bearer <your-jwt-token>",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "curl -X POST http://localhost:8000/api/v1/auth/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"email\": \"user@example.com\",\n    \"password\": \"your-password\"\n  }'",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "curl -X GET \"http://localhost:8000/api/v1/agents?limit=10&status=active\" \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "curl -X POST http://localhost:8000/api/v1/agents \\\n  -H \"Authorization: Bearer <token>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"frontend-expert\",\n    \"role\": \"developer\",\n    \"c...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "curl -X GET http://localhost:8000/api/v1/agents/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "curl -X PUT http://localhost:8000/api/v1/agents/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <token>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"max_concurrent_tasks\"...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "curl -X DELETE http://localhost:8000/api/v1/agents/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "curl -X GET \"http://localhost:8000/api/v1/tasks?status=pending&priority=high\" \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "curl -X POST http://localhost:8000/api/v1/tasks \\\n  -H \"Authorization: Bearer <token>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"title\": \"Build user dashboard\",\n    \"description\": \"Create...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "curl -X POST http://localhost:8000/api/v1/tasks/task-123/assign/123e4567-e89b-12d3-a456-426614174000 \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "curl -X GET \"http://localhost:8000/api/v1/workflows?status=active\" \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "curl -X POST http://localhost:8000/api/v1/workflows/workflow-456/start \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "curl -X POST http://localhost:8000/api/v1/coordination/projects \\\n  -H \"Authorization: Bearer <token>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"name\": \"AI Analytics Dashboard\",\n    \"desc...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "curl -X GET http://localhost:8000/api/v1/coordination/projects/proj-789 \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "curl -X GET http://localhost:8000/api/v1/system/health",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "curl -X GET \"http://localhost:8000/api/v1/system/metrics?timerange=24h\" \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 16,
+          "code": "curl -X POST http://localhost:8000/api/v1/agents \\\n  -H \"Authorization: Bearer <token>\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\": \"\"}'  # Invalid empty name",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 17,
+          "code": "curl -X GET http://localhost:8000/api/v1/agents/nonexistent-id \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 18,
+          "code": "curl -X GET \"http://localhost:8000/api/v1/agents?limit=10&cursor=eyJpZCI6IjEyMyJ9\" \\\n  -H \"Authorization: Bearer <token>\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 19,
+          "code": "# Test authentication\nexport API_TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"test@example.com\",\"password\":\"password\"}' | \\...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 20,
+          "code": "# Install HTTPie\npip install httpie\n\n# Test API endpoints\nhttp POST localhost:8000/api/v1/auth/login email=test@example.com password=password\nhttp GET localhost:8000/api/v1/agents Authorization:\"Beare...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import asyncio\nfrom leanvibe_client import LeanVibeClient\n\nasync def main():\n    # Initialize client\n    client = LeanVibeClient(\n        base_url=\"http://localhost:8000/api/v1\",\n        api_key=\"your...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 22,
+        "passed": 21,
+        "failed": 1
+      }
+    },
+    "docs/reference/validation-framework.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Install the validation framework\n./install_validation_framework.sh\n\n# Or manually install dependencies\npip install -r requirements-validation.txt",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Quick validation check (1-2 minutes)\npython comprehensive_validation_suite.py --quick-check\n\n# Standard validation (5-10 minutes)  \npython comprehensive_validation_suite.py --level standard\n\n# Compr...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "docs/reference/DASHBOARD_API_DOCUMENTATION.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "python test_dashboard_apis.py",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "python test_dashboard_apis.py /api/dashboard/agents/status",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Comprehensive tests include WebSocket validation\npython test_dashboard_apis.py",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    "docs/reference/GITHUB_INTEGRATION_API_COMPREHENSIVE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "Authorization: Bearer <agent-token>\nX-GitHub-Token: <github-personal-access-token>",
+          "valid": false,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 1,
+        "passed": 0,
+        "failed": 1
+      }
+    },
+    "docs/reference/SEMANTIC_MEMORY_API.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Start mock server on port 8001\ncd /Users/bogdan/work/leanvibe-dev/bee-hive\npython -m mock_servers.semantic_memory_mock\n\n# Verify mock server is running\ncurl http://localhost:8001/api/v1/memory/healt...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "import httpx\nimport asyncio\nfrom uuid import uuid4\n\n# Initialize client\nclient = httpx.AsyncClient(base_url=\"http://localhost:8001/api/v1\")\n\nasync def basic_example():\n    # Ingest a document\n    inge...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "class AgentMemoryManager:\n    \"\"\"Manages semantic memory for a specific agent.\"\"\"\n    \n    def __init__(self, agent_id: str, memory_client: httpx.AsyncClient):\n        self.agent_id = agent_id\n       ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "class WorkflowContextManager:\n    \"\"\"Integrates semantic memory with DAG workflows.\"\"\"\n    \n    def __init__(self, workflow_id: str, memory_client: httpx.AsyncClient):\n        self.workflow_id = workf...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "class RealTimeKnowledgeSync:\n    \"\"\"Synchronizes real-time agent learning with semantic memory.\"\"\"\n    \n    def __init__(self, agent_id: str, memory_client: httpx.AsyncClient,\n                 redis_c...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "from typing import Dict, Any, List\nfrom dataclasses import dataclass\n\n@dataclass\nclass SemanticMemoryNode:\n    \"\"\"Base class for semantic memory DAG nodes.\"\"\"\n    node_id: str\n    memory_client: httpx...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "class OptimizedMemoryClient:\n    \"\"\"Optimized client for high-performance semantic memory operations.\"\"\"\n    \n    def __init__(self, base_url: str, max_batch_size: int = 50):\n        self.client = htt...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "class SemanticMemoryError(Exception):\n    \"\"\"Base exception for semantic memory operations.\"\"\"\n    pass\n\nclass IngestionError(SemanticMemoryError):\n    \"\"\"Error during document ingestion.\"\"\"\n    pass\n...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "class ContentProcessor:\n    \"\"\"Best practices for content processing and tagging.\"\"\"\n    \n    @staticmethod\n    def optimize_content_for_search(content: str) -> str:\n        \"\"\"Optimize content for be...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 8,
+          "code": "class PerformanceMonitor:\n    \"\"\"Monitor semantic memory service performance.\"\"\"\n    \n    def __init__(self, memory_client: httpx.AsyncClient):\n        self.client = memory_client\n        self.metrics...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 10,
+        "passed": 10,
+        "failed": 0
+      }
+    },
+    "docs/reference/OBSERVABILITY_EVENT_SCHEMA.md": {
+      "bash_examples": [],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "from app.schemas.observability import (\n    BaseObservabilityEvent,\n    WorkflowStartedEvent,\n    PreToolUseEvent,\n    PostToolUseEvent,\n    SemanticQueryEvent,\n    # ... other event types\n)\n\n# Exampl...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "import jsonschema\nimport json\n\n# Load schema\nwith open('schemas/observability_events.json', 'r') as f:\n    schema = json.load(f)\n\n# Validate event\njsonschema.validate(event.dict(), schema)",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "from app.core.event_serialization import (\n    serialize_for_stream,\n    serialize_for_storage,\n    deserialize_from_stream,\n    EventSerializer,\n    SerializationFormat\n)\n\n# High-performance streamin...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "from mock_servers.observability_events_mock import (\n    MockEventGenerator,\n    WorkflowScenario,\n    generate_sample_events\n)\n\n# Generate complete workflow\ngenerator = MockEventGenerator()\nevents = ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 4,
+          "code": "from app.observability.hooks import HookInterceptor, EventProcessor\n\nclass ObservabilityEventProcessor(EventProcessor):\n    async def process_event(self, session_id, agent_id, event_type, payload, lat...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 5,
+          "code": "# Capture PreToolUse\nawait interceptor.capture_pre_tool_use(\n    session_id=session_id,\n    agent_id=agent_id,\n    tool_data={\n        \"tool_name\": tool_name,\n        \"parameters\": parameters,\n       ...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 6,
+          "code": "import asyncio\nfrom app.core.redis import get_redis\n\nclass DashboardEventConsumer:\n    async def consume_events(self):\n        redis_client = get_redis()\n        \n        # Consumer group for dashboar...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 7,
+          "code": "class DashboardEventFilter:\n    def __init__(self):\n        self.critical_events = {\n            \"WorkflowStarted\", \"WorkflowEnded\",\n            \"PreToolUse\", \"PostToolUse\",\n            \"FailureDetect...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 8,
+          "code": "from app.core.database import get_db_session\nfrom app.models.observability import AgentEvent\n\nclass AnalyticsEventProcessor:\n    async def analyze_performance_trends(self, hours: int = 24):\n        as...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 9,
+          "code": "class SemanticAnalytics:\n    async def analyze_query_patterns(self):\n        # Find semantic queries\n        semantic_events = await self._get_semantic_events()\n        \n        # Cluster similar quer...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 10,
+          "code": "class PerformanceMonitor:\n    def __init__(self):\n        self.thresholds = {\n            \"tool_execution_ms\": 5000,\n            \"workflow_duration_ms\": 300000,\n            \"memory_usage_mb\": 1000,\n  ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 11,
+          "code": "class OptimizationTriggers:\n    async def should_trigger_optimization(self, metrics: Dict[str, float]) -> Dict[str, bool]:\n        return {\n            \"memory_optimization\": metrics.get(\"avg_memory_m...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 12,
+          "code": "# Event streams setup\nOBSERVABILITY_STREAM = \"observability_events\"\nCONSUMER_GROUPS = {\n    \"dashboard\": \"dashboard_group\",\n    \"analytics\": \"analytics_group\", \n    \"performance\": \"performance_group\",...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 13,
+          "code": "async def publish_observability_event(event: BaseObservabilityEvent):\n    # Serialize event\n    serialized_data, metadata = serialize_for_stream(event)\n    \n    # Add to stream with automatic ID\n    s...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 14,
+          "code": "from app.core.embedding_service import get_embedding_service\n\nclass SemanticEventEnricher:\n    async def enrich_event(self, event: BaseObservabilityEvent):\n        # Generate embedding for semantic co...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 15,
+          "code": "class ContextualAnalyzer:\n    async def analyze_with_context(self, event: BaseObservabilityEvent):\n        if not event.semantic_embedding:\n            return {}\n        \n        # Find similar events...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 16,
+          "code": "# Run comprehensive schema validation\npytest tests/contract/test_observability_schema.py -v\n\n# Performance benchmark validation\npython scripts/benchmark_event_performance.py --iterations 1000\n\n# Mock ...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 17,
+          "code": "# Redis streams integration\npytest tests/integration/test_redis_observability.py\n\n# Semantic memory integration  \npytest tests/integration/test_semantic_observability.py\n\n# End-to-end workflow\npytest ...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 18,
+          "code": "class ResilientEventProcessor:\n    async def process_with_retry(self, event, max_retries=3):\n        for attempt in range(max_retries + 1):\n            try:\n                return await self._process_...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 19,
+          "code": "class SchemaEvolutionHandler:\n    def __init__(self):\n        self.schema_versions = {\n            \"1.0.0\": self._handle_v1_0_0,\n            \"1.1.0\": self._handle_v1_1_0,\n        }\n    \n    async def ...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 20,
+          "code": "# Event processing health metrics\nPROMETHEUS_METRICS = {\n    \"events_processed_total\": Counter(\"events_processed_total\", [\"event_type\"]),\n    \"processing_duration_seconds\": Histogram(\"processing_durat...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 21,
+        "passed": 18,
+        "failed": 3
+      }
+    },
+    "docs/reference/AGENT_SPECIALIZATION_TEMPLATES.md": {
+      "bash_examples": [],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "@dataclass\nclass AgentSpecialization:\n    \"\"\"\n    Comprehensive agent specialization definition\n    \"\"\"\n    specialization_id: str\n    name: str\n    description: str\n    \n    # Core capabilities and e...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "class TeamOptimizer:\n    \"\"\"\n    Intelligent team composition optimization\n    \"\"\"\n    \n    async def optimize_team_composition(\n        self,\n        project_requirements: ProjectRequirements,\n      ...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "docs/core/system-architecture.md": {
+      "bash_examples": [],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Message queues\nagent_messages:{agent_id} = List[Message]\n\n# Real-time communication channels\npub/sub channels:\n- agent_events:{agent_id}\n- system_events\n- task_updates\n- health_checks\n\n# Session sta...",
+          "valid": false,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Agent Management\nPOST /api/v1/agents - Create new agent\nGET /api/v1/agents - List all agents\nGET /api/v1/agents/{agent_id} - Get agent details\nPUT /api/v1/agents/{agent_id} - Update agent\nDELETE /ap...",
+          "valid": false,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 2,
+        "passed": 0,
+        "failed": 2
+      }
+    },
+    "docs/core/product-requirements.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/runbooks/PRODUCTION_DEPLOYMENT_RUNBOOK.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Python and Dependencies\nPython: 3.11.0+\npip: 23.0+\nPoetry: 1.5.0+ (for dependency management)\n\n# Database\nPostgreSQL: 15.0+\npgvector extension: 0.5.0+\nRedis: 7.0+\n\n# Container Runtime\nDocker: 24.0+\n...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# SSL/TLS\nValid SSL certificates (Let's Encrypt or commercial)\nTLS 1.2+ only\nStrong cipher suites configured\n\n# Network Security\nFirewall configured (iptables/ufw or cloud security groups)\nVPN access ...",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Run complete test suite\npytest -v --cov=app --cov-report=html tests/\n\n# Security scanning\nbandit -r app/\nsafety check\n\n# Code quality\nflake8 app/\nmypy app/\n\n# Frontend tests\ncd frontend && npm test\n...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Verify connectivity\nping database-server\nping redis-server\nping monitoring-server\n\n# Check resource availability\ndf -h  # Disk space\nfree -h  # Memory\nnproc  # CPU cores\n\n# Verify DNS resolution\nnsl...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "#!/bin/bash\n# server-setup.sh - Prepare Ubuntu 20.04 server for LeanVibe deployment\n\n# Update system\nsudo apt update && sudo apt upgrade -y\n\n# Install essential packages\nsudo apt install -y \\\n    curl...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "#!/bin/bash\n# database-setup.sh - Set up PostgreSQL with pgvector\n\n# Install PostgreSQL 15\nsudo sh -c 'echo \"deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main\" > /etc/apt/source...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "#!/bin/bash\n# redis-setup.sh - Install and configure Redis\n\n# Install Redis\nsudo apt update\nsudo apt install -y redis-server\n\n# Configure Redis for production\nsudo tee /etc/redis/redis.conf << EOF\n# N...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# /opt/leanvibe/app/.env.production\n\n# Application Configuration\nDEBUG=false\nLOG_LEVEL=INFO\nENVIRONMENT=production\n\n# Database Configuration\nDATABASE_URL=postgresql+asyncpg://leanvibe_admin:secure_db_...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "#!/bin/bash\n# validate-env.sh - Validate environment configuration\n\necho \"Validating production environment configuration...\"\n\n# Check required environment variables\nrequired_vars=(\n    \"DATABASE_URL\"...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "#!/bin/bash\n# ssl-setup.sh - Set up SSL certificates with Let's Encrypt\n\n# Install Certbot\nsudo apt update\nsudo apt install -y certbot python3-certbot-nginx\n\n# Generate certificates for your domains\ns...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "#!/bin/bash\n# manual-ssl-setup.sh - Install manually provided certificates\n\n# Create SSL directory\nsudo mkdir -p /opt/leanvibe/ssl\n\n# Copy certificate files (replace with your actual files)\nsudo cp yo...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "#!/bin/bash\n# database-init.sh - Initialize database with migrations\n\ncd /opt/leanvibe/app\n\n# Load environment variables\nsource .env.production\n\n# Install Python dependencies\npython3.11 -m venv venv\ns...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "#!/bin/bash\n# backup-setup.sh - Set up automated database backups\n\n# Create backup directory\nsudo mkdir -p /opt/leanvibe/backups/database\nsudo chown leanvibe:leanvibe /opt/leanvibe/backups/database\n\n#...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "#!/bin/bash\n# deploy.sh - Production deployment script\n\nset -e\n\necho \"Starting LeanVibe Agent Hive production deployment...\"\n\n# Configuration\nDEPLOY_DIR=\"/opt/leanvibe\"\nAPP_DIR=\"$DEPLOY_DIR/app\"\nBACKU...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "#!/bin/bash\n# verify-deployment.sh - Comprehensive post-deployment verification\n\necho \"Starting post-deployment verification...\"\n\n# Service health checks\necho \"Checking service health...\"\n\n# Check app...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 15,
+        "passed": 13,
+        "failed": 2
+      }
+    },
+    "docs/runbooks/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "#!/bin/bash\n# health-check.sh - Quick system diagnostic\n\necho \"=== LeanVibe Agent Hive Health Check ===\"\necho \"Timestamp: $(date)\"\necho\n\n# Check service status\necho \"--- Service Status ---\"\nsystemctl ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# Check container logs\ndocker logs leanvibe-app --tail=50\n\n# Check if port is already in use\nnetstat -tlnp | grep :8000\n\n# Verify environment variables\ndocker exec leanvibe-app env | grep -E \"DATABASE...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Check database is running\ndocker-compose ps postgres\n\n# Reset database connection\ndocker-compose restart postgres\ndocker-compose restart app\n\n# Verify database URL format\necho $DATABASE_URL\n# Should...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Validate .env file\ncat .env.production | grep -v '^#' | grep -v '^$'\n\n# Recreate container with fresh environment\ndocker-compose down\ndocker-compose up -d --force-recreate",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Find process using port 8000\nsudo lsof -i :8000\n\n# Kill conflicting process or change port\nsudo kill -9 <PID>\n# OR\n# Edit docker-compose.yml to use different port",
+          "valid": false,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "# Check recent crashes\ndocker logs leanvibe-app --since=1h | grep -i \"error\\|exception\\|traceback\"\n\n# Monitor resource usage\ndocker stats leanvibe-app\n\n# Check system limits\ndocker exec leanvibe-app u...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Increase memory limits\n# In docker-compose.yml:\nservices:\n  app:\n    deploy:\n      resources:\n        limits:\n          memory: 2G\n        reservations:\n          memory: 1G\n\n# Monitor memory usage ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Check active connections\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT count(*) as active_connections, state \nFROM pg_stat_activity \nWHERE datname = 'leanvi...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# Check for long-running queries\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT pid, now() - pg_stat_activity.query_start AS duration, query \nFROM pg_stat_acti...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# Check JWT token validity\npython3 -c \"\nimport jwt\nimport os\nfrom datetime import datetime\n\ntoken = 'your-jwt-token-here'\nsecret = os.getenv('JWT_SECRET_KEY', 'your-secret')\n\ntry:\n    decoded = jwt.de...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# Check request format\ncurl -X POST http://localhost:8000/api/v1/agents \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer <token>\" \\\n  -d '{\"name\":\"test-agent\",\"role\":\"developer\"}'...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Check application logs for detailed error\ndocker logs leanvibe-app --tail=20 | grep -A 10 -B 5 \"500\\|Internal Server Error\"\n\n# Enable debug logging temporarily\ndocker exec leanvibe-app sed -i 's/LOG...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 12,
+          "code": "# Check PostgreSQL status\ndocker-compose ps postgres\n\n# Check connection limits\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT setting FROM pg_settings WHERE n...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 13,
+          "code": "# Edit PostgreSQL configuration\ndocker exec leanvibe-postgres sed -i 's/max_connections = 100/max_connections = 200/' /var/lib/postgresql/data/postgresql.conf\n\n# Restart PostgreSQL\ndocker-compose rest...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 14,
+          "code": "# Update application environment\ncat >> .env.production << EOF\nDATABASE_POOL_SIZE=20\nDATABASE_MAX_OVERFLOW=10\nDATABASE_POOL_TIMEOUT=30\nDATABASE_POOL_RECYCLE=3600\nEOF\n\ndocker-compose restart app",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 15,
+          "code": "# Enable slow query logging\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nALTER SYSTEM SET log_min_duration_statement = 1000;  -- Log queries taking > 1 second\nSELEC...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 16,
+          "code": "# Check for sequential scans on large tables\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT schemaname, tablename, seq_scan, seq_tup_read, \n       idx_scan, id...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 17,
+          "code": "# Check for orphaned tasks (tasks without valid agents)\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT COUNT(*) as orphaned_tasks\nFROM tasks t\nLEFT JOIN agents...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 18,
+          "code": "# Check database corruption\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT datname, checksum_failures, checksum_last_failure\nFROM pg_stat_database\nWHERE datnam...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 19,
+          "code": "# Check Redis status\ndocker-compose ps redis\n\n# Test Redis connection\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" ping\n\n# Check Redis info\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" i...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 20,
+          "code": "# Check memory usage\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" info memory\n\n# Clear cache if safe to do so\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" flushdb\n\n# Increase memory limi...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 21,
+          "code": "# Check slow log\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" slowlog get 10\n\n# Monitor keyspace\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" info keyspace\n\n# Check for large keys\nredis-...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 22,
+          "code": "# Check cache hit ratio\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" info stats | grep keyspace\n\n# Monitor cache operations in application logs\ndocker logs leanvibe-app | grep -i cache | tail -...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 23,
+          "code": "# Clear specific cache patterns\nredis-cli -h localhost -p 6379 -a \"$REDIS_PASSWORD\" eval \"\nlocal keys = redis.call('keys', ARGV[1])\nfor i=1,#keys,5000 do\n  redis.call('del', unpack(keys, i, math.min(i...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 24,
+          "code": "# Check agent status in database\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT id, name, status, last_activity, created_at\nFROM agents\nWHERE status != 'active...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 25,
+          "code": "# Reset agent status\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nUPDATE agents \nSET status = 'active', last_activity = NOW()\nWHERE id = '$(agent_id)';\n\"\n\n# Clear a...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 26,
+          "code": "# Check agent workload\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT a.id, a.name, a.max_concurrent_tasks,\n       COUNT(t.id) as current_tasks,\n       COUNT(t...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 27,
+          "code": "# Check available agents for task requirements\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT a.id, a.name, a.capabilities, a.status, a.max_concurrent_tasks,\n ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 28,
+          "code": "# Debug capability matching\npython3 -c \"\nimport json\nimport psycopg2\nfrom psycopg2.extras import RealDictCursor\n\n# Connect to database\nconn = psycopg2.connect('postgresql://leanvibe_admin:password@loc...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 29,
+          "code": "# Check workflow status\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT id, name, status, created_at, started_at, error_message\nFROM workflows\nWHERE status IN (...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 30,
+          "code": "# Check for circular dependencies\npython3 -c \"\nimport psycopg2\nfrom psycopg2.extras import RealDictCursor\nimport json\n\nconn = psycopg2.connect('postgresql://leanvibe_admin:password@localhost:5432/lean...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 31,
+          "code": "# Check if required agents are available\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nWITH task_requirements AS (\n    SELECT DISTINCT jsonb_array_elements_text(requ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 32,
+          "code": "# Find stuck workflows\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT w.id, w.name, w.status, w.started_at,\n       NOW() - w.started_at as running_time,\n      ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 33,
+          "code": "# Reset stuck tasks\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nUPDATE tasks \nSET status = 'pending', assigned_agent_id = NULL\nWHERE status IN ('assigned', 'in_pro...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 34,
+          "code": "# Check dependency chain for stuck tasks\npython3 -c \"\nimport psycopg2\nfrom psycopg2.extras import RealDictCursor\nimport json\n\nconn = psycopg2.connect('postgresql://leanvibe_admin:password@localhost:54...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 35,
+          "code": "# Monitor CPU usage\ntop -p $(docker inspect --format='{{.State.Pid}}' leanvibe-app)\n\n# Check for CPU-intensive queries\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\n...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 36,
+          "code": "# Enable query statistics\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nCREATE EXTENSION IF NOT EXISTS pg_stat_statements;\n\"\n\n# Find slow queries\ndocker exec leanvib...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 37,
+          "code": "# Increase worker processes\n# Edit docker-compose.yml\nservices:\n  app:\n    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 6\n\n# Enable connection pooling\ncat >> .env.production << E...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 38,
+          "code": "# Monitor memory usage\ndocker stats leanvibe-app --no-stream\n\n# Check for memory leaks\ndocker exec leanvibe-app python -c \"\nimport psutil\nimport gc\nimport time\n\nprocess = psutil.Process()\nfor i in ran...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 39,
+          "code": "# Tune PostgreSQL memory settings\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nALTER SYSTEM SET shared_buffers = '1GB';\nALTER SYSTEM SET work_mem = '16MB';\nALTER SY...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 40,
+          "code": "# Implement memory limits\n# In docker-compose.yml:\nservices:\n  app:\n    deploy:\n      resources:\n        limits:\n          memory: 2G\n    environment:\n      - PYTHONHASHSEED=random\n      - PYTHONUNBUF...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 41,
+          "code": "# Measure API response times\ncurl -w \"@curl-format.txt\" -o /dev/null -s \"http://localhost:8000/api/v1/agents\"\n\n# Create curl-format.txt:\ncat > curl-format.txt << EOF\n     time_namelookup:  %{time_name...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 42,
+          "code": "# Vacuum and analyze tables\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nVACUUM ANALYZE;\n\"\n\n# Update table statistics\ndocker exec leanvibe-postgres psql -U leanvibe...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 43,
+          "code": "# Check user exists and is active\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT id, email, username, is_active, is_superuser, created_at, last_login\nFROM user...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 44,
+          "code": "# Validate JWT token\npython3 -c \"\nimport jwt\nimport json\nfrom datetime import datetime\n\ntoken = 'jwt_token_here'\nsecret = 'your_jwt_secret'\n\ntry:\n    payload = jwt.decode(token, secret, algorithms=['H...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 45,
+          "code": "# Check user roles and permissions\ndocker exec leanvibe-postgres psql -U leanvibe_admin -d leanvibe_production -c \"\nSELECT u.email, u.is_active, u.is_superuser, r.name as role_name, p.name as permissi...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 46,
+          "code": "# Test WebSocket connection\nwscat -c ws://localhost:8000/ws/observability\n\n# Check nginx WebSocket configuration\ndocker exec leanvibe-nginx nginx -t\n\n# Verify WebSocket headers\ncurl -i -N -H \"Connecti...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 47,
+          "code": "# Check nginx timeout settings\ndocker exec leanvibe-nginx grep -r \"proxy_read_timeout\\|proxy_send_timeout\" /etc/nginx/\n\n# Update nginx configuration for WebSockets\ncat > nginx-websocket.conf << EOF\nlo...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 48,
+          "code": "# Check WebSocket connections\ndocker exec leanvibe-app netstat -an | grep :8000\n\n# Monitor WebSocket messages\ndocker logs leanvibe-app | grep -i websocket | tail -20\n\n# Test message broadcasting\ncurl ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 49,
+          "code": "# Check manifest.json\ncurl -s http://localhost:8000/manifest.json | jq '.'\n\n# Verify service worker registration\ncurl -s http://localhost:8000/sw.js | head -20\n\n# Check PWA requirements\nlighthouse htt...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 50,
+          "code": "# Check container logs\ndocker logs leanvibe-app --details\n\n# Inspect container configuration\ndocker inspect leanvibe-app | jq '.[0].Config'\n\n# Check resource limits\ndocker stats leanvibe-app --no-stre...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 51,
+          "code": "# Check Docker networks\ndocker network ls\ndocker network inspect leanvibe_leanvibe-network\n\n# Test connectivity between containers\ndocker exec leanvibe-app ping postgres\ndocker exec leanvibe-app ping ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 52,
+          "code": "# Check upstream health\ndocker exec leanvibe-nginx nginx -t\ndocker logs leanvibe-nginx --tail=50\n\n# Test backend connectivity\ndocker exec leanvibe-nginx curl -f http://app:8000/health\n\n# Check nginx c...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 53,
+          "code": "# Check certificate validity\nopenssl x509 -in /path/to/cert.crt -text -noout | grep -A 2 \"Validity\"\n\n# Test SSL configuration\necho | openssl s_client -servername your-domain.com -connect your-domain.c...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 54,
+          "code": "# Check Prometheus targets\ncurl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health, lastError: .lastError}'\n\n# Verify metrics endpoint\ncurl -s htt...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 55,
+          "code": "# Query available metrics\ncurl -s http://localhost:9090/api/v1/label/__name__/values | jq '.data[]' | grep leanvibe\n\n# Check metric cardinality\ncurl -s \"http://localhost:9090/api/v1/query?query=promet...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 56,
+          "code": "# Check Grafana logs\ndocker logs leanvibe-grafana --tail=50\n\n# Test data source connection\ncurl -X GET http://admin:admin@localhost:3000/api/datasources\n\n# Verify dashboard configuration\ncurl -X GET h...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 57,
+          "code": "# Configure structured logging\ncat >> .env.production << EOF\nLOG_FORMAT=json\nLOG_LEVEL=INFO\nSTRUCTURED_LOGGING=true\nEOF\n\n# Install log forwarding (optional)\ndocker run -d --name=log-forwarder \\\n  --lo...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 58,
+          "code": "#!/bin/bash\n# analyze-logs.sh - Analyze application logs\n\nLOG_FILE=\"/opt/leanvibe/logs/app.log\"\n\necho \"=== Log Analysis Report ===\"\necho \"Time period: $(tail -1 $LOG_FILE | jq -r '.timestamp') to $(he...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 59,
+          "code": "#!/bin/bash\n# emergency-recovery.sh - Emergency system recovery\n\necho \"=== EMERGENCY RECOVERY PROCEDURE ===\"\necho \"Starting at: $(date)\"\n\n# Stop all services\necho \"1. Stopping all services...\"\ndocker-...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 60,
+          "code": "#!/bin/bash\n# database-recovery.sh - Recover database from backup\n\nBACKUP_FILE=\"$1\"\nDB_NAME=\"leanvibe_production\"\n\nif [[ -z \"$BACKUP_FILE\" ]]; then\n    echo \"Usage: $0 <backup_file>\"\n    echo \"Availab...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 61,
+          "code": "#!/bin/bash\n# security-incident-response.sh - Security incident response\n\necho \"=== SECURITY INCIDENT RESPONSE ===\"\necho \"Incident detected at: $(date)\"\n\n# Immediate containment\necho \"1. IMMEDIATE CON...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Add caching to frequently accessed endpoints\nfrom functools import lru_cache\nimport redis\n\nredis_client = redis.Redis(host='redis', port=6379, decode_responses=True)\n\n@lru_cache(maxsize=128)\ndef get...",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Add WebSocket debugging\nimport logging\nimport websockets\n\nlogging.basicConfig(level=logging.DEBUG)\nwebsockets_logger = logging.getLogger('websockets')\nwebsockets_logger.setLevel(logging.DEBUG)\n\n# Te...",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 64,
+        "passed": 63,
+        "failed": 1
+      }
+    },
+    "docs/reports/SYSTEM_VALIDATION_COMPREHENSIVE.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "docs/reports/STATUS_COMPREHENSIVE.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "agent-hive start\n# \u2705 Launches infrastructure + spawns 5 real agents",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "agent-hive dashboard\n# \u2705 Opens mobile-optimized remote oversight dashboard",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "agent-hive develop \"Build authentication API\"\n# \u2705 Real multi-agent coordination builds working code",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "agent-hive walkthrough\n# \u2705 End-to-end validation of entire platform",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0
+      }
+    },
+    "docs/migrations/SANDBOX_TO_PRODUCTION_MIGRATION.md": {
+      "bash_examples": [
+        {
+          "index": 0,
+          "code": "# Production Configuration\nSANDBOX_MODE=false\nSANDBOX_DEMO_MODE=false\n\n# Required API Keys\nANTHROPIC_API_KEY=your_anthropic_api_key_here\nANTHROPIC_MODEL=claude-3-5-sonnet-20241022\n\n# Optional API Keys...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 1,
+          "code": "# 1. Install PostgreSQL\n# Ubuntu/Debian:\nsudo apt install postgresql postgresql-contrib\n\n# macOS:\nbrew install postgresql\n\n# 2. Create production database\nsudo -u postgres createdb leanvibe_prod\nsudo ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 2,
+          "code": "# Install Redis\n# Ubuntu/Debian:\nsudo apt install redis-server\n\n# macOS:\nbrew install redis\n\n# Start Redis service\nsudo systemctl start redis-server  # Linux\nbrew services start redis          # macOS...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 3,
+          "code": "# Check all production requirements\npython scripts/validate_production_config.py\n\n# Expected output:\n# \u2705 Anthropic API key configured and valid\n# \u2705 Database connection successful\n# \u2705 Redis connection ...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 4,
+          "code": "# Run performance benchmarks\npython scripts/benchmark_production_performance.py\n\n# Expected results:\n# - API response time: <2 seconds\n# - Database query time: <500ms\n# - Redis operations: <10ms\n# - C...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 5,
+          "code": "#!/bin/bash\n# Quick migration from sandbox to production\n\necho \"\ud83d\ude80 Migrating from Sandbox to Production...\"\n\n# 1. Check environment file\nif [ ! -f \".env.local\" ]; then\n    echo \"\u274c .env.local not found....",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 6,
+          "code": "# Test API keys\ncurl -H \"Authorization: Bearer $ANTHROPIC_API_KEY\" \\\n     -H \"Content-Type: application/json\" \\\n     https://api.anthropic.com/v1/messages",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 7,
+          "code": "# Test database connection\npython -c \"\nimport psycopg2\nconn = psycopg2.connect('postgresql://user:pass@localhost/db')\nprint('Database connected')\nconn.close()\n\"",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 8,
+          "code": "# Test Redis connection\nredis-cli -h localhost -p 6379 ping",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 9,
+          "code": "# Development\nENVIRONMENT=development\nDATABASE_URL=postgresql://localhost/leanvibe_dev\n\n# Staging\nENVIRONMENT=staging  \nDATABASE_URL=postgresql://staging-db/leanvibe_staging\n\n# Production\nENVIRONMENT=...",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 10,
+          "code": "# Docker Compose scaling\ndocker-compose up --scale app=3 --scale worker=5\n\n# Kubernetes deployment\nkubectl apply -f k8s/production/\nkubectl scale deployment leanvibe-app --replicas=3",
+          "valid": true,
+          "type": "bash"
+        },
+        {
+          "index": 11,
+          "code": "# Database backups\npg_dump leanvibe_prod > backup_$(date +%Y%m%d).sql\n\n# Redis backups  \nredis-cli --rdb backup_$(date +%Y%m%d).rdb\n\n# Automated backups\ncrontab -e\n# Add: 0 2 * * * /usr/local/bin/back...",
+          "valid": true,
+          "type": "bash"
+        }
+      ],
+      "python_examples": [
+        {
+          "index": 0,
+          "code": "# Configure rate limiting in .env.local\nANTHROPIC_RATE_LIMIT_RPM=1000\nANTHROPIC_RATE_LIMIT_TPM=50000\nOPENAI_RATE_LIMIT_RPM=3000\nOPENAI_RATE_LIMIT_TPM=150000",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 1,
+          "code": "# Enable production caching\nREDIS_CACHE_ENABLED=true\nCACHE_TTL_HOURS=24\nEMBEDDING_CACHE_ENABLED=true",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 2,
+          "code": "# Production monitoring\nPROMETHEUS_ENABLED=true\nGRAFANA_ENABLED=true\nALERT_WEBHOOK_URL=your_slack_webhook_url",
+          "valid": true,
+          "type": "python"
+        },
+        {
+          "index": 3,
+          "code": "# Production security\nCORS_ORIGINS=[\"https://yourdomain.com\"]\nALLOWED_HOSTS=[\"yourdomain.com\"]\nRATE_LIMITING_ENABLED=true\nAPI_KEY_ROTATION_ENABLED=true",
+          "valid": true,
+          "type": "python"
+        }
+      ],
+      "validation_summary": {
+        "total": 16,
+        "passed": 16,
+        "failed": 0
+      }
+    },
+    "docs/enterprise/market-strategy.md": {
+      "bash_examples": [],
+      "python_examples": [],
+      "validation_summary": {
+        "total": 0,
+        "passed": 0,
+        "failed": 0
+      }
+    }
+  },
+  "freshness_check": {
+    "README.md": {
+      "last_modified": "2025-08-27T19:06:45.097024",
+      "age_days": 0,
+      "status": "fresh"
+    },
+    "ARCHITECTURE_CONSOLIDATED.md": {
+      "last_modified": "2025-08-22T17:42:08.719287",
+      "age_days": 5,
+      "status": "fresh"
+    },
+    "API_REFERENCE_CONSOLIDATED.md": {
+      "last_modified": "2025-08-22T17:39:28.644418",
+      "age_days": 5,
+      "status": "fresh"
+    },
+    "CLI_USAGE_GUIDE.md": {
+      "last_modified": "2025-08-20T19:36:44.773144",
+      "age_days": 6,
+      "status": "fresh"
+    },
+    "DEVELOPER_ONBOARDING_30MIN.md": {
+      "last_modified": "2025-08-22T17:38:01.210163",
+      "age_days": 5,
+      "status": "fresh"
+    },
+    "UV_INSTALLATION_GUIDE.md": {
+      "last_modified": "2025-08-20T20:03:35.057473",
+      "age_days": 6,
+      "status": "fresh"
+    },
+    "CONTRIBUTING.md": {
+      "last_modified": "2025-07-27T08:42:28.442278",
+      "age_days": 31,
+      "status": "stale"
+    },
+    "DEPLOYMENT_CHECKLIST.md": {
+      "last_modified": "2025-08-20T21:39:04.967688",
+      "age_days": 6,
+      "status": "fresh"
+    },
+    "docs/GETTING_STARTED.md": {
+      "last_modified": "2025-08-18T17:21:45.586329",
+      "age_days": 9,
+      "status": "fresh"
+    },
+    "docs/CORE.md": {
+      "last_modified": "2025-08-12T11:06:15.030225",
+      "age_days": 15,
+      "status": "fresh"
+    },
+    "docs/TECHNICAL_SPECIFICATIONS.md": {
+      "last_modified": "2025-08-18T01:29:11.272572",
+      "age_days": 9,
+      "status": "fresh"
+    },
+    "docs/PRODUCTION_DEPLOYMENT_GUIDE.md": {
+      "last_modified": "2025-08-18T15:27:38.076514",
+      "age_days": 9,
+      "status": "fresh"
+    },
+    "docs/NAV_INDEX.md": {
+      "last_modified": "2025-08-12T12:46:04.358176",
+      "age_days": 15,
+      "status": "fresh"
+    },
+    "docs/OPERATIONAL_RUNBOOK.md": {
+      "last_modified": "2025-08-18T17:23:14.053683",
+      "age_days": 9,
+      "status": "fresh"
+    },
+    "docs/paths/EXECUTIVE_PATH.md": {
+      "last_modified": "2025-08-02T01:18:41.806493",
+      "age_days": 25,
+      "status": "fresh"
+    },
+    "docs/paths/DEVELOPER_PATH.md": {
+      "last_modified": "2025-08-12T12:22:01.960144",
+      "age_days": 15,
+      "status": "fresh"
+    },
+    "docs/paths/ADVANCED_DEVELOPER_PATH.md": {
+      "last_modified": "2025-08-12T12:15:57.319801",
+      "age_days": 15,
+      "status": "fresh"
+    },
+    "docs/tutorials/USER_TUTORIAL_COMPREHENSIVE.md": {
+      "last_modified": "2025-07-29T22:29:20.148896",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/tutorials/AUTONOMOUS_DEVELOPMENT_DEMO.md": {
+      "last_modified": "2025-08-02T01:18:41.803299",
+      "age_days": 25,
+      "status": "fresh"
+    },
+    "docs/product/PRODUCT_VISION.md": {
+      "last_modified": "2025-08-17T14:46:54.911898",
+      "age_days": 10,
+      "status": "fresh"
+    },
+    "docs/product/VALUE_PROPOSITION.md": {
+      "last_modified": "2025-08-17T14:46:54.911678",
+      "age_days": 10,
+      "status": "fresh"
+    },
+    "docs/product/TARGET_USER_ANALYSIS.md": {
+      "last_modified": "2025-08-17T14:46:54.921762",
+      "age_days": 10,
+      "status": "fresh"
+    },
+    "docs/competitive-advantages.md": {
+      "last_modified": "2025-08-22T16:29:41.516868",
+      "age_days": 5,
+      "status": "fresh"
+    },
+    "docs/guides/MULTI_AGENT_COORDINATION_GUIDE.md": {
+      "last_modified": "2025-07-26T17:13:58.800490",
+      "age_days": 32,
+      "status": "stale"
+    },
+    "docs/guides/EXTERNAL_TOOLS_GUIDE.md": {
+      "last_modified": "2025-07-26T16:53:28.016497",
+      "age_days": 32,
+      "status": "stale"
+    },
+    "docs/guides/MOBILE_PWA_IMPLEMENTATION_GUIDE.md": {
+      "last_modified": "2025-08-05T10:57:05.322347",
+      "age_days": 22,
+      "status": "fresh"
+    },
+    "docs/guides/ENTERPRISE_USER_GUIDE.md": {
+      "last_modified": "2025-07-30T00:04:02.886921",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/guides/PERFORMANCE_TUNING_COMPREHENSIVE_GUIDE.md": {
+      "last_modified": "2025-08-05T11:02:26.211505",
+      "age_days": 22,
+      "status": "fresh"
+    },
+    "docs/guides/QUALITY_GATES_AUTOMATION.md": {
+      "last_modified": "2025-07-30T00:49:52.559036",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/guides/SANDBOX_MODE_GUIDE.md": {
+      "last_modified": "2025-08-11T14:07:52.027441",
+      "age_days": 16,
+      "status": "fresh"
+    },
+    "docs/implementation/context-compression.md": {
+      "last_modified": "2025-08-17T18:00:19.729200",
+      "age_days": 10,
+      "status": "fresh"
+    },
+    "docs/integrations/HOOK_INTEGRATION_GUIDE.md": {
+      "last_modified": "2025-07-27T12:26:29.680503",
+      "age_days": 31,
+      "status": "stale"
+    },
+    "docs/integrations/claude/hooks-guide.md": {
+      "last_modified": "2025-07-30T00:44:38.386097",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/integrations/HIVE_SLASH_COMMANDS.md": {
+      "last_modified": "2025-08-03T18:56:47.263322",
+      "age_days": 24,
+      "status": "fresh"
+    },
+    "docs/design/ENTERPRISE_SYSTEM_ARCHITECTURE.md": {
+      "last_modified": "2025-07-30T00:00:56.595135",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/reference/API_REFERENCE_COMPREHENSIVE.md": {
+      "last_modified": "2025-07-29T22:25:50.207726",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/reference/validation-framework.md": {
+      "last_modified": "2025-08-17T17:59:58.393441",
+      "age_days": 10,
+      "status": "fresh"
+    },
+    "docs/reference/DASHBOARD_API_DOCUMENTATION.md": {
+      "last_modified": "2025-08-07T14:42:27.142718",
+      "age_days": 20,
+      "status": "fresh"
+    },
+    "docs/reference/GITHUB_INTEGRATION_API_COMPREHENSIVE.md": {
+      "last_modified": "2025-07-29T23:46:59.056963",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/reference/SEMANTIC_MEMORY_API.md": {
+      "last_modified": "2025-07-29T02:36:33.811171",
+      "age_days": 29,
+      "status": "fresh"
+    },
+    "docs/reference/OBSERVABILITY_EVENT_SCHEMA.md": {
+      "last_modified": "2025-07-29T05:22:58.604394",
+      "age_days": 29,
+      "status": "fresh"
+    },
+    "docs/reference/AGENT_SPECIALIZATION_TEMPLATES.md": {
+      "last_modified": "2025-07-30T00:45:49.954674",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/core/system-architecture.md": {
+      "last_modified": "2025-08-08T10:39:38.081195",
+      "age_days": 19,
+      "status": "fresh"
+    },
+    "docs/core/product-requirements.md": {
+      "last_modified": "2025-08-08T11:06:26.199700",
+      "age_days": 19,
+      "status": "fresh"
+    },
+    "docs/runbooks/PRODUCTION_DEPLOYMENT_RUNBOOK.md": {
+      "last_modified": "2025-07-29T22:32:51.212250",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/runbooks/TROUBLESHOOTING_GUIDE_COMPREHENSIVE.md": {
+      "last_modified": "2025-07-29T22:36:52.972318",
+      "age_days": 28,
+      "status": "fresh"
+    },
+    "docs/reports/SYSTEM_VALIDATION_COMPREHENSIVE.md": {
+      "last_modified": "2025-08-05T09:59:34.008500",
+      "age_days": 22,
+      "status": "fresh"
+    },
+    "docs/reports/STATUS_COMPREHENSIVE.md": {
+      "last_modified": "2025-08-03T19:37:38.663100",
+      "age_days": 23,
+      "status": "fresh"
+    },
+    "docs/migrations/SANDBOX_TO_PRODUCTION_MIGRATION.md": {
+      "last_modified": "2025-08-02T01:18:41.804071",
+      "age_days": 25,
+      "status": "fresh"
+    },
+    "docs/enterprise/market-strategy.md": {
+      "last_modified": "2025-07-31T11:33:21.936358",
+      "age_days": 27,
+      "status": "fresh"
+    }
+  },
+  "journey_validation": {
+    "quick_start": {
+      "total_files": 3,
+      "existing_files": 3,
+      "missing_files": [],
+      "complete": true
+    },
+    "developer": {
+      "total_files": 4,
+      "existing_files": 4,
+      "missing_files": [],
+      "complete": true
+    },
+    "enterprise": {
+      "total_files": 3,
+      "existing_files": 3,
+      "missing_files": [],
+      "complete": true
+    }
+  },
+  "success_metrics": {
+    "epic9_criteria": {
+      "file_count_target": 50,
+      "file_count_actual": 50,
+      "file_count_success": true,
+      "link_success_rate": 0.6575342465753424,
+      "code_success_rate": 0.9258426966292135,
+      "journey_completeness": 1.0,
+      "content_freshness": 0.92
+    },
+    "overall_score": 0.8744288132984454,
+    "recommendations": [
+      "Fix broken links in: README.md, docs/paths/EXECUTIVE_PATH.md, docs/paths/DEVELOPER_PATH.md",
+      "Fix code examples in: README.md, CLI_USAGE_GUIDE.md, DEVELOPER_ONBOARDING_30MIN.md"
+    ]
+  }
+}
