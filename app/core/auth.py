@@ -63,6 +63,7 @@ class Permission(Enum):
     # ROI and analytics
     VIEW_ROI_METRICS = "view_roi_metrics"
     CREATE_ROI_METRICS = "create_roi_metrics"
+    VIEW_ANALYTICS = "view_analytics"
     
     # Executive engagement
     VIEW_EXECUTIVE_ENGAGEMENT = "view_executive_engagement"
@@ -85,7 +86,7 @@ ROLE_PERMISSIONS = {
     UserRole.SUPER_ADMIN: list(Permission),  # All permissions
     UserRole.ENTERPRISE_ADMIN: [
         Permission.CREATE_PILOT, Permission.VIEW_PILOT, Permission.UPDATE_PILOT,
-        Permission.VIEW_ROI_METRICS, Permission.CREATE_ROI_METRICS,
+        Permission.VIEW_ROI_METRICS, Permission.CREATE_ROI_METRICS, Permission.VIEW_ANALYTICS,
         Permission.VIEW_EXECUTIVE_ENGAGEMENT, Permission.CREATE_EXECUTIVE_ENGAGEMENT,
         Permission.UPDATE_EXECUTIVE_ENGAGEMENT,
         Permission.CREATE_DEVELOPMENT_TASK, Permission.VIEW_DEVELOPMENT_TASK,
@@ -99,7 +100,7 @@ ROLE_PERMISSIONS = {
     ],
     UserRole.SUCCESS_MANAGER: [
         Permission.VIEW_PILOT, Permission.UPDATE_PILOT,
-        Permission.VIEW_ROI_METRICS, Permission.CREATE_ROI_METRICS,
+        Permission.VIEW_ROI_METRICS, Permission.CREATE_ROI_METRICS, Permission.VIEW_ANALYTICS,
         Permission.VIEW_EXECUTIVE_ENGAGEMENT, Permission.CREATE_EXECUTIVE_ENGAGEMENT,
         Permission.UPDATE_EXECUTIVE_ENGAGEMENT
     ],
@@ -108,7 +109,7 @@ ROLE_PERMISSIONS = {
         Permission.VIEW_DEVELOPMENT_TASK, Permission.EXECUTE_DEVELOPMENT_TASK
     ],
     UserRole.VIEWER: [
-        Permission.VIEW_PILOT, Permission.VIEW_ROI_METRICS,
+        Permission.VIEW_PILOT, Permission.VIEW_ROI_METRICS, Permission.VIEW_ANALYTICS,
         Permission.VIEW_EXECUTIVE_ENGAGEMENT, Permission.VIEW_DEVELOPMENT_TASK
     ]
 }

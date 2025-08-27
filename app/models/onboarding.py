@@ -15,11 +15,9 @@ from uuid import UUID, uuid4
 from sqlalchemy import Column, String, DateTime, Integer, Boolean, Text, JSON, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from ..core.database import Base
 
-from .base import BaseModel
-
-class OnboardingSession(BaseModel):
+class OnboardingSession(Base):
     """
     Main onboarding session tracking.
     
@@ -85,7 +83,7 @@ class OnboardingSession(BaseModel):
         else:
             return int((datetime.utcnow() - self.started_at).total_seconds() * 1000)
 
-class OnboardingStep(BaseModel):
+class OnboardingStep(Base):
     """
     Individual step completion tracking.
     
@@ -129,7 +127,7 @@ class OnboardingStep(BaseModel):
         }
         return step_names.get(self.step_number, f"Step {self.step_number}")
 
-class OnboardingEvent(BaseModel):
+class OnboardingEvent(Base):
     """
     Granular event tracking during onboarding.
     
@@ -160,7 +158,7 @@ class OnboardingEvent(BaseModel):
     def __repr__(self):
         return f"<OnboardingEvent(id={self.id}, event_name={self.event_name}, session_id={self.session_id})>"
 
-class OnboardingMetric(BaseModel):
+class OnboardingMetric(Base):
     """
     Aggregated metrics and analytics for onboarding optimization.
     
@@ -198,7 +196,7 @@ class OnboardingMetric(BaseModel):
     def __repr__(self):
         return f"<OnboardingMetric(id={self.id}, type={self.metric_type}, session_id={self.session_id})>"
 
-class OnboardingTemplate(BaseModel):
+class OnboardingTemplate(Base):
     """
     Onboarding flow templates for different user segments.
     
@@ -231,7 +229,7 @@ class OnboardingTemplate(BaseModel):
     def __repr__(self):
         return f"<OnboardingTemplate(id={self.id}, name={self.name}, active={self.is_active})>"
 
-class OnboardingFeedback(BaseModel):
+class OnboardingFeedback(Base):
     """
     User feedback collected during or after onboarding.
     
