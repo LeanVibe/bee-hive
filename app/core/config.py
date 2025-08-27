@@ -274,40 +274,34 @@ class _LazySettings:
 
     def _ensure(self) -> Settings:
         if self._instance is None:
+            import os
+            if os.getenv("ENVIRONMENT") in ("test", "testing"):
+                # For test environment, use clean test configuration
+                try:
+                    from .test_config import test_settings
+                    # Cast test_settings to Settings type for compatibility
+                    self._instance = test_settings
+                    return self._instance
+                except ImportError:
+                    pass
+            
+            # Normal production/development configuration
             try:
-                # Clear any potential pydantic validation cache
-                import os
-                if os.getenv("ENVIRONMENT") == "test":
-                    # For test environment, create with explicit overrides
-                    self._instance = Settings(
-                        _env_file=".env.test",
-                        SECRET_KEY=os.getenv("SECRET_KEY", "test-secret"),
-                        JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY", "test-jwt-secret"),
-                        DATABASE_URL=os.getenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:"),
-                        REDIS_URL=os.getenv("REDIS_URL", "redis://localhost:6379/1")
-                    )
-                else:
-                    self._instance = Settings()
+                self._instance = Settings()
             except Exception as e:
-                # Fallback for testing with minimal configuration
-                import os
-                if os.getenv("ENVIRONMENT") == "test":
-                    try:
-                        # Try with minimal BaseSettings
-                        from pydantic_settings import BaseSettings
-                        from pydantic import Field
-                        
-                        class TestSettings(BaseSettings):
-                            SECRET_KEY: str = "test-secret-key"
-                            JWT_SECRET_KEY: str = "test-jwt-secret-key"
-                            DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
-                            REDIS_URL: str = "redis://localhost:6379/1"
-                            ENVIRONMENT: str = "test"
-                            DEBUG: bool = True
-                        
-                        self._instance = TestSettings()
-                    except Exception:
-                        raise e
+                # Final fallback for testing if test_config fails
+                if os.getenv("ENVIRONMENT") in ("test", "testing"):
+                    # Create minimal mock settings for testing
+                    from types import SimpleNamespace
+                    test_settings = SimpleNamespace()
+                    test_settings.SECRET_KEY = "test-secret-key"
+                    test_settings.JWT_SECRET_KEY = "test-jwt-secret-key"
+                    test_settings.DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+                    test_settings.REDIS_URL = "redis://localhost:6379/1"
+                    test_settings.ENVIRONMENT = "testing"
+                    test_settings.DEBUG = True
+                    test_settings.APP_NAME = "LeanVibe Agent Hive 2.0 Test"
+                    self._instance = test_settings
                 else:
                     raise e
         return self._instance
