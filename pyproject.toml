@@ -358,6 +358,12 @@ prepend_sys_path = ["."]
 version_path_separator = "os"
 sqlalchemy.url = "postgresql://leanvibe_user:password@localhost:5432/leanvibe_agent_hive"
 
+[dependency-groups]
+dev = [
+    "fakeredis>=2.31.0",
+    "scikit-learn>=1.7.1",
+]
+
 # === DEPLOYMENT CONFIGURATION ===
 [tool.hatch.envs.default]
 dependencies = [
