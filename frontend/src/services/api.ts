@@ -16,7 +16,7 @@ class ApiClient {
   private baseURL: string
   private defaultHeaders: Record<string, string>
   
-  constructor(baseURL = '/api/v1') {
+  constructor(baseURL = 'http://localhost:8000') {
     this.baseURL = baseURL
     this.defaultHeaders = {
       'Content-Type': 'application/json',

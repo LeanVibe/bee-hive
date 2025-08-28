@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connection Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .loading { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Business Analytics API Connection Test</h1>
+    <div id="status">Testing connection...</div>
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                statusDiv.innerHTML = '<span class="loading">🔄 Testing /analytics/dashboard...</span>';
+                
+                const dashboardResponse = await fetch('http://localhost:8000/analytics/dashboard');
+                const dashboardData = await dashboardResponse.json();
+                
+                statusDiv.innerHTML += '<br><span class="success">✅ Dashboard API working</span>';
+                
+                const kpiResponse = await fetch('http://localhost:8000/analytics/quick/kpis');
+                const kpiData = await kpiResponse.json();
+                
+                statusDiv.innerHTML += '<br><span class="success">✅ KPI API working</span>';
+                
+                const statusResponse = await fetch('http://localhost:8000/analytics/quick/status');
+                const statusData = await statusResponse.json();
+                
+                statusDiv.innerHTML += '<br><span class="success">✅ Status API working</span>';
+                statusDiv.innerHTML += '<br><br><span class="success">🎉 ALL APIS CONNECTED SUCCESSFULLY!</span>';
+                
+                resultsDiv.innerHTML = `
+                    <h2>API Response Data:</h2>
+                    <h3>Dashboard:</h3>
+                    <pre>${JSON.stringify(dashboardData, null, 2)}</pre>
+                    <h3>KPIs:</h3>
+                    <pre>${JSON.stringify(kpiData, null, 2)}</pre>
+                    <h3>Status:</h3>
+                    <pre>${JSON.stringify(statusData, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                statusDiv.innerHTML += '<br><span class="error">❌ Error: ' + error.message + '</span>';
+                console.error('API Test Error:', error);
+            }
+        }
+        
+        // Run test immediately
+        testAPI();
+        
+        // Auto-refresh every 30 seconds to simulate the real app
+        setInterval(testAPI, 30000);
+    </script>
+</body>
+</html>

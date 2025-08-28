@@ -34,6 +34,9 @@
     <!-- System Health Overview -->
     <SystemHealthCard />
     
+    <!-- Business Intelligence Panel -->
+    <BusinessIntelligencePanel :refresh-interval="30000" />
+    
     <!-- Key Metrics Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <MetricCard
@@ -189,6 +192,7 @@ import SystemComponentsCard from '@/components/dashboard/SystemComponentsCard.vu
 import RealTimeAgentStatusGrid from '@/components/dashboard/RealTimeAgentStatusGrid.vue'
 import RealTimePerformanceCard from '@/components/dashboard/RealTimePerformanceCard.vue'
 import RealTimeAgentPerformanceChart from '@/components/charts/RealTimeAgentPerformanceChart.vue'
+import BusinessIntelligencePanel from '@/components/business-analytics/BusinessIntelligencePanel.vue'
 
 // Stores
 const metricsStore = useMetricsStore()
