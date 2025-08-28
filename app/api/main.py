@@ -106,6 +106,7 @@ async def root():
             "health": "/health",
             "metrics": "/metrics",
             "agents": "/api/v1/agents",
+            "tasks": "/api/v1/tasks",
             "docs": "/docs",
             "redoc": "/redoc"
         }
@@ -113,12 +114,62 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Basic health check endpoint"""
+    """Comprehensive system health check endpoint"""
+    health_status = {"healthy": True, "checks": {}}
+    
+    # Test Database connectivity
+    try:
+        from ..core.database import get_session
+        async with get_session() as session:
+            # Simple query to test database connectivity
+            result = await session.execute("SELECT 1")
+            health_status["checks"]["database"] = {
+                "status": "healthy",
+                "details": "PostgreSQL connection successful"
+            }
+    except Exception as e:
+        health_status["healthy"] = False
+        health_status["checks"]["database"] = {
+            "status": "unhealthy", 
+            "error": str(e),
+            "details": "PostgreSQL connection failed"
+        }
+    
+    # Test Redis connectivity
+    try:
+        from ..core.redis import get_redis_client
+        redis_client = await get_redis_client()
+        if redis_client:
+            # Test basic Redis operation
+            await redis_client.ping()
+            health_status["checks"]["redis"] = {
+                "status": "healthy",
+                "details": "Redis connection successful"
+            }
+        else:
+            raise Exception("Redis client not available")
+    except Exception as e:
+        health_status["healthy"] = False
+        health_status["checks"]["redis"] = {
+            "status": "unhealthy",
+            "error": str(e), 
+            "details": "Redis connection failed"
+        }
+    
+    # System status summary
+    overall_status = "healthy" if health_status["healthy"] else "degraded"
+    
     return {
-        "status": "healthy",
+        "status": overall_status,
         "timestamp": datetime.utcnow().isoformat(),
         "version": "2.0.0",
-        "service": "leanvibe-agent-hive"
+        "service": "leanvibe-agent-hive",
+        "components": health_status["checks"],
+        "summary": {
+            "healthy_components": len([c for c in health_status["checks"].values() if c["status"] == "healthy"]),
+            "total_components": len(health_status["checks"]),
+            "overall_healthy": health_status["healthy"]
+        }
     }
 
 @app.get("/metrics")
@@ -141,96 +192,8 @@ async def metrics():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-# In-memory storage for basic agent management (temporary)
-AGENTS: Dict[str, Dict[str, Any]] = {}
-TASKS: Dict[str, Dict[str, Any]] = {}
-
-@app.post("/api/v1/agents")
-async def create_agent(agent_data: dict):
-    """Create a new agent (in-memory for now)"""
-    import uuid
-    
-    agent_id = str(uuid.uuid4())
-    agent = {
-        "id": agent_id,
-        "name": agent_data.get("name", f"agent-{agent_id[:8]}"),
-        "type": agent_data.get("type", "general-purpose"),
-        "capabilities": agent_data.get("capabilities", []),
-        "status": "active",
-        "created_at": datetime.utcnow().isoformat(),
-        "last_seen": datetime.utcnow().isoformat()
-    }
-    
-    AGENTS[agent_id] = agent
-    logger.info(f"Created agent: {agent['name']} ({agent_id})")
-    
-    return agent
-
-@app.get("/api/v1/agents")
-async def list_agents():
-    """List all agents"""
-    return {
-        "agents": list(AGENTS.values()),
-        "count": len(AGENTS),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-@app.get("/api/v1/agents/{agent_id}")
-async def get_agent(agent_id: str):
-    """Get specific agent by ID"""
-    if agent_id not in AGENTS:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    return AGENTS[agent_id]
-
-@app.delete("/api/v1/agents/{agent_id}")
-async def delete_agent(agent_id: str):
-    """Delete an agent"""
-    if agent_id not in AGENTS:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    agent = AGENTS.pop(agent_id)
-    logger.info(f"Deleted agent: {agent['name']} ({agent_id})")
-    
-    return {"message": f"Agent {agent['name']} deleted successfully"}
-
-@app.post("/api/v1/tasks")
-async def create_task(task_data: dict):
-    """Create a new task"""
-    import uuid
-    
-    task_id = str(uuid.uuid4())
-    task = {
-        "id": task_id,
-        "title": task_data.get("title", f"task-{task_id[:8]}"),
-        "description": task_data.get("description", ""),
-        "agent_id": task_data.get("agent_id"),
-        "status": "pending",
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    
-    TASKS[task_id] = task
-    logger.info(f"Created task: {task['title']} ({task_id})")
-    
-    return task
-
-@app.get("/api/v1/tasks")
-async def list_tasks():
-    """List all tasks"""
-    return {
-        "tasks": list(TASKS.values()),
-        "count": len(TASKS),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-@app.get("/api/v1/tasks/{task_id}")
-async def get_task(task_id: str):
-    """Get specific task by ID"""
-    if task_id not in TASKS:
-        raise HTTPException(status_code=404, detail="Task not found")
-    
-    return TASKS[task_id]
+# Core API endpoints now handled by dedicated route files
+# See app/api/routes/agents.py and app/api/routes/tasks.py
 
 # Error handler
 @app.exception_handler(Exception)

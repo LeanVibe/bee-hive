@@ -44,6 +44,9 @@ from .business_intelligence import (
     BusinessMetric, UserSession, UserJourneyEvent, AgentPerformanceMetric,
     BusinessAlert, BusinessForecast, BusinessDashboardConfig, MetricType, AlertLevel
 )
+from .persona import (
+    PersonaDefinitionModel, PersonaAssignmentModel, PersonaPerformanceModel
+)
 
 __all__ = [
     "Agent", "AgentStatus", "AgentType",
@@ -73,5 +76,6 @@ __all__ = [
     "ProjectIndex", "FileEntry", "DependencyRelationship", "IndexSnapshot", "AnalysisSession",
     "ProjectStatus", "FileType", "DependencyType", "SnapshotType", "AnalysisSessionType", "AnalysisStatus",
     "BusinessMetric", "UserSession", "UserJourneyEvent", "AgentPerformanceMetric",
-    "BusinessAlert", "BusinessForecast", "BusinessDashboardConfig", "MetricType", "AlertLevel"
+    "BusinessAlert", "BusinessForecast", "BusinessDashboardConfig", "MetricType", "AlertLevel",
+    "PersonaDefinitionModel", "PersonaAssignmentModel", "PersonaPerformanceModel"
 ]

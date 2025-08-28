@@ -22,6 +22,10 @@ from .v1.websocket import router as websocket_router
 from .project_index import router as project_index_router
 from .business_analytics import router as business_analytics_router
 
+# EPIC C PHASE 1: Core API endpoints for agent and task management
+from .endpoints.agents import router as agents_api_router
+from .endpoints.tasks import router as tasks_api_router
+
 # EPIC 1 PHASE 1.1: Add missing agent API endpoints (simplified version for CLI integration)
 from .v1.agents_simple import router as agents_router
 
@@ -42,6 +46,10 @@ router.include_router(github_router, prefix="/api/v1")
 router.include_router(coordination_monitoring_router, prefix="/api/v1")
 router.include_router(project_index_router)  # Project Index API
 router.include_router(business_analytics_router)  # Business Analytics API (1,401 lines, 18 endpoints)
+
+# EPIC C PHASE 1: Include core API endpoints for production usage
+router.include_router(agents_api_router)  # Core Agent API endpoints
+router.include_router(tasks_api_router)   # Core Task API endpoints
 
 # EPIC 1 PHASE 1.1: Include agent API endpoints for CLI integration
 router.include_router(agents_router, prefix="/agents", tags=["agents"])

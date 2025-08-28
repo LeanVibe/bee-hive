@@ -15,10 +15,12 @@ from typing import Any, Callable, Dict, List, Optional
 
 # Utility imports - Auto-generated
 from .unix_commands import unix_commands
+from .agent_hive_cli import AgentHiveCLI
 
 # Utility exports - Auto-generated
 __all__ = [
     "unix_commands",
+    "AgentHiveCLI",
 ]
 
 # Standard module initialization

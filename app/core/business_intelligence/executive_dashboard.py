@@ -257,10 +257,10 @@ class ExecutiveDashboard:
             # Task count queries
             total_tasks_query = select(func.count(Task.id))
             completed_tasks_query = select(func.count(Task.id)).where(
-                Task.status == TaskStatus.completed
+                Task.status == TaskStatus.COMPLETED
             )
             failed_tasks_query = select(func.count(Task.id)).where(
-                Task.status == TaskStatus.failed
+                Task.status == TaskStatus.FAILED
             )
             
             results = await asyncio.gather(
