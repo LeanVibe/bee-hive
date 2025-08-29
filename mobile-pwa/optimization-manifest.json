@@ -1,0 +1,30 @@
+{
+  "images": {
+    "formats": [
+      "webp",
+      "avif",
+      "png"
+    ],
+    "sizes": [
+      72,
+      96,
+      128,
+      144,
+      152,
+      192,
+      384,
+      512
+    ],
+    "quality": 85
+  },
+  "fonts": {
+    "display": "swap",
+    "preload": [
+      "critical-font.woff2"
+    ]
+  },
+  "compression": {
+    "gzip": true,
+    "brotli": true
+  }
+}

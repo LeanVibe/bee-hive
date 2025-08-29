@@ -223,14 +223,68 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'es2020',
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true,
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html')
-      },
+        target: 'es2020',
+        outDir: 'dist',
+        assetsDir: 'assets',
+        sourcemap: false, // Disable in production for performance
+        minify: 'esbuild', // Faster minification
+        rollupOptions: {
+          input: {
+            main: resolve(__dirname, 'index.html')
+          },
+          output: {
+            // Advanced chunking strategy
+            manualChunks: {
+              // Core framework chunks
+              'lit-core': ['lit'],
+              'state-management': ['zustand'],
+              
+              // Utilities chunk
+              'utilities': ['date-fns', 'sortablejs', 'idb'],
+              
+              // Chart.js and visualization
+              'charts': ['chart.js', 'chartjs-adapter-date-fns'],
+              
+              // Authentication and security
+              'auth': ['@auth0/auth0-spa-js', 'jose'],
+              
+              // Firebase and offline
+              'offline': ['firebase', 'idb', 'workbox-window'],
+              
+              // Performance monitoring
+              'monitoring': ['web-vitals']
+            },
+            // Optimize chunk naming for long-term caching
+            chunkFileNames: 'js/[name]-[hash].js',
+            entryFileNames: 'js/[name]-[hash].js',
+            assetFileNames: (assetInfo) => {
+              const info = assetInfo.name.split('.');
+              const ext = info[info.length - 1];
+              if (/.(png|jpe?g|svg|gif|tiff|bmp|ico)$/i.test(assetInfo.name)) {
+                return `images/[name]-[hash].${ext}`;
+              }
+              if (/.(woff2?|eot|ttf|otf)$/i.test(assetInfo.name)) {
+                return `fonts/[name]-[hash].${ext}`;
+              }
+              return `assets/[name]-[hash].${ext}`;
+            },
+          },
+        },
+        chunkSizeWarningLimit: 500, // More aggressive chunk size limit
+        reportCompressedSize: false, // Disable for faster builds
+        
+        // Advanced compression
+        terserOptions: {
+          compress: {
+            drop_console: true, // Remove console.logs in production
+            drop_debugger: true,
+            pure_funcs: ['console.log', 'console.info', 'console.debug']
+          },
+          mangle: {
+            safari10: true
+          }
+        }
+      },,
       output: {
         manualChunks: {
           vendor: ['lit', 'zustand'],

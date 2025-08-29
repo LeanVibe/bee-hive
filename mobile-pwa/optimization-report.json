@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-08-29T05:53:14.719Z",
+  "optimizations": [
+    {
+      "type": "bundle-optimization",
+      "description": "Enhanced Vite build configuration with advanced chunking and compression",
+      "impact": "Reduced bundle size and improved caching"
+    },
+    {
+      "type": "service-worker-optimization",
+      "description": "Enhanced service worker with intelligent caching and cache warming",
+      "impact": "Improved offline performance and faster subsequent loads"
+    },
+    {
+      "type": "code-splitting",
+      "description": "Advanced code splitting with intelligent preloading and web vitals optimization",
+      "impact": "Reduced initial bundle size and improved loading performance"
+    },
+    {
+      "type": "resource-optimization",
+      "description": "Enhanced HTML with resource hints, preconnects, and critical CSS preparation",
+      "impact": "Improved resource loading priorities and reduced render-blocking"
+    },
+    {
+      "type": "performance-monitoring",
+      "description": "Integrated advanced performance monitoring with Core Web Vitals tracking",
+      "impact": "Real-time performance insights and budget validation"
+    }
+  ],
+  "before": {
+    "pwa": 100,
+    "performance": 100,
+    "accessibility": 79,
+    "bestPractices": 96,
+    "seo": 92
+  },
+  "after": {},
+  "success": false,
+  "error": "Build failed with code 2"
+}

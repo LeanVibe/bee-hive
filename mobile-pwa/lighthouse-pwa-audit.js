@@ -1,7 +1,11 @@
-const lighthouse = require('lighthouse');
-const chromeLauncher = require('chrome-launcher');
-const fs = require('fs');
-const path = require('path');
+import lighthouse from 'lighthouse';
+import * as chromeLauncher from 'chrome-launcher';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Lighthouse PWA Audit Script
@@ -26,10 +30,10 @@ const PWA_REQUIREMENTS = {
 };
 
 const URLS_TO_TEST = [
-  'http://localhost:3001',
-  'http://localhost:3001/dashboard',
-  'http://localhost:3001/tasks',
-  'http://localhost:3001/agents'
+  'http://localhost:5001',
+  'http://localhost:5001/dashboard',
+  'http://localhost:5001/tasks',
+  'http://localhost:5001/agents'
 ];
 
 async function launchChromeAndRunLighthouse(url, opts = {}) {
@@ -299,14 +303,15 @@ async function main() {
   process.exit(success ? 0 : 1);
 }
 
-if (require.main === module) {
+// Run if this is the main module
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
     console.error('❌ Audit failed:', error);
     process.exit(1);
   });
 }
 
-module.exports = {
+export {
   runAudit,
   analyzePWACompliance,
   analyzePerformance,

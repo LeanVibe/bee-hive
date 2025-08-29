@@ -1,0 +1,385 @@
+{
+  "summary": {
+    "timestamp": "2025-08-29T06:00:40.442Z",
+    "totalUrls": 4,
+    "passedPWA": 4,
+    "averageScores": {
+      "pwa": 100,
+      "performance": 100,
+      "accessibility": 79,
+      "bestPractices": 96,
+      "seo": 92
+    }
+  },
+  "results": [
+    {
+      "url": "http://localhost:5001",
+      "timestamp": "2025-08-29T06:00:19.066Z",
+      "pwa": {
+        "score": 100,
+        "passed": true,
+        "audits": {
+          "installable-manifest": {
+            "passed": true,
+            "score": 1,
+            "title": "Web app manifest and service worker meet the installability requirements",
+            "description": "Service worker is the technology that enables your app to use many Progressive Web App features, such as offline, add to homescreen, and push notifications. With proper service worker and manifest implementations, browsers can proactively prompt users to add your app to their homescreen, which can lead to higher engagement. [Learn more about manifest installability requirements](https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest/)."
+          },
+          "splash-screen": {
+            "passed": true,
+            "score": 1,
+            "title": "Configured for a custom splash screen",
+            "description": "A themed splash screen ensures a high-quality experience when users launch your app from their homescreens. [Learn more about splash screens](https://developer.chrome.com/docs/lighthouse/pwa/splash-screen/)."
+          },
+          "themed-omnibox": {
+            "passed": true,
+            "score": 1,
+            "title": "Sets a theme color for the address bar.",
+            "description": "The browser address bar can be themed to match your site. [Learn more about theming the address bar](https://developer.chrome.com/docs/lighthouse/pwa/themed-omnibox/)."
+          },
+          "content-width": {
+            "passed": true,
+            "score": 1,
+            "title": "Content is sized correctly for the viewport",
+            "description": "If the width of your app's content doesn't match the width of the viewport, your app might not be optimized for mobile screens. [Learn how to size content for the viewport](https://developer.chrome.com/docs/lighthouse/pwa/content-width/)."
+          },
+          "viewport": {
+            "passed": true,
+            "score": 1,
+            "title": "Has a `<meta name=\"viewport\">` tag with `width` or `initial-scale`",
+            "description": "A `<meta name=\"viewport\">` not only optimizes your app for mobile screen sizes, but also prevents [a 300 millisecond delay to user input](https://developer.chrome.com/blog/300ms-tap-delay-gone-away/). [Learn more about using the viewport meta tag](https://developer.chrome.com/docs/lighthouse/pwa/viewport/)."
+          },
+          "maskable-icon": {
+            "passed": true,
+            "score": 1,
+            "title": "Manifest has a maskable icon",
+            "description": "A maskable icon ensures that the image fills the entire shape without being letterboxed when installing the app on a device. [Learn about maskable manifest icons](https://developer.chrome.com/docs/lighthouse/pwa/maskable-icon-audit/)."
+          }
+        },
+        "recommendations": []
+      },
+      "performance": {
+        "score": 100,
+        "passed": true,
+        "metrics": {
+          "fcp": 403.9054,
+          "lcp": 403.9054,
+          "cls": 0.0001026903034523034,
+          "fid": 16,
+          "tti": 403.9054
+        },
+        "opportunities": [
+          {
+            "audit": "uses-text-compression",
+            "title": "Enable text compression",
+            "savings": 2840
+          },
+          {
+            "audit": "unminified-javascript",
+            "title": "Minify JavaScript",
+            "savings": 2360
+          },
+          {
+            "audit": "unused-javascript",
+            "title": "Reduce unused JavaScript",
+            "savings": 1000
+          },
+          {
+            "audit": "server-response-time",
+            "title": "Initial server response time was short",
+            "savings": 0
+          },
+          {
+            "audit": "redirects",
+            "title": "Avoid multiple page redirects",
+            "savings": 0
+          }
+        ]
+      },
+      "categories": {
+        "pwa": 100,
+        "performance": 100,
+        "accessibility": 79,
+        "bestPractices": 96,
+        "seo": 92
+      }
+    },
+    {
+      "url": "http://localhost:5001/dashboard",
+      "timestamp": "2025-08-29T06:00:26.196Z",
+      "pwa": {
+        "score": 100,
+        "passed": true,
+        "audits": {
+          "installable-manifest": {
+            "passed": true,
+            "score": 1,
+            "title": "Web app manifest and service worker meet the installability requirements",
+            "description": "Service worker is the technology that enables your app to use many Progressive Web App features, such as offline, add to homescreen, and push notifications. With proper service worker and manifest implementations, browsers can proactively prompt users to add your app to their homescreen, which can lead to higher engagement. [Learn more about manifest installability requirements](https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest/)."
+          },
+          "splash-screen": {
+            "passed": true,
+            "score": 1,
+            "title": "Configured for a custom splash screen",
+            "description": "A themed splash screen ensures a high-quality experience when users launch your app from their homescreens. [Learn more about splash screens](https://developer.chrome.com/docs/lighthouse/pwa/splash-screen/)."
+          },
+          "themed-omnibox": {
+            "passed": true,
+            "score": 1,
+            "title": "Sets a theme color for the address bar.",
+            "description": "The browser address bar can be themed to match your site. [Learn more about theming the address bar](https://developer.chrome.com/docs/lighthouse/pwa/themed-omnibox/)."
+          },
+          "content-width": {
+            "passed": true,
+            "score": 1,
+            "title": "Content is sized correctly for the viewport",
+            "description": "If the width of your app's content doesn't match the width of the viewport, your app might not be optimized for mobile screens. [Learn how to size content for the viewport](https://developer.chrome.com/docs/lighthouse/pwa/content-width/)."
+          },
+          "viewport": {
+            "passed": true,
+            "score": 1,
+            "title": "Has a `<meta name=\"viewport\">` tag with `width` or `initial-scale`",
+            "description": "A `<meta name=\"viewport\">` not only optimizes your app for mobile screen sizes, but also prevents [a 300 millisecond delay to user input](https://developer.chrome.com/blog/300ms-tap-delay-gone-away/). [Learn more about using the viewport meta tag](https://developer.chrome.com/docs/lighthouse/pwa/viewport/)."
+          },
+          "maskable-icon": {
+            "passed": true,
+            "score": 1,
+            "title": "Manifest has a maskable icon",
+            "description": "A maskable icon ensures that the image fills the entire shape without being letterboxed when installing the app on a device. [Learn about maskable manifest icons](https://developer.chrome.com/docs/lighthouse/pwa/maskable-icon-audit/)."
+          }
+        },
+        "recommendations": []
+      },
+      "performance": {
+        "score": 100,
+        "passed": true,
+        "metrics": {
+          "fcp": 464.9267499999999,
+          "lcp": 564.4340749999999,
+          "cls": 0.0001026903034523034,
+          "fid": 16,
+          "tti": 464.9267499999999
+        },
+        "opportunities": [
+          {
+            "audit": "uses-text-compression",
+            "title": "Enable text compression",
+            "savings": 2840
+          },
+          {
+            "audit": "unminified-javascript",
+            "title": "Minify JavaScript",
+            "savings": 2360
+          },
+          {
+            "audit": "unused-javascript",
+            "title": "Reduce unused JavaScript",
+            "savings": 1000
+          },
+          {
+            "audit": "server-response-time",
+            "title": "Initial server response time was short",
+            "savings": 0
+          },
+          {
+            "audit": "redirects",
+            "title": "Avoid multiple page redirects",
+            "savings": 0
+          }
+        ]
+      },
+      "categories": {
+        "pwa": 100,
+        "performance": 100,
+        "accessibility": 79,
+        "bestPractices": 96,
+        "seo": 92
+      }
+    },
+    {
+      "url": "http://localhost:5001/tasks",
+      "timestamp": "2025-08-29T06:00:33.877Z",
+      "pwa": {
+        "score": 100,
+        "passed": true,
+        "audits": {
+          "installable-manifest": {
+            "passed": true,
+            "score": 1,
+            "title": "Web app manifest and service worker meet the installability requirements",
+            "description": "Service worker is the technology that enables your app to use many Progressive Web App features, such as offline, add to homescreen, and push notifications. With proper service worker and manifest implementations, browsers can proactively prompt users to add your app to their homescreen, which can lead to higher engagement. [Learn more about manifest installability requirements](https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest/)."
+          },
+          "splash-screen": {
+            "passed": true,
+            "score": 1,
+            "title": "Configured for a custom splash screen",
+            "description": "A themed splash screen ensures a high-quality experience when users launch your app from their homescreens. [Learn more about splash screens](https://developer.chrome.com/docs/lighthouse/pwa/splash-screen/)."
+          },
+          "themed-omnibox": {
+            "passed": true,
+            "score": 1,
+            "title": "Sets a theme color for the address bar.",
+            "description": "The browser address bar can be themed to match your site. [Learn more about theming the address bar](https://developer.chrome.com/docs/lighthouse/pwa/themed-omnibox/)."
+          },
+          "content-width": {
+            "passed": true,
+            "score": 1,
+            "title": "Content is sized correctly for the viewport",
+            "description": "If the width of your app's content doesn't match the width of the viewport, your app might not be optimized for mobile screens. [Learn how to size content for the viewport](https://developer.chrome.com/docs/lighthouse/pwa/content-width/)."
+          },
+          "viewport": {
+            "passed": true,
+            "score": 1,
+            "title": "Has a `<meta name=\"viewport\">` tag with `width` or `initial-scale`",
+            "description": "A `<meta name=\"viewport\">` not only optimizes your app for mobile screen sizes, but also prevents [a 300 millisecond delay to user input](https://developer.chrome.com/blog/300ms-tap-delay-gone-away/). [Learn more about using the viewport meta tag](https://developer.chrome.com/docs/lighthouse/pwa/viewport/)."
+          },
+          "maskable-icon": {
+            "passed": true,
+            "score": 1,
+            "title": "Manifest has a maskable icon",
+            "description": "A maskable icon ensures that the image fills the entire shape without being letterboxed when installing the app on a device. [Learn about maskable manifest icons](https://developer.chrome.com/docs/lighthouse/pwa/maskable-icon-audit/)."
+          }
+        },
+        "recommendations": []
+      },
+      "performance": {
+        "score": 100,
+        "passed": true,
+        "metrics": {
+          "fcp": 427.02405,
+          "lcp": 487.02405,
+          "cls": 0.0001026903034523034,
+          "fid": 16,
+          "tti": 427.02405
+        },
+        "opportunities": [
+          {
+            "audit": "uses-text-compression",
+            "title": "Enable text compression",
+            "savings": 2840
+          },
+          {
+            "audit": "unminified-javascript",
+            "title": "Minify JavaScript",
+            "savings": 2360
+          },
+          {
+            "audit": "unused-javascript",
+            "title": "Reduce unused JavaScript",
+            "savings": 1000
+          },
+          {
+            "audit": "server-response-time",
+            "title": "Initial server response time was short",
+            "savings": 0
+          },
+          {
+            "audit": "redirects",
+            "title": "Avoid multiple page redirects",
+            "savings": 0
+          }
+        ]
+      },
+      "categories": {
+        "pwa": 100,
+        "performance": 100,
+        "accessibility": 79,
+        "bestPractices": 96,
+        "seo": 92
+      }
+    },
+    {
+      "url": "http://localhost:5001/agents",
+      "timestamp": "2025-08-29T06:00:40.442Z",
+      "pwa": {
+        "score": 100,
+        "passed": true,
+        "audits": {
+          "installable-manifest": {
+            "passed": true,
+            "score": 1,
+            "title": "Web app manifest and service worker meet the installability requirements",
+            "description": "Service worker is the technology that enables your app to use many Progressive Web App features, such as offline, add to homescreen, and push notifications. With proper service worker and manifest implementations, browsers can proactively prompt users to add your app to their homescreen, which can lead to higher engagement. [Learn more about manifest installability requirements](https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest/)."
+          },
+          "splash-screen": {
+            "passed": true,
+            "score": 1,
+            "title": "Configured for a custom splash screen",
+            "description": "A themed splash screen ensures a high-quality experience when users launch your app from their homescreens. [Learn more about splash screens](https://developer.chrome.com/docs/lighthouse/pwa/splash-screen/)."
+          },
+          "themed-omnibox": {
+            "passed": true,
+            "score": 1,
+            "title": "Sets a theme color for the address bar.",
+            "description": "The browser address bar can be themed to match your site. [Learn more about theming the address bar](https://developer.chrome.com/docs/lighthouse/pwa/themed-omnibox/)."
+          },
+          "content-width": {
+            "passed": true,
+            "score": 1,
+            "title": "Content is sized correctly for the viewport",
+            "description": "If the width of your app's content doesn't match the width of the viewport, your app might not be optimized for mobile screens. [Learn how to size content for the viewport](https://developer.chrome.com/docs/lighthouse/pwa/content-width/)."
+          },
+          "viewport": {
+            "passed": true,
+            "score": 1,
+            "title": "Has a `<meta name=\"viewport\">` tag with `width` or `initial-scale`",
+            "description": "A `<meta name=\"viewport\">` not only optimizes your app for mobile screen sizes, but also prevents [a 300 millisecond delay to user input](https://developer.chrome.com/blog/300ms-tap-delay-gone-away/). [Learn more about using the viewport meta tag](https://developer.chrome.com/docs/lighthouse/pwa/viewport/)."
+          },
+          "maskable-icon": {
+            "passed": true,
+            "score": 1,
+            "title": "Manifest has a maskable icon",
+            "description": "A maskable icon ensures that the image fills the entire shape without being letterboxed when installing the app on a device. [Learn about maskable manifest icons](https://developer.chrome.com/docs/lighthouse/pwa/maskable-icon-audit/)."
+          }
+        },
+        "recommendations": []
+      },
+      "performance": {
+        "score": 100,
+        "passed": true,
+        "metrics": {
+          "fcp": 423.794175,
+          "lcp": 483.3725999999999,
+          "cls": 0.0001026903034523034,
+          "fid": 16,
+          "tti": 423.794175
+        },
+        "opportunities": [
+          {
+            "audit": "uses-text-compression",
+            "title": "Enable text compression",
+            "savings": 2840
+          },
+          {
+            "audit": "unminified-javascript",
+            "title": "Minify JavaScript",
+            "savings": 2360
+          },
+          {
+            "audit": "unused-javascript",
+            "title": "Reduce unused JavaScript",
+            "savings": 1000
+          },
+          {
+            "audit": "server-response-time",
+            "title": "Initial server response time was short",
+            "savings": 0
+          },
+          {
+            "audit": "redirects",
+            "title": "Avoid multiple page redirects",
+            "savings": 0
+          }
+        ]
+      },
+      "categories": {
+        "pwa": 100,
+        "performance": 100,
+        "accessibility": 79,
+        "bestPractices": 96,
+        "seo": 92
+      }
+    }
+  ],
+  "recommendations": []
+}
