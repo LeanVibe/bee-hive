@@ -320,7 +320,7 @@ export class ThemeService extends EventEmitter {
   }
   
   // Utility methods for components
-  getThemeColors(): ThemeColors {
+  getCurrentThemeColors(): ThemeColors {
     return this.getThemeColors(this.isDarkMode())
   }
   
@@ -472,7 +472,7 @@ export class ThemeService extends EventEmitter {
   
   // Theme validation for accessibility
   validateCurrentTheme(): { valid: boolean; issues: string[] } {
-    const colors = this.getThemeColors()
+    const colors = this.getCurrentThemeColors()
     const issues: string[] = []
     
     // Check primary text contrast
@@ -506,7 +506,7 @@ export const themeService = ThemeService.getInstance()
 // CSS-in-JS theme helper for Lit components
 export function getThemeCSS(isDark?: boolean): string {
   const theme = isDark ?? themeService.isDarkMode()
-  const colors = themeService.getThemeColors()
+  const colors = themeService.getCurrentThemeColors()
   
   return `
     :host {

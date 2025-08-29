@@ -1,0 +1,433 @@
+# Predictive Observability Recording Rules for Prometheus
+# ====================================================
+#
+# Advanced recording rules for Epic F Phase 2: Predictive Analytics,
+# Anomaly Detection, Capacity Planning, and Business Intelligence
+#
+# These rules pre-calculate complex metrics for efficient querying
+# and provide foundation data for AI-powered analytics
+
+groups:
+  - name: predictive_analytics_rules
+    interval: 30s
+    rules:
+      # Performance prediction base metrics
+      - record: leanvibe:performance_trend_5m
+        expr: |
+          rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])
+        labels:
+          component: "performance_prediction"
+          aggregation: "5m"
+
+      - record: leanvibe:performance_trend_15m
+        expr: |
+          rate(http_request_duration_seconds_sum[15m]) / rate(http_request_duration_seconds_count[15m])
+        labels:
+          component: "performance_prediction"
+          aggregation: "15m"
+
+      - record: leanvibe:performance_trend_1h
+        expr: |
+          rate(http_request_duration_seconds_sum[1h]) / rate(http_request_duration_seconds_count[1h])
+        labels:
+          component: "performance_prediction"
+          aggregation: "1h"
+
+      # Performance prediction confidence metrics
+      - record: leanvibe:prediction_accuracy_score
+        expr: |
+          (
+            sum(rate(leanvibe_predictions_correct_total[1h])) /
+            sum(rate(leanvibe_predictions_total[1h]))
+          ) * 100
+        labels:
+          component: "prediction_accuracy"
+          
+      - record: leanvibe:prediction_confidence_avg
+        expr: |
+          avg_over_time(leanvibe_prediction_confidence[15m])
+        labels:
+          component: "prediction_confidence"
+
+      # Resource utilization predictions
+      - record: leanvibe:cpu_utilization_trend
+        expr: |
+          predict_linear(cpu_usage_percent[15m], 1800)  # 30 min prediction
+        labels:
+          resource: "cpu"
+          prediction_horizon: "30m"
+
+      - record: leanvibe:memory_utilization_trend  
+        expr: |
+          predict_linear(memory_usage_percent[15m], 1800)
+        labels:
+          resource: "memory"
+          prediction_horizon: "30m"
+
+      - record: leanvibe:agent_capacity_trend
+        expr: |
+          predict_linear(active_agents_count[15m], 1800)
+        labels:
+          resource: "agents"
+          prediction_horizon: "30m"
+
+  - name: anomaly_detection_rules
+    interval: 30s
+    rules:
+      # Statistical anomaly detection metrics
+      - record: leanvibe:response_time_zscore
+        expr: |
+          (
+            leanvibe:performance_trend_5m - 
+            avg_over_time(leanvibe:performance_trend_5m[1h])
+          ) / stddev_over_time(leanvibe:performance_trend_5m[1h])
+        labels:
+          detection_method: "zscore"
+          component: "anomaly_detection"
+
+      - record: leanvibe:error_rate_zscore
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m]) - 
+            avg_over_time(rate(http_requests_total{status=~"5.."}[5m])[1h])
+          ) / stddev_over_time(rate(http_requests_total{status=~"5.."}[5m])[1h])
+        labels:
+          detection_method: "zscore"
+          component: "anomaly_detection"
+
+      # Anomaly detection confidence and baseline metrics
+      - record: leanvibe:anomaly_baseline_response_time
+        expr: |
+          quantile_over_time(0.5, leanvibe:performance_trend_15m[24h])
+        labels:
+          baseline_type: "median_24h"
+          component: "anomaly_baseline"
+
+      - record: leanvibe:anomaly_baseline_error_rate
+        expr: |
+          quantile_over_time(0.95, rate(http_requests_total{status=~"5.."}[5m])[24h])
+        labels:
+          baseline_type: "p95_24h"
+          component: "anomaly_baseline"
+
+      # Adaptive threshold calculations
+      - record: leanvibe:adaptive_threshold_upper
+        expr: |
+          leanvibe:anomaly_baseline_response_time + (2 * stddev_over_time(leanvibe:performance_trend_15m[24h]))
+        labels:
+          threshold_type: "upper_2sigma"
+          component: "adaptive_threshold"
+
+      - record: leanvibe:adaptive_threshold_lower
+        expr: |
+          leanvibe:anomaly_baseline_response_time - (2 * stddev_over_time(leanvibe:performance_trend_15m[24h]))
+        labels:
+          threshold_type: "lower_2sigma"
+          component: "adaptive_threshold"
+
+      # Anomaly frequency and severity metrics
+      - record: leanvibe:anomaly_frequency_1h
+        expr: |
+          sum(increase(leanvibe_anomalies_detected_total[1h])) by (severity)
+        labels:
+          time_window: "1h"
+          component: "anomaly_frequency"
+
+      - record: leanvibe:anomaly_severity_score
+        expr: |
+          sum(
+            leanvibe_anomalies_detected_total * on(severity) group_left()
+            label_replace(
+              vector(1), "severity", "info", "", ""
+            ) * 1 +
+            label_replace(
+              vector(2), "severity", "low", "", ""
+            ) * 2 +
+            label_replace(
+              vector(3), "severity", "medium", "", ""
+            ) * 3 +
+            label_replace(
+              vector(4), "severity", "high", "", ""
+            ) * 4 +
+            label_replace(
+              vector(5), "severity", "critical", "", ""
+            ) * 5
+          )
+        labels:
+          component: "anomaly_severity"
+
+  - name: capacity_planning_rules
+    interval: 60s
+    rules:
+      # Resource utilization growth rates
+      - record: leanvibe:cpu_growth_rate_1h
+        expr: |
+          deriv(avg_over_time(cpu_usage_percent[5m])[1h])
+        labels:
+          resource: "cpu"
+          growth_period: "1h"
+          component: "capacity_planning"
+
+      - record: leanvibe:memory_growth_rate_1h
+        expr: |
+          deriv(avg_over_time(memory_usage_percent[5m])[1h])
+        labels:
+          resource: "memory"
+          growth_period: "1h"
+          component: "capacity_planning"
+
+      - record: leanvibe:storage_growth_rate_1h
+        expr: |
+          deriv(avg_over_time(disk_usage_percent[5m])[1h])
+        labels:
+          resource: "storage"
+          growth_period: "1h"
+          component: "capacity_planning"
+
+      # Capacity thresholds and utilization scores
+      - record: leanvibe:resource_utilization_score
+        expr: |
+          (
+            (cpu_usage_percent * 0.3) +
+            (memory_usage_percent * 0.3) +
+            (disk_usage_percent * 0.2) +
+            (network_usage_percent * 0.2)
+          )
+        labels:
+          component: "capacity_utilization"
+
+      - record: leanvibe:capacity_time_to_threshold
+        expr: |
+          (85 - cpu_usage_percent) / clamp_min(leanvibe:cpu_growth_rate_1h * 24, 0.1)
+        labels:
+          resource: "cpu"
+          threshold: "85_percent"
+          component: "capacity_planning"
+
+      # Scaling recommendation confidence
+      - record: leanvibe:scaling_confidence_cpu
+        expr: |
+          clamp_max(
+            abs(leanvibe:cpu_growth_rate_1h) * 10 +
+            (cpu_usage_percent > 70) * 0.2 +
+            (predict_linear(cpu_usage_percent[30m], 1800) > 80) * 0.3,
+            1.0
+          )
+        labels:
+          resource: "cpu"
+          component: "scaling_confidence"
+
+      # Cost optimization metrics
+      - record: leanvibe:resource_efficiency_score
+        expr: |
+          (
+            rate(http_requests_total[5m]) /
+            (cpu_usage_percent / 100 * memory_usage_percent / 100)
+          ) * 100
+        labels:
+          component: "resource_efficiency"
+
+      - record: leanvibe:cost_per_request
+        expr: |
+          (
+            leanvibe_infrastructure_cost_per_hour / 3600
+          ) / rate(http_requests_total[5m])
+        labels:
+          component: "cost_efficiency"
+
+  - name: business_intelligence_rules
+    interval: 60s
+    rules:
+      # Business health metrics
+      - record: leanvibe:business_health_score
+        expr: |
+          (
+            (100 - leanvibe:response_time_impact_score) * 0.3 +
+            (100 - leanvibe:error_rate_impact_score) * 0.3 +
+            leanvibe:availability_score * 0.2 +
+            leanvibe:user_satisfaction_score * 0.2
+          )
+        labels:
+          component: "business_intelligence"
+
+      # Response time business impact
+      - record: leanvibe:response_time_impact_score
+        expr: |
+          clamp_max(
+            (leanvibe:performance_trend_5m - 0.5) / 0.5 * 100,
+            100
+          )
+        labels:
+          impact_type: "response_time"
+          component: "business_impact"
+
+      # Error rate business impact
+      - record: leanvibe:error_rate_impact_score
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m]) * 1000
+        labels:
+          impact_type: "error_rate"
+          component: "business_impact"
+
+      # User experience metrics
+      - record: leanvibe:user_satisfaction_score
+        expr: |
+          (
+            (sum(rate(http_requests_total{status="200"}[5m])) /
+             sum(rate(http_requests_total[5m]))) * 50 +
+            clamp_max(50 - (leanvibe:performance_trend_5m - 0.2) * 100, 50)
+          )
+        labels:
+          component: "user_experience"
+
+      # Availability and SLA metrics
+      - record: leanvibe:availability_score
+        expr: |
+          (
+            sum(rate(http_requests_total{status!~"5.."}[5m])) /
+            sum(rate(http_requests_total[5m]))
+          ) * 100
+        labels:
+          component: "availability"
+
+      - record: leanvibe:sla_compliance_score
+        expr: |
+          (
+            (leanvibe:availability_score >= 99.9) * 30 +
+            (leanvibe:performance_trend_5m <= 0.5) * 30 +
+            (rate(http_requests_total{status=~"5.."}[5m]) <= 0.001) * 40
+          )
+        labels:
+          component: "sla_compliance"
+
+      # Business correlation metrics
+      - record: leanvibe:technical_business_correlation
+        expr: |
+          (
+            (100 - leanvibe:response_time_impact_score) * 
+            leanvibe:user_satisfaction_score / 10000
+          )
+        labels:
+          correlation_type: "technical_business"
+          component: "correlation_analysis"
+
+      # Revenue impact estimation
+      - record: leanvibe:estimated_revenue_impact_per_minute
+        expr: |
+          (
+            leanvibe:response_time_impact_score * 0.5 +
+            leanvibe:error_rate_impact_score * 0.3 +
+            (100 - leanvibe:availability_score) * 0.2
+          ) * leanvibe_revenue_per_minute_baseline
+        labels:
+          component: "revenue_impact"
+
+      # Customer impact metrics
+      - record: leanvibe:customer_impact_score
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m]) * 1000 +
+            clamp_min((leanvibe:performance_trend_5m - 1.0) * 50, 0) +
+            (100 - leanvibe:availability_score) * 10
+          )
+        labels:
+          component: "customer_impact"
+
+  - name: predictive_alerts_rules
+    interval: 30s
+    rules:
+      # Predictive alert conditions
+      - record: leanvibe:performance_degradation_risk
+        expr: |
+          (
+            (leanvibe:response_time_zscore > 2) * 0.3 +
+            (predict_linear(leanvibe:performance_trend_5m[15m], 900) > leanvibe:adaptive_threshold_upper) * 0.4 +
+            (leanvibe:cpu_utilization_trend > 85) * 0.3
+          )
+        labels:
+          alert_type: "predictive"
+          risk_type: "performance_degradation"
+
+      - record: leanvibe:capacity_exhaustion_risk
+        expr: |
+          (
+            (leanvibe:capacity_time_to_threshold < 2) * 0.4 +
+            (leanvibe:resource_utilization_score > 80) * 0.3 +
+            (leanvibe:cpu_growth_rate_1h > 5) * 0.3
+          )
+        labels:
+          alert_type: "predictive"
+          risk_type: "capacity_exhaustion"
+
+      - record: leanvibe:business_impact_risk
+        expr: |
+          (
+            (leanvibe:business_health_score < 70) * 0.3 +
+            (leanvibe:estimated_revenue_impact_per_minute > 100) * 0.4 +
+            (leanvibe:customer_impact_score > 50) * 0.3
+          )
+        labels:
+          alert_type: "predictive"
+          risk_type: "business_impact"
+
+      # Composite risk score
+      - record: leanvibe:overall_system_risk_score
+        expr: |
+          (
+            leanvibe:performance_degradation_risk * 0.3 +
+            leanvibe:capacity_exhaustion_risk * 0.3 +
+            leanvibe:business_impact_risk * 0.4
+          )
+        labels:
+          component: "overall_risk"
+
+  - name: ml_model_performance_rules
+    interval: 300s  # 5 minutes
+    rules:
+      # ML model accuracy tracking
+      - record: leanvibe:prediction_model_accuracy
+        expr: |
+          leanvibe_ml_model_accuracy_score
+        labels:
+          component: "ml_model_performance"
+
+      - record: leanvibe:anomaly_detection_precision
+        expr: |
+          (
+            sum(leanvibe_anomaly_true_positives) /
+            (sum(leanvibe_anomaly_true_positives) + sum(leanvibe_anomaly_false_positives))
+          )
+        labels:
+          metric_type: "precision"
+          component: "ml_model_performance"
+
+      - record: leanvibe:anomaly_detection_recall
+        expr: |
+          (
+            sum(leanvibe_anomaly_true_positives) /
+            (sum(leanvibe_anomaly_true_positives) + sum(leanvibe_anomaly_false_negatives))
+          )
+        labels:
+          metric_type: "recall"
+          component: "ml_model_performance"
+
+      # Model drift detection
+      - record: leanvibe:model_drift_score
+        expr: |
+          abs(
+            leanvibe:prediction_model_accuracy - 
+            avg_over_time(leanvibe:prediction_model_accuracy[24h])
+          )
+        labels:
+          component: "model_drift"
+
+      # Feature importance stability
+      - record: leanvibe:feature_stability_score
+        expr: |
+          1 - (
+            stddev_over_time(leanvibe_feature_importance_cpu[24h]) +
+            stddev_over_time(leanvibe_feature_importance_memory[24h]) +
+            stddev_over_time(leanvibe_feature_importance_network[24h])
+          ) / 3
+        labels:
+          component: "feature_stability"

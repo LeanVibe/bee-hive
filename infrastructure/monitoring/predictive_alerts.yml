@@ -1,0 +1,372 @@
+# Predictive Observability Alert Rules for Prometheus
+# =================================================
+#
+# Advanced alerting rules for Epic F Phase 2: AI-powered predictive alerts
+# that proactively notify before performance issues impact users
+#
+# Alert Categories:
+# - Predictive Performance Alerts (15-30 minutes ahead)
+# - Intelligent Anomaly Alerts (adaptive thresholds)
+# - Capacity Planning Alerts (proactive scaling)
+# - Business Impact Alerts (revenue/customer impact)
+
+groups:
+  - name: predictive_performance_alerts
+    rules:
+      # Critical: Performance degradation predicted within 30 minutes
+      - alert: PredictivePerformanceDegradationCritical
+        expr: leanvibe:performance_degradation_risk > 0.8
+        for: 2m
+        labels:
+          severity: critical
+          category: predictive
+          component: performance
+          alert_type: proactive
+        annotations:
+          summary: "Critical performance degradation predicted within 30 minutes"
+          description: |
+            AI models predict critical performance degradation with {{ $value | printf "%.2f" }} confidence.
+            Current response time: {{ query "leanvibe:performance_trend_5m" | first | value | printf "%.3f" }}s
+            Predicted response time: {{ query "predict_linear(leanvibe:performance_trend_5m[15m], 1800)" | first | value | printf "%.3f" }}s
+            Risk factors: High CPU utilization trend, increasing response time pattern
+            Recommended actions: Scale resources immediately, investigate bottlenecks
+          runbook_url: "https://runbooks.leanvibe.com/predictive-performance-degradation"
+          dashboard_url: "https://grafana.leanvibe.com/d/predictive-performance"
+
+      # High: Performance issues likely within 1 hour
+      - alert: PredictivePerformanceDegradationHigh
+        expr: leanvibe:performance_degradation_risk > 0.6 and leanvibe:performance_degradation_risk <= 0.8
+        for: 5m
+        labels:
+          severity: high
+          category: predictive
+          component: performance
+          alert_type: proactive
+        annotations:
+          summary: "Performance degradation predicted within 1 hour"
+          description: |
+            AI models predict performance issues with {{ $value | printf "%.2f" }} confidence.
+            Current metrics show upward trend in response times.
+            Predicted threshold breach in {{ query "leanvibe:capacity_time_to_threshold" | first | value | printf "%.1f" }} hours.
+            Recommended actions: Prepare scaling resources, monitor closely
+
+      # Medium: Early warning for potential issues
+      - alert: PredictivePerformanceWarning
+        expr: leanvibe:performance_degradation_risk > 0.4 and leanvibe:performance_degradation_risk <= 0.6
+        for: 10m
+        labels:
+          severity: warning
+          category: predictive
+          component: performance
+          alert_type: early_warning
+        annotations:
+          summary: "Potential performance issues detected by AI analysis"
+          description: |
+            Predictive models indicate potential performance concerns.
+            Risk score: {{ $value | printf "%.2f" }}
+            Monitor trends and prepare contingency plans.
+
+  - name: intelligent_anomaly_alerts
+    rules:
+      # Critical: Severe anomaly detected with high confidence
+      - alert: IntelligentAnomalyCritical
+        expr: leanvibe:response_time_zscore > 3 and leanvibe:anomaly_detection_precision > 0.85
+        for: 1m
+        labels:
+          severity: critical
+          category: anomaly
+          component: response_time
+          detection_method: statistical
+        annotations:
+          summary: "Critical performance anomaly detected by AI"
+          description: |
+            Severe anomaly detected in response times (Z-score: {{ $value | printf "%.2f" }}).
+            Current response time: {{ query "leanvibe:performance_trend_5m" | first | value | printf "%.3f" }}s
+            Baseline (24h median): {{ query "leanvibe:anomaly_baseline_response_time" | first | value | printf "%.3f" }}s
+            Adaptive threshold: {{ query "leanvibe:adaptive_threshold_upper" | first | value | printf "%.3f" }}s
+            Detection confidence: {{ query "leanvibe:anomaly_detection_precision" | first | value | printf "%.2f" }}
+          runbook_url: "https://runbooks.leanvibe.com/anomaly-response"
+
+      # High: Significant anomaly requiring attention
+      - alert: IntelligentAnomalyHigh
+        expr: leanvibe:response_time_zscore > 2.5 and leanvibe:response_time_zscore <= 3
+        for: 3m
+        labels:
+          severity: high
+          category: anomaly
+          component: response_time
+          detection_method: statistical
+        annotations:
+          summary: "Significant performance anomaly detected"
+          description: |
+            Performance anomaly detected (Z-score: {{ $value | printf "%.2f" }}).
+            Current value exceeds normal patterns by {{ query "(leanvibe:performance_trend_5m - leanvibe:anomaly_baseline_response_time) / leanvibe:anomaly_baseline_response_time * 100" | first | value | printf "%.1f" }}%.
+
+      # Adaptive threshold breach
+      - alert: AdaptiveThresholdBreach
+        expr: leanvibe:performance_trend_5m > leanvibe:adaptive_threshold_upper
+        for: 2m
+        labels:
+          severity: high
+          category: anomaly
+          component: adaptive_threshold
+          detection_method: adaptive
+        annotations:
+          summary: "Adaptive performance threshold breached"
+          description: |
+            Response time ({{ query "leanvibe:performance_trend_5m" | first | value | printf "%.3f" }}s) 
+            exceeded adaptive threshold ({{ query "leanvibe:adaptive_threshold_upper" | first | value | printf "%.3f" }}s).
+            Threshold is automatically adjusted based on 24h historical patterns.
+
+      # Error rate anomaly
+      - alert: ErrorRateAnomalyDetected
+        expr: leanvibe:error_rate_zscore > 2
+        for: 2m
+        labels:
+          severity: high
+          category: anomaly
+          component: error_rate
+          detection_method: statistical
+        annotations:
+          summary: "Error rate anomaly detected"
+          description: |
+            Error rate anomaly detected (Z-score: {{ $value | printf "%.2f" }}).
+            Current error rate: {{ query "rate(http_requests_total{status=~\"5..\"}[5m]) * 100" | first | value | printf "%.3f" }}%
+            Baseline error rate: {{ query "leanvibe:anomaly_baseline_error_rate * 100" | first | value | printf "%.3f" }}%
+
+  - name: capacity_planning_alerts
+    rules:
+      # Critical: Capacity exhaustion imminent
+      - alert: CapacityExhaustionImminent
+        expr: leanvibe:capacity_exhaustion_risk > 0.8
+        for: 1m
+        labels:
+          severity: critical
+          category: capacity
+          component: resource_planning
+          alert_type: proactive
+        annotations:
+          summary: "Critical: Resource capacity exhaustion predicted"
+          description: |
+            AI models predict resource capacity exhaustion with high confidence.
+            Risk score: {{ $value | printf "%.2f" }}
+            Time to CPU threshold: {{ query "leanvibe:capacity_time_to_threshold" | first | value | printf "%.1f" }} hours
+            Current CPU utilization: {{ query "cpu_usage_percent" | first | value | printf "%.1f" }}%
+            Growth rate: {{ query "leanvibe:cpu_growth_rate_1h" | first | value | printf "%.2f" }}%/hour
+            IMMEDIATE ACTION REQUIRED: Scale resources now
+          runbook_url: "https://runbooks.leanvibe.com/capacity-scaling"
+
+      # High: Capacity planning needed
+      - alert: CapacityPlanningRequired
+        expr: leanvibe:capacity_exhaustion_risk > 0.6 and leanvibe:capacity_exhaustion_risk <= 0.8
+        for: 5m
+        labels:
+          severity: high
+          category: capacity
+          component: resource_planning
+          alert_type: planning
+        annotations:
+          summary: "Capacity planning action required"
+          description: |
+            Resource utilization trends indicate scaling may be needed.
+            Current utilization score: {{ query "leanvibe:resource_utilization_score" | first | value | printf "%.1f" }}%
+            Predicted time to threshold: {{ query "leanvibe:capacity_time_to_threshold" | first | value | printf "%.1f" }} hours
+            Scaling confidence: {{ query "leanvibe:scaling_confidence_cpu" | first | value | printf "%.2f" }}
+
+      # CPU growth rate alert
+      - alert: CPUUtilizationGrowthHigh
+        expr: leanvibe:cpu_growth_rate_1h > 10
+        for: 10m
+        labels:
+          severity: warning
+          category: capacity
+          component: cpu
+          trend: increasing
+        annotations:
+          summary: "High CPU utilization growth rate detected"
+          description: |
+            CPU utilization is growing rapidly at {{ $value | printf "%.2f" }}%/hour.
+            Current utilization: {{ query "cpu_usage_percent" | first | value | printf "%.1f" }}%
+            Predicted utilization in 4 hours: {{ query "predict_linear(cpu_usage_percent[30m], 14400)" | first | value | printf "%.1f" }}%
+
+      # Memory pressure prediction
+      - alert: MemoryPressurePredicted
+        expr: predict_linear(memory_usage_percent[30m], 3600) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: capacity
+          component: memory
+          alert_type: predictive
+        annotations:
+          summary: "Memory pressure predicted within 1 hour"
+          description: |
+            Memory utilization predicted to reach {{ $value | printf "%.1f" }}% within 1 hour.
+            Current utilization: {{ query "memory_usage_percent" | first | value | printf "%.1f" }}%
+            Growth trend: {{ query "leanvibe:memory_growth_rate_1h" | first | value | printf "%.2f" }}%/hour
+
+  - name: business_intelligence_alerts
+    rules:
+      # Critical: Severe business impact
+      - alert: BusinessImpactCritical
+        expr: leanvibe:business_impact_risk > 0.8
+        for: 1m
+        labels:
+          severity: critical
+          category: business_impact
+          component: revenue
+          escalation: executive
+        annotations:
+          summary: "CRITICAL: Severe business impact detected"
+          description: |
+            AI analysis indicates severe business impact from system performance.
+            Business health score: {{ query "leanvibe:business_health_score" | first | value | printf "%.1f" }}/100
+            Estimated revenue impact: ${{ query "leanvibe:estimated_revenue_impact_per_minute" | first | value | printf "%.2f" }}/minute
+            Customer impact score: {{ query "leanvibe:customer_impact_score" | first | value | printf "%.1f" }}
+            SLA compliance: {{ query "leanvibe:sla_compliance_score" | first | value | printf "%.1f" }}%
+            EXECUTIVE ESCALATION REQUIRED
+          dashboard_url: "https://grafana.leanvibe.com/d/business-intelligence"
+          escalation_contacts: "executives@leanvibe.com"
+
+      # High: Significant business impact
+      - alert: BusinessImpactHigh
+        expr: leanvibe:business_impact_risk > 0.6 and leanvibe:business_impact_risk <= 0.8
+        for: 3m
+        labels:
+          severity: high
+          category: business_impact
+          component: customer_experience
+        annotations:
+          summary: "High business impact from system performance"
+          description: |
+            System performance is significantly impacting business metrics.
+            User satisfaction score: {{ query "leanvibe:user_satisfaction_score" | first | value | printf "%.1f" }}/100
+            Availability score: {{ query "leanvibe:availability_score" | first | value | printf "%.2f" }}%
+            Response time impact: {{ query "leanvibe:response_time_impact_score" | first | value | printf "%.1f" }}%
+
+      # SLA breach prediction
+      - alert: SLABreachPredicted
+        expr: leanvibe:sla_compliance_score < 80
+        for: 5m
+        labels:
+          severity: high
+          category: sla
+          component: compliance
+          alert_type: predictive
+        annotations:
+          summary: "SLA breach predicted based on current trends"
+          description: |
+            Current system performance trends indicate potential SLA breach.
+            SLA compliance score: {{ $value | printf "%.1f" }}%
+            Availability: {{ query "leanvibe:availability_score" | first | value | printf "%.2f" }}% (target: 99.9%)
+            Response time: {{ query "leanvibe:performance_trend_5m" | first | value | printf "%.3f" }}s (target: <0.5s)
+            Error rate: {{ query "rate(http_requests_total{status=~\"5..\"}[5m]) * 100" | first | value | printf "%.3f" }}% (target: <0.1%)
+
+      # Revenue impact threshold
+      - alert: RevenueImpactThreshold
+        expr: leanvibe:estimated_revenue_impact_per_minute > 50
+        for: 2m
+        labels:
+          severity: high
+          category: business_impact
+          component: revenue
+          financial_impact: "true"
+        annotations:
+          summary: "Revenue impact threshold exceeded"
+          description: |
+            Estimated revenue impact: ${{ $value | printf "%.2f" }}/minute
+            Cumulative impact (last hour): ${{ query "leanvibe:estimated_revenue_impact_per_minute * 60" | first | value | printf "%.2f" }}
+            Primary causes: {{ query "leanvibe:response_time_impact_score > 20" | first | value | printf "Performance issues" }}{{ query "leanvibe:error_rate_impact_score > 10" | first | value | printf ", Error rate increases" }}
+
+  - name: ml_model_health_alerts
+    rules:
+      # Model accuracy degradation
+      - alert: MLModelAccuracyDegradation
+        expr: leanvibe:prediction_model_accuracy < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          category: ml_model
+          component: accuracy
+        annotations:
+          summary: "ML model accuracy degraded"
+          description: |
+            Prediction model accuracy dropped to {{ $value | printf "%.3f" }} (target: >0.85).
+            Model drift score: {{ query "leanvibe:model_drift_score" | first | value | printf "%.3f" }}
+            Recommended action: Retrain models with recent data
+
+      # High false positive rate in anomaly detection
+      - alert: AnomalyDetectionHighFalsePositiveRate
+        expr: (1 - leanvibe:anomaly_detection_precision) > 0.2
+        for: 15m
+        labels:
+          severity: warning
+          category: ml_model
+          component: anomaly_detection
+        annotations:
+          summary: "High false positive rate in anomaly detection"
+          description: |
+            False positive rate: {{ $value | printf "%.2f" }} (target: <0.1)
+            Precision: {{ query "leanvibe:anomaly_detection_precision" | first | value | printf "%.3f" }}
+            Recall: {{ query "leanvibe:anomaly_detection_recall" | first | value | printf "%.3f" }}
+            Consider adjusting detection thresholds
+
+      # Feature stability issues
+      - alert: FeatureStabilityLow
+        expr: leanvibe:feature_stability_score < 0.7
+        for: 20m
+        labels:
+          severity: info
+          category: ml_model
+          component: feature_engineering
+        annotations:
+          summary: "Low feature stability detected"
+          description: |
+            Feature stability score: {{ $value | printf "%.3f" }} (target: >0.8)
+            High variance in feature importance may affect model reliability.
+            Monitor model performance closely.
+
+  - name: system_health_composite_alerts
+    rules:
+      # Overall system risk alert
+      - alert: OverallSystemRiskHigh
+        expr: leanvibe:overall_system_risk_score > 0.7
+        for: 3m
+        labels:
+          severity: critical
+          category: system_health
+          component: composite
+          escalation: "oncall"
+        annotations:
+          summary: "CRITICAL: High overall system risk detected"
+          description: |
+            Composite AI analysis indicates high system risk.
+            Overall risk score: {{ $value | printf "%.2f" }}
+            Performance risk: {{ query "leanvibe:performance_degradation_risk" | first | value | printf "%.2f" }}
+            Capacity risk: {{ query "leanvibe:capacity_exhaustion_risk" | first | value | printf "%.2f" }}
+            Business impact risk: {{ query "leanvibe:business_impact_risk" | first | value | printf "%.2f" }}
+            IMMEDIATE ATTENTION REQUIRED
+          dashboard_url: "https://grafana.leanvibe.com/d/system-health-overview"
+
+      # Cascading failure prediction
+      - alert: CascadingFailurePrediction
+        expr: |
+          (leanvibe:performance_degradation_risk > 0.6) and 
+          (leanvibe:capacity_exhaustion_risk > 0.6) and
+          (leanvibe:business_impact_risk > 0.5)
+        for: 2m
+        labels:
+          severity: critical
+          category: system_health
+          component: cascade_prediction
+          escalation: "emergency"
+        annotations:
+          summary: "WARNING: Cascading failure pattern detected"
+          description: |
+            AI models predict potential cascading failure based on multiple risk factors:
+            - Performance degradation risk: {{ query "leanvibe:performance_degradation_risk" | first | value | printf "%.2f" }}
+            - Capacity exhaustion risk: {{ query "leanvibe:capacity_exhaustion_risk" | first | value | printf "%.2f" }}
+            - Business impact risk: {{ query "leanvibe:business_impact_risk" | first | value | printf "%.2f" }}
+            EMERGENCY RESPONSE PROTOCOL ACTIVATED
+          runbook_url: "https://runbooks.leanvibe.com/emergency-response"
+          emergency_contacts: "emergency@leanvibe.com"

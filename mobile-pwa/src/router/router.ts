@@ -113,7 +113,7 @@ export class Router {
     // Execute route handler
     try {
       route.handler()
-      this.onRouteChange(normalizedPath)
+      this.notifyRouteChange(normalizedPath)
     } catch (error) {
       console.error('Route handler error:', error)
       this.handleRouteError(normalizedPath, error)
@@ -269,7 +269,7 @@ export class Router {
     }
   }
   
-  private onRouteChange(route: string): void {
+  private notifyRouteChange(route: string): void {
     this.routeChangeHandlers.forEach(handler => {
       try {
         handler(route)

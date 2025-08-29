@@ -273,6 +273,7 @@ export default defineConfig({
         chunkSizeWarningLimit: 500, // More aggressive chunk size limit
         reportCompressedSize: false, // Disable for faster builds
         
+      },
         // Advanced compression
         terserOptions: {
           compress: {
@@ -284,15 +285,7 @@ export default defineConfig({
             safari10: true
           }
         }
-      },,
-      output: {
-        manualChunks: {
-          vendor: ['lit', 'zustand'],
-          utils: ['date-fns', 'sortablejs', 'idb']
-        },
-      },
     },
-    chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
     include: ['lit', 'zustand', 'date-fns', 'sortablejs', 'idb'],
