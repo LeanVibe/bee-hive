@@ -160,7 +160,6 @@ class EnhancedAgentSuitabilityScore(AgentSuitabilityScore):
     # Persona-specific scores
     persona_match_score: Optional[PersonaMatchScore] = None
     cognitive_compatibility_score: float = 0.0
-    specialization_bonus: float = 0.0
     
     # Contextual scores
     contextual_fit_score: float = 0.0

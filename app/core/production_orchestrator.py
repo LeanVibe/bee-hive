@@ -31,6 +31,7 @@ from .redis import get_redis
 from .config import settings
 from .orchestrator import AgentOrchestrator
 from .performance_orchestrator import PerformanceOrchestrator
+from .engines.consolidated_engine import EngineCoordinationLayer
 from ..observability.prometheus_exporter import get_metrics_exporter
 from ..models.performance_metric import PerformanceMetric
 from ..models.agent import Agent, AgentStatus
@@ -229,12 +230,16 @@ class ProductionOrchestrator:
         self,
         agent_orchestrator: Optional[AgentOrchestrator] = None,
         performance_orchestrator: Optional[PerformanceOrchestrator] = None,
-        db_session: Optional[AsyncSession] = None
+        db_session: Optional[AsyncSession] = None,
+        engine_config: Optional[Dict[str, Any]] = None
     ):
-        """Initialize production orchestrator."""
+        """Initialize production orchestrator with consolidated engine integration."""
         self.agent_orchestrator = agent_orchestrator
         self.performance_orchestrator = performance_orchestrator
         self.db_session = db_session
+        
+        # Initialize consolidated engine coordination layer
+        self.engine_coordinator = EngineCoordinationLayer(engine_config or {})
         
         # Metrics and monitoring
         self.metrics_exporter = get_metrics_exporter()
@@ -451,6 +456,9 @@ class ProductionOrchestrator:
                 asyncio.create_task(self._anomaly_detection_loop())
             ]
             
+            # Initialize consolidated engine system
+            await self.engine_coordinator.initialize()
+            
             # Initialize health monitor and alerting engine
             from .health_monitor import HealthMonitor
             from .alerting_engine import AlertingEngine
@@ -472,6 +480,9 @@ class ProductionOrchestrator:
         logger.info("🛑 Shutting down Production Orchestrator...")
         
         self.is_running = False
+        
+        # Shutdown engine coordinator
+        await self.engine_coordinator.shutdown()
         
         # Cancel all monitoring tasks
         for task in self.monitoring_tasks:
@@ -504,7 +515,8 @@ class ProductionOrchestrator:
             "auto_scaling_status": await self._get_auto_scaling_status(),
             "disaster_recovery_status": await self._get_disaster_recovery_status(),
             "component_health": await self._get_component_health_summary(),
-            "performance_summary": await self._get_performance_summary()
+            "performance_summary": await self._get_performance_summary(),
+            "engine_status": await self.engine_coordinator.get_status()
         }
     
     async def _metrics_collection_loop(self) -> None:
@@ -1536,6 +1548,8 @@ class ProductionOrchestrator:
     
     async def _get_component_health_summary(self) -> Dict[str, str]:
         """Get component health summary."""
+        engine_health = await self.engine_coordinator.health_check()
+        
         return {
             "database": "healthy",
             "redis": "healthy", 
@@ -1543,7 +1557,10 @@ class ProductionOrchestrator:
             "performance_orchestrator": "healthy" if self.performance_orchestrator else "unavailable",
             "backup_system": "healthy" if self.backup_enabled else "disabled",
             "alerting_system": "healthy",
-            "monitoring_system": "healthy"
+            "monitoring_system": "healthy",
+            "workflow_engine": "healthy" if engine_health.get('workflow_engine', {}).get('status') == 'running' else "degraded",
+            "task_execution_engine": "healthy" if engine_health.get('task_execution_engine', {}).get('status') == 'running' else "degraded",
+            "communication_engine": "healthy" if engine_health.get('communication_engine', {}).get('status') == 'running' else "degraded"
         }
     
     async def _get_performance_summary(self) -> Dict[str, Any]:
@@ -1638,12 +1655,14 @@ class ProductionOrchestrator:
 # Factory function
 async def create_production_orchestrator(
     agent_orchestrator: Optional[AgentOrchestrator] = None,
-    performance_orchestrator: Optional[PerformanceOrchestrator] = None
+    performance_orchestrator: Optional[PerformanceOrchestrator] = None,
+    engine_config: Optional[Dict[str, Any]] = None
 ) -> ProductionOrchestrator:
-    """Create and initialize production orchestrator."""
+    """Create and initialize production orchestrator with consolidated engines."""
     orchestrator = ProductionOrchestrator(
         agent_orchestrator=agent_orchestrator,
-        performance_orchestrator=performance_orchestrator
+        performance_orchestrator=performance_orchestrator,
+        engine_config=engine_config
     )
     await orchestrator.start()
     return orchestrator
