@@ -15,11 +15,24 @@ from .consolidated_engine import (
     EngineCoordinationLayer,
     ConsolidatedWorkflowEngine, 
     ConsolidatedTaskExecutionEngine,
-    ConsolidatedCommunicationEngine,
-    WorkflowExecutionContext,
-    TaskExecutionContext,
-    CommunicationMessage
+    ConsolidatedCommunicationEngine
 )
+
+# Define missing types for compatibility
+WorkflowExecutionContext = Dict[str, Any]
+TaskExecutionContext = Dict[str, Any]
+
+@dataclass
+class CommunicationMessage:
+    """Communication message for compatibility."""
+    message_id: str
+    source: str
+    destination: str
+    message_type: str
+    content: Dict[str, Any]
+    priority: str
+    timestamp: datetime
+    metadata: Optional[Dict[str, Any]] = None
 
 logger = logging.getLogger(__name__)
 
