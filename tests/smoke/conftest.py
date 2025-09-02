@@ -13,8 +13,7 @@ import asyncio
 import os
 from typing import AsyncGenerator
 
-# Import base fixtures from main conftest
-pytest_plugins = ["tests.conftest"]
+# Base fixtures are automatically available from parent conftest.py
 
 # Override environment for smoke tests
 @pytest.fixture(autouse=True, scope="session")
