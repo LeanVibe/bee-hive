@@ -1,0 +1,126 @@
+{
+  "total_endpoints_found": 51,
+  "endpoints_by_method": {
+    "GET": 25,
+    "POST": 20,
+    "PUT": 4,
+    "DELETE": 2
+  },
+  "endpoints_by_file": {
+    "main.py": 3,
+    "routes.py": 3,
+    "agent_coordination.py": 27,
+    "dashboard_monitoring.py": 9,
+    "agents.py": 9
+  },
+  "common_patterns": [
+    "/context/{agent_id}/update",
+    "/context/{agent_id}/current",
+    "/protected/admin",
+    "/context/request",
+    "/capabilities/health-assessment/{project_id}",
+    "/{agent_id}/activate",
+    "/{agent_id}",
+    "/coordination/diagnostics",
+    "/",
+    "/capabilities/health-monitoring/{project_id}",
+    "/agents/status",
+    "/tasks/coordinate",
+    "/coordination/success-rate",
+    "/collaboration/knowledge",
+    "/capabilities/code-analysis/{project_id}",
+    "/coordination/enhanced-metrics",
+    "/analytics/optimization",
+    "/analytics/collaboration",
+    "/tasks/active",
+    "/{agent_id}/stats",
+    "/analytics/routing",
+    "/collaboration/session",
+    "/agents/heartbeat",
+    "/capabilities/test-quality/{project_id}",
+    "/collaboration/resolve",
+    "/capabilities/code-smells/{project_id}",
+    "/tasks/{task_id}/performance",
+    "/collaboration/{session_id}/progress",
+    "/protected/ping",
+    "/collaboration/knowledge/{agent_id}",
+    "/metrics",
+    "/tasks/{task_id}/handoff",
+    "/agents/{agent_id}/metrics",
+    "/coordination/failures",
+    "/coordination/reset",
+    "/health",
+    "/capabilities/documentation/{project_id}/outdated",
+    "/{agent_id}/deactivate",
+    "/tasks/route",
+    "/{agent_id}/tasks",
+    "/collaboration/conflicts",
+    "/capabilities/test-recommendations/{project_id}",
+    "/context/{agent_id}/clear",
+    "/agents/{agent_id}/restart",
+    "/capabilities/documentation/{project_id}"
+  ],
+  "consolidation_insights": [],
+  "sample_endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "function": "unknown_function",
+      "file": "main.py"
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "function": "unknown_function",
+      "file": "main.py"
+    },
+    {
+      "method": "GET",
+      "path": "/metrics",
+      "function": "unknown_function",
+      "file": "main.py"
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "function": "unknown_function",
+      "file": "routes.py"
+    },
+    {
+      "method": "GET",
+      "path": "/protected/ping",
+      "function": "unknown_function",
+      "file": "routes.py"
+    },
+    {
+      "method": "GET",
+      "path": "/protected/admin",
+      "function": "unknown_function",
+      "file": "routes.py"
+    },
+    {
+      "method": "POST",
+      "path": "/context/request",
+      "function": "unknown_function",
+      "file": "agent_coordination.py"
+    },
+    {
+      "method": "GET",
+      "path": "/context/{agent_id}/current",
+      "function": "unknown_function",
+      "file": "agent_coordination.py"
+    },
+    {
+      "method": "PUT",
+      "path": "/context/{agent_id}/update",
+      "function": "unknown_function",
+      "file": "agent_coordination.py"
+    },
+    {
+      "method": "DELETE",
+      "path": "/context/{agent_id}/clear",
+      "function": "unknown_function",
+      "file": "agent_coordination.py"
+    }
+  ]
+}

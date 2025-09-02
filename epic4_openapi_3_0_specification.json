@@ -1,0 +1,341 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LeanVibe Agent Hive 2.0 - Unified API",
+    "description": "Consolidated multi-agent orchestration API with comprehensive business domain coverage",
+    "version": "2.0.0",
+    "contact": {
+      "name": "LeanVibe Support",
+      "email": "support@leanvibe.dev",
+      "url": "https://leanvibe.dev/support"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://leanvibe.dev/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.leanvibe.dev",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.leanvibe.dev",
+      "description": "Staging server"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "security": [
+    {
+      "oauth2": []
+    },
+    {
+      "apiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/api/v2/auth/oauth/authorize",
+            "tokenUrl": "/api/v2/auth/oauth/token",
+            "scopes": {
+              "read:agents": "Read agent information",
+              "write:agents": "Create and modify agents",
+              "execute:tasks": "Execute tasks and workflows",
+              "read:monitoring": "Access monitoring data",
+              "admin": "Administrative access"
+            }
+          }
+        }
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "jwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "services": {
+            "type": "object"
+          }
+        }
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "idle",
+              "error",
+              "offline"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v2/monitoring/health": {
+      "get": {
+        "summary": "System Health Check",
+        "description": "Comprehensive system health and status information",
+        "tags": [
+          "monitoring",
+          "health"
+        ],
+        "parameters": [],
+        "requestBody": null,
+        "responses": {
+          "200": {
+            "description": "System health information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read:monitoring"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v2/monitoring/metrics": {
+      "get": {
+        "summary": "System Metrics",
+        "description": "Real-time system performance and operational metrics",
+        "tags": [
+          "monitoring",
+          "metrics"
+        ],
+        "parameters": [
+          {
+            "name": "timeRange",
+            "in": "query",
+            "description": "Time range for metrics (1h, 24h, 7d, 30d)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1h",
+                "24h",
+                "7d",
+                "30d"
+              ]
+            }
+          }
+        ],
+        "requestBody": null,
+        "responses": {
+          "200": {
+            "description": "System metrics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read:monitoring"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v2/agents": {
+      "post": {
+        "summary": "Create Agent",
+        "description": "Create new agent with specified configuration and capabilities",
+        "tags": [
+          "agents"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agent created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid agent configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write:agents"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/v2/tasks/execute": {
+      "post": {
+        "summary": "Execute Task",
+        "description": "Execute task with specified parameters and routing",
+        "tags": [
+          "tasks",
+          "execution"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskExecutionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Task accepted for execution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskExecutionResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "execute:tasks"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "monitoring",
+      "description": "System monitoring and observability"
+    },
+    {
+      "name": "agents",
+      "description": "Agent management and coordination"
+    },
+    {
+      "name": "tasks",
+      "description": "Task execution and workflows"
+    },
+    {
+      "name": "auth",
+      "description": "Authentication and authorization"
+    },
+    {
+      "name": "projects",
+      "description": "Project and context management"
+    },
+    {
+      "name": "enterprise",
+      "description": "Enterprise features"
+    },
+    {
+      "name": "integrations",
+      "description": "External integrations"
+    },
+    {
+      "name": "development",
+      "description": "Development tooling"
+    }
+  ]
+}

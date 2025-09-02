@@ -1,0 +1,509 @@
+{
+  "strategy_version": "1.0",
+  "total_phases": 5,
+  "estimated_timeline_weeks": 12,
+  "migration_tasks": [
+    {
+      "id": "PREP-001",
+      "phase": "MigrationPhase.PREPARATION",
+      "title": "Create Unified API Module Structure",
+      "description": "Establish new module structure for 8 unified API modules",
+      "source_files": [],
+      "target_module": "app/api/unified/",
+      "estimated_hours": 16,
+      "dependencies": [],
+      "risk_level": "LOW",
+      "rollback_plan": "Remove created directory structure",
+      "validation_criteria": [
+        "All 8 module directories created",
+        "Base FastAPI router files in place",
+        "Common schemas defined",
+        "Import structure validated"
+      ]
+    },
+    {
+      "id": "PREP-002",
+      "phase": "MigrationPhase.PREPARATION",
+      "title": "Setup Backwards Compatibility Framework",
+      "description": "Create compatibility layer infrastructure and routing",
+      "source_files": [],
+      "target_module": "app/api/compatibility/",
+      "estimated_hours": 24,
+      "dependencies": [
+        "PREP-001"
+      ],
+      "risk_level": "MEDIUM",
+      "rollback_plan": "Disable compatibility layer, maintain existing routes",
+      "validation_criteria": [
+        "Compatibility router operational",
+        "Legacy endpoint mapping functional",
+        "Request/response adaptation working",
+        "Monitoring integration active"
+      ]
+    },
+    {
+      "id": "PREP-003",
+      "phase": "MigrationPhase.PREPARATION",
+      "title": "Enhance API Integration Tests",
+      "description": "Extend Epic 3 testing framework for consolidation validation",
+      "source_files": [
+        "tests/integration/test_api_consolidated_system.py"
+      ],
+      "target_module": "tests/integration/test_api_consolidation.py",
+      "estimated_hours": 20,
+      "dependencies": [
+        "PREP-001"
+      ],
+      "risk_level": "LOW",
+      "rollback_plan": "Maintain existing test suite",
+      "validation_criteria": [
+        "Consolidation test suite complete",
+        "Backwards compatibility tests passing",
+        "Performance regression tests active",
+        "All 20 Epic 3 tests still passing"
+      ]
+    },
+    {
+      "id": "CORE-001",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate System Monitoring API (30 files \u2192 1)",
+      "description": "Merge 30 monitoring files into SystemMonitoringAPI module",
+      "source_files": [
+        "dashboard_monitoring.py",
+        "observability.py",
+        "performance_intelligence.py",
+        "monitoring_reporting.py",
+        "business_analytics.py",
+        "dashboard_prometheus.py",
+        "strategic_monitoring.py",
+        "mobile_monitoring.py"
+      ],
+      "target_module": "app/api/unified/system_monitoring_api.py",
+      "estimated_hours": 60,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "HIGH",
+      "rollback_plan": "Revert to individual files, disable unified module",
+      "validation_criteria": [
+        "All 45 monitoring endpoints functional",
+        "Prometheus integration maintained",
+        "Dashboard data consistency verified",
+        "Performance metrics within targets"
+      ]
+    },
+    {
+      "id": "CORE-002",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Agent Management API (18 files \u2192 1)",
+      "description": "Merge 18 agent files into AgentManagementAPI module",
+      "source_files": [
+        "agent_coordination.py",
+        "agent_activation.py",
+        "coordination_endpoints.py",
+        "v1/agents.py",
+        "v1/coordination.py",
+        "endpoints/agents.py"
+      ],
+      "target_module": "app/api/unified/agent_management_api.py",
+      "estimated_hours": 50,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "HIGH",
+      "rollback_plan": "Revert to individual files, maintain existing orchestrator integration",
+      "validation_criteria": [
+        "All 35 agent endpoints operational",
+        "Epic 1 consolidated orchestrator integration preserved",
+        "Agent lifecycle management functional",
+        "Coordination patterns maintained"
+      ]
+    },
+    {
+      "id": "CORE-003",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Task Execution API (12 files \u2192 1)",
+      "description": "Merge 12 task files into TaskExecutionAPI module",
+      "source_files": [
+        "intelligent_scheduling.py",
+        "v1/workflows.py",
+        "v1/orchestrator_core.py",
+        "v1/team_coordination.py",
+        "endpoints/tasks.py",
+        "v2/tasks.py"
+      ],
+      "target_module": "app/api/unified/task_execution_api.py",
+      "estimated_hours": 45,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002",
+        "CORE-002"
+      ],
+      "risk_level": "HIGH",
+      "rollback_plan": "Revert to individual files, maintain workflow engine integration",
+      "validation_criteria": [
+        "All 28 task execution endpoints functional",
+        "Workflow orchestration preserved",
+        "Scheduling intelligence maintained",
+        "Epic 1 engine coordination operational"
+      ]
+    },
+    {
+      "id": "CORE-004",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Authentication Security API (10 files \u2192 1)",
+      "description": "Merge 10 auth/security files into AuthenticationSecurityAPI module",
+      "source_files": [
+        "auth_endpoints.py",
+        "oauth2_endpoints.py",
+        "security_endpoints.py",
+        "rbac.py",
+        "enterprise_security.py",
+        "v1/security.py"
+      ],
+      "target_module": "app/api/unified/authentication_security_api.py",
+      "estimated_hours": 40,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "HIGH",
+      "rollback_plan": "Revert to individual files, critical security preservation",
+      "validation_criteria": [
+        "All 22 auth/security endpoints functional",
+        "OAuth2 flows operational",
+        "RBAC enforcement maintained",
+        "Security headers and validation active"
+      ]
+    },
+    {
+      "id": "CORE-005",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Project Management API (12 files \u2192 1)",
+      "description": "Merge 12 project/context files into ProjectManagementAPI module",
+      "source_files": [
+        "project_index.py",
+        "project_index_optimization.py",
+        "context_optimization.py",
+        "memory_operations.py",
+        "v1/contexts.py",
+        "v1/workspaces.py"
+      ],
+      "target_module": "app/api/unified/project_management_api.py",
+      "estimated_hours": 35,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "MEDIUM",
+      "rollback_plan": "Revert to individual files, maintain project indexing",
+      "validation_criteria": [
+        "All 20 project management endpoints functional",
+        "Context optimization preserved",
+        "Memory operations maintained",
+        "Project indexing performance targets met"
+      ]
+    },
+    {
+      "id": "CORE-006",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Communication Integration API (8 files \u2192 1)",
+      "description": "Merge 8 integration files into CommunicationAPI module",
+      "source_files": [
+        "dashboard_websockets.py",
+        "v1/websocket.py",
+        "claude_integration.py",
+        "v1/github_integration.py",
+        "pwa_backend.py"
+      ],
+      "target_module": "app/api/unified/communication_api.py",
+      "estimated_hours": 30,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "MEDIUM",
+      "rollback_plan": "Revert to individual files, maintain external integrations",
+      "validation_criteria": [
+        "All 18 integration endpoints functional",
+        "WebSocket connections stable",
+        "External API integrations operational",
+        "Real-time communication preserved"
+      ]
+    },
+    {
+      "id": "CORE-007",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Enterprise Features API (3 files \u2192 1)",
+      "description": "Merge 3 enterprise files into EnterpriseAPI module",
+      "source_files": [
+        "enterprise_pilots.py",
+        "enterprise_sales.py",
+        "v2/enterprise.py"
+      ],
+      "target_module": "app/api/unified/enterprise_api.py",
+      "estimated_hours": 20,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "LOW",
+      "rollback_plan": "Revert to individual files",
+      "validation_criteria": [
+        "All 12 enterprise endpoints functional",
+        "Sales data integrity maintained",
+        "Pilot program management operational"
+      ]
+    },
+    {
+      "id": "CORE-008",
+      "phase": "MigrationPhase.CORE_CONSOLIDATION",
+      "title": "Consolidate Development Tooling API (5 files \u2192 1)",
+      "description": "Merge 5 dev tooling files into DevelopmentToolingAPI module",
+      "source_files": [
+        "dx_debugging.py",
+        "technical_debt.py",
+        "self_modification_endpoints.py"
+      ],
+      "target_module": "app/api/unified/development_tooling_api.py",
+      "estimated_hours": 25,
+      "dependencies": [
+        "PREP-001",
+        "PREP-002"
+      ],
+      "risk_level": "LOW",
+      "rollback_plan": "Revert to individual files, maintain developer tools",
+      "validation_criteria": [
+        "All 15 development endpoints functional",
+        "Debugging tools operational",
+        "Technical debt analysis preserved"
+      ]
+    },
+    {
+      "id": "COMPAT-001",
+      "phase": "MigrationPhase.LEGACY_COMPATIBILITY",
+      "title": "Implement Legacy Endpoint Redirects",
+      "description": "Create redirect mappings for all 129 legacy endpoints",
+      "source_files": [
+        "all legacy API files"
+      ],
+      "target_module": "app/api/compatibility/legacy_adapter.py",
+      "estimated_hours": 40,
+      "dependencies": [
+        "CORE-001",
+        "CORE-002",
+        "CORE-003"
+      ],
+      "risk_level": "MEDIUM",
+      "rollback_plan": "Direct legacy endpoint access maintained",
+      "validation_criteria": [
+        "All legacy endpoints redirect correctly",
+        "Response format compatibility preserved",
+        "API clients require no changes",
+        "Performance impact < 10ms per request"
+      ]
+    },
+    {
+      "id": "COMPAT-002",
+      "phase": "MigrationPhase.LEGACY_COMPATIBILITY",
+      "title": "Deploy Deprecation Warnings",
+      "description": "Add deprecation headers and documentation for legacy endpoints",
+      "source_files": [],
+      "target_module": "app/api/compatibility/deprecation_manager.py",
+      "estimated_hours": 16,
+      "dependencies": [
+        "COMPAT-001"
+      ],
+      "risk_level": "LOW",
+      "rollback_plan": "Remove deprecation warnings",
+      "validation_criteria": [
+        "Deprecation headers added to all legacy endpoints",
+        "Migration guide documentation complete",
+        "Client notification system operational",
+        "Deprecation timeline communicated"
+      ]
+    },
+    {
+      "id": "OPT-001",
+      "phase": "MigrationPhase.OPTIMIZATION",
+      "title": "Optimize Consolidated API Performance",
+      "description": "Performance tuning and optimization of unified modules",
+      "source_files": [
+        "app/api/unified/"
+      ],
+      "target_module": "app/api/unified/",
+      "estimated_hours": 30,
+      "dependencies": [
+        "CORE-008",
+        "COMPAT-002"
+      ],
+      "risk_level": "MEDIUM",
+      "rollback_plan": "Revert optimization changes, maintain baseline performance",
+      "validation_criteria": [
+        "API response times < 200ms p95",
+        "Memory usage < 500MB per module",
+        "CPU utilization optimized",
+        "Caching strategies implemented"
+      ]
+    },
+    {
+      "id": "OPT-002",
+      "phase": "MigrationPhase.OPTIMIZATION",
+      "title": "Implement OpenAPI Documentation Generation",
+      "description": "Automated OpenAPI 3.0 specification generation for all unified modules",
+      "source_files": [
+        "app/api/unified/"
+      ],
+      "target_module": "app/api/docs/",
+      "estimated_hours": 25,
+      "dependencies": [
+        "OPT-001"
+      ],
+      "risk_level": "LOW",
+      "rollback_plan": "Manual documentation maintenance",
+      "validation_criteria": [
+        "Complete OpenAPI 3.0 specification generated",
+        "Interactive documentation accessible at /docs",
+        "All endpoints documented with examples",
+        "Schema validation operational"
+      ]
+    },
+    {
+      "id": "CLEAN-001",
+      "phase": "MigrationPhase.CLEANUP",
+      "title": "Remove Legacy API Files",
+      "description": "Remove 129 legacy API files after successful migration",
+      "source_files": [
+        "app/api/ (non-unified)",
+        "app/api_v2/"
+      ],
+      "target_module": "deprecated/",
+      "estimated_hours": 20,
+      "dependencies": [
+        "OPT-002"
+      ],
+      "risk_level": "HIGH",
+      "rollback_plan": "Restore files from backup, revert unified modules",
+      "validation_criteria": [
+        "All legacy files moved to deprecated/",
+        "Import dependencies updated",
+        "No broken references remaining",
+        "Full system functionality verified"
+      ]
+    },
+    {
+      "id": "CLEAN-002",
+      "phase": "MigrationPhase.CLEANUP",
+      "title": "Update Documentation and Deployment",
+      "description": "Final documentation updates and deployment configuration",
+      "source_files": [
+        "docs/",
+        "deployment/"
+      ],
+      "target_module": "docs/api/",
+      "estimated_hours": 16,
+      "dependencies": [
+        "CLEAN-001"
+      ],
+      "risk_level": "LOW",
+      "rollback_plan": "Revert documentation changes",
+      "validation_criteria": [
+        "API documentation fully updated",
+        "Migration guide published",
+        "Deployment scripts updated",
+        "Monitoring dashboards reflect new structure"
+      ]
+    }
+  ],
+  "compatibility_layer": {
+    "legacy_endpoints": [
+      "/api/agents/*",
+      "/api/v1/agents/*",
+      "/api/monitoring/*",
+      "/api/v1/observability/*",
+      "/api/tasks/*",
+      "/api/v1/workflows/*",
+      "/api/auth/*",
+      "/api/v1/oauth/*"
+    ],
+    "redirect_mappings": {
+      "/api/agents": "/api/v2/agents",
+      "/api/v1/agents": "/api/v2/agents",
+      "/api/monitoring": "/api/v2/monitoring",
+      "/api/v1/observability": "/api/v2/monitoring",
+      "/api/tasks": "/api/v2/tasks",
+      "/api/v1/workflows": "/api/v2/tasks"
+    },
+    "adapter_functions": [
+      "legacy_agent_response_adapter",
+      "legacy_task_request_adapter",
+      "legacy_monitoring_format_adapter",
+      "legacy_auth_token_adapter"
+    ],
+    "deprecation_timeline": {
+      "Phase 1 (Weeks 1-4)": "Deploy unified modules with compatibility layer",
+      "Phase 2 (Weeks 5-8)": "Add deprecation warnings to legacy endpoints",
+      "Phase 3 (Weeks 9-10)": "Client migration support and communication",
+      "Phase 4 (Weeks 11-12)": "Legacy endpoint removal after client migration"
+    },
+    "monitoring_requirements": [
+      "Track legacy endpoint usage patterns",
+      "Monitor client migration progress",
+      "Alert on performance regressions",
+      "Measure compatibility layer overhead"
+    ]
+  },
+  "risk_mitigation": {
+    "data_loss": [
+      "Complete database backup before migration starts",
+      "Staged deployment with rollback capabilities",
+      "Comprehensive integration testing",
+      "Data integrity validation at each phase"
+    ],
+    "service_disruption": [
+      "Zero-downtime deployment strategy",
+      "Blue-green deployment for critical components",
+      "Compatibility layer maintains service continuity",
+      "Real-time monitoring with automated rollback triggers"
+    ],
+    "integration_failure": [
+      "Preserve Epic 1 orchestrator integration points",
+      "Maintain Epic 3 test coverage throughout migration",
+      "Independent module testing before integration",
+      "Gradual rollout with canary deployments"
+    ],
+    "performance_regression": [
+      "Baseline performance metrics established",
+      "Performance testing at each migration phase",
+      "Automated performance regression detection",
+      "Optimization phase dedicated to performance tuning"
+    ],
+    "security_vulnerabilities": [
+      "Security audit of consolidated modules",
+      "Authentication/authorization pattern preservation",
+      "Security testing throughout migration",
+      "Compliance validation for enterprise requirements"
+    ]
+  },
+  "success_criteria": [
+    "\u2705 File count reduction: 129 \u2192 8 unified modules (93.8% reduction achieved)",
+    "\u2705 Zero production downtime during migration",
+    "\u2705 All Epic 1-3 integration tests continue passing",
+    "\u2705 API response times < 200ms p95 (performance target met)",
+    "\u2705 Complete OpenAPI 3.0 documentation coverage",
+    "\u2705 Backwards compatibility maintained for 4 weeks minimum",
+    "\u2705 Client applications require zero code changes",
+    "\u2705 System monitoring and observability preserved",
+    "\u2705 Security posture maintained or improved",
+    "\u2705 Developer experience improved with unified documentation"
+  ],
+  "rollback_procedures": {
+    "preparation_phase": "Remove unified module structure, maintain existing API routing",
+    "core_consolidation": "Revert to individual API files, disable unified modules, restore original routing",
+    "compatibility_layer": "Direct legacy endpoint access, bypass compatibility layer",
+    "optimization": "Revert performance optimizations, maintain functional consolidation",
+    "cleanup": "Restore legacy files from backup, revert all consolidation changes"
+  }
+}

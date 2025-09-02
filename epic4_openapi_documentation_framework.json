@@ -1,0 +1,644 @@
+{
+  "openapi_version": "3.0.3",
+  "framework_version": "1.0.0",
+  "modules": [
+    {
+      "module_name": "SystemMonitoringAPI",
+      "description": "Unified observability, metrics, dashboards, and performance monitoring",
+      "version": "2.0.0",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v2/monitoring/health",
+          "summary": "System Health Check",
+          "description": "Comprehensive system health and status information including service availability, resource utilization, and performance metrics.",
+          "tags": [
+            "monitoring",
+            "health"
+          ],
+          "parameters": [
+            {
+              "name": "detailed",
+              "in": "query",
+              "description": "Include detailed service health information",
+              "schema": {
+                "type": "boolean",
+                "default": false
+              },
+              "example": true
+            }
+          ],
+          "request_body_schema": null,
+          "response_schemas": {
+            "200": "HealthResponse",
+            "503": "ServiceUnavailableResponse"
+          },
+          "examples": {
+            "healthy_system": {
+              "status": "healthy",
+              "timestamp": "2024-01-15T10:30:00Z",
+              "services": {
+                "database": {
+                  "status": "healthy",
+                  "response_time_ms": 5
+                },
+                "redis": {
+                  "status": "healthy",
+                  "response_time_ms": 2
+                },
+                "orchestrator": {
+                  "status": "healthy",
+                  "active_agents": 12
+                }
+              }
+            }
+          },
+          "security_requirements": [
+            "oauth2:read:monitoring"
+          ],
+          "performance_notes": "Typically responds in <50ms. Detailed health checks may take up to 200ms.",
+          "business_context": "Critical for monitoring system reliability and enabling proactive maintenance."
+        },
+        {
+          "method": "GET",
+          "path": "/api/v2/monitoring/metrics",
+          "summary": "System Performance Metrics",
+          "description": "Real-time and historical system performance metrics including CPU, memory, API response times, and business KPIs.",
+          "tags": [
+            "monitoring",
+            "metrics",
+            "performance"
+          ],
+          "parameters": [
+            {
+              "name": "timeRange",
+              "in": "query",
+              "required": false,
+              "description": "Time range for metrics aggregation",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "5m",
+                  "1h",
+                  "24h",
+                  "7d",
+                  "30d"
+                ],
+                "default": "1h"
+              },
+              "example": "24h"
+            },
+            {
+              "name": "metrics",
+              "in": "query",
+              "description": "Specific metrics to retrieve (comma-separated)",
+              "schema": {
+                "type": "string"
+              },
+              "example": "cpu_usage,memory_usage,api_response_time"
+            }
+          ],
+          "request_body_schema": null,
+          "response_schemas": {
+            "200": "MetricsResponse",
+            "400": "InvalidTimeRangeResponse"
+          },
+          "examples": {
+            "system_metrics": {
+              "time_range": "1h",
+              "metrics": {
+                "cpu_usage": {
+                  "current": 45.2,
+                  "average": 42.8,
+                  "peak": 78.1
+                },
+                "memory_usage": {
+                  "current": 2.4,
+                  "average": 2.1,
+                  "peak": 3.2,
+                  "unit": "GB"
+                },
+                "api_response_time": {
+                  "p50": 87,
+                  "p95": 234,
+                  "p99": 451,
+                  "unit": "ms"
+                }
+              }
+            }
+          },
+          "security_requirements": [
+            "oauth2:read:monitoring"
+          ],
+          "performance_notes": "Response time varies by time range: 5m-1h (<100ms), 24h-7d (<300ms), 30d (<500ms)",
+          "business_context": "Enables performance optimization, capacity planning, and SLA monitoring."
+        }
+      ],
+      "schemas": [
+        {
+          "name": "HealthResponse",
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "healthy",
+                "degraded",
+                "unhealthy"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "services": {
+              "type": "object"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "timestamp"
+          ],
+          "example": {
+            "status": "healthy",
+            "timestamp": "2024-01-15T10:30:00Z",
+            "services": {
+              "database": {
+                "status": "healthy"
+              }
+            },
+            "version": "2.0.0"
+          },
+          "description": "System health status response"
+        }
+      ],
+      "security_schemes": [
+        "oauth2",
+        "apiKey"
+      ],
+      "common_responses": {
+        "401": "Unauthorized - Invalid or missing authentication",
+        "403": "Forbidden - Insufficient permissions",
+        "429": "Rate Limit Exceeded - Too many requests",
+        "500": "Internal Server Error - Unexpected system error"
+      }
+    },
+    {
+      "module_name": "AgentManagementAPI",
+      "description": "Comprehensive agent lifecycle, coordination, and activation management",
+      "version": "2.0.0",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/v2/agents",
+          "summary": "List Active Agents",
+          "description": "Retrieve paginated list of agents with current status, capabilities, and performance metrics.",
+          "tags": [
+            "agents",
+            "management"
+          ],
+          "parameters": [
+            {
+              "name": "status",
+              "in": "query",
+              "description": "Filter agents by current status",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "idle",
+                  "busy",
+                  "error",
+                  "offline"
+                ]
+              },
+              "example": "active"
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Maximum number of agents to return",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20
+              },
+              "example": 50
+            },
+            {
+              "name": "offset",
+              "in": "query",
+              "description": "Number of agents to skip for pagination",
+              "schema": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+              },
+              "example": 20
+            }
+          ],
+          "request_body_schema": null,
+          "response_schemas": {
+            "200": "AgentListResponse",
+            "400": "BadRequestResponse"
+          },
+          "examples": {
+            "agent_list": {
+              "agents": [
+                {
+                  "id": "agent-001",
+                  "name": "DocumentProcessor",
+                  "status": "active",
+                  "capabilities": [
+                    "pdf_processing",
+                    "text_extraction"
+                  ],
+                  "current_tasks": 2,
+                  "performance": {
+                    "avg_response_time": 1200,
+                    "success_rate": 0.98
+                  }
+                }
+              ],
+              "total": 45,
+              "limit": 20,
+              "offset": 0
+            }
+          },
+          "security_requirements": [
+            "oauth2:read:agents"
+          ],
+          "performance_notes": "Response time typically <150ms for up to 100 agents",
+          "business_context": "Essential for monitoring agent fleet health and optimizing task distribution."
+        },
+        {
+          "method": "POST",
+          "path": "/api/v2/agents",
+          "summary": "Create New Agent",
+          "description": "Create and configure new agent instance with specified capabilities and resource allocation.",
+          "tags": [
+            "agents",
+            "creation"
+          ],
+          "parameters": [],
+          "request_body_schema": "CreateAgentRequest",
+          "response_schemas": {
+            "201": "Agent",
+            "400": "ValidationErrorResponse",
+            "409": "AgentExistsResponse"
+          },
+          "examples": {
+            "create_request": {
+              "name": "DataAnalyzer",
+              "capabilities": [
+                "data_processing",
+                "statistical_analysis"
+              ],
+              "resources": {
+                "cpu_cores": 2,
+                "memory_gb": 4
+              },
+              "configuration": {
+                "timeout_seconds": 300,
+                "retry_attempts": 3
+              }
+            },
+            "create_response": {
+              "id": "agent-new-001",
+              "name": "DataAnalyzer",
+              "status": "initializing",
+              "created_at": "2024-01-15T10:45:00Z"
+            }
+          },
+          "security_requirements": [
+            "oauth2:write:agents"
+          ],
+          "performance_notes": "Agent creation typically completes in 2-5 seconds",
+          "business_context": "Enables dynamic scaling of processing capacity based on workload demands."
+        }
+      ],
+      "schemas": [
+        {
+          "name": "Agent",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "idle",
+                "busy",
+                "error",
+                "offline"
+              ]
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "performance": {
+              "$ref": "#/components/schemas/AgentPerformance"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "status",
+            "capabilities",
+            "created_at"
+          ],
+          "example": {
+            "id": "agent-001",
+            "name": "DocumentProcessor",
+            "status": "active",
+            "capabilities": [
+              "pdf_processing"
+            ],
+            "created_at": "2024-01-15T09:00:00Z"
+          },
+          "description": "Agent entity with status and capabilities"
+        }
+      ],
+      "security_schemes": [
+        "oauth2"
+      ],
+      "common_responses": {
+        "401": "Unauthorized - Authentication required",
+        "403": "Forbidden - Insufficient agent management permissions"
+      }
+    },
+    {
+      "module_name": "TaskExecutionAPI",
+      "description": "Unified workflow orchestration, task delegation, and execution management",
+      "version": "2.0.0",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/v2/tasks/execute",
+          "summary": "Execute Task",
+          "description": "Submit task for execution with routing to appropriate agents and monitoring capabilities.",
+          "tags": [
+            "tasks",
+            "execution"
+          ],
+          "parameters": [],
+          "request_body_schema": "TaskExecutionRequest",
+          "response_schemas": {
+            "202": "TaskExecutionResponse",
+            "400": "TaskValidationErrorResponse",
+            "503": "NoAvailableAgentsResponse"
+          },
+          "examples": {
+            "document_processing_task": {
+              "task_type": "document_processing",
+              "priority": "high",
+              "parameters": {
+                "document_url": "https://example.com/doc.pdf",
+                "output_format": "structured_json"
+              },
+              "timeout_seconds": 300
+            }
+          },
+          "security_requirements": [
+            "oauth2:execute:tasks"
+          ],
+          "performance_notes": "Task acceptance typically <100ms, execution time varies by task complexity",
+          "business_context": "Core functionality for processing user requests and automating business workflows."
+        }
+      ],
+      "schemas": [],
+      "security_schemes": [
+        "oauth2"
+      ],
+      "common_responses": {}
+    },
+    {
+      "module_name": "AuthenticationSecurityAPI",
+      "description": "Comprehensive authentication, authorization, and security management",
+      "version": "2.0.0",
+      "endpoints": [],
+      "schemas": [],
+      "security_schemes": [
+        "oauth2",
+        "jwt",
+        "apiKey"
+      ],
+      "common_responses": {}
+    },
+    {
+      "module_name": "ProjectManagementAPI",
+      "description": "Unified project indexing, context management, and workspace operations",
+      "version": "2.0.0",
+      "endpoints": [],
+      "schemas": [],
+      "security_schemes": [
+        "oauth2"
+      ],
+      "common_responses": {}
+    },
+    {
+      "module_name": "EnterpriseAPI",
+      "description": "Enterprise sales, pilots, and strategic business features",
+      "version": "2.0.0",
+      "endpoints": [],
+      "schemas": [],
+      "security_schemes": [
+        "oauth2"
+      ],
+      "common_responses": {}
+    },
+    {
+      "module_name": "CommunicationAPI",
+      "description": "WebSocket, GitHub, Claude, and external system integrations",
+      "version": "2.0.0",
+      "endpoints": [],
+      "schemas": [],
+      "security_schemes": [
+        "oauth2",
+        "webhook_signature"
+      ],
+      "common_responses": {}
+    },
+    {
+      "module_name": "DevelopmentToolingAPI",
+      "description": "Developer experience, debugging, and technical debt management tools",
+      "version": "2.0.0",
+      "endpoints": [],
+      "schemas": [],
+      "security_schemes": [
+        "oauth2"
+      ],
+      "common_responses": {}
+    }
+  ],
+  "global_schemas": [
+    {
+      "name": "ErrorResponse",
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer"
+        },
+        "details": {
+          "type": "object"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "error",
+        "message",
+        "code",
+        "timestamp"
+      ],
+      "example": {
+        "error": "ValidationError",
+        "message": "Invalid request parameters",
+        "code": 400,
+        "details": {
+          "field": "name",
+          "issue": "required"
+        },
+        "timestamp": "2024-01-15T10:30:00Z"
+      },
+      "description": "Standard error response format"
+    },
+    {
+      "name": "PaginationResponse",
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "has_more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "total",
+        "limit",
+        "offset",
+        "has_more"
+      ],
+      "example": {
+        "total": 150,
+        "limit": 20,
+        "offset": 40,
+        "has_more": true
+      },
+      "description": "Standard pagination metadata"
+    }
+  ],
+  "security_schemes": {
+    "oauth2": {
+      "type": "oauth2",
+      "flows": {
+        "authorizationCode": {
+          "authorizationUrl": "/api/v2/auth/oauth/authorize",
+          "tokenUrl": "/api/v2/auth/oauth/token",
+          "scopes": {
+            "read:agents": "Read agent information and status",
+            "write:agents": "Create, modify, and delete agents",
+            "execute:tasks": "Submit and manage task execution",
+            "read:monitoring": "Access system monitoring data",
+            "write:monitoring": "Modify monitoring configuration",
+            "admin": "Full administrative access"
+          }
+        }
+      }
+    },
+    "apiKey": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key",
+      "description": "API key for programmatic access"
+    },
+    "jwt": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "description": "JWT token for authenticated requests"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.leanvibe.dev",
+      "description": "Production server - Stable and reliable for production use"
+    },
+    {
+      "url": "https://staging-api.leanvibe.dev",
+      "description": "Staging server - Latest features for testing"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "generation_config": {
+    "auto_generation": {
+      "enabled": true,
+      "trigger_on_code_changes": true,
+      "validation_on_generation": true,
+      "example_generation": true
+    },
+    "output_formats": [
+      "json",
+      "yaml",
+      "html"
+    ],
+    "ui_frameworks": [
+      "swagger-ui",
+      "redoc"
+    ],
+    "validation": {
+      "schema_validation": true,
+      "example_validation": true,
+      "security_validation": true
+    },
+    "customization": {
+      "theme": "leanvibe",
+      "logo_url": "https://leanvibe.dev/logo.png",
+      "contact_info": {
+        "name": "LeanVibe API Support",
+        "email": "api-support@leanvibe.dev",
+        "url": "https://leanvibe.dev/support"
+      }
+    }
+  }
+}

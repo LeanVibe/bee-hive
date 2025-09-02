@@ -1,0 +1,585 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LeanVibe Agent Hive 2.0 - Unified API",
+    "description": "Consolidated multi-agent orchestration API with comprehensive business domain coverage",
+    "version": "2.0.0",
+    "contact": {
+      "name": "LeanVibe API Support",
+      "email": "api-support@leanvibe.dev",
+      "url": "https://leanvibe.dev/support"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://leanvibe.dev/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.leanvibe.dev",
+      "description": "Production server - Stable and reliable for production use"
+    },
+    {
+      "url": "https://staging-api.leanvibe.dev",
+      "description": "Staging server - Latest features for testing"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "security": [
+    {
+      "oauth2": []
+    },
+    {
+      "apiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/api/v2/auth/oauth/authorize",
+            "tokenUrl": "/api/v2/auth/oauth/token",
+            "scopes": {
+              "read:agents": "Read agent information and status",
+              "write:agents": "Create, modify, and delete agents",
+              "execute:tasks": "Submit and manage task execution",
+              "read:monitoring": "Access system monitoring data",
+              "write:monitoring": "Modify monitoring configuration",
+              "admin": "Full administrative access"
+            }
+          }
+        }
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for programmatic access"
+      },
+      "jwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token for authenticated requests"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "details": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "code",
+          "timestamp"
+        ],
+        "example": {
+          "error": "ValidationError",
+          "message": "Invalid request parameters",
+          "code": 400,
+          "details": {
+            "field": "name",
+            "issue": "required"
+          },
+          "timestamp": "2024-01-15T10:30:00Z"
+        },
+        "description": "Standard error response format"
+      },
+      "PaginationResponse": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "has_more"
+        ],
+        "example": {
+          "total": 150,
+          "limit": 20,
+          "offset": 40,
+          "has_more": true
+        },
+        "description": "Standard pagination metadata"
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "services": {
+            "type": "object"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "example": {
+          "status": "healthy",
+          "timestamp": "2024-01-15T10:30:00Z",
+          "services": {
+            "database": {
+              "status": "healthy"
+            }
+          },
+          "version": "2.0.0"
+        },
+        "description": "System health status response"
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "idle",
+              "busy",
+              "error",
+              "offline"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/AgentPerformance"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "capabilities",
+          "created_at"
+        ],
+        "example": {
+          "id": "agent-001",
+          "name": "DocumentProcessor",
+          "status": "active",
+          "capabilities": [
+            "pdf_processing"
+          ],
+          "created_at": "2024-01-15T09:00:00Z"
+        },
+        "description": "Agent entity with status and capabilities"
+      }
+    }
+  },
+  "paths": {
+    "/api/v2/monitoring/health": {
+      "get": {
+        "summary": "System Health Check",
+        "description": "Comprehensive system health and status information including service availability, resource utilization, and performance metrics.",
+        "tags": [
+          "monitoring",
+          "health"
+        ],
+        "parameters": [
+          {
+            "name": "detailed",
+            "in": "query",
+            "description": "Include detailed service health information",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Response for 503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2:read:monitoring": []
+          }
+        ]
+      }
+    },
+    "/api/v2/monitoring/metrics": {
+      "get": {
+        "summary": "System Performance Metrics",
+        "description": "Real-time and historical system performance metrics including CPU, memory, API response times, and business KPIs.",
+        "tags": [
+          "monitoring",
+          "metrics",
+          "performance"
+        ],
+        "parameters": [
+          {
+            "name": "timeRange",
+            "in": "query",
+            "required": false,
+            "description": "Time range for metrics aggregation",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "5m",
+                "1h",
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "default": "1h"
+            },
+            "example": "24h"
+          },
+          {
+            "name": "metrics",
+            "in": "query",
+            "description": "Specific metrics to retrieve (comma-separated)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "cpu_usage,memory_usage,api_response_time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidTimeRangeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2:read:monitoring": []
+          }
+        ]
+      }
+    },
+    "/api/v2/agents": {
+      "get": {
+        "summary": "List Active Agents",
+        "description": "Retrieve paginated list of agents with current status, capabilities, and performance metrics.",
+        "tags": [
+          "agents",
+          "management"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter agents by current status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "idle",
+                "busy",
+                "error",
+                "offline"
+              ]
+            },
+            "example": "active"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of agents to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of agents to skip for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response for 200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2:read:agents": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create New Agent",
+        "description": "Create and configure new agent instance with specified capabilities and resource allocation.",
+        "tags": [
+          "agents",
+          "creation"
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Response for 201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Response for 409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentExistsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2:write:agents": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/tasks/execute": {
+      "post": {
+        "summary": "Execute Task",
+        "description": "Submit task for execution with routing to appropriate agents and monitoring capabilities.",
+        "tags": [
+          "tasks",
+          "execution"
+        ],
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "Response for 202",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Response for 400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Response for 503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoAvailableAgentsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2:execute:tasks": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskExecutionRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "agents",
+      "description": "Operations related to agents"
+    },
+    {
+      "name": "creation",
+      "description": "Operations related to creation"
+    },
+    {
+      "name": "execution",
+      "description": "Operations related to execution"
+    },
+    {
+      "name": "health",
+      "description": "Operations related to health"
+    },
+    {
+      "name": "management",
+      "description": "Operations related to management"
+    },
+    {
+      "name": "metrics",
+      "description": "Operations related to metrics"
+    },
+    {
+      "name": "monitoring",
+      "description": "Operations related to monitoring"
+    },
+    {
+      "name": "performance",
+      "description": "Operations related to performance"
+    },
+    {
+      "name": "tasks",
+      "description": "Operations related to tasks"
+    }
+  ]
+}

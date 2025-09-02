@@ -1,0 +1,608 @@
+{
+  "version": "2.0.0",
+  "title": "LeanVibe Agent Hive 2.0 - Unified API",
+  "description": "Consolidated multi-agent orchestration API with comprehensive business domain coverage",
+  "modules": [
+    {
+      "name": "SystemMonitoringAPI",
+      "business_domain": "system_monitoring",
+      "description": "Unified observability, metrics, dashboards, and performance monitoring",
+      "prefix": "/api/v2/monitoring",
+      "source_files": [
+        "dashboard_monitoring.py",
+        "observability.py",
+        "performance_intelligence.py",
+        "monitoring_reporting.py",
+        "business_analytics.py",
+        "dashboard_prometheus.py",
+        "strategic_monitoring.py",
+        "mobile_monitoring.py",
+        "observability_hooks.py"
+      ],
+      "endpoints_count": 45,
+      "consolidation_priority": 10,
+      "security_requirements": [
+        "api_key",
+        "rbac"
+      ],
+      "dependencies": [
+        "redis",
+        "prometheus",
+        "grafana"
+      ],
+      "response_models": [
+        "MetricsResponse",
+        "DashboardData",
+        "AlertConfiguration"
+      ],
+      "middleware": [
+        "rate_limiting",
+        "caching",
+        "compression"
+      ],
+      "openapi_tags": [
+        "monitoring",
+        "observability",
+        "analytics",
+        "dashboards"
+      ]
+    },
+    {
+      "name": "AgentManagementAPI",
+      "business_domain": "agent_management",
+      "description": "Comprehensive agent lifecycle, coordination, and activation management",
+      "prefix": "/api/v2/agents",
+      "source_files": [
+        "agent_coordination.py",
+        "agent_activation.py",
+        "coordination_endpoints.py",
+        "v1/agents.py",
+        "v1/coordination.py",
+        "endpoints/agents.py"
+      ],
+      "endpoints_count": 35,
+      "consolidation_priority": 10,
+      "security_requirements": [
+        "oauth2",
+        "rbac"
+      ],
+      "dependencies": [
+        "database",
+        "redis",
+        "consolidated_engine"
+      ],
+      "response_models": [
+        "Agent",
+        "AgentStatus",
+        "CoordinationResponse"
+      ],
+      "middleware": [
+        "authentication",
+        "validation",
+        "logging"
+      ],
+      "openapi_tags": [
+        "agents",
+        "coordination",
+        "lifecycle"
+      ]
+    },
+    {
+      "name": "TaskExecutionAPI",
+      "business_domain": "task_execution",
+      "description": "Unified workflow orchestration, task delegation, and execution management",
+      "prefix": "/api/v2/tasks",
+      "source_files": [
+        "intelligent_scheduling.py",
+        "v1/workflows.py",
+        "v1/orchestrator_core.py",
+        "v1/team_coordination.py",
+        "endpoints/tasks.py",
+        "v2/tasks.py"
+      ],
+      "endpoints_count": 28,
+      "consolidation_priority": 10,
+      "security_requirements": [
+        "oauth2",
+        "task_permissions"
+      ],
+      "dependencies": [
+        "database",
+        "workflow_engine",
+        "consolidated_orchestrator"
+      ],
+      "response_models": [
+        "Task",
+        "WorkflowExecution",
+        "ScheduleResponse"
+      ],
+      "middleware": [
+        "authentication",
+        "validation",
+        "rate_limiting"
+      ],
+      "openapi_tags": [
+        "tasks",
+        "workflows",
+        "scheduling",
+        "orchestration"
+      ]
+    },
+    {
+      "name": "AuthenticationSecurityAPI",
+      "business_domain": "authentication_security",
+      "description": "Comprehensive authentication, authorization, and security management",
+      "prefix": "/api/v2/auth",
+      "source_files": [
+        "auth_endpoints.py",
+        "oauth2_endpoints.py",
+        "security_endpoints.py",
+        "rbac.py",
+        "enterprise_security.py",
+        "v1/security.py"
+      ],
+      "endpoints_count": 22,
+      "consolidation_priority": 8,
+      "security_requirements": [
+        "oauth2",
+        "jwt",
+        "rbac",
+        "mfa"
+      ],
+      "dependencies": [
+        "database",
+        "redis",
+        "oauth_provider"
+      ],
+      "response_models": [
+        "AuthResponse",
+        "TokenResponse",
+        "UserProfile",
+        "PermissionSet"
+      ],
+      "middleware": [
+        "cors",
+        "security_headers",
+        "rate_limiting"
+      ],
+      "openapi_tags": [
+        "authentication",
+        "security",
+        "authorization",
+        "rbac"
+      ]
+    },
+    {
+      "name": "ProjectManagementAPI",
+      "business_domain": "project_management",
+      "description": "Unified project indexing, context management, and workspace operations",
+      "prefix": "/api/v2/projects",
+      "source_files": [
+        "project_index.py",
+        "project_index_optimization.py",
+        "context_optimization.py",
+        "memory_operations.py",
+        "v1/contexts.py",
+        "v1/workspaces.py"
+      ],
+      "endpoints_count": 20,
+      "consolidation_priority": 6,
+      "security_requirements": [
+        "oauth2",
+        "project_permissions"
+      ],
+      "dependencies": [
+        "database",
+        "vector_store",
+        "context_engine"
+      ],
+      "response_models": [
+        "Project",
+        "Context",
+        "Workspace",
+        "IndexResponse"
+      ],
+      "middleware": [
+        "authentication",
+        "validation",
+        "caching"
+      ],
+      "openapi_tags": [
+        "projects",
+        "context",
+        "indexing",
+        "workspaces"
+      ]
+    },
+    {
+      "name": "EnterpriseAPI",
+      "business_domain": "enterprise_features",
+      "description": "Enterprise sales, pilots, and strategic business features",
+      "prefix": "/api/v2/enterprise",
+      "source_files": [
+        "enterprise_pilots.py",
+        "enterprise_sales.py",
+        "v2/enterprise.py"
+      ],
+      "endpoints_count": 12,
+      "consolidation_priority": 4,
+      "security_requirements": [
+        "oauth2",
+        "enterprise_permissions"
+      ],
+      "dependencies": [
+        "database",
+        "crm_integration"
+      ],
+      "response_models": [
+        "PilotProgram",
+        "SalesData",
+        "EnterpriseMetrics"
+      ],
+      "middleware": [
+        "authentication",
+        "enterprise_validation"
+      ],
+      "openapi_tags": [
+        "enterprise",
+        "sales",
+        "pilots"
+      ]
+    },
+    {
+      "name": "CommunicationAPI",
+      "business_domain": "communication_integration",
+      "description": "WebSocket, GitHub, Claude, and external system integrations",
+      "prefix": "/api/v2/integrations",
+      "source_files": [
+        "dashboard_websockets.py",
+        "v1/websocket.py",
+        "claude_integration.py",
+        "v1/github_integration.py",
+        "pwa_backend.py"
+      ],
+      "endpoints_count": 18,
+      "consolidation_priority": 6,
+      "security_requirements": [
+        "oauth2",
+        "webhook_validation"
+      ],
+      "dependencies": [
+        "websocket",
+        "github_api",
+        "claude_api"
+      ],
+      "response_models": [
+        "WebSocketResponse",
+        "IntegrationStatus",
+        "WebhookEvent"
+      ],
+      "middleware": [
+        "websocket_auth",
+        "webhook_validation"
+      ],
+      "openapi_tags": [
+        "websockets",
+        "integrations",
+        "github",
+        "claude"
+      ]
+    },
+    {
+      "name": "DevelopmentToolingAPI",
+      "business_domain": "development_tooling",
+      "description": "Developer experience, debugging, and technical debt management tools",
+      "prefix": "/api/v2/dev",
+      "source_files": [
+        "dx_debugging.py",
+        "technical_debt.py",
+        "self_modification_endpoints.py"
+      ],
+      "endpoints_count": 15,
+      "consolidation_priority": 4,
+      "security_requirements": [
+        "oauth2",
+        "developer_permissions"
+      ],
+      "dependencies": [
+        "code_analysis",
+        "git_integration"
+      ],
+      "response_models": [
+        "DebuggingInfo",
+        "TechnicalDebtReport",
+        "ModificationResponse"
+      ],
+      "middleware": [
+        "authentication",
+        "developer_validation"
+      ],
+      "openapi_tags": [
+        "development",
+        "debugging",
+        "technical-debt"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/v2/monitoring/health",
+      "summary": "System Health Check",
+      "description": "Comprehensive system health and status information",
+      "tags": [
+        "monitoring",
+        "health"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "System health information",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthResponse"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "oauth2": [
+            "read:monitoring"
+          ]
+        }
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/monitoring/metrics",
+      "summary": "System Metrics",
+      "description": "Real-time system performance and operational metrics",
+      "tags": [
+        "monitoring",
+        "metrics"
+      ],
+      "parameters": [
+        {
+          "name": "timeRange",
+          "in": "query",
+          "description": "Time range for metrics (1h, 24h, 7d, 30d)",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "1h",
+              "24h",
+              "7d",
+              "30d"
+            ]
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "System metrics data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricsResponse"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "oauth2": [
+            "read:monitoring"
+          ]
+        }
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/v2/agents",
+      "summary": "List Agents",
+      "description": "Retrieve list of all agents with status and configuration",
+      "tags": [
+        "agents"
+      ],
+      "parameters": [
+        {
+          "name": "status",
+          "in": "query",
+          "description": "Filter agents by status",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "active",
+              "idle",
+              "error",
+              "offline"
+            ]
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Maximum number of agents to return",
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "List of agents",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentListResponse"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "oauth2": [
+            "read:agents"
+          ]
+        }
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/agents",
+      "summary": "Create Agent",
+      "description": "Create new agent with specified configuration and capabilities",
+      "tags": [
+        "agents"
+      ],
+      "parameters": [],
+      "request_body": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateAgentRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Agent created successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Agent"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid agent configuration",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "oauth2": [
+            "write:agents"
+          ]
+        }
+      ],
+      "deprecated": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/v2/tasks/execute",
+      "summary": "Execute Task",
+      "description": "Execute task with specified parameters and routing",
+      "tags": [
+        "tasks",
+        "execution"
+      ],
+      "parameters": [],
+      "request_body": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TaskExecutionRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "202": {
+          "description": "Task accepted for execution",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskExecutionResponse"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "oauth2": [
+            "execute:tasks"
+          ]
+        }
+      ],
+      "deprecated": false
+    }
+  ],
+  "security_schemes": {
+    "oauth2": {
+      "type": "oauth2",
+      "flows": {
+        "authorizationCode": {
+          "authorizationUrl": "/api/v2/auth/oauth/authorize",
+          "tokenUrl": "/api/v2/auth/oauth/token",
+          "scopes": {
+            "read:agents": "Read agent information",
+            "write:agents": "Create and modify agents",
+            "execute:tasks": "Execute tasks and workflows",
+            "read:monitoring": "Access monitoring data",
+            "admin": "Administrative access"
+          }
+        }
+      }
+    },
+    "apiKey": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key"
+    },
+    "jwt": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.leanvibe.dev",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.leanvibe.dev",
+      "description": "Staging server"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    }
+  ],
+  "consolidation_metrics": {
+    "original_file_count": 129,
+    "unified_module_count": 8,
+    "consolidation_ratio": 0.062,
+    "complexity_reduction_percentage": 93.8,
+    "estimated_endpoints_total": 195,
+    "business_domains_covered": 8,
+    "migration_complexity_score": "MEDIUM - Balanced mix of critical and standard systems",
+    "maintenance_improvement_factor": 16.1
+  }
+}
