@@ -30,6 +30,7 @@ export class BaseService extends EventEmitter {
   protected config: ServiceConfig;
   private cache = new Map<string, CacheEntry<any>>();
   private loadingStates = new Map<string, LoadingState>();
+  private customAuthHeaders: Record<string, string> = {}; // For Epic 4 OAuth2 tokens
 
   constructor(config: Partial<ServiceConfig> = {}) {
     super();
@@ -104,6 +105,7 @@ export class BaseService extends EventEmitter {
         method,
         headers: {
           'Content-Type': 'application/json',
+          ...this.customAuthHeaders, // Epic 4 OAuth2 + RBAC headers
           ...options.headers
         },
         signal: AbortSignal.timeout(this.config.timeout),
@@ -409,11 +411,48 @@ export class BaseService extends EventEmitter {
     return this.subscribe('pollingError', listener);
   }
 
+  // ===== EPIC 4 OAUTH2 + RBAC AUTHENTICATION =====
+
+  /**
+   * Set authentication headers for Epic 4 v2 API OAuth2 + RBAC
+   */
+  public setAuthHeaders(authHeader: string): void {
+    this.customAuthHeaders['Authorization'] = authHeader;
+    console.log('🔐 Epic 4 OAuth2 authentication configured');
+  }
+
+  /**
+   * Set custom headers for Epic 4 v2 API integration
+   */
+  public setCustomHeaders(headers: Record<string, string>): void {
+    this.customAuthHeaders = { ...this.customAuthHeaders, ...headers };
+    console.log('📋 Epic 4 custom headers configured:', Object.keys(headers));
+  }
+
+  /**
+   * Clear all authentication headers
+   */
+  public clearAuthHeaders(): void {
+    this.customAuthHeaders = {};
+    console.log('🔓 Authentication headers cleared');
+  }
+
+  /**
+   * Get current authentication status
+   */
+  public getAuthStatus(): { hasAuth: boolean; headers: string[] } {
+    return {
+      hasAuth: 'Authorization' in this.customAuthHeaders,
+      headers: Object.keys(this.customAuthHeaders)
+    };
+  }
+
   // ===== CLEANUP =====
 
   public destroy(): void {
     this.cache.clear();
     this.loadingStates.clear();
+    this.clearAuthHeaders();
     this.removeAllListeners();
   }
 }
