@@ -14,9 +14,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 import structlog
 
-from ...core.simple_orchestrator import SimpleOrchestrator, AgentRole, AgentInstance, create_simple_orchestrator
-from ...core.database import get_session_dependency
-from ...models.agent import AgentStatus, AgentType
+from app.core.simple_orchestrator import SimpleOrchestrator, AgentRole, AgentInstance, create_simple_orchestrator
+from app.core.database import get_session_dependency
+from app.models.agent import AgentStatus, AgentType
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/agents", tags=["agents"])

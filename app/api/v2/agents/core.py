@@ -86,7 +86,7 @@ async def get_orchestrator() -> SimpleOrchestrator:
         except Exception as e:
             logger.warning(f"ConsolidatedProductionOrchestrator unavailable: {e}")
             # Fallback to SimpleOrchestrator
-            from ...core.simple_orchestrator import get_simple_orchestrator
+            from app.core.simple_orchestrator import get_simple_orchestrator
             _orchestrator = get_simple_orchestrator()
             await _orchestrator.initialize()
             logger.info("Using SimpleOrchestrator as fallback")

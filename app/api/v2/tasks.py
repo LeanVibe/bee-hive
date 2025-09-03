@@ -14,8 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 import structlog
 
-from ...core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator, TaskAssignment
-from ...models.task import TaskStatus, TaskPriority
+from app.core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator, TaskAssignment
+from app.models.task import TaskStatus, TaskPriority
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/tasks", tags=["tasks"])

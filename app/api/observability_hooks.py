@@ -21,7 +21,7 @@ from app.core.redis import get_redis
 from app.core.event_serialization import serialize_for_stream, deserialize_from_stream
 from app.models.observability import EventType
 from app.observability.hooks import RealTimeEventProcessor, HookInterceptor
-from app.schemas.observability import BaseObservabilityEvent, EventFilter
+from app.schemas.observability import BaseObservabilityEvent
 from app.core.auth import get_current_user
 
 logger = structlog.get_logger()

@@ -62,7 +62,7 @@ from .models import (
 from .core import (
     create_task,
     assign_task, 
-    get_task_status,
+    update_task_status,
     cancel_task,
     update_task_priority
 )
@@ -94,7 +94,7 @@ __all__ = [
     # Core endpoints
     "create_task",
     "assign_task",
-    "get_task_status", 
+    "update_task_status", 
     "cancel_task",
     "update_task_priority",
     # Workflow endpoints

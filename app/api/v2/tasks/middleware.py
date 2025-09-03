@@ -339,7 +339,7 @@ class TaskAuditLogger:
     """
     
     def __init__(self):
-        self.audit_logger = get_audit_logger("task_execution_api")
+        self.logger = structlog.get_logger("task_execution_api_audit")
         self.sensitive_fields = {
             "password", "token", "secret", "key", "credentials", "authorization"
         }
@@ -381,7 +381,7 @@ class TaskAuditLogger:
                 "error": error
             }
             
-            await self.audit_logger.log_audit_event(audit_entry)
+            self.logger.info("Audit log", **audit_entry)
             
         except Exception as e:
             logger.error("Audit logging failed", 

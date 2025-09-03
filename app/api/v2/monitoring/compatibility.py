@@ -17,8 +17,8 @@ from fastapi import APIRouter, HTTPException, Query, Path, Depends, Request, Res
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.database import get_async_session
-from ...core.auth import get_current_user
+from app.core.database import get_async_session
+from app.core.auth import get_current_user
 from .core import (
     get_unified_dashboard,
     get_prometheus_metrics,

@@ -31,10 +31,10 @@ from .middleware import (
     scheduling_circuit_breaker
 )
 
-from ....core.production_orchestrator_unified import get_production_orchestrator
-from ....core.redis_integration import get_redis_service
-from ....core.intelligent_sleep_manager import get_intelligent_sleep_manager
-from ....core.sleep_analytics import get_sleep_analytics_engine
+from app.core.production_orchestrator import create_production_orchestrator
+from app.core.redis_integration import get_redis_service
+from app.core.intelligent_sleep_manager import get_intelligent_sleep_manager
+from app.core.sleep_analytics import get_sleep_analytics_engine
 
 
 logger = structlog.get_logger(__name__)
@@ -62,7 +62,7 @@ class IntelligentSchedulingService:
         
     async def initialize(self):
         """Initialize scheduling service dependencies."""
-        self.orchestrator = get_production_orchestrator()
+        self.orchestrator = create_production_orchestrator()
         self.redis_service = get_redis_service()
         self.intelligent_manager = get_intelligent_sleep_manager()
         self.analytics_engine = get_sleep_analytics_engine()

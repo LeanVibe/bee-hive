@@ -21,8 +21,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 import redis.asyncio as redis
 
-from ...core.redis import get_redis
-from ...core.auth import verify_token, get_permissions
+from app.core.redis import get_redis
+from app.core.auth import get_auth_service, get_current_user
 from .models import ErrorResponse, CacheConfig, SecurityConfig
 
 logger = structlog.get_logger()

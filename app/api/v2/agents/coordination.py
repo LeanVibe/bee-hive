@@ -579,7 +579,7 @@ async def register_agent_for_coordination(
     """
     try:
         # Validate agent exists in the system
-        from ...models.agent import Agent
+        from app.models.agent import Agent
         agent = await db.get(Agent, request.agent_id)
         if not agent:
             raise HTTPException(

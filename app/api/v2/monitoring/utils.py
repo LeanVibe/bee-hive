@@ -19,8 +19,8 @@ import structlog
 from sqlalchemy import select, func, and_, desc, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...models.agent import Agent, AgentStatus
-from ...models.task import Task, TaskStatus, TaskPriority
+from app.models.agent import Agent, AgentStatus
+from app.models.task import Task, TaskStatus, TaskPriority
 from .models import (
     PerformanceStats, 
     BusinessMetrics, 

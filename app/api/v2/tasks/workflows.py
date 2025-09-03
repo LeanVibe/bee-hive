@@ -32,10 +32,10 @@ from .middleware import (
     workflow_circuit_breaker
 )
 
-from ....core.production_orchestrator_unified import get_production_orchestrator
-from ....core.redis_integration import get_redis_service
-from ....models.workflow import Workflow, WorkflowStatus, WorkflowPriority
-from ....models.task import Task, TaskStatus
+from app.core.production_orchestrator import create_production_orchestrator
+from app.core.redis_integration import get_redis_service
+from app.models.workflow import Workflow, WorkflowStatus, WorkflowPriority
+from app.models.task import Task, TaskStatus
 
 
 logger = structlog.get_logger(__name__)
@@ -60,7 +60,7 @@ class WorkflowOrchestrationService:
         
     async def initialize(self):
         """Initialize service dependencies."""
-        self.orchestrator = get_production_orchestrator()
+        self.orchestrator = create_production_orchestrator()
         self.redis_service = get_redis_service()
     
     async def create_workflow_execution(

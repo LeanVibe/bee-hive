@@ -14,7 +14,7 @@ from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends
 import structlog
 import asyncio
 
-from ...core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
+from app.core.simple_orchestrator import SimpleOrchestrator, create_simple_orchestrator
 
 logger = structlog.get_logger()
 router = APIRouter()

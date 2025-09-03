@@ -33,16 +33,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
 # Core dependencies
-from ...core.database import get_async_session
-from ...core.redis import get_redis
-from ...core.auth import get_current_user, require_permissions
-from ...models.agent import Agent, AgentStatus
-from ...models.task import Task, TaskStatus, TaskPriority
+from app.core.database import get_async_session
+from app.core.redis import get_redis
+from app.core.auth import get_current_user, require_permission
+from app.models.agent import Agent, AgentStatus
+from app.models.task import Task, TaskStatus, TaskPriority
 
 # Import functionality from original modules
-from ...api.dashboard_prometheus import PrometheusMetricsGenerator
-from ...api.observability_hooks import WebSocketConnectionManager, RealTimeEventProcessor
-from ...api.mobile_monitoring import MobileMonitoringService
+from app.api.dashboard_prometheus import PrometheusMetricsGenerator
+from app.api.observability_hooks import WebSocketConnectionManager, RealTimeEventProcessor
+from app.api.mobile_monitoring import MobileMonitoringService
 
 from .models import (
     MonitoringResponse,
@@ -367,7 +367,7 @@ async def get_strategic_intelligence_unified(
     time_horizon_months: int = Query(6, ge=1, le=24),
     include_predictions: bool = Query(True, description="Include AI predictions"),
     db: AsyncSession = Depends(get_async_session),
-    current_user: dict = Depends(require_permissions(["admin", "analyst"]))
+    current_user: dict = Depends(require_permission(["admin", "analyst"]))
 ) -> StrategicIntelligence:
     """
     Generate comprehensive strategic intelligence report.
@@ -431,7 +431,7 @@ async def get_business_metrics_unified(
     period: str = Query("current_month", description="Reporting period"),
     include_forecasts: bool = Query(True, description="Include forecasts"),
     db: AsyncSession = Depends(get_async_session),
-    current_user: dict = Depends(require_permissions(["admin", "business_analyst"]))
+    current_user: dict = Depends(require_permission(["admin", "business_analyst"]))
 ) -> BusinessMetrics:
     """
     Get comprehensive business intelligence metrics.
