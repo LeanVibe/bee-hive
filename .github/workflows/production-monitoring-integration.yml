@@ -1,0 +1,804 @@
+name: Production Monitoring Integration
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to monitor'
+        required: true
+        type: string
+      deployment_version:
+        description: 'Deployment version to monitor'
+        required: false
+        type: string
+      monitoring_duration:
+        description: 'Duration to monitor in minutes'
+        required: false
+        default: 30
+        type: number
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to monitor'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - staging
+        - production
+      deployment_version:
+        description: 'Deployment version to monitor'
+        required: false
+        type: string
+      monitoring_duration:
+        description: 'Duration to monitor in minutes'
+        required: false
+        default: 30
+        type: number
+      enable_epic4_validation:
+        description: 'Enable Epic 4 API monitoring validation'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.12'
+  KUBECTL_VERSION: '1.28.0'
+
+jobs:
+  # Initialize monitoring setup
+  setup-monitoring:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      monitoring_config: ${{ steps.config.outputs.config }}
+      epic4_endpoints: ${{ steps.endpoints.outputs.endpoints }}
+      prometheus_url: ${{ steps.config.outputs.prometheus_url }}
+      grafana_url: ${{ steps.config.outputs.grafana_url }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure monitoring environment
+        id: config
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "prometheus_url=http://prometheus-staging.leanvibe.internal:9090" >> $GITHUB_OUTPUT
+              echo "grafana_url=http://grafana-staging.leanvibe.internal:3000" >> $GITHUB_OUTPUT
+              echo "namespace=leanvibe-staging" >> $GITHUB_OUTPUT
+              ;;
+            "production")
+              echo "prometheus_url=http://prometheus-prod.leanvibe.internal:9090" >> $GITHUB_OUTPUT
+              echo "grafana_url=http://grafana-prod.leanvibe.internal:3000" >> $GITHUB_OUTPUT
+              echo "namespace=leanvibe-production" >> $GITHUB_OUTPUT
+              ;;
+          esac
+          
+          # Generate monitoring configuration
+          config=$(cat << EOF | jq -c .
+          {
+            "environment": "${{ inputs.environment }}",
+            "deployment_version": "${{ inputs.deployment_version || github.sha }}",
+            "monitoring_duration": ${{ inputs.monitoring_duration }},
+            "epic4_apis": ["monitoring", "agents", "tasks"],
+            "performance_thresholds": {
+              "response_time_ms": 200,
+              "error_rate_percent": 5,
+              "efficiency_percent": {
+                "monitoring": 94.4,
+                "agents": 94.4,
+                "tasks": 96.2
+              }
+            }
+          }
+          EOF
+          )
+          
+          echo "config=$config" >> $GITHUB_OUTPUT
+          echo "Monitoring configuration initialized for ${{ inputs.environment }}"
+      
+      - name: Define Epic 4 monitoring endpoints
+        id: endpoints
+        run: |
+          # Epic 4 consolidated API endpoints for monitoring
+          endpoints=$(cat << EOF | jq -c .
+          {
+            "monitoring_api": {
+              "base_url": "/api/v2/monitoring",
+              "health_endpoint": "/health",
+              "metrics_endpoint": "/metrics", 
+              "performance_endpoint": "/performance-stats",
+              "alerts_endpoint": "/alerts"
+            },
+            "agents_api": {
+              "base_url": "/api/v2/agents",
+              "health_endpoint": "/system/health",
+              "list_endpoint": "/",
+              "stats_endpoint": "/system/stats"
+            },
+            "tasks_api": {
+              "base_url": "/api/v2/tasks",
+              "health_endpoint": "/system/health",
+              "list_endpoint": "/",
+              "stats_endpoint": "/system/stats"
+            }
+          }
+          EOF
+          )
+          
+          echo "endpoints=$endpoints" >> $GITHUB_OUTPUT
+          echo "Epic 4 monitoring endpoints configured"
+
+  # Epic 4 API monitoring validation
+  epic4-monitoring-validation:
+    needs: setup-monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJson(inputs.monitoring_duration) }}
+    strategy:
+      matrix:
+        api: [monitoring, agents, tasks]
+      fail-fast: false
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install monitoring dependencies
+        run: |
+          pip install httpx asyncio structlog prometheus-client jq
+      
+      - name: Configure monitoring access
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "API_BASE_URL=https://api-staging.leanvibe.com" >> $GITHUB_ENV
+              echo "AUTH_TOKEN=${{ secrets.STAGING_API_TOKEN }}" >> $GITHUB_ENV
+              ;;
+            "production")
+              echo "API_BASE_URL=https://api.leanvibe.com" >> $GITHUB_ENV
+              echo "AUTH_TOKEN=${{ secrets.PRODUCTION_API_TOKEN }}" >> $GITHUB_ENV
+              ;;
+          esac
+      
+      - name: Run Epic 4 ${{ matrix.api }} API monitoring
+        run: |
+          echo "📊 Starting Epic 4 ${{ matrix.api }} API monitoring..."
+          
+          # Create monitoring script
+          cat > monitor_epic4_${{ matrix.api }}.py << 'EOF'
+          import asyncio
+          import httpx
+          import json
+          import time
+          import os
+          from datetime import datetime, timedelta
+          from typing import Dict, List, Any
+          import structlog
+          
+          logger = structlog.get_logger(__name__)
+          
+          class Epic4APIMonitor:
+              def __init__(self, api_name: str, base_url: str, auth_token: str):
+                  self.api_name = api_name
+                  self.base_url = base_url
+                  self.auth_token = auth_token
+                  self.client = httpx.AsyncClient(
+                      timeout=30.0,
+                      headers={'Authorization': f'Bearer {auth_token}'}
+                  )
+                  
+                  # Epic 4 performance targets
+                  self.targets = {
+                      'monitoring': {'efficiency': 94.4, 'response_time': 200},
+                      'agents': {'efficiency': 94.4, 'response_time': 200},
+                      'tasks': {'efficiency': 96.2, 'response_time': 200}  # Benchmark achievement
+                  }
+              
+              async def monitor_api_health(self, duration_minutes: int) -> Dict[str, Any]:
+                  """Monitor Epic 4 API health over specified duration"""
+                  end_time = datetime.now() + timedelta(minutes=duration_minutes)
+                  results = {
+                      'api_name': self.api_name,
+                      'monitoring_duration_minutes': duration_minutes,
+                      'start_time': datetime.now().isoformat(),
+                      'samples': [],
+                      'summary': {},
+                      'epic4_targets': self.targets.get(self.api_name, {}),
+                      'violations': []
+                  }
+                  
+                  sample_count = 0
+                  response_times = []
+                  success_count = 0
+                  error_count = 0
+                  
+                  while datetime.now() < end_time:
+                      sample_start = time.time()
+                      
+                      # Test health endpoint
+                      health_result = await self._test_health_endpoint()
+                      
+                      # Test performance endpoint
+                      perf_result = await self._test_performance_endpoint()
+                      
+                      sample_duration = (time.time() - sample_start) * 1000
+                      sample_count += 1
+                      response_times.append(sample_duration)
+                      
+                      if health_result['success'] and perf_result['success']:
+                          success_count += 1
+                      else:
+                          error_count += 1
+                          results['violations'].append({
+                              'timestamp': datetime.now().isoformat(),
+                              'health_error': health_result.get('error'),
+                              'performance_error': perf_result.get('error')
+                          })
+                      
+                      # Record sample
+                      results['samples'].append({
+                          'timestamp': datetime.now().isoformat(),
+                          'response_time_ms': sample_duration,
+                          'health_status': health_result['success'],
+                          'performance_status': perf_result['success'],
+                          'health_data': health_result.get('data'),
+                          'performance_data': perf_result.get('data')
+                      })
+                      
+                      # Log progress
+                      if sample_count % 10 == 0:
+                          success_rate = (success_count / sample_count) * 100
+                          avg_response_time = sum(response_times) / len(response_times)
+                          logger.info(
+                              f"Epic 4 {self.api_name} API monitoring progress",
+                              samples=sample_count,
+                              success_rate=f"{success_rate:.1f}%",
+                              avg_response_time=f"{avg_response_time:.1f}ms"
+                          )
+                      
+                      # Wait before next sample (5-second intervals)
+                      await asyncio.sleep(5)
+                  
+                  # Calculate final summary
+                  avg_response_time = sum(response_times) / len(response_times)
+                  max_response_time = max(response_times)
+                  success_rate = (success_count / sample_count) * 100
+                  error_rate = (error_count / sample_count) * 100
+                  
+                  # Calculate efficiency (simplified: success_rate - response_time_penalty)
+                  response_time_penalty = max(0, (avg_response_time - 100) / 10)
+                  efficiency = max(0, success_rate - response_time_penalty)
+                  
+                  results['summary'] = {
+                      'total_samples': sample_count,
+                      'success_count': success_count,
+                      'error_count': error_count,
+                      'success_rate_percent': success_rate,
+                      'error_rate_percent': error_rate,
+                      'avg_response_time_ms': avg_response_time,
+                      'max_response_time_ms': max_response_time,
+                      'calculated_efficiency': efficiency,
+                      'end_time': datetime.now().isoformat()
+                  }
+                  
+                  # Check Epic 4 targets
+                  targets = self.targets.get(self.api_name, {})
+                  results['target_compliance'] = {
+                      'response_time_target': targets.get('response_time', 200),
+                      'response_time_met': avg_response_time <= targets.get('response_time', 200),
+                      'efficiency_target': targets.get('efficiency', 90),
+                      'efficiency_met': efficiency >= targets.get('efficiency', 90),
+                      'error_rate_target': 5.0,
+                      'error_rate_met': error_rate <= 5.0
+                  }
+                  
+                  return results
+              
+              async def _test_health_endpoint(self) -> Dict[str, Any]:
+                  """Test API health endpoint"""
+                  try:
+                      endpoint_map = {
+                          'monitoring': '/api/v2/monitoring/health',
+                          'agents': '/api/v2/agents/system/health', 
+                          'tasks': '/api/v2/tasks/system/health'
+                      }
+                      
+                      endpoint = endpoint_map.get(self.api_name, f'/api/v2/{self.api_name}/health')
+                      url = f"{self.base_url}{endpoint}"
+                      
+                      response = await self.client.get(url)
+                      
+                      return {
+                          'success': response.status_code == 200,
+                          'status_code': response.status_code,
+                          'data': response.json() if response.status_code == 200 else None,
+                          'error': None if response.status_code == 200 else f"HTTP {response.status_code}"
+                      }
+                      
+                  except Exception as e:
+                      return {
+                          'success': False,
+                          'status_code': None,
+                          'data': None,
+                          'error': str(e)
+                      }
+              
+              async def _test_performance_endpoint(self) -> Dict[str, Any]:
+                  """Test API performance endpoint"""
+                  try:
+                      endpoint_map = {
+                          'monitoring': '/api/v2/monitoring/metrics',
+                          'agents': '/api/v2/agents/',
+                          'tasks': '/api/v2/tasks/'
+                      }
+                      
+                      endpoint = endpoint_map.get(self.api_name, f'/api/v2/{self.api_name}/')
+                      url = f"{self.base_url}{endpoint}"
+                      
+                      response = await self.client.get(url)
+                      
+                      return {
+                          'success': response.status_code in [200, 404, 422],  # 404/422 OK for empty results
+                          'status_code': response.status_code,
+                          'data': response.json() if response.status_code == 200 else None,
+                          'error': None if response.status_code in [200, 404, 422] else f"HTTP {response.status_code}"
+                      }
+                      
+                  except Exception as e:
+                      return {
+                          'success': False,
+                          'status_code': None,
+                          'data': None,
+                          'error': str(e)
+                      }
+              
+              async def close(self):
+                  await self.client.aclose()
+          
+          async def main():
+              api_name = "${{ matrix.api }}"
+              base_url = os.environ['API_BASE_URL']
+              auth_token = os.environ.get('AUTH_TOKEN', 'test-token')
+              duration = int(os.environ.get('MONITORING_DURATION', '5'))  # Default 5 minutes for testing
+              
+              monitor = Epic4APIMonitor(api_name, base_url, auth_token)
+              
+              try:
+                  results = await monitor.monitor_api_health(duration)
+                  
+                  # Save results
+                  with open(f'epic4_{api_name}_monitoring_results.json', 'w') as f:
+                      json.dump(results, f, indent=2)
+                  
+                  # Print summary
+                  summary = results['summary']
+                  compliance = results['target_compliance']
+                  
+                  print(f"\n📊 Epic 4 {api_name.upper()} API Monitoring Summary:")
+                  print(f"Duration: {duration} minutes")
+                  print(f"Samples: {summary['total_samples']}")
+                  print(f"Success Rate: {summary['success_rate_percent']:.1f}%")
+                  print(f"Error Rate: {summary['error_rate_percent']:.1f}%")
+                  print(f"Avg Response Time: {summary['avg_response_time_ms']:.1f}ms")
+                  print(f"Max Response Time: {summary['max_response_time_ms']:.1f}ms") 
+                  print(f"Calculated Efficiency: {summary['calculated_efficiency']:.1f}%")
+                  print(f"\n🎯 Epic 4 Target Compliance:")
+                  print(f"Response Time (<{compliance['response_time_target']}ms): {'✅' if compliance['response_time_met'] else '❌'}")
+                  print(f"Efficiency (≥{compliance['efficiency_target']}%): {'✅' if compliance['efficiency_met'] else '❌'}")
+                  print(f"Error Rate (<{compliance['error_rate_target']}%): {'✅' if compliance['error_rate_met'] else '❌'}")
+                  
+                  if results['violations']:
+                      print(f"\n⚠️ {len(results['violations'])} violations detected")
+                  
+                  # Exit with error if Epic 4 targets not met
+                  if not all([compliance['response_time_met'], compliance['efficiency_met'], compliance['error_rate_met']]):
+                      print(f"\n❌ Epic 4 {api_name} API monitoring failed to meet targets")
+                      exit(1)
+                  else:
+                      print(f"\n✅ Epic 4 {api_name} API monitoring passed all targets")
+                      
+              finally:
+                  await monitor.close()
+          
+          if __name__ == "__main__":
+              asyncio.run(main())
+          EOF
+          
+          # Run monitoring with shorter duration for CI/CD
+          export MONITORING_DURATION=5  # 5 minutes for CI/CD testing
+          python monitor_epic4_${{ matrix.api }}.py
+      
+      - name: Upload monitoring results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: epic4-${{ matrix.api }}-monitoring-results
+          path: epic4_${{ matrix.api }}_monitoring_results.json
+          retention-days: 30
+
+  # System-wide monitoring aggregation
+  aggregate-monitoring-results:
+    needs: [setup-monitoring, epic4-monitoring-validation]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    outputs:
+      monitoring_status: ${{ steps.aggregate.outputs.status }}
+      epic4_compliance: ${{ steps.aggregate.outputs.epic4_compliance }}
+    
+    steps:
+      - name: Download all monitoring results
+        uses: actions/download-artifact@v4
+      
+      - name: Aggregate Epic 4 monitoring results
+        id: aggregate
+        run: |
+          echo "📊 Aggregating Epic 4 monitoring results..."
+          
+          # Install jq for JSON processing
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          # Create aggregation script
+          cat > aggregate_results.py << 'EOF'
+          import json
+          import os
+          from datetime import datetime
+          from pathlib import Path
+          
+          def aggregate_monitoring_results():
+              results = {
+                  'aggregation_timestamp': datetime.now().isoformat(),
+                  'environment': '${{ inputs.environment }}',
+                  'deployment_version': '${{ inputs.deployment_version || github.sha }}',
+                  'monitoring_duration_minutes': ${{ inputs.monitoring_duration }},
+                  'epic4_apis': {},
+                  'overall_summary': {},
+                  'compliance_summary': {},
+                  'violations': []
+              }
+              
+              api_names = ['monitoring', 'agents', 'tasks']
+              all_compliant = True
+              total_samples = 0
+              total_success = 0
+              total_errors = 0
+              response_times = []
+              efficiencies = []
+              
+              for api_name in api_names:
+                  result_file = f'epic4-{api_name}-monitoring-results/epic4_{api_name}_monitoring_results.json'
+                  
+                  if os.path.exists(result_file):
+                      with open(result_file, 'r') as f:
+                          api_results = json.load(f)
+                      
+                      results['epic4_apis'][api_name] = api_results
+                      
+                      # Aggregate metrics
+                      summary = api_results.get('summary', {})
+                      compliance = api_results.get('target_compliance', {})
+                      
+                      total_samples += summary.get('total_samples', 0)
+                      total_success += summary.get('success_count', 0)
+                      total_errors += summary.get('error_count', 0)
+                      
+                      if summary.get('avg_response_time_ms'):
+                          response_times.append(summary['avg_response_time_ms'])
+                      
+                      if summary.get('calculated_efficiency'):
+                          efficiencies.append(summary['calculated_efficiency'])
+                      
+                      # Check compliance
+                      api_compliant = all([
+                          compliance.get('response_time_met', False),
+                          compliance.get('efficiency_met', False),
+                          compliance.get('error_rate_met', False)
+                      ])
+                      
+                      if not api_compliant:
+                          all_compliant = False
+                      
+                      # Collect violations
+                      results['violations'].extend(api_results.get('violations', []))
+                      
+                      print(f"✅ Processed {api_name} API results: {summary.get('total_samples', 0)} samples")
+                  else:
+                      print(f"⚠️ Missing results for {api_name} API")
+                      all_compliant = False
+              
+              # Calculate overall metrics
+              avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+              avg_efficiency = sum(efficiencies) / len(efficiencies) if efficiencies else 0
+              overall_success_rate = (total_success / total_samples * 100) if total_samples > 0 else 0
+              overall_error_rate = (total_errors / total_samples * 100) if total_samples > 0 else 0
+              
+              results['overall_summary'] = {
+                  'total_samples': total_samples,
+                  'total_success': total_success,
+                  'total_errors': total_errors,
+                  'overall_success_rate_percent': overall_success_rate,
+                  'overall_error_rate_percent': overall_error_rate,
+                  'avg_response_time_ms': avg_response_time,
+                  'avg_efficiency_percent': avg_efficiency,
+                  'apis_monitored': len([api for api in api_names if f'epic4-{api}-monitoring-results' in os.listdir('.')])
+              }
+              
+              results['compliance_summary'] = {
+                  'all_apis_compliant': all_compliant,
+                  'total_violations': len(results['violations']),
+                  'epic4_targets_met': {
+                      'response_time_target': '< 200ms',
+                      'efficiency_targets': {
+                          'monitoring': '≥ 94.4%',
+                          'agents': '≥ 94.4%', 
+                          'tasks': '≥ 96.2% (benchmark)'
+                      },
+                      'error_rate_target': '< 5%'
+                  }
+              }
+              
+              # Save aggregated results
+              with open('epic4_aggregated_monitoring_report.json', 'w') as f:
+                  json.dump(results, f, indent=2)
+              
+              # Print summary
+              print(f"\n📊 Epic 4 Monitoring Aggregation Summary:")
+              print(f"Environment: {results['environment']}")
+              print(f"APIs Monitored: {results['overall_summary']['apis_monitored']}/3")
+              print(f"Total Samples: {results['overall_summary']['total_samples']}")
+              print(f"Overall Success Rate: {results['overall_summary']['overall_success_rate_percent']:.1f}%")
+              print(f"Average Response Time: {results['overall_summary']['avg_response_time_ms']:.1f}ms")
+              print(f"Average Efficiency: {results['overall_summary']['avg_efficiency_percent']:.1f}%")
+              print(f"Total Violations: {results['compliance_summary']['total_violations']}")
+              print(f"All APIs Compliant: {'✅' if results['compliance_summary']['all_apis_compliant'] else '❌'}")
+              
+              return results['compliance_summary']['all_apis_compliant']
+          
+          compliant = aggregate_monitoring_results()
+          EOF
+          
+          python aggregate_results.py
+          
+          # Set outputs
+          if [ -f epic4_aggregated_monitoring_report.json ]; then
+            compliance_status=$(jq -r '.compliance_summary.all_apis_compliant' epic4_aggregated_monitoring_report.json)
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "epic4_compliance=$compliance_status" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "epic4_compliance=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Upload aggregated monitoring report
+        uses: actions/upload-artifact@v4
+        with:
+          name: epic4-aggregated-monitoring-report
+          path: epic4_aggregated_monitoring_report.json
+          retention-days: 90
+
+  # Create monitoring dashboard
+  create-monitoring-dashboard:
+    needs: [setup-monitoring, aggregate-monitoring-results]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Download aggregated results
+        uses: actions/download-artifact@v4
+        with:
+          name: epic4-aggregated-monitoring-report
+      
+      - name: Generate monitoring dashboard
+        run: |
+          echo "📊 Generating Epic 4 monitoring dashboard..."
+          
+          cat > epic4_monitoring_dashboard.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Epic 4 Production Monitoring Dashboard</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 20px; }
+                  .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+                  .metric { background: #fff; border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+                  .success { border-left: 5px solid #28a745; }
+                  .warning { border-left: 5px solid #ffc107; }
+                  .error { border-left: 5px solid #dc3545; }
+                  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+              </style>
+          </head>
+          <body>
+              <div class="header">
+                  <h1>🚀 Epic 4 Production Monitoring Dashboard</h1>
+                  <p><strong>Environment:</strong> ${{ inputs.environment }}</p>
+                  <p><strong>Deployment Version:</strong> ${{ inputs.deployment_version || github.sha }}</p>
+                  <p><strong>Monitoring Duration:</strong> ${{ inputs.monitoring_duration }} minutes</p>
+                  <p><strong>Generated:</strong> $(date)</p>
+              </div>
+          
+              <div class="grid">
+                  <div class="metric success">
+                      <h3>🎯 SystemMonitoringAPI v2</h3>
+                      <p><strong>Target Efficiency:</strong> ≥ 94.4%</p>
+                      <p><strong>Target Response Time:</strong> < 200ms</p>
+                      <p><strong>Status:</strong> <span id="monitoring-status">Loading...</span></p>
+                  </div>
+                  
+                  <div class="metric success">
+                      <h3>👥 AgentManagementAPI v2</h3>
+                      <p><strong>Target Efficiency:</strong> ≥ 94.4%</p>
+                      <p><strong>Target Response Time:</strong> < 200ms</p>
+                      <p><strong>Status:</strong> <span id="agents-status">Loading...</span></p>
+                  </div>
+                  
+                  <div class="metric success">
+                      <h3>⚡ TaskExecutionAPI v2</h3>
+                      <p><strong>Target Efficiency:</strong> ≥ 96.2% (Benchmark)</p>
+                      <p><strong>Target Response Time:</strong> < 200ms</p>
+                      <p><strong>Status:</strong> <span id="tasks-status">Loading...</span></p>
+                  </div>
+              </div>
+          
+              <div class="metric">
+                  <h3>📊 Overall Monitoring Summary</h3>
+                  <div id="summary">Loading...</div>
+              </div>
+          
+              <script>
+                  // Load monitoring data
+                  fetch('./epic4_aggregated_monitoring_report.json')
+                      .then(response => response.json())
+                      .then(data => {
+                          // Update API statuses
+                          const apis = ['monitoring', 'agents', 'tasks'];
+                          apis.forEach(api => {
+                              const element = document.getElementById(api + '-status');
+                              const apiData = data.epic4_apis[api];
+                              if (apiData) {
+                                  const compliance = apiData.target_compliance;
+                                  const summary = apiData.summary;
+                                  const status = compliance.response_time_met && compliance.efficiency_met && compliance.error_rate_met ? '✅ PASSING' : '❌ FAILING';
+                                  element.innerHTML = \`\${status}<br>
+                                      Efficiency: \${summary.calculated_efficiency.toFixed(1)}%<br>
+                                      Response Time: \${summary.avg_response_time_ms.toFixed(1)}ms<br>
+                                      Success Rate: \${summary.success_rate_percent.toFixed(1)}%\`;
+                              } else {
+                                  element.innerHTML = '⚠️ NO DATA';
+                              }
+                          });
+          
+                          // Update overall summary
+                          const summaryElement = document.getElementById('summary');
+                          const overall = data.overall_summary;
+                          const compliance = data.compliance_summary;
+                          summaryElement.innerHTML = \`
+                              <p><strong>Overall Compliance:</strong> \${compliance.all_apis_compliant ? '✅ ALL TARGETS MET' : '❌ TARGETS NOT MET'}</p>
+                              <p><strong>Total Samples:</strong> \${overall.total_samples}</p>
+                              <p><strong>Success Rate:</strong> \${overall.overall_success_rate_percent.toFixed(1)}%</p>
+                              <p><strong>Average Response Time:</strong> \${overall.avg_response_time_ms.toFixed(1)}ms</p>
+                              <p><strong>Average Efficiency:</strong> \${overall.avg_efficiency_percent.toFixed(1)}%</p>
+                              <p><strong>Total Violations:</strong> \${compliance.total_violations}</p>
+                          \`;
+                      })
+                      .catch(error => {
+                          console.error('Error loading monitoring data:', error);
+                      });
+              </script>
+          </body>
+          </html>
+          EOF
+          
+          echo "✅ Monitoring dashboard generated"
+      
+      - name: Upload monitoring dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: epic4-monitoring-dashboard
+          path: |
+            epic4_monitoring_dashboard.html
+            epic4_aggregated_monitoring_report.json
+          retention-days: 90
+
+  # Send monitoring notifications
+  monitoring-notifications:
+    needs: [setup-monitoring, aggregate-monitoring-results]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Send monitoring summary notification
+        run: |
+          status="${{ needs.aggregate-monitoring-results.outputs.monitoring_status }}"
+          compliance="${{ needs.aggregate-monitoring-results.outputs.epic4_compliance }}"
+          
+          if [ "$compliance" == "true" ]; then
+            emoji="✅"
+            color="good"
+            message="All Epic 4 APIs meeting performance targets"
+          else
+            emoji="⚠️"
+            color="warning"  
+            message="Epic 4 API performance targets not met"
+          fi
+          
+          echo "$emoji Epic 4 Production Monitoring: $message"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Duration: ${{ inputs.monitoring_duration }} minutes"
+          echo "Compliance: $compliance"
+          
+          # In production, this would send notifications to Slack, email, etc.
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data "{'text':'$emoji Epic 4 monitoring: $message'}" \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Monitoring summary
+  monitoring-summary:
+    needs: [setup-monitoring, epic4-monitoring-validation, aggregate-monitoring-results, create-monitoring-dashboard]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate final monitoring summary
+        run: |
+          cat > monitoring-summary.md << EOF
+          # Epic 4 Production Monitoring Summary
+          
+          **Environment:** ${{ inputs.environment }}
+          **Deployment Version:** ${{ inputs.deployment_version || github.sha }}
+          **Monitoring Duration:** ${{ inputs.monitoring_duration }} minutes
+          **Timestamp:** $(date -u)
+          **Workflow Run:** ${{ github.run_id }}
+          
+          ## Job Results
+          
+          - Setup: ${{ needs.setup-monitoring.result }}
+          - Epic 4 Monitoring: ${{ needs.epic4-monitoring-validation.result }}
+          - Result Aggregation: ${{ needs.aggregate-monitoring-results.result }}
+          - Dashboard Creation: ${{ needs.create-monitoring-dashboard.result }}
+          
+          ## Epic 4 API Performance Targets
+          
+          | API | Efficiency Target | Response Time Target | Status |
+          |-----|------------------|---------------------|---------|
+          | SystemMonitoringAPI v2 | ≥ 94.4% | < 200ms | ${{ needs.aggregate-monitoring-results.outputs.epic4_compliance == 'true' && '✅ PASSING' || '❌ NEEDS ATTENTION' }} |
+          | AgentManagementAPI v2 | ≥ 94.4% | < 200ms | ${{ needs.aggregate-monitoring-results.outputs.epic4_compliance == 'true' && '✅ PASSING' || '❌ NEEDS ATTENTION' }} |
+          | TaskExecutionAPI v2 | ≥ 96.2% | < 200ms | ${{ needs.aggregate-monitoring-results.outputs.epic4_compliance == 'true' && '✅ PASSING' || '❌ NEEDS ATTENTION' }} |
+          
+          ## Overall Status
+          
+          **Monitoring Status:** ${{ needs.aggregate-monitoring-results.outputs.monitoring_status }}
+          **Epic 4 Compliance:** ${{ needs.aggregate-monitoring-results.outputs.epic4_compliance == 'true' && '✅ ALL TARGETS MET' || '❌ TARGETS NOT MET' }}
+          
+          ## Next Steps
+          
+          - [ ] Review detailed monitoring dashboard
+          - [ ] Investigate any performance violations
+          - [ ] Update alerting thresholds if needed
+          - [ ] Schedule follow-up monitoring
+          
+          ## Artifacts Generated
+          
+          - Individual API monitoring results
+          - Aggregated monitoring report
+          - Interactive monitoring dashboard
+          - Performance violation details (if any)
+          
+          EOF
+          
+          echo "Monitoring summary generated:"
+          cat monitoring-summary.md
+      
+      - name: Upload monitoring summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: epic4-monitoring-summary
+          path: monitoring-summary.md
+          retention-days: 90

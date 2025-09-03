@@ -348,14 +348,61 @@ jobs:
           # Wait for port forward to be ready
           sleep 10
           
-          # Run smoke tests
+          # Run basic smoke tests
           curl -f http://localhost:8080/health || { kill $PF_PID; exit 1; }
           curl -f http://localhost:8080/api/v1/agents || { kill $PF_PID; exit 1; }
+          
+          # Run Epic 4 API smoke tests
+          echo "🔍 Testing Epic 4 consolidated APIs..."
+          curl -f http://localhost:8080/api/v2/monitoring/health || { kill $PF_PID; exit 1; }
+          curl -f http://localhost:8080/api/v2/agents/system/health || { kill $PF_PID; exit 1; }
+          curl -f http://localhost:8080/api/v2/tasks/system/health || { kill $PF_PID; exit 1; }
           
           # Cleanup
           kill $PF_PID
           
-          echo "✅ Smoke tests passed"
+          echo "✅ All smoke tests passed (including Epic 4 APIs)"
+      
+      - name: Run Epic 4 API Performance Validation
+        env:
+          NAMESPACE: leanvibe-agent-hive-${{ needs.validate.outputs.environment }}
+          INACTIVE_ENV: ${{ steps.active.outputs.inactive }}
+        run: |
+          echo "⚡ Validating Epic 4 API performance in $INACTIVE_ENV environment..."
+          
+          # Port forward for performance testing
+          kubectl port-forward deployment/leanvibe-api-$INACTIVE_ENV 8081:8000 -n $NAMESPACE &
+          PF_PID=$!
+          sleep 10
+          
+          # Test Epic 4 API response times (target: <200ms)
+          apis=("monitoring" "agents" "tasks")
+          for api in "${apis[@]}"; do
+            echo "Testing $api API performance..."
+            
+            # Run 5 requests and measure average response time
+            total_time=0
+            for i in {1..5}; do
+              start_time=$(date +%s%N)
+              curl -s -f http://localhost:8081/api/v2/$api/system/health >/dev/null || { kill $PF_PID; exit 1; }
+              end_time=$(date +%s%N)
+              response_time=$(( ($end_time - $start_time) / 1000000 ))
+              total_time=$(( $total_time + $response_time ))
+            done
+            
+            avg_time=$(( $total_time / 5 ))
+            echo "$api API average response time: ${avg_time}ms"
+            
+            # Check if response time meets Epic 4 target (<200ms)
+            if [ $avg_time -gt 200 ]; then
+              echo "❌ $api API response time ${avg_time}ms exceeds 200ms target"
+              kill $PF_PID
+              exit 1
+            fi
+          done
+          
+          kill $PF_PID
+          echo "✅ Epic 4 API performance validation passed"
       
       - name: Switch traffic to new environment
         env:

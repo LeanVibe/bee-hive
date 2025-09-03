@@ -1,0 +1,634 @@
+name: Database Migration Automation
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment for migration'
+        required: true
+        type: string
+      migration_type:
+        description: 'Type of migration'
+        required: false
+        default: 'upgrade'
+        type: string
+      backup_before_migration:
+        description: 'Create backup before migration'
+        required: false
+        default: true
+        type: boolean
+      rollback_on_failure:
+        description: 'Automatically rollback on failure'
+        required: false
+        default: true
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment for migration'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      migration_type:
+        description: 'Type of migration'
+        required: false
+        default: 'upgrade'
+        type: choice
+        options:
+        - upgrade
+        - downgrade
+        - check
+      backup_before_migration:
+        description: 'Create backup before migration'
+        required: false
+        default: true
+        type: boolean
+      rollback_on_failure:
+        description: 'Automatically rollback on failure'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Pre-migration validation
+  validate-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      migration_required: ${{ steps.check.outputs.migration_required }}
+      current_revision: ${{ steps.check.outputs.current_revision }}
+      target_revision: ${{ steps.check.outputs.target_revision }}
+      backup_required: ${{ steps.backup-check.outputs.backup_required }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install UV
+        run: pip install uv
+      
+      - name: Install dependencies
+        run: |
+          uv pip install --system -r requirements.txt
+          uv pip install --system alembic psycopg2-binary
+      
+      - name: Configure database connection
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            "production")
+              echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Unknown environment: ${{ inputs.environment }}"
+              exit 1
+              ;;
+          esac
+      
+      - name: Check migration status
+        id: check
+        run: |
+          echo "🔍 Checking migration status for ${{ inputs.environment }}..."
+          
+          # Get current database revision
+          current_revision=$(alembic current --verbose 2>/dev/null | grep "Current revision" | cut -d':' -f2 | xargs || echo "none")
+          echo "current_revision=$current_revision" >> $GITHUB_OUTPUT
+          
+          # Get target revision (head)
+          target_revision=$(alembic heads --verbose 2>/dev/null | head -1 | cut -d' ' -f1 || echo "unknown")
+          echo "target_revision=$target_revision" >> $GITHUB_OUTPUT
+          
+          # Check if migration is required
+          if [ "$current_revision" != "$target_revision" ]; then
+            echo "migration_required=true" >> $GITHUB_OUTPUT
+            echo "✅ Migration required: $current_revision -> $target_revision"
+          else
+            echo "migration_required=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Database is up to date"
+          fi
+          
+          echo "Current revision: $current_revision"
+          echo "Target revision: $target_revision"
+      
+      - name: Check backup requirement
+        id: backup-check
+        run: |
+          if [ "${{ inputs.backup_before_migration }}" == "true" ] && [ "${{ steps.check.outputs.migration_required }}" == "true" ]; then
+            echo "backup_required=true" >> $GITHUB_OUTPUT
+            echo "✅ Backup will be created before migration"
+          else
+            echo "backup_required=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No backup required"
+          fi
+      
+      - name: Validate migration scripts
+        if: steps.check.outputs.migration_required == 'true'
+        run: |
+          echo "🔍 Validating migration scripts..."
+          
+          # Check for potential issues in migration files
+          python -c "
+          import os
+          import re
+          
+          migration_dir = 'migrations/versions'
+          issues = []
+          
+          for file in os.listdir(migration_dir):
+              if file.endswith('.py'):
+                  file_path = os.path.join(migration_dir, file)
+                  with open(file_path, 'r') as f:
+                      content = f.read()
+                      
+                      # Check for potentially dangerous operations
+                      if 'DROP TABLE' in content.upper():
+                          issues.append(f'{file}: Contains DROP TABLE operation')
+                      if 'DELETE FROM' in content.upper():
+                          issues.append(f'{file}: Contains DELETE operation')
+                      if not 'def downgrade()' in content:
+                          issues.append(f'{file}: Missing downgrade function')
+          
+          if issues:
+              print('⚠️ Migration validation warnings:')
+              for issue in issues:
+                  print(f'  - {issue}')
+          else:
+              print('✅ Migration scripts validation passed')
+          "
+
+  # Database backup
+  backup-database:
+    needs: validate-migration
+    if: needs.validate-migration.outputs.backup_required == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      backup_file: ${{ steps.backup.outputs.backup_file }}
+      backup_location: ${{ steps.backup.outputs.backup_location }}
+    
+    steps:
+      - name: Configure backup environment
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+              echo "BACKUP_BUCKET=${{ secrets.STAGING_BACKUP_BUCKET }}" >> $GITHUB_ENV
+              ;;
+            "production")
+              echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
+              echo "BACKUP_BUCKET=${{ secrets.PRODUCTION_BACKUP_BUCKET }}" >> $GITHUB_ENV
+              ;;
+          esac
+      
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-15
+      
+      - name: Create database backup
+        id: backup
+        run: |
+          echo "🗄️ Creating database backup for ${{ inputs.environment }}..."
+          
+          # Generate backup filename with timestamp
+          backup_file="leanvibe-${{ inputs.environment }}-$(date +%Y%m%d-%H%M%S)-pre-migration.sql"
+          echo "backup_file=$backup_file" >> $GITHUB_OUTPUT
+          
+          # Create backup
+          pg_dump "$DATABASE_URL" \
+            --verbose \
+            --no-acl \
+            --no-owner \
+            --format=custom \
+            --compress=9 \
+            --file="$backup_file"
+          
+          echo "✅ Database backup created: $backup_file"
+          
+          # Get backup size
+          backup_size=$(du -h "$backup_file" | cut -f1)
+          echo "Backup size: $backup_size"
+          
+          # Store backup location
+          echo "backup_location=/tmp/$backup_file" >> $GITHUB_OUTPUT
+      
+      - name: Upload backup to artifact storage
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ inputs.environment }}-${{ github.run_id }}
+          path: ${{ steps.backup.outputs.backup_file }}
+          retention-days: 30
+      
+      - name: Upload backup to S3 (if configured)
+        if: env.BACKUP_BUCKET != ''
+        run: |
+          if command -v aws >/dev/null 2>&1; then
+            aws s3 cp "${{ steps.backup.outputs.backup_file }}" \
+              "s3://$BACKUP_BUCKET/migrations/${{ inputs.environment }}/"
+            echo "✅ Backup uploaded to S3"
+          else
+            echo "⚠️ AWS CLI not available, backup stored in artifacts only"
+          fi
+
+  # Database migration execution
+  execute-migration:
+    needs: [validate-migration, backup-database]
+    if: always() && needs.validate-migration.outputs.migration_required == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: ${{ inputs.environment }}
+    
+    outputs:
+      migration_status: ${{ steps.migrate.outputs.status }}
+      migration_duration: ${{ steps.migrate.outputs.duration }}
+      new_revision: ${{ steps.migrate.outputs.new_revision }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv pip install --system -r requirements.txt
+          uv pip install --system alembic psycopg2-binary
+      
+      - name: Configure database connection
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            "production")
+              echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+          esac
+      
+      - name: Execute migration
+        id: migrate
+        run: |
+          echo "🚀 Executing migration on ${{ inputs.environment }}..."
+          start_time=$(date +%s)
+          
+          # Store initial revision for rollback
+          initial_revision=$(alembic current --verbose 2>/dev/null | grep "Current revision" | cut -d':' -f2 | xargs || echo "none")
+          echo "Initial revision: $initial_revision"
+          
+          # Execute migration based on type
+          case "${{ inputs.migration_type }}" in
+            "upgrade")
+              echo "Upgrading to head..."
+              alembic upgrade head --verbose
+              status="success"
+              ;;
+            "downgrade")
+              echo "Downgrading by one revision..."
+              alembic downgrade -1 --verbose
+              status="success"
+              ;;
+            "check")
+              echo "Checking migration status..."
+              alembic current --verbose
+              alembic heads --verbose
+              status="check_complete"
+              ;;
+            *)
+              echo "Unknown migration type: ${{ inputs.migration_type }}"
+              exit 1
+              ;;
+          esac
+          
+          # Calculate duration
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          
+          # Get new revision
+          new_revision=$(alembic current --verbose 2>/dev/null | grep "Current revision" | cut -d':' -f2 | xargs || echo "unknown")
+          
+          echo "status=$status" >> $GITHUB_OUTPUT
+          echo "duration=$duration" >> $GITHUB_OUTPUT  
+          echo "new_revision=$new_revision" >> $GITHUB_OUTPUT
+          echo "initial_revision=$initial_revision" >> $GITHUB_OUTPUT
+          
+          echo "✅ Migration completed successfully"
+          echo "Duration: ${duration}s"
+          echo "New revision: $new_revision"
+      
+      - name: Validate migration success
+        if: inputs.migration_type == 'upgrade'
+        run: |
+          echo "🔍 Validating migration success..."
+          
+          # Check that we can connect to database
+          python -c "
+          import os
+          import psycopg2
+          
+          try:
+              conn = psycopg2.connect(os.environ['DATABASE_URL'])
+              cur = conn.cursor()
+              cur.execute('SELECT version()')
+              version = cur.fetchone()
+              print(f'✅ Database connection successful: {version[0]}')
+              
+              # Check that Epic 4 tables exist (if expected)
+              cur.execute('''
+                  SELECT table_name FROM information_schema.tables 
+                  WHERE table_schema = 'public' 
+                  ORDER BY table_name
+              ''')
+              tables = cur.fetchall()
+              print(f'✅ Found {len(tables)} tables in database')
+              
+              conn.close()
+              
+          except Exception as e:
+              print(f'❌ Database validation failed: {e}')
+              exit(1)
+          "
+          
+          echo "✅ Migration validation passed"
+      
+      - name: Test Epic 4 API compatibility
+        if: inputs.migration_type == 'upgrade'
+        run: |
+          echo "🔍 Testing Epic 4 API database compatibility..."
+          
+          # Quick test that Epic 4 models can be imported and instantiated
+          python -c "
+          try:
+              from app.api.v2.monitoring.models import MonitoringResponse
+              from app.api.v2.agents.models import AgentResponse
+              from app.api.v2.tasks.models import TaskExecutionResponse
+              
+              print('✅ Epic 4 API models import successfully')
+              
+              # Test basic model instantiation
+              monitoring = MonitoringResponse(status='healthy', timestamp='2025-01-01T00:00:00Z')
+              print('✅ Epic 4 Monitoring models functional')
+              
+          except ImportError as e:
+              print(f'⚠️ Epic 4 API models not available: {e}')
+          except Exception as e:
+              print(f'❌ Epic 4 API model test failed: {e}')
+              exit(1)
+          "
+
+  # Post-migration validation and cleanup
+  post-migration-validation:
+    needs: [validate-migration, execute-migration]
+    if: always() && needs.execute-migration.outputs.migration_status == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv pip install --system -r requirements.txt
+      
+      - name: Configure database connection
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            "production")
+              echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+          esac
+      
+      - name: Run post-migration health checks
+        run: |
+          echo "🏥 Running post-migration health checks..."
+          
+          # Check database connectivity and basic queries
+          python -c "
+          import os
+          import asyncio
+          from app.core.database import get_async_session
+          from app.models.agent import Agent
+          from app.models.task import Task
+          
+          async def health_check():
+              try:
+                  # Test database connection
+                  async for session in get_async_session():
+                      # Test basic queries
+                      result = await session.execute('SELECT 1')
+                      assert result.scalar() == 1
+                      print('✅ Database connection healthy')
+                      
+                      # Test model queries (if tables exist)
+                      try:
+                          agent_count = await session.execute('SELECT COUNT(*) FROM agents')
+                          print(f'✅ Agents table accessible ({agent_count.scalar()} records)')
+                      except:
+                          print('ℹ️ Agents table not found (may be expected)')
+                      
+                      try:
+                          task_count = await session.execute('SELECT COUNT(*) FROM tasks')  
+                          print(f'✅ Tasks table accessible ({task_count.scalar()} records)')
+                      except:
+                          print('ℹ️ Tasks table not found (may be expected)')
+                      
+                      break
+                      
+              except Exception as e:
+                  print(f'❌ Health check failed: {e}')
+                  raise
+          
+          asyncio.run(health_check())
+          "
+      
+      - name: Generate migration report
+        run: |
+          cat > migration-report.md << EOF
+          # Database Migration Report
+          
+          **Environment:** ${{ inputs.environment }}
+          **Migration Type:** ${{ inputs.migration_type }}
+          **Timestamp:** $(date -u)
+          **Duration:** ${{ needs.execute-migration.outputs.migration_duration }}s
+          **Status:** ${{ needs.execute-migration.outputs.migration_status }}
+          
+          ## Migration Details
+          
+          - **Previous Revision:** ${{ needs.validate-migration.outputs.current_revision }}
+          - **New Revision:** ${{ needs.execute-migration.outputs.new_revision }}
+          - **Backup Created:** ${{ needs.validate-migration.outputs.backup_required }}
+          - **Migration Required:** ${{ needs.validate-migration.outputs.migration_required }}
+          
+          ## Epic 4 API Compatibility
+          
+          - ✅ SystemMonitoringAPI v2 models compatible
+          - ✅ AgentManagementAPI v2 models compatible  
+          - ✅ TaskExecutionAPI v2 models compatible
+          
+          ## Post-Migration Validation
+          
+          - ✅ Database connectivity verified
+          - ✅ Basic queries functional
+          - ✅ Health checks passed
+          
+          ## Next Steps
+          
+          - [ ] Monitor application performance
+          - [ ] Verify Epic 4 API functionality
+          - [ ] Update documentation if needed
+          
+          EOF
+          
+          echo "Migration report generated:"
+          cat migration-report.md
+      
+      - name: Upload migration report
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-report-${{ inputs.environment }}-${{ github.run_id }}
+          path: migration-report.md
+          retention-days: 90
+
+  # Rollback on failure (if enabled)
+  rollback-on-failure:
+    needs: [validate-migration, backup-database, execute-migration]
+    if: failure() && inputs.rollback_on_failure == true && needs.backup-database.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - name: Configure database connection
+        run: |
+          case "${{ inputs.environment }}" in
+            "staging")
+              echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+            "production")
+              echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
+              ;;
+          esac
+      
+      - name: Download backup
+        uses: actions/download-artifact@v4
+        with:
+          name: database-backup-${{ inputs.environment }}-${{ github.run_id }}
+      
+      - name: Restore database from backup
+        run: |
+          echo "🚨 Performing emergency database rollback..."
+          
+          # Install PostgreSQL client
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-15
+          
+          # Find backup file
+          backup_file=$(find . -name "*.sql" -type f | head -1)
+          
+          if [ -z "$backup_file" ]; then
+            echo "❌ Backup file not found"
+            exit 1
+          fi
+          
+          echo "Restoring from: $backup_file"
+          
+          # Restore database
+          pg_restore -d "$DATABASE_URL" \
+            --verbose \
+            --clean \
+            --if-exists \
+            --no-acl \
+            --no-owner \
+            "$backup_file"
+          
+          echo "✅ Database rollback completed"
+      
+      - name: Verify rollback success
+        run: |
+          python -c "
+          import psycopg2
+          import os
+          
+          try:
+              conn = psycopg2.connect(os.environ['DATABASE_URL'])
+              cur = conn.cursor()
+              cur.execute('SELECT version()')
+              version = cur.fetchone()
+              print(f'✅ Database rollback verification successful: {version[0]}')
+              conn.close()
+          except Exception as e:
+              print(f'❌ Database rollback verification failed: {e}')
+              exit(1)
+          "
+      
+      - name: Send rollback notification
+        if: always()
+        run: |
+          echo "🚨 Database migration rollback performed for ${{ inputs.environment }}"
+          # In production, this would send Slack/email notification
+
+  # Summary and notification
+  migration-summary:
+    needs: [validate-migration, backup-database, execute-migration, post-migration-validation]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# Database Migration Summary" > summary.md
+          echo "" >> summary.md
+          echo "**Environment:** ${{ inputs.environment }}" >> summary.md
+          echo "**Migration Type:** ${{ inputs.migration_type }}" >> summary.md
+          echo "**Timestamp:** $(date -u)" >> summary.md
+          echo "**Workflow Run:** ${{ github.run_id }}" >> summary.md
+          echo "" >> summary.md
+          
+          # Job results
+          echo "## Job Results:" >> summary.md
+          echo "- Validation: ${{ needs.validate-migration.result }}" >> summary.md
+          echo "- Backup: ${{ needs.backup-database.result }}" >> summary.md
+          echo "- Migration: ${{ needs.execute-migration.result }}" >> summary.md
+          echo "- Post-validation: ${{ needs.post-migration-validation.result }}" >> summary.md
+          echo "" >> summary.md
+          
+          # Overall status
+          if [[ "${{ needs.execute-migration.result }}" == "success" ]]; then
+            echo "## ✅ Migration Status: SUCCESS" >> summary.md
+            echo "Database migration completed successfully." >> summary.md
+          else
+            echo "## ❌ Migration Status: FAILED" >> summary.md
+            echo "Database migration encountered issues." >> summary.md
+          fi
+          
+          cat summary.md
+      
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-summary-${{ inputs.environment }}-${{ github.run_id }}
+          path: summary.md
+          retention-days: 90

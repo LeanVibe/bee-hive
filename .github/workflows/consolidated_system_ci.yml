@@ -77,6 +77,22 @@ jobs:
         TESTING: true
         REDIS_URL: redis://localhost:6379
     
+    - name: Run Epic 4 API Contract Validation
+      run: |
+        echo "🔍 Validating Epic 4 Consolidated API Contracts..."
+        
+        # Run Epic 4 API contract tests
+        python -m pytest tests/integration/test_epic4_api_contract_validation.py \
+          -v --tb=short \
+          --junit-xml=epic4-api-contract-results.xml \
+          --json-report --json-report-file=epic4-api-contract-report.json
+        
+        echo "✅ Epic 4 API contract validation completed"
+      env:
+        DATABASE_URL: postgresql://postgres:test@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379
+        TESTING: true
+    
     - name: Upload Quality Gate Results
       uses: actions/upload-artifact@v4
       if: always()
@@ -93,6 +109,8 @@ jobs:
         path: |
           test-results.xml
           integration-test-results.xml
+          epic4-api-contract-results.xml
+          epic4-api-contract-report.json
           coverage.json
           coverage.xml
         retention-days: 30
@@ -115,6 +133,8 @@ jobs:
           
           // Find the latest quality gate report
           const resultsDir = 'tests/quality_gates/results';
+          let comment = '';
+          
           if (fs.existsSync(resultsDir)) {
             const files = fs.readdirSync(resultsDir)
               .filter(f => f.startsWith('quality_gate_report_'))
@@ -128,7 +148,7 @@ jobs:
               const status = report.overall_status === 'PASSED' ? '✅' : 
                             report.overall_status === 'PARTIAL' ? '⚠️' : '❌';
               
-              const comment = `## ${status} Consolidated System Quality Gates
+              comment = `## ${status} Consolidated System Quality Gates
               
               **Overall Status:** ${report.overall_status}
               **Duration:** ${report.duration_seconds.toFixed(2)}s
@@ -146,6 +166,36 @@ jobs:
                 `\n### Recommendations:\n${report.recommendations.map(r => `- ${r}`).join('\n')}` : ''
               }
               `;
+            }
+          }
+          
+          // Add Epic 4 API Contract Validation results
+          if (fs.existsSync('epic4-api-contract-report.json')) {
+            const epic4Report = JSON.parse(fs.readFileSync('epic4-api-contract-report.json', 'utf8'));
+            const epic4Status = epic4Report.overall_status === 'PASSED' ? '✅' : '❌';
+            
+            comment += `
+            
+            ## ${epic4Status} Epic 4 API Contract Validation
+            
+            **Status:** ${epic4Report.overall_status}
+            **APIs Tested:** ${Object.keys(epic4Report.api_validations || {}).length}
+            **Performance Status:** ${epic4Report.performance_results?.passed ? '✅ PASSED' : '❌ FAILED'}
+            **Security Status:** ${epic4Report.security_validation?.passed ? '✅ PASSED' : '❌ FAILED'}
+            
+            ### API Validation Results:
+            ${Object.entries(epic4Report.api_validations || {}).map(([api, result]) => 
+              `- ${result.passed ? '✅' : '❌'} **${api} API**: ${result.endpoints_passed}/${result.endpoints_tested} endpoints`
+            ).join('\n')}
+            
+            ### Performance Efficiency:
+            ${Object.entries(epic4Report.performance_results?.efficiency_tests || {}).map(([api, test]) => 
+              `- **${api}**: ${test.measured?.toFixed(1)}% (target: ${test.target}%) ${test.passed ? '✅' : '❌'}`
+            ).join('\n')}
+            
+            ${epic4Report.errors?.length > 0 ? `\n**Epic 4 Errors:** ${epic4Report.errors.length}` : ''}
+            `;
+          }
               
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
