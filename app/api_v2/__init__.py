@@ -11,6 +11,7 @@ Consolidates 96 API modules into 15 RESTful resource endpoints.
 from fastapi import APIRouter
 from .middleware import auth_middleware, error_middleware, performance_middleware
 from .routers import (
+    auth,
     agents,
     workflows, 
     tasks,
@@ -30,12 +31,13 @@ from .routers import (
 )
 
 # Create main API router
-api_router = APIRouter(prefix="/api/v2")
+api_router = APIRouter()
 
 # Note: APIRouter doesn't support middleware directly
 # Middleware will be applied at the FastAPI app level in main.py
 
 # Include all resource routers
+api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(agents.router, prefix="/agents", tags=["Agents"])
 api_router.include_router(workflows.router, prefix="/workflows", tags=["Workflows"])
 api_router.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
@@ -61,7 +63,7 @@ async def api_root():
         "version": "2.0.0",
         "modules_consolidated": "96 → 16 (83% reduction)",
         "resources": [
-            "agents", "workflows", "tasks", "projects",  # "coordination" temporarily disabled
+            "auth", "agents", "workflows", "tasks", "projects",  # "coordination" temporarily disabled
             "observability", "security", "resources", "contexts", "enterprise",
             "websocket", "health", "admin", "integrations", "dashboard", "plugins"
         ],

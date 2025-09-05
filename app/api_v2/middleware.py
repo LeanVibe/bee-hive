@@ -16,12 +16,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from ..core.auth import (
-    decode_jwt_token, 
-    get_user_by_id,
-    Permission,
-    UserRole
-)
+from ..services.user_service import get_user_service
+from ..models.user import UserRole
 from ..core.database import get_session
 
 logger = structlog.get_logger()
@@ -107,7 +103,12 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     PUBLIC_ENDPOINTS = {
         "/api/v2/",
         "/api/v2/health/status",
-        "/api/v2/health/ready",
+        "/api/v2/health/ready", 
+        "/api/v2/health",
+        "/api/v2/auth/register",
+        "/api/v2/auth/login",
+        "/api/v2/auth/refresh",
+        "/api/v2/auth/health",
         "/api/v2/security/login",
         "/api/v2/security/refresh",
         "/docs",
@@ -137,9 +138,16 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         
         try:
             # Decode and validate JWT token
-            payload = decode_jwt_token(token)
-            user_id = payload.get("sub")
+            user_service = get_user_service()
+            payload = user_service.verify_token(token)
             
+            if not payload:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired token"
+                )
+            
+            user_id = payload.get("sub")
             if not user_id:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -148,7 +156,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             
             # Get user from database
             async with get_session() as db:
-                user = await get_user_by_id(db, user_id)
+                user = await user_service.get_user_by_id(db, user_id)
                 if not user:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -158,14 +166,14 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             # Inject user context into request
             request.state.current_user = user
             request.state.user_id = user_id
-            request.state.user_role = user.role
-            request.state.permissions = user.permissions
+            request.state.user_roles = user.roles or []
+            request.state.permissions = user.permissions or []
             
             # Log authentication success
             logger.debug(
                 "authentication_success",
                 user_id=user_id,
-                role=user.role.value if user.role else None,
+                roles=user.roles,
                 request_id=getattr(request.state, "request_id", None)
             )
             
@@ -239,7 +247,7 @@ auth_middleware = AuthenticationMiddleware
 error_middleware = ErrorHandlingMiddleware
 
 # Utility functions for route handlers
-def require_permission(permission: Permission):
+def require_permission(permission: str):
     """Decorator to require specific permission for endpoint access."""
     def decorator(func):
         async def wrapper(request: Request, *args, **kwargs):
@@ -247,21 +255,23 @@ def require_permission(permission: Permission):
             if permission not in user_permissions:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission '{permission.value}' required"
+                    detail=f"Permission '{permission}' required"
                 )
             return await func(request, *args, **kwargs)
         return wrapper
     return decorator
 
-def require_role(role: UserRole):
+def require_role(role: str):
     """Decorator to require specific role for endpoint access."""
     def decorator(func):
         async def wrapper(request: Request, *args, **kwargs):
-            user_role = getattr(request.state, "user_role", None)
-            if user_role != role:
+            user_roles = getattr(request.state, "user_roles", [])
+            if isinstance(role, UserRole):
+                role = role.value
+            if role not in user_roles:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Role '{role.value}' required"
+                    detail=f"Role '{role}' required"
                 )
             return await func(request, *args, **kwargs)
         return wrapper

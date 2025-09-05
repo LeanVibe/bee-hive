@@ -46,8 +46,8 @@ class OnboardingSession(Base):
     # Completion/abandonment details
     skip_reason = Column(String(255), nullable=True)
     
-    # Relationships
-    user = relationship("User", back_populates="onboarding_sessions")
+    # Relationships - removed back_populates to avoid circular dependency
+    # user = relationship("User", back_populates="onboarding_sessions")
     steps = relationship("OnboardingStep", back_populates="session", cascade="all, delete-orphan")
     events = relationship("OnboardingEvent", back_populates="session", cascade="all, delete-orphan")
     metrics = relationship("OnboardingMetric", back_populates="session", cascade="all, delete-orphan")

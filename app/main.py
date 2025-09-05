@@ -69,6 +69,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await init_database()
         await init_redis()
         
+        # Initialize user service and create default admin
+        from .services.user_service import create_default_admin
+        await create_default_admin()
+        
         # Initialize enhanced coordination bridge
         logger.info("🤖 Starting Enhanced Coordination Bridge...")
         await start_enhanced_coordination_bridge()
