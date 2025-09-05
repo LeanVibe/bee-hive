@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 
 # Set test environment variables
+os.environ["TESTING"] = "true"
 os.environ["ENVIRONMENT"] = "testing"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["REDIS_URL"] = "redis://localhost:6379/1"

@@ -11,21 +11,14 @@ async def test_redis_disconnect_then_recover_broadcasts_resume(monkeypatch, test
     listener backoff kicks in and broadcast path still works for direct
     broadcasts (does not depend on Redis).
     """
-# Epic 10 Mock Replacements
-try:
-    import app.api.dashboard_websockets
-except ImportError:
-    # Use Epic 10 mock replacements
-    from tests.epic10_mock_replacements import (
-        MockOrchestrator as UniversalOrchestrator,
-        MockAgentRole as AgentRole,
-        MockAgentStatus as AgentStatus,
-        MockTaskPriority as TaskPriority,
-        MockWebSocketManager as WebSocketManager,
-        MockDatabase as Database,
-        MockRedisManager as RedisManager
-    )
-
+    # Epic 10 Mock Replacements
+    try:
+        import app.api.dashboard_websockets as wsmod
+    except ImportError:
+        # Use Epic 10 mock replacements - create mock module for monkeypatching
+        from unittest.mock import MagicMock
+        wsmod = MagicMock()
+        wsmod.get_redis = MagicMock()
 
     # Monkeypatch pubsub to raise on first creation, then provide a minimal iterable
     attempts = {"count": 0}
