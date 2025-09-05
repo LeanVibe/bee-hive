@@ -1,0 +1,73 @@
+{
+  "timestamp": "2025-09-05T16:14:47.860355",
+  "system_info": {
+    "cpu_count": 16,
+    "memory_total_gb": 48.0,
+    "platform": "darwin",
+    "python_version": "3.13.7"
+  },
+  "baselines": {
+    "simple_orchestrator": {
+      "initialization_time_ms": 0.1049041748046875,
+      "memory_footprint_mb": 112.421875,
+      "working": true,
+      "methodology": "Direct measurement of SimpleOrchestrator initialization time and memory usage"
+    },
+    "database": {
+      "working": false,
+      "error": "Database module not available: cannot import name 'get_database_session' from 'app.core.database' (/Users/bogdan/work/leanvibe-dev/bee-hive/app/core/database.py)",
+      "methodology": "Attempted database module import"
+    },
+    "redis": {
+      "working": false,
+      "error": "Redis module not available: No module named 'app.core.redis_manager'",
+      "methodology": "Attempted Redis module import"
+    },
+    "api_endpoints": {
+      "working": false,
+      "error": "No working API endpoints found",
+      "tested_endpoints": [
+        "http://localhost:8000/health",
+        "http://localhost:8000/api/health",
+        "http://localhost:8000/api/status",
+        "http://localhost:8000/api/v2/health",
+        "http://localhost:8000/api/v2/status"
+      ],
+      "endpoint_details": {
+        "http://localhost:8000/health": {
+          "working": false,
+          "error": "Server disconnected"
+        },
+        "http://localhost:8000/api/health": {
+          "working": false,
+          "error": "Server disconnected"
+        },
+        "http://localhost:8000/api/status": {
+          "working": false,
+          "error": "Server disconnected"
+        },
+        "http://localhost:8000/api/v2/health": {
+          "working": false,
+          "error": "Server disconnected"
+        },
+        "http://localhost:8000/api/v2/status": {
+          "working": false,
+          "error": "Server disconnected"
+        }
+      },
+      "methodology": "HTTP requests to potential API endpoints"
+    }
+  },
+  "methodology": {},
+  "errors": [],
+  "summary": {
+    "total_components_tested": 4,
+    "working_components_count": 1,
+    "working_components": [
+      "simple_orchestrator"
+    ],
+    "baseline_established": true,
+    "measurement_date": "2025-09-05T16:14:48.626610",
+    "measurement_purpose": "Epic 6 Phase 3: Replace unsupported performance claims with evidence"
+  }
+}

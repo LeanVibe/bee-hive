@@ -1,0 +1,162 @@
+{
+  "timestamp": "2025-09-05T16:18:11.872940",
+  "component": "SimpleOrchestrator",
+  "purpose": "Epic 6 Phase 3B: Establish comprehensive baselines for working component",
+  "system_info": {
+    "cpu_count_physical": 16,
+    "cpu_count_logical": 16,
+    "memory_total_gb": 48.0,
+    "memory_available_gb": 11.73,
+    "platform": "darwin",
+    "python_version": "3.13.7",
+    "architecture": "arm64"
+  },
+  "benchmarks": {
+    "Initialization Performance": {
+      "success": true,
+      "duration_ms": 2.6337040471844375,
+      "metrics": {
+        "iterations_completed": 100,
+        "iterations_failed": 0,
+        "average_init_time_ms": 0.0263,
+        "median_init_time_ms": 0.0202,
+        "min_init_time_ms": 0.0147,
+        "max_init_time_ms": 0.1331,
+        "std_dev_init_time_ms": 0.0168,
+        "p95_init_time_ms": 0.0594,
+        "p99_init_time_ms": 0.1331,
+        "baseline_memory_mb": 112.55,
+        "final_memory_mb": 112.55,
+        "memory_delta_mb": 0.0,
+        "average_memory_per_instance_mb": 0.0,
+        "total_test_duration_ms": 2.63
+      },
+      "errors": [],
+      "methodology": "Direct measurement of SimpleOrchestrator() constructor over 100 iterations with memory tracking"
+    },
+    "Method Performance": {
+      "success": true,
+      "duration_ms": 0.0009,
+      "metrics": {
+        "methods_tested": 5,
+        "methods_available": 5,
+        "availability_rate_percent": 100.0,
+        "method_details": {
+          "get_status": {
+            "available": true,
+            "average_time_ms": 0.0001,
+            "min_time_ms": 0.0,
+            "max_time_ms": 0.0007,
+            "successful_calls": 20,
+            "failed_calls": 0
+          },
+          "str_representation": {
+            "available": true,
+            "average_time_ms": 0.0003,
+            "min_time_ms": 0.0002,
+            "max_time_ms": 0.0013,
+            "successful_calls": 20,
+            "failed_calls": 0
+          },
+          "repr_representation": {
+            "available": true,
+            "average_time_ms": 0.0002,
+            "min_time_ms": 0.0002,
+            "max_time_ms": 0.0005,
+            "successful_calls": 20,
+            "failed_calls": 0
+          },
+          "hash_computation": {
+            "available": true,
+            "average_time_ms": 0.0002,
+            "min_time_ms": 0.0001,
+            "max_time_ms": 0.0012,
+            "successful_calls": 20,
+            "failed_calls": 0
+          },
+          "attribute_access": {
+            "available": true,
+            "average_time_ms": 0.0001,
+            "min_time_ms": 0.0,
+            "max_time_ms": 0.0007,
+            "successful_calls": 20,
+            "failed_calls": 0
+          }
+        }
+      },
+      "errors": [],
+      "methodology": "Direct method invocation timing for available SimpleOrchestrator methods"
+    },
+    "Memory Behavior": {
+      "success": true,
+      "duration_ms": 0.8921699482016265,
+      "metrics": {
+        "instances_created": 50,
+        "instances_failed": 0,
+        "baseline_memory_mb": 112.55,
+        "peak_memory_mb": 112.55,
+        "cleanup_memory_mb": 112.55,
+        "total_memory_increase_mb": 0.0,
+        "memory_per_instance_kb": 0,
+        "memory_measurements": [
+          {
+            "instance_count": 10,
+            "memory_mb": 112.546875,
+            "memory_increase_mb": 0.0
+          },
+          {
+            "instance_count": 20,
+            "memory_mb": 112.546875,
+            "memory_increase_mb": 0.0
+          },
+          {
+            "instance_count": 30,
+            "memory_mb": 112.546875,
+            "memory_increase_mb": 0.0
+          },
+          {
+            "instance_count": 40,
+            "memory_mb": 112.546875,
+            "memory_increase_mb": 0.0
+          },
+          {
+            "instance_count": 50,
+            "memory_mb": 112.546875,
+            "memory_increase_mb": 0.0
+          }
+        ],
+        "average_creation_time_ms": 0.0178,
+        "memory_leak_indicator_mb": 0.0
+      },
+      "errors": [],
+      "methodology": "Created 50 SimpleOrchestrator instances with memory tracking every 10 instances"
+    },
+    "Concurrent Creation": {
+      "success": true,
+      "duration_ms": 1.0371249809395522,
+      "metrics": {
+        "concurrency_level": 20,
+        "successful_creations": 20,
+        "failed_creations": 0,
+        "success_rate_percent": 100.0,
+        "total_time_ms": 1.04,
+        "average_creation_time_ms": 0.0223,
+        "max_creation_time_ms": 0.0662,
+        "min_creation_time_ms": 0.0166,
+        "creations_per_second": 19284.08,
+        "concurrent_overhead_ms": 0.0519
+      },
+      "errors": [],
+      "methodology": "Concurrent creation of 20 SimpleOrchestrator instances using asyncio.gather"
+    }
+  },
+  "summary": {
+    "total_benchmarks": 4,
+    "successful_benchmarks": 4,
+    "success_rate_percent": 100.0,
+    "component_status": "BENCHMARKED",
+    "evidence_based_metrics": true,
+    "baseline_established": true
+  },
+  "evidence_based": true
+}
