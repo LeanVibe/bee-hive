@@ -1,0 +1,347 @@
+# Promtail Configuration for LeanVibe Agent Hive Production
+# Log collection agent with advanced parsing and labeling
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # LeanVibe API application logs
+  - job_name: leanvibe-api
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: leanvibe-api
+          service: api
+          environment: production
+          __path__: /var/log/leanvibe/api/*.log
+    
+    pipeline_stages:
+      # Parse JSON logs from FastAPI/Uvicorn
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            logger: logger
+            message: message
+            module: module
+            function: function
+            line: line
+            request_id: request_id
+            user_id: user_id
+            correlation_id: correlation_id
+      
+      # Extract additional fields
+      - regex:
+          expression: '(?P<method>GET|POST|PUT|DELETE|PATCH|OPTIONS) (?P<path>/[^\s]*)'
+          source: message
+      
+      # Set timestamp
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02T15:04:05.999Z07:00"
+      
+      # Add labels
+      - labels:
+          level:
+          logger:
+          method:
+          service:
+
+  # Nginx access logs
+  - job_name: nginx-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-access
+          service: nginx
+          log_type: access
+          environment: production
+          __path__: /var/log/nginx/access.log
+
+    pipeline_stages:
+      # Parse nginx log format
+      - regex:
+          expression: '^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<path>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" "(?P<http_x_forwarded_for>[^"]*)" rt=(?P<request_time>\S+) uct="(?P<upstream_connect_time>\S*)" uht="(?P<upstream_header_time>\S*)" urt="(?P<upstream_response_time>\S*)"'
+      
+      # Convert status to number
+      - template:
+          source: status
+          template: '{{ .status }}'
+      
+      # Add labels
+      - labels:
+          method:
+          status:
+          service:
+      
+      # Parse timestamp
+      - timestamp:
+          source: time_local
+          format: "02/Jan/2006:15:04:05 -0700"
+
+  # Nginx error logs
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-error
+          service: nginx
+          log_type: error
+          environment: production
+          __path__: /var/log/nginx/error.log
+
+    pipeline_stages:
+      # Parse nginx error log format
+      - regex:
+          expression: '^(?P<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<pid>\d+)#(?P<tid>\d+): (?P<message>.*)$'
+      
+      # Parse timestamp
+      - timestamp:
+          source: time
+          format: "2006/01/02 15:04:05"
+      
+      # Add labels
+      - labels:
+          level:
+          service:
+
+  # PostgreSQL logs
+  - job_name: postgresql
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgresql
+          service: postgres
+          environment: production
+          __path__: /var/log/postgresql/*.log
+
+    pipeline_stages:
+      # Parse PostgreSQL log format
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d{3} \w+) \[(?P<pid>\d+)\]: \[(?P<line_num>\d+)-(?P<session_id>\d+)\] user=(?P<user>\w*),db=(?P<database>\w*),app=(?P<application>\w*),client=(?P<client_addr>[\w\.]*) (?P<level>\w+):  (?P<message>.*)$'
+      
+      # Parse timestamp
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02 15:04:05.000 MST"
+      
+      # Add labels
+      - labels:
+          level:
+          user:
+          database:
+          service:
+
+  # Redis logs
+  - job_name: redis
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: redis
+          service: redis
+          environment: production
+          __path__: /var/log/redis/*.log
+
+    pipeline_stages:
+      # Parse Redis log format
+      - regex:
+          expression: '^(?P<pid>\d+):(?P<role>\w) (?P<timestamp>\d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2}.\d{3}) (?P<level>[*#-]) (?P<message>.*)$'
+      
+      # Parse timestamp
+      - timestamp:
+          source: timestamp
+          format: "02 Jan 2006 15:04:05.000"
+      
+      # Add labels
+      - labels:
+          level:
+          role:
+          service:
+
+  # Docker container logs
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+    
+    relabel_configs:
+      # Container name as job
+      - source_labels: [__meta_docker_container_name]
+        regex: '/(.*)'
+        target_label: job
+        replacement: '$1'
+      
+      # Service label
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      
+      # Environment label
+      - source_labels: [__meta_docker_container_label_environment]
+        target_label: environment
+      
+      # Container ID (short)
+      - source_labels: [__meta_docker_container_id]
+        regex: '(.{12}).*'
+        target_label: container_id
+        replacement: '$1'
+      
+      # Image name
+      - source_labels: [__meta_docker_container_label_com_docker_compose_image]
+        target_label: image
+
+    pipeline_stages:
+      # Parse JSON logs from containers
+      - json:
+          expressions:
+            level: level
+            timestamp: timestamp
+            message: message
+            service: service
+            module: module
+      
+      # Fallback timestamp if not in JSON
+      - timestamp:
+          source: timestamp
+          format: "RFC3339Nano"
+          fallback_formats:
+            - "2006-01-02T15:04:05.999999999Z07:00"
+            - "2006-01-02T15:04:05Z07:00"
+      
+      # Add container labels
+      - labels:
+          level:
+          service:
+          module:
+
+  # System logs
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          service: system
+          environment: production
+          __path__: /var/log/syslog
+
+    pipeline_stages:
+      # Parse syslog format
+      - regex:
+          expression: '^(?P<timestamp>\w{3} \d{2} \d{2}:\d{2}:\d{2}) (?P<hostname>\S+) (?P<tag>[^:]+): (?P<message>.*)$'
+      
+      # Parse timestamp (current year assumed)
+      - timestamp:
+          source: timestamp
+          format: "Jan 02 15:04:05"
+      
+      # Add labels
+      - labels:
+          hostname:
+          tag:
+          service:
+
+  # Application metrics logs (for debugging)
+  - job_name: leanvibe-metrics
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: leanvibe-metrics
+          service: metrics
+          environment: production
+          __path__: /var/log/leanvibe/metrics/*.log
+
+    pipeline_stages:
+      # Parse structured metrics logs
+      - json:
+          expressions:
+            timestamp: timestamp
+            metric_name: metric_name
+            metric_value: metric_value
+            metric_type: metric_type
+            labels: labels
+            service: service
+      
+      # Set timestamp
+      - timestamp:
+          source: timestamp
+          format: "RFC3339Nano"
+      
+      # Add labels
+      - labels:
+          metric_name:
+          metric_type:
+          service:
+
+  # Audit logs for security monitoring
+  - job_name: leanvibe-audit
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: leanvibe-audit
+          service: audit
+          log_type: security
+          environment: production
+          __path__: /var/log/leanvibe/audit/*.log
+
+    pipeline_stages:
+      # Parse audit log JSON format
+      - json:
+          expressions:
+            timestamp: timestamp
+            event_type: event_type
+            user_id: user_id
+            ip_address: ip_address
+            user_agent: user_agent
+            action: action
+            resource: resource
+            outcome: outcome
+            risk_score: risk_score
+      
+      # Set timestamp
+      - timestamp:
+          source: timestamp
+          format: "RFC3339Nano"
+      
+      # Add security labels
+      - labels:
+          event_type:
+          action:
+          outcome:
+          service:
+
+# Global configuration
+global:
+  # File for storing positions
+  positions_file: /tmp/positions.yaml
+  
+  # Client configuration
+  client:
+    # Maximum number of active streams
+    max_streams: 10000
+    
+    # Batch configuration
+    batch_wait: 1s
+    batch_size: 1048576  # 1MB
+    
+    # External labels
+    external_labels:
+      cluster: production
+      datacenter: primary
+      application: leanvibe-agent-hive
