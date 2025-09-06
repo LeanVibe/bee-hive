@@ -272,21 +272,8 @@ export default defineConfig({
         },
         chunkSizeWarningLimit: 500, // More aggressive chunk size limit
         reportCompressedSize: false, // Disable for faster builds
-        
-      },
-        // Advanced compression
-        terserOptions: {
-          compress: {
-            drop_console: true, // Remove console.logs in production
-            drop_debugger: true,
-            pure_funcs: ['console.log', 'console.info', 'console.debug']
-          },
-          mangle: {
-            safari10: true
-          }
-        }
+      }
     },
-  },
   optimizeDeps: {
     include: ['lit', 'zustand', 'date-fns', 'sortablejs', 'idb'],
   },
