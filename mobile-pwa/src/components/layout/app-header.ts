@@ -48,7 +48,7 @@ export class AppHeader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--space-4, 1rem);
+      padding: var(--space-4);
       max-width: 100%;
       min-height: 60px;
     }
@@ -56,36 +56,38 @@ export class AppHeader extends LitElement {
     .logo {
       display: flex;
       align-items: center;
-      gap: var(--space-3, 0.75rem);
+      gap: var(--space-3);
       font-weight: 600;
-      color: var(--color-text, #1f2937);
-      transition: all var(--transition-normal, 0.3s);
+      color: var(--color-text);
+      transition: all var(--transition-normal);
     }
     
     .logo-icon {
       width: 32px;
       height: 32px;
-      background: linear-gradient(135deg, var(--color-primary, #1e40af), var(--color-primary-light, #3b82f6));
-      border-radius: var(--radius-lg, 0.5rem);
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+      border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 700;
-      font-size: 0.875rem;
+      font-size: var(--text-sm);
       letter-spacing: -0.02em;
-      box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
-      transition: all var(--transition-normal, 0.3s);
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-normal);
     }
     
     .logo-icon:hover {
       transform: scale(1.05);
-      box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+      box-shadow: var(--shadow-md);
     }
     
     .title {
-      font-size: var(--text-lg, 1.125rem);
+      font-size: var(--text-lg);
       font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
     }
     
     .status-indicators {
@@ -98,13 +100,14 @@ export class AppHeader extends LitElement {
     .status-indicator {
       display: flex;
       align-items: center;
-      gap: var(--space-1, 0.25rem);
-      font-size: var(--text-xs, 0.75rem);
-      padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-      border-radius: var(--radius-md, 0.375rem);
+      gap: var(--space-1);
+      font-size: var(--text-xs);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-md);
       font-weight: 600;
-      transition: all var(--transition-normal, 0.3s);
+      transition: all var(--transition-normal);
       white-space: nowrap;
+      letter-spacing: 0.025em;
     }
     
     .status-online {
@@ -161,20 +164,21 @@ export class AppHeader extends LitElement {
     }
     
     .status-count {
-      background: var(--color-surface-secondary, #f3f4f6);
-      color: var(--color-text-secondary, #374151);
-      font-size: var(--text-xs, 0.6875rem);
-      padding: var(--space-1, 0.125rem) var(--space-2, 0.375rem);
-      border-radius: var(--radius-md, 0.25rem);
+      background: var(--color-surface-secondary);
+      color: var(--color-text-secondary);
+      font-size: var(--text-xs);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-md);
       font-weight: 700;
-      border: 1px solid var(--color-border, #e5e7eb);
-      transition: all var(--transition-normal, 0.3s);
+      border: 1px solid var(--color-border);
+      transition: all var(--transition-normal);
+      letter-spacing: 0.025em;
     }
     
     .status-count:hover {
-      background: var(--color-primary-alpha, rgba(59, 130, 246, 0.1));
-      border-color: var(--color-primary, #3b82f6);
-      color: var(--color-primary, #3b82f6);
+      background: var(--color-primary-alpha);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
     }
 
     .menu-button {
@@ -221,7 +225,7 @@ export class AppHeader extends LitElement {
     /* Mobile optimizations */
     @media (max-width: 768px) {
       .header {
-        padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+        padding: var(--space-3) var(--space-4);
         min-height: 56px;
       }
       
@@ -230,12 +234,12 @@ export class AppHeader extends LitElement {
       }
       
       .status-indicator {
-        font-size: var(--text-xs, 0.625rem);
-        padding: var(--space-1, 0.25rem);
+        font-size: 0.625rem; /* Extra small for mobile */
+        padding: var(--space-1);
       }
       
       .status-indicators {
-        gap: var(--space-1, 0.25rem);
+        gap: var(--space-1);
       }
       
       .menu-button {
