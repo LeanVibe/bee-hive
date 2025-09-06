@@ -41,7 +41,7 @@ test.describe('API Endpoint Discovery and Validation', () => {
     expect(openApiSchema).toHaveProperty('openapi');
     expect(openApiSchema).toHaveProperty('info');
     expect(openApiSchema).toHaveProperty('paths');
-    expect(openApiSchema.info.title).toBe('LeanVibe Agent Hive 2.0');
+    expect(openApiSchema.info.title).toBe('HiveOps');
     expect(openApiSchema.info.version).toBe('2.0.0');
     
     // Count all endpoints

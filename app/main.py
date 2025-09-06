@@ -250,7 +250,7 @@ def create_app() -> FastAPI:
     from .api.v2 import api_router as api_v2_router
 
     app = FastAPI(
-        title="LeanVibe Agent Hive 2.0 - Consolidated API",
+        title="HiveOps - Consolidated API",
         description="Multi-Agent Orchestration System with 96→15 module consolidation (84% reduction)",
         version="2.0.0",
         lifespan=lifespan,
@@ -674,7 +674,7 @@ leanvibe_uptime_seconds 0
 if os.environ.get("CI") == "true":
     from fastapi import FastAPI as _FastAPI
 
-    app = _FastAPI(title="LeanVibe Agent Hive 2.0", version="2.0.0")
+    app = _FastAPI(title="HiveOps", version="2.0.0")
 
     @app.get("/health")
     async def _ci_health():

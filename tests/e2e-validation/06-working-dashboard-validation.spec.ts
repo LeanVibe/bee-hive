@@ -14,7 +14,7 @@ test.describe('Working Dashboard Validation', () => {
     
     // Check for dashboard title
     const title = await page.title();
-    expect(title).toContain('LeanVibe Agent Hive 2.0');
+    expect(title).toContain('HiveOps');
     
     // Check if agent data is displayed
     const pageContent = await page.textContent('body');
