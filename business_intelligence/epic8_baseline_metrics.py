@@ -12,12 +12,19 @@ Comprehensive baseline metrics establishment for Epic 8 business value delivery:
 """
 
 import json
+import sys
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 import structlog
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from app.common.script_base import ScriptBase
 
 logger = structlog.get_logger()
 
@@ -65,7 +72,7 @@ class BusinessValueBaseline:
     recommendations: List[str] = field(default_factory=list)
 
 
-class Epic8BaselineEstablisher:
+class Epic8BaselineEstablisher(ScriptBase):
     """
     Epic 8 business value baseline establishment system.
     
@@ -74,6 +81,7 @@ class Epic8BaselineEstablisher:
     """
     
     def __init__(self):
+        super().__init__("Epic8BaselineEstablisher")
         self.system_version = "2.0.0-epic7-phase3"
         self.environment = "production"
         
@@ -88,6 +96,31 @@ class Epic8BaselineEstablisher:
         }
         
         logger.info("📊 Epic 8 Baseline Establisher initialized for business value measurement")
+        
+    async def run(self) -> Dict[str, Any]:
+        """Execute Epic 8 baseline establishment and return results."""
+        baseline = await self.establish_comprehensive_baseline()
+        export_data = self.export_baseline_for_epic8(baseline)
+        
+        return {
+            "status": "success",
+            "message": "Epic 8 business value baseline established successfully",
+            "data": export_data,
+            "metrics": {
+                "confidence_score": baseline.baseline_confidence_score,
+                "readiness_score": baseline.epic8_readiness_score,
+                "total_metrics": sum([
+                    len(baseline.operational_excellence),
+                    len(baseline.user_experience),
+                    len(baseline.business_productivity),
+                    len(baseline.cost_optimization),
+                    len(baseline.developer_productivity),
+                    len(baseline.quality_improvement),
+                    len(baseline.innovation_enablement)
+                ])
+            },
+            "recommendations": baseline.recommendations[:10]
+        }
         
     async def establish_comprehensive_baseline(self) -> BusinessValueBaseline:
         """Establish comprehensive business value baseline for Epic 8."""
@@ -818,41 +851,8 @@ class Epic8BaselineEstablisher:
             return {}
 
 
-# Global Epic 8 baseline establisher instance
+# Standardized script execution pattern
 epic8_baseline_establisher = Epic8BaselineEstablisher()
 
-
-async def establish_epic8_baseline():
-    """Establish comprehensive Epic 8 business value baseline."""
-    try:
-        baseline = await epic8_baseline_establisher.establish_comprehensive_baseline()
-        export_data = epic8_baseline_establisher.export_baseline_for_epic8(baseline)
-        
-        logger.info("🎯 Epic 8 baseline established successfully",
-                   confidence_score=baseline.baseline_confidence_score,
-                   readiness_score=baseline.epic8_readiness_score,
-                   total_metrics=sum([
-                       len(baseline.operational_excellence),
-                       len(baseline.user_experience),
-                       len(baseline.business_productivity),
-                       len(baseline.cost_optimization),
-                       len(baseline.developer_productivity),
-                       len(baseline.quality_improvement),
-                       len(baseline.innovation_enablement)
-                   ]))
-                   
-        return export_data
-        
-    except Exception as e:
-        logger.error("❌ Failed to establish Epic 8 baseline", error=str(e))
-        raise
-
-
 if __name__ == "__main__":
-    import asyncio
-    
-    async def main():
-        baseline_data = await establish_epic8_baseline()
-        print(json.dumps(baseline_data, indent=2))
-        
-    asyncio.run(main())
+    epic8_baseline_establisher.execute()
