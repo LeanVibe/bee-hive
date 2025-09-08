@@ -31,6 +31,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ScriptBase import for standardized execution
+from app.common.script_base import ScriptBase
+
 
 class CleanupPhase(Enum):
     """Legacy cleanup phases"""
@@ -1024,16 +1027,27 @@ async def main():
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    from app.common.utilities.script_base import BaseScript, script_main
+class CleanupLegacyCodeScript(ScriptBase):
+    """Legacy code cleanup using ScriptBase pattern."""
     
-    class CleanupLegacyCodeScript(BaseScript):
-        """Refactored script using standardized pattern."""
-        
-        async def execute(self):
-            """Execute the main script logic."""
+    async def run(self) -> Dict[str, Any]:
+        """Execute the legacy code cleanup."""
+        try:
             await main()
-            
-            return {"status": "completed"}
-    
-    script_main(CleanupLegacyCodeScript)
+            return {
+                "status": "success",
+                "message": "Legacy code cleanup completed successfully"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "message": "Legacy code cleanup failed"
+            }
+
+
+# Create script instance
+script = CleanupLegacyCodeScript()
+
+if __name__ == "__main__":
+    script.execute()

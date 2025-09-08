@@ -50,6 +50,9 @@ from app.core.secret_manager import SecretManager
 from app.core.oauth_provider import OAuthProvider, OAuthToken, OIDCClaims
 from app.core.jwt_validator import JWTValidator, TokenValidationResult
 
+# ScriptBase import for standardized execution
+from app.common.script_base import ScriptBase
+
 
 @dataclass
 class MockOAuthToken:
@@ -1239,12 +1242,35 @@ async def test_generate_security_integration_report():
     return security_report
 
 
+class SecurityIntegrationComprehensiveTestScript(ScriptBase):
+    """Standardized security integration test execution using ScriptBase pattern."""
+    
+    async def run(self) -> Dict[str, Any]:
+        """Execute comprehensive security integration tests."""
+        import subprocess
+        import sys
+        
+        # Run pytest with the same configuration
+        result = subprocess.run([
+            sys.executable, "-m", "pytest",
+            __file__,
+            "-v",
+            "--tb=short",
+            "-k", "test_security_integration_comprehensive",
+            "--asyncio-mode=auto"
+        ], capture_output=True, text=True)
+        
+        return {
+            "status": "success" if result.returncode == 0 else "error",
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "message": f"Security integration tests {'passed' if result.returncode == 0 else 'failed'}"
+        }
+
+
+# Create script instance
+script = SecurityIntegrationComprehensiveTestScript()
+
 if __name__ == "__main__":
-    # Run comprehensive security integration tests
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-k", "test_security_integration_comprehensive",
-        "--asyncio-mode=auto"
-    ])
+    script.execute()

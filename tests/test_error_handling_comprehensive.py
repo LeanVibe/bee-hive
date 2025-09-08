@@ -55,6 +55,9 @@ from app.core.error_handling_integration import (
     ErrorHandlingObservabilityIntegration, get_error_handling_integration
 )
 
+# ScriptBase import for standardized execution
+from app.common.script_base import ScriptBase
+
 
 class TestCircuitBreaker:
     """Test suite for circuit breaker implementation."""
@@ -1235,13 +1238,36 @@ class TestPerformanceAndReliability:
         assert state == CircuitBreakerState.CLOSED
 
 
-# Run tests with coverage
+class ErrorHandlingComprehensiveTestScript(ScriptBase):
+    """Standardized error handling test execution with coverage using ScriptBase pattern."""
+    
+    async def run(self) -> Dict[str, Any]:
+        """Execute comprehensive error handling tests with coverage."""
+        import subprocess
+        import sys
+        
+        # Run pytest with coverage configuration
+        result = subprocess.run([
+            sys.executable, "-m", "pytest",
+            __file__,
+            "-v",
+            "--cov=app.core",
+            "--cov-report=html", 
+            "--cov-report=term-missing",
+            "--cov-fail-under=85"
+        ], capture_output=True, text=True)
+        
+        return {
+            "status": "success" if result.returncode == 0 else "error",
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "message": f"Error handling tests with coverage {'passed' if result.returncode == 0 else 'failed'}"
+        }
+
+
+# Create script instance
+script = ErrorHandlingComprehensiveTestScript()
+
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--cov=app.core",
-        "--cov-report=html",
-        "--cov-report=term-missing",
-        "--cov-fail-under=85"
-    ])
+    script.execute()
