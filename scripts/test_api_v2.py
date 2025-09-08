@@ -404,15 +404,24 @@ async def main():
         return False
 
 
+from app.common.script_base import ScriptBase
+
+
+class APIv2TestScript(ScriptBase):
+    """API v2 comprehensive testing script."""
+    
+    async def run(self):
+        success = await main()
+        
+        return {
+            "status": "success" if success else "error",
+            "message": "API v2 tests completed",
+            "tests_passed": success
+        }
+
+
+# Standardized script execution pattern
+test_script = APIv2TestScript()
+
 if __name__ == "__main__":
-    try:
-        success = asyncio.run(main())
-        sys.exit(0 if success else 1)
-    except KeyboardInterrupt:
-        print("\n⏹️ Tests interrupted by user")
-        sys.exit(130)
-    except Exception as e:
-        print(f"\n💥 Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    test_script.execute()

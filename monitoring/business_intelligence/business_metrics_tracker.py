@@ -679,9 +679,13 @@ async def init_business_tracker():
     logger.info("🎯 Initializing Business Metrics Tracker for Epic 7 Phase 3")
     
 
-if __name__ == "__main__":
-    # Test the business metrics tracker
-    async def test_tracker():
+from app.common.script_base import ScriptBase
+
+
+class BusinessMetricsTestScript(ScriptBase):
+    """Test script for business metrics tracker."""
+    
+    async def run(self):
         await init_business_tracker()
         
         # Simulate user registration
@@ -709,6 +713,16 @@ if __name__ == "__main__":
         
         # Generate business intelligence report
         report = await business_tracker.generate_business_intelligence_report(None)
-        print(json.dumps(report, indent=2))
         
-    asyncio.run(test_tracker())
+        return {
+            "status": "success",
+            "message": "Business metrics tracker test completed successfully",
+            "report": report
+        }
+
+
+# Standardized script execution pattern
+test_script = BusinessMetricsTestScript()
+
+if __name__ == "__main__":
+    test_script.execute()
