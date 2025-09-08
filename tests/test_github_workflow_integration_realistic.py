@@ -43,6 +43,9 @@ from app.models.github_integration import (
     WorkTreeStatus, PullRequestStatus, IssueStatus
 )
 
+# ScriptBase import for standardized execution
+from app.common.script_base import ScriptBase
+
 
 @dataclass
 class MockRepository:
@@ -1617,12 +1620,35 @@ async def test_generate_github_integration_report():
     return github_report
 
 
+class GitHubWorkflowIntegrationTestScript(ScriptBase):
+    """Standardized test execution using ScriptBase pattern."""
+    
+    async def run(self) -> Dict[str, Any]:
+        """Execute the GitHub workflow integration tests."""
+        import subprocess
+        import sys
+        
+        # Run pytest with the same configuration
+        result = subprocess.run([
+            sys.executable, "-m", "pytest",
+            __file__,
+            "-v",
+            "--tb=short", 
+            "-k", "test_github_workflow_integration_realistic",
+            "--asyncio-mode=auto"
+        ], capture_output=True, text=True)
+        
+        return {
+            "status": "success" if result.returncode == 0 else "error",
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "message": f"Tests {'passed' if result.returncode == 0 else 'failed'}"
+        }
+
+
+# Create script instance
+script = GitHubWorkflowIntegrationTestScript()
+
 if __name__ == "__main__":
-    # Run realistic GitHub workflow integration tests
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-k", "test_github_workflow_integration_realistic",
-        "--asyncio-mode=auto"
-    ])
+    script.execute()

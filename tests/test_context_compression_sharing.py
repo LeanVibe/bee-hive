@@ -59,6 +59,9 @@ from tests.factories import (
     create_test_agent_expertise, create_test_memory_items
 )
 
+# ScriptBase import for standardized execution
+from app.common.script_base import ScriptBase
+
 
 # =============================================================================
 # PERFORMANCE TEST TARGETS
@@ -1461,5 +1464,33 @@ async def test_performance_validation_summary():
     assert True  # Placeholder - real validation happens in individual tests
 
 
+class ContextCompressionSharingTestScript(ScriptBase):
+    """Standardized test execution using ScriptBase pattern."""
+    
+    async def run(self) -> Dict[str, Any]:
+        """Execute context compression and sharing tests."""
+        import subprocess
+        import sys
+        
+        # Run pytest with the same configuration
+        result = subprocess.run([
+            sys.executable, "-m", "pytest",
+            __file__,
+            "-v", 
+            "--tb=short"
+        ], capture_output=True, text=True)
+        
+        return {
+            "status": "success" if result.returncode == 0 else "error",
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "message": f"Context compression tests {'passed' if result.returncode == 0 else 'failed'}"
+        }
+
+
+# Create script instance
+script = ContextCompressionSharingTestScript()
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+    script.execute()

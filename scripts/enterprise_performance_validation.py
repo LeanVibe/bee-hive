@@ -29,6 +29,9 @@ import subprocess
 
 import structlog
 
+# ScriptBase import for standardized execution
+from app.common.script_base import ScriptBase
+
 # Configure logging
 structlog.configure(
     processors=[
@@ -1172,22 +1175,27 @@ async def main():
         await validator.teardown()
 
 
-if __name__ == "__main__":
-    from app.common.utilities.script_base import BaseScript, script_main
+class EnterprisePerformanceValidationScript(ScriptBase):
+    """Enterprise performance validation using ScriptBase pattern."""
     
-    class EnterprisePerformanceValidationScript(BaseScript):
-        """Refactored script using standardized pattern."""
-        
-        async def execute(self):
-            """Execute the main script logic."""
-            import sys
-
-            # Run validation
+    async def run(self) -> Dict[str, Any]:
+        """Execute the enterprise performance validation."""
+        try:
             await main()
+            return {
+                "status": "success",
+                "message": "Enterprise performance validation completed successfully"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "message": "Enterprise performance validation failed"
+            }
 
-            # Exit with appropriate code
-            sys.exit(0 if success else 1)
-            
-            return {"status": "completed"}
-    
-    script_main(EnterprisePerformanceValidationScript)
+
+# Create script instance
+script = EnterprisePerformanceValidationScript()
+
+if __name__ == "__main__":
+    script.execute()
