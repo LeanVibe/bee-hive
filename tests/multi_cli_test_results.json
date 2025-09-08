@@ -1,0 +1,138 @@
+{
+  "test_run_summary": {
+    "start_time": 1757184383.1960561,
+    "end_time": 1757184383.7033741,
+    "total_duration": 0.5073180198669434,
+    "suites_executed": 1,
+    "suites_passed": 0,
+    "suites_failed": 1,
+    "suites_error": 0,
+    "suites_skipped": 0,
+    "total_tests": 3,
+    "total_passed": 1,
+    "total_failed": 2,
+    "overall_pass_rate": 33.33333333333333,
+    "overall_status": "FAILED"
+  },
+  "suite_results": [
+    {
+      "suite_name": "foundation",
+      "status": "failed",
+      "duration": 0.5071220397949219,
+      "tests_executed": 3,
+      "tests_passed": 1,
+      "tests_failed": 2,
+      "pass_rate": 33.33333333333333,
+      "error_message": null
+    }
+  ],
+  "detailed_results": {
+    "foundation": {
+      "start_time": 1757184383.244222,
+      "scenarios_executed": 3,
+      "scenarios_passed": 1,
+      "scenarios_failed": 2,
+      "detailed_results": [
+        {
+          "scenario_name": "Sequential Development Workflow",
+          "start_time": 1757184383.244268,
+          "steps": [
+            {
+              "step_index": 0,
+              "step_name": "Code Analysis",
+              "start_time": 1757184383.3153129,
+              "status": "completed",
+              "agent_result": {
+                "status": "completed",
+                "result": "Mock task analyze_code completed successfully",
+                "execution_time": 0.1,
+                "files_modified": [
+                  "mock_file.py"
+                ],
+                "context_updates": {
+                  "mock_key": "mock_value"
+                }
+              },
+              "end_time": 1757184383.4162838,
+              "duration": 0.10097098350524902
+            },
+            {
+              "step_index": 1,
+              "step_name": "Feature Implementation",
+              "start_time": 1757184383.416289,
+              "status": "completed",
+              "agent_result": {
+                "status": "completed",
+                "result": "Mock task implement_feature completed successfully",
+                "execution_time": 0.1,
+                "files_modified": [
+                  "mock_file.py"
+                ],
+                "context_updates": {
+                  "mock_key": "mock_value"
+                }
+              },
+              "end_time": 1757184383.5173912,
+              "duration": 0.10110211372375488
+            },
+            {
+              "step_index": 2,
+              "step_name": "Test Creation",
+              "start_time": 1757184383.5173938,
+              "status": "completed",
+              "agent_result": {
+                "status": "completed",
+                "result": "Mock task create_tests completed successfully",
+                "execution_time": 0.1,
+                "files_modified": [
+                  "mock_file.py"
+                ],
+                "context_updates": {
+                  "mock_key": "mock_value"
+                }
+              },
+              "end_time": 1757184383.618489,
+              "duration": 0.10109519958496094
+            }
+          ],
+          "agents_used": [
+            "claude_code_0",
+            "cursor_1",
+            "gemini_cli_2"
+          ],
+          "status": "completed",
+          "end_time": 1757184383.618495,
+          "duration": 0.37422704696655273
+        },
+        {
+          "scenario_name": "Parallel Component Development",
+          "start_time": 1757184383.618541,
+          "steps": [],
+          "agents_used": [],
+          "status": "error",
+          "error": "Failed to create worktree for claude_code_0: Cmd('git') failed due to: exit code(128)\n  cmdline: git worktree add /var/folders/h4/rhh6b9dd7779n60jjvzcpx580000gn/T/multi_cli_test_idpmxkvm/worktree_claude_code_0 test_Parallel_Component_Development_claude_code_0\n  stderr: 'Preparing worktree (checking out 'test_Parallel_Component_Development_claude_code_0')\nfatal: '/var/folders/h4/rhh6b9dd7779n60jjvzcpx580000gn/T/multi_cli_test_idpmxkvm/worktree_claude_code_0' already exists'",
+          "end_time": 1757184383.634294,
+          "duration": 0.01575303077697754
+        },
+        {
+          "scenario_name": "Error Recovery Workflow",
+          "start_time": 1757184383.634345,
+          "steps": [],
+          "agents_used": [],
+          "status": "error",
+          "error": "Failed to create worktree for claude_code_0: Cmd('git') failed due to: exit code(128)\n  cmdline: git worktree add /var/folders/h4/rhh6b9dd7779n60jjvzcpx580000gn/T/multi_cli_test_idpmxkvm/worktree_claude_code_0 test_Error_Recovery_Workflow_claude_code_0\n  stderr: 'Preparing worktree (checking out 'test_Error_Recovery_Workflow_claude_code_0')\nfatal: '/var/folders/h4/rhh6b9dd7779n60jjvzcpx580000gn/T/multi_cli_test_idpmxkvm/worktree_claude_code_0' already exists'",
+          "end_time": 1757184383.6480691,
+          "duration": 0.013724088668823242
+        }
+      ],
+      "summary": {
+        "total_scenarios": 3,
+        "pass_rate": 33.33333333333333,
+        "average_duration": 0.13462702433268228,
+        "status": "FAILED"
+      },
+      "end_time": 1757184383.648103,
+      "total_duration": 0.4038810729980469
+    }
+  }
+}
