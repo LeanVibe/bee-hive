@@ -1,0 +1,525 @@
+---
+# Advanced Horizontal Pod Autoscaler with custom metrics
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: leanvibe-api-advanced-hpa
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-api
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+  # CPU utilization target
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  # Memory utilization target  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Custom metric: Active agents per pod
+  - type: Pods
+    pods:
+      metric:
+        name: active_agents_per_pod
+      target:
+        type: AverageValue
+        averageValue: "10"
+  # Custom metric: Concurrent users per pod
+  - type: Pods
+    pods:
+      metric:
+        name: concurrent_users_per_pod
+      target:
+        type: AverageValue
+        averageValue: "200"
+  # Custom metric: Average response time
+  - type: Pods
+    pods:
+      metric:
+        name: avg_response_time_ms
+      target:
+        type: AverageValue
+        averageValue: "400"
+  # Custom metric: Error rate threshold
+  - type: Pods
+    pods:
+      metric:
+        name: error_rate_percent
+      target:
+        type: AverageValue
+        averageValue: "0.5"
+  # External metric: Queue depth in Redis
+  - type: External
+    external:
+      metric:
+        name: redis_queue_depth
+        selector:
+          matchLabels:
+            queue_type: "agent_tasks"
+      target:
+        type: AverageValue
+        averageValue: "50"
+  behavior:
+    scaleUp:
+      # Allow fast scale-up for performance issues
+      stabilizationWindowSeconds: 60
+      policies:
+      # Aggressive scaling for emergency conditions
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      # Conservative scaling for normal conditions
+      - type: Percent
+        value: 50
+        periodSeconds: 120
+      # Pod-based scaling for precise control
+      - type: Pods
+        value: 5
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      # Conservative scale-down to prevent thrashing
+      stabilizationWindowSeconds: 300
+      policies:
+      # Gradual scale-down
+      - type: Percent
+        value: 25
+        periodSeconds: 300
+      # Minimum pod removal rate
+      - type: Pods
+        value: 2
+        periodSeconds: 300
+      selectPolicy: Min
+
+---
+# Vertical Pod Autoscaler for right-sizing
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: leanvibe-api-vpa
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-api
+  updatePolicy:
+    updateMode: "Auto"
+    minReplicas: 3
+  resourcePolicy:
+    containerPolicies:
+    - containerName: api
+      # CPU recommendations
+      minAllowed:
+        cpu: 100m
+        memory: 512Mi
+      maxAllowed:
+        cpu: 4000m
+        memory: 8Gi
+      # Resource scaling mode
+      mode: Auto
+      # CPU scaling preference
+      controlledResources: ["cpu", "memory"]
+    - containerName: db-migration
+      mode: "Off"  # Don't scale init containers
+
+---
+# Pod Disruption Budget for high availability during scaling
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: leanvibe-api-advanced-pdb
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  # Ensure at least 60% of pods remain available during disruptions
+  minAvailable: 60%
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: api
+
+---
+# Service Monitor for Prometheus metrics collection
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: leanvibe-api-scaling-metrics
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: api
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s
+    metricRelabelings:
+    # Relabel metrics for scaling decisions
+    - sourceLabels: [__name__]
+      targetLabel: scaling_metric
+      regex: '(.*_response_time|.*_error_rate|.*_concurrent_users|.*_active_agents).*'
+      replacement: 'true'
+
+---
+# Custom Resource Definition for Scaling Policies
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: scalingpolicies.scaling.leanvibe.com
+spec:
+  group: scaling.leanvibe.com
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              target:
+                type: object
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    type: string
+                  name:
+                    type: string
+              thresholds:
+                type: object
+                properties:
+                  cpu:
+                    type: object
+                    properties:
+                      scaleUp:
+                        type: number
+                      scaleDown:
+                        type: number
+                      emergency:
+                        type: number
+                  memory:
+                    type: object
+                    properties:
+                      scaleUp:
+                        type: number
+                      scaleDown:
+                        type: number
+                      emergency:
+                        type: number
+                  responseTime:
+                    type: object
+                    properties:
+                      scaleUp:
+                        type: number
+                      emergency:
+                        type: number
+                  errorRate:
+                    type: object
+                    properties:
+                      scaleUp:
+                        type: number
+                      emergency:
+                        type: number
+              scalingBehavior:
+                type: object
+                properties:
+                  scaleUpStabilizationSeconds:
+                    type: integer
+                  scaleDownStabilizationSeconds:
+                    type: integer
+                  maxScaleUpPods:
+                    type: integer
+                  maxScaleDownPods:
+                    type: integer
+              performanceTargets:
+                type: object
+                properties:
+                  maxResponseTimeMs:
+                    type: number
+                  minThroughputRps:
+                    type: number
+                  maxErrorRate:
+                    type: number
+                  targetAvailability:
+                    type: number
+          status:
+            type: object
+            properties:
+              currentReplicas:
+                type: integer
+              targetReplicas:
+                type: integer
+              lastScalingTime:
+                type: string
+              scalingDecision:
+                type: string
+              confidence:
+                type: number
+  scope: Namespaced
+  names:
+    plural: scalingpolicies
+    singular: scalingpolicy
+    kind: ScalingPolicy
+
+---
+# Default Scaling Policy for LeanVibe API
+apiVersion: scaling.leanvibe.com/v1
+kind: ScalingPolicy
+metadata:
+  name: leanvibe-api-default-policy
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  target:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leanvibe-api
+  thresholds:
+    cpu:
+      scaleUp: 70.0
+      scaleDown: 30.0
+      emergency: 90.0
+    memory:
+      scaleUp: 80.0
+      scaleDown: 40.0
+      emergency: 95.0
+    responseTime:
+      scaleUp: 500.0
+      emergency: 2000.0
+    errorRate:
+      scaleUp: 1.0
+      emergency: 5.0
+  scalingBehavior:
+    scaleUpStabilizationSeconds: 60
+    scaleDownStabilizationSeconds: 300
+    maxScaleUpPods: 5
+    maxScaleDownPods: 2
+  performanceTargets:
+    maxResponseTimeMs: 500.0
+    minThroughputRps: 1000.0
+    maxErrorRate: 0.001
+    targetAvailability: 0.999
+
+---
+# Network Policy for scaling automation components
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: scaling-automation-network-policy
+  labels:
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow metrics collection
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+  # Allow health checks from ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow internal service communication
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: leanvibe-agent-hive
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow database connections
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: leanvibe-agent-hive
+          app.kubernetes.io/component: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow Redis connections
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: leanvibe-agent-hive
+          app.kubernetes.io/component: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS for external APIs
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# ConfigMap for scaling automation configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scaling-automation-config
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+data:
+  # Scaling thresholds
+  cpu_scale_up_threshold: "70.0"
+  cpu_scale_down_threshold: "30.0"
+  cpu_emergency_threshold: "90.0"
+  memory_scale_up_threshold: "80.0"
+  memory_scale_down_threshold: "40.0"
+  memory_emergency_threshold: "95.0"
+  response_time_scale_up_threshold: "500.0"
+  response_time_emergency_threshold: "2000.0"
+  error_rate_scale_up_threshold: "1.0"
+  error_rate_emergency_threshold: "5.0"
+  
+  # Scaling behavior
+  scale_up_stabilization_seconds: "60"
+  scale_down_stabilization_seconds: "300"
+  emergency_override_seconds: "30"
+  max_scale_up_pods: "5"
+  max_scale_down_pods: "2"
+  
+  # Replica limits
+  min_replicas: "3"
+  max_replicas: "50"
+  concurrent_users_per_pod: "200"
+  
+  # Performance targets for Epic 3 Phase 2
+  max_response_time_ms: "500.0"
+  min_throughput_rps: "1000.0"
+  max_error_rate: "0.001"
+  target_availability: "0.999"
+  target_concurrent_users: "10000"
+  
+  # Feature flags
+  enable_predictive_scaling: "true"
+  enable_custom_metrics: "true"
+  enable_vpa: "true"
+  enable_emergency_scaling: "true"
+  
+  # Monitoring configuration
+  metrics_collection_interval_seconds: "15"
+  metrics_retention_hours: "24"
+  scaling_history_retention_count: "100"
+
+---
+# RBAC for scaling automation system
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scaling-automation
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: scaling-automation
+  labels:
+    scaling.leanvibe.com/epic: "3-phase-2"
+rules:
+# Deployment management
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "watch", "update", "patch"]
+# Pod management
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+# HPA management
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# VPA management
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+# Metrics access
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+# Custom metrics access
+- apiGroups: ["custom.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list"]
+# External metrics access
+- apiGroups: ["external.metrics.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list"]
+# Custom scaling policies
+- apiGroups: ["scaling.leanvibe.com"]
+  resources: ["scalingpolicies"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Events for logging
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: scaling-automation
+  labels:
+    scaling.leanvibe.com/epic: "3-phase-2"
+subjects:
+- kind: ServiceAccount
+  name: scaling-automation
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: scaling-automation
+  apiGroup: rbac.authorization.k8s.io

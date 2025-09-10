@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 LeanVibe Frontend-Backend Integration Test</h1>
+        
+        <div class="test-section">
+            <h2>📡 API Connectivity Tests</h2>
+            <button onclick="testHealthEndpoint()">Test Health Endpoint</button>
+            <button onclick="testStatusEndpoint()">Test Status Endpoint</button>
+            <button onclick="testAPIInfo()">Test API Info</button>
+            <button onclick="testPostRequest()">Test POST Request</button>
+            <button onclick="testGetData()">Test Get Data</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+            
+            <div id="health-result" class="test-result" style="display: none;"></div>
+            <div id="status-result" class="test-result" style="display: none;"></div>
+            <div id="api-info-result" class="test-result" style="display: none;"></div>
+            <div id="post-result" class="test-result" style="display: none;"></div>
+            <div id="data-result" class="test-result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Test Results Summary</h2>
+            <div id="summary" class="test-result loading">
+                Click "Run All Tests" to see results summary
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Configuration Info</h2>
+            <pre id="config-info">
+Backend Server: http://localhost:8000
+Frontend Origin: http://localhost:3001
+CORS Enabled: Yes
+Test Framework: Native JavaScript Fetch API
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let testResults = {};
+
+        function showResult(elementId, success, message, data = null) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = success ? 'test-result success' : 'test-result error';
+            
+            let content = `<strong>${success ? '✅' : '❌'} ${message}</strong>`;
+            if (data) {
+                content += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            element.innerHTML = content;
+            
+            return success;
+        }
+
+        function showLoading(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'test-result loading';
+            element.innerHTML = `<strong>⏳ ${message}</strong>`;
+        }
+
+        async function testHealthEndpoint() {
+            const testName = 'Health Endpoint';
+            showLoading('health-result', `Testing ${testName}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testResults.health = showResult('health-result', true, `${testName} - Success`, data);
+                } else {
+                    testResults.health = showResult('health-result', false, `${testName} - HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                testResults.health = showResult('health-result', false, `${testName} - Network Error: ${error.message}`);
+            }
+        }
+
+        async function testStatusEndpoint() {
+            const testName = 'Status Endpoint';
+            showLoading('status-result', `Testing ${testName}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testResults.status = showResult('status-result', true, `${testName} - Success`, data);
+                } else {
+                    testResults.status = showResult('status-result', false, `${testName} - HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                testResults.status = showResult('status-result', false, `${testName} - Network Error: ${error.message}`);
+            }
+        }
+
+        async function testAPIInfo() {
+            const testName = 'API Info Endpoint';
+            showLoading('api-info-result', `Testing ${testName}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/info`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testResults.apiInfo = showResult('api-info-result', true, `${testName} - Success`, data);
+                } else {
+                    testResults.apiInfo = showResult('api-info-result', false, `${testName} - HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                testResults.apiInfo = showResult('api-info-result', false, `${testName} - Network Error: ${error.message}`);
+            }
+        }
+
+        async function testPostRequest() {
+            const testName = 'POST Request';
+            showLoading('post-result', `Testing ${testName}...`);
+            
+            try {
+                const testData = {
+                    test: 'frontend-backend-integration',
+                    timestamp: new Date().toISOString(),
+                    origin: 'frontend-test'
+                };
+                
+                const response = await fetch(`${API_BASE}/api/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testResults.post = showResult('post-result', true, `${testName} - Success`, data);
+                } else {
+                    testResults.post = showResult('post-result', false, `${testName} - HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                testResults.post = showResult('post-result', false, `${testName} - Network Error: ${error.message}`);
+            }
+        }
+
+        async function testGetData() {
+            const testName = 'Get Test Data';
+            showLoading('data-result', `Testing ${testName}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/test-data`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testResults.data = showResult('data-result', true, `${testName} - Success`, data);
+                } else {
+                    testResults.data = showResult('data-result', false, `${testName} - HTTP ${response.status}`, data);
+                }
+            } catch (error) {
+                testResults.data = showResult('data-result', false, `${testName} - Network Error: ${error.message}`);
+            }
+        }
+
+        async function runAllTests() {
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            try {
+                await testHealthEndpoint();
+                await testStatusEndpoint();
+                await testAPIInfo();
+                await testPostRequest();
+                await testGetData();
+                
+                updateSummary();
+            } finally {
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function updateSummary() {
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(result => result).length;
+            const failed = total - passed;
+            
+            const summaryElement = document.getElementById('summary');
+            const success = failed === 0;
+            
+            summaryElement.className = success ? 'test-result success' : 'test-result error';
+            summaryElement.innerHTML = `
+                <strong>📋 Test Results Summary</strong><br>
+                Total Tests: ${total}<br>
+                Passed: ${passed} ✅<br>
+                Failed: ${failed} ❌<br>
+                Success Rate: ${Math.round((passed / total) * 100)}%<br><br>
+                ${success ? '🎉 All tests passed! Frontend-backend connectivity is working correctly.' : '⚠️ Some tests failed. Check individual test results above.'}
+            `;
+        }
+
+        // Auto-run basic connectivity test on page load
+        window.addEventListener('load', async () => {
+            console.log('🚀 Frontend-Backend Integration Test initialized');
+            console.log('Backend URL:', API_BASE);
+            
+            // Quick connectivity check
+            try {
+                await fetch(`${API_BASE}/health`);
+                console.log('✅ Backend is reachable');
+            } catch (error) {
+                console.error('❌ Backend connection failed:', error.message);
+            }
+        });
+    </script>
+</body>
+</html>

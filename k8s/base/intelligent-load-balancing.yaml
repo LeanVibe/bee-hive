@@ -1,0 +1,707 @@
+---
+# Intelligent Load Balancing and Traffic Management
+# Epic 3 Phase 2: Advanced traffic routing with failover, rate limiting, and DDoS protection
+
+# Ingress Controller Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller-config
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    scaling.leanvibe.com/epic: "3-phase-2"
+data:
+  # Global rate limiting
+  rate-limit-rps: "1000"
+  rate-limit-connections: "100"
+  
+  # Connection settings for high concurrency
+  worker-processes: "auto"
+  max-worker-connections: "16384"
+  worker-rlimit-nofile: "65535"
+  
+  # Keepalive settings
+  upstream-keepalive-connections: "320"
+  upstream-keepalive-requests: "10000"
+  upstream-keepalive-timeout: "60"
+  
+  # Buffer sizes for performance
+  client-body-buffer-size: "128k"
+  client-header-buffer-size: "64k"
+  large-client-header-buffers: "8 64k"
+  proxy-buffer-size: "128k"
+  proxy-buffers: "4 256k"
+  
+  # Security settings
+  hide-headers: "Server,X-Powered-By"
+  ssl-protocols: "TLSv1.2 TLSv1.3"
+  ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+  
+  # DDoS protection
+  limit-req-status-code: "429"
+  limit-conn-status-code: "429"
+  enable-real-ip: "true"
+  
+  # Health monitoring
+  enable-opentracing: "true"
+  jaeger-collector-host: "jaeger-collector.monitoring.svc.cluster.local"
+  
+  # Performance optimizations
+  enable-brotli: "true"
+  gzip-level: "6"
+  gzip-types: "application/json application/javascript text/css text/javascript text/plain text/xml"
+  
+  # Custom error pages
+  custom-http-errors: "400,401,403,404,405,408,410,411,412,413,414,415,416,417,418,421,425,429,431,451,500,501,502,503,504,505,506,507,508,510,511"
+
+---
+# Advanced Ingress with multiple routing strategies
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: leanvibe-intelligent-ingress
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+  annotations:
+    # Ingress class
+    kubernetes.io/ingress.class: "nginx"
+    
+    # SSL and certificates
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # Load balancing configuration
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr consistent"
+    nginx.ingress.kubernetes.io/load-balance: "ewma"  # Exponentially weighted moving average
+    
+    # Rate limiting and DDoS protection
+    nginx.ingress.kubernetes.io/rate-limit-rps: "100"
+    nginx.ingress.kubernetes.io/rate-limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "10"
+    
+    # Connection management
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "error timeout http_502 http_503 http_504"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "30"
+    
+    # Health checks and circuit breaker
+    nginx.ingress.kubernetes.io/upstream-fail-timeout: "30"
+    nginx.ingress.kubernetes.io/upstream-max-fails: "3"
+    
+    # Performance optimizations
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # Caching for static content
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header X-Cache-Status "HIT";
+      }
+      
+      location /api/ {
+        add_header X-Cache-Status "BYPASS";
+      }
+    
+    # Custom error handling
+    nginx.ingress.kubernetes.io/custom-http-errors: "400,401,403,404,405,408,410,411,412,413,414,415,416,417,418,421,425,429,431,451,500,501,502,503,504,505,506,507,508,510,511"
+    
+    # Monitoring and logging
+    nginx.ingress.kubernetes.io/enable-access-log: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Request-ID: $req_id";
+      more_set_headers "X-Response-Time: $upstream_response_time";
+      more_set_headers "X-Upstream-Server: $upstream_addr";
+      
+      # Rate limit bypass for health checks
+      if ($http_user_agent ~* "kube-probe|GoogleHC") {
+        set $rate_limit_bypass 1;
+      }
+spec:
+  tls:
+  - hosts:
+    - api.leanvibe.com
+    - app.leanvibe.com
+    secretName: leanvibe-tls
+  rules:
+  - host: api.leanvibe.com
+    http:
+      paths:
+      # API routes with different load balancing strategies
+      - path: /api/v1/auth
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api
+            port:
+              number: 8000
+      - path: /api/v1/agents
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api
+            port:
+              number: 8000
+      - path: /api/v1/tasks
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api
+            port:
+              number: 8000
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api
+            port:
+              number: 8000
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-api
+            port:
+              number: 9090
+  - host: app.leanvibe.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: leanvibe-frontend
+            port:
+              number: 80
+
+---
+# Service for intelligent load balancing
+apiVersion: v1
+kind: Service
+metadata:
+  name: leanvibe-api-load-balanced
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api-load-balancer
+    scaling.leanvibe.com/epic: "3-phase-2"
+  annotations:
+    # Session affinity for stateful operations
+    service.kubernetes.io/load-balancer-source-ranges: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    
+    # AWS Load Balancer Controller annotations (if using AWS)
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-connection-draining-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-connection-draining-timeout: "60"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "30"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout: "5"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
+spec:
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600  # 1 hour session stickiness
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+    protocol: TCP
+  - port: 9090
+    targetPort: 9090
+    name: metrics
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: api
+
+---
+# ServiceMonitor for load balancer metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-ingress-controller-metrics
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  endpoints:
+  - port: prometheus
+    interval: 30s
+    path: /metrics
+    scheme: http
+    metricRelabelings:
+    - sourceLabels: [__name__]
+      targetLabel: component
+      replacement: ingress-controller
+  namespaceSelector:
+    matchNames:
+    - ingress-nginx
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+
+---
+# Traffic splitting for canary deployments
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: leanvibe-api-traffic-split
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  hosts:
+  - api.leanvibe.com
+  http:
+  - match:
+    - headers:
+        canary:
+          exact: "true"
+    route:
+    - destination:
+        host: leanvibe-api-canary
+        port:
+          number: 8000
+      weight: 100
+  - match:
+    - uri:
+        prefix: "/api/v1/agents"
+    route:
+    - destination:
+        host: leanvibe-api
+        port:
+          number: 8000
+      weight: 95
+    - destination:
+        host: leanvibe-api-canary
+        port:
+          number: 8000
+      weight: 5
+    fault:
+      delay:
+        percentage:
+          value: 0.1
+        fixedDelay: 50ms
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: "5xx,reset,connect-failure,refused-stream"
+  - route:
+    - destination:
+        host: leanvibe-api
+        port:
+          number: 8000
+      weight: 100
+
+---
+# Destination Rule for load balancing configuration
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: leanvibe-api-destination-rule
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  host: leanvibe-api
+  trafficPolicy:
+    # Load balancing algorithm
+    loadBalancer:
+      simple: LEAST_CONN  # Options: ROUND_ROBIN, LEAST_CONN, RANDOM, PASSTHROUGH
+    
+    # Connection pool settings
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 10s
+        tcpNoDelay: true
+      http:
+        http1MaxPendingRequests: 64
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+        connectTimeout: 10s
+        h2UpgradePolicy: UPGRADE
+        idleTimeout: 60s
+        h2UpgradePolicy: UPGRADE
+    
+    # Circuit breaker settings
+    outlierDetection:
+      consecutiveGatewayErrors: 3
+      consecutive5xxErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+      splitExternalLocalOriginErrors: false
+  
+  portLevelSettings:
+  - port:
+      number: 8000
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "User-ID"  # Session affinity based on user ID
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 5s
+      http:
+        http1MaxPendingRequests: 32
+        maxRequestsPerConnection: 5
+
+---
+# Rate limiting configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rate-limit-config
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+data:
+  config.yaml: |
+    # Global rate limits for Epic 3 Phase 2 (10x capacity)
+    domain: leanvibe-rate-limits
+    descriptors:
+    # API rate limits per user
+    - key: user_id
+      rate_limit:
+        unit: minute
+        requests_per_unit: 1000  # 1000 requests per minute per user
+    
+    # Global API rate limits
+    - key: api_global
+      rate_limit:
+        unit: second
+        requests_per_unit: 10000  # 10k RPS global limit
+    
+    # Agent-specific rate limits
+    - key: agent_operations
+      rate_limit:
+        unit: minute
+        requests_per_unit: 500   # 500 agent operations per minute
+    
+    # Authentication endpoints (more restrictive)
+    - key: auth_endpoints
+      rate_limit:
+        unit: minute
+        requests_per_unit: 50    # 50 auth requests per minute
+    
+    # Health check endpoints (very permissive)
+    - key: health_checks
+      rate_limit:
+        unit: second
+        requests_per_unit: 100   # 100 health checks per second
+    
+    # Premium tier users (higher limits)
+    - key: premium_user
+      rate_limit:
+        unit: minute
+        requests_per_unit: 5000  # 5000 requests per minute for premium users
+    
+    # IP-based rate limiting for DDoS protection
+    - key: ip_global
+      rate_limit:
+        unit: second
+        requests_per_unit: 100   # 100 RPS per IP address
+    
+    # Burst limits for spike handling
+    - key: burst_limit
+      rate_limit:
+        unit: second
+        requests_per_unit: 1000  # Allow 1000 RPS bursts
+        shadow_mode: false
+
+---
+# Rate Limit Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rate-limit-service
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: rate-limit
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: rate-limit
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: leanvibe-agent-hive
+        app.kubernetes.io/component: rate-limit
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "6070"
+        prometheus.io/path: "/stats/prometheus"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+      - name: rate-limit
+        image: envoyproxy/ratelimit:master
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 8081
+          name: grpc
+        - containerPort: 6070
+          name: debug
+        env:
+        - name: REDIS_SOCKET_TYPE
+          value: "tcp"
+        - name: REDIS_URL
+          value: "redis-cluster:6379"
+        - name: USE_STATSD
+          value: "false"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: RUNTIME_ROOT
+          value: "/data"
+        - name: RUNTIME_SUBDIRECTORY
+          value: "ratelimit"
+        - name: RUNTIME_WATCH_ROOT
+          value: "false"
+        volumeMounts:
+        - name: rate-limit-config
+          mountPath: /data/ratelimit/config
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: rate-limit-config
+        configMap:
+          name: rate-limit-config
+
+---
+# Rate Limit Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rate-limit-service
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: rate-limit
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  - port: 8081
+    targetPort: 8081
+    name: grpc
+  - port: 6070
+    targetPort: 6070
+    name: debug
+  selector:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: rate-limit
+
+---
+# EnvoyFilter for rate limiting integration
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: rate-limit-filter
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.local_ratelimit
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          value:
+            stat_prefix: local_rate_limiter
+            token_bucket:
+              max_tokens: 100
+              tokens_per_fill: 100
+              fill_interval: 60s
+            filter_enabled:
+              runtime_key: local_rate_limit_enabled
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            filter_enforced:
+              runtime_key: local_rate_limit_enforced
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+
+---
+# Network Policy for load balancer security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: load-balancer-network-policy
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: leanvibe-agent-hive
+      app.kubernetes.io/component: api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 9090
+  # Allow traffic from rate limit service
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: rate-limit
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow monitoring traffic
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+  egress:
+  # Allow database connections
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: postgres-primary
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: postgres-replica
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow Redis connections
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: redis-cluster
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS for external APIs
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# HPA for Rate Limit Service
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: rate-limit-service-hpa
+  labels:
+    app.kubernetes.io/name: leanvibe-agent-hive
+    app.kubernetes.io/component: rate-limit
+    scaling.leanvibe.com/epic: "3-phase-2"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: rate-limit-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60
