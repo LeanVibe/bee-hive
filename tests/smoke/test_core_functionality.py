@@ -15,6 +15,7 @@ import pytest
 import asyncio
 import time
 from typing import Any, Dict
+from sqlalchemy import text
 
 
 class TestCoreAPIs:

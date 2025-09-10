@@ -15,6 +15,29 @@ from typing import AsyncGenerator
 
 # Base fixtures are automatically available from parent conftest.py
 
+# Database fixtures for smoke tests
+@pytest.fixture
+async def test_engine():
+    """Create test database engine with proper configuration for smoke tests."""
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.pool import StaticPool
+    
+    # Use SQLite for fast smoke tests - no complex schema needed for connection pool tests
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+        echo=False,
+    )
+    
+    # No need to create complex tables for connection pool testing
+    # The test just needs to execute "SELECT 1" queries
+    
+    yield engine
+    
+    # Cleanup
+    await engine.dispose()
+
 # Override environment for smoke tests
 @pytest.fixture(autouse=True, scope="session")
 def smoke_test_environment():
