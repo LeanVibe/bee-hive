@@ -35,27 +35,25 @@ ENV PYTHONUNBUFFERED=1 \
 # Install system dependencies with security updates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Essential tools
-    curl=7.* \
-    wget=1.* \
+    curl \
+    wget \
     # Build dependencies
-    build-essential=12.* \
-    pkg-config=1.* \
+    build-essential \
+    pkg-config \
     # Database clients
-    postgresql-client=15+* \
-    libpq-dev=15.* \
-    # Redis client
-    redis-tools=7:* \
+    postgresql-client \
+    libpq-dev \
     # Git for version control
-    git=1:* \
+    git \
     # tmux for session management
-    tmux=3.* \
+    tmux \
     # Security tools
-    ca-certificates=* \
-    gnupg=2.* \
+    ca-certificates \
+    gnupg \
     # Process monitoring
-    procps=2:* \
+    procps \
     # Network utilities
-    netcat-openbsd=1.* \
+    netcat-openbsd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/* /var/tmp/*
@@ -127,16 +125,83 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload
 # Production stage
 FROM dependencies as production
 
+# Install gunicorn for production
+RUN pip install --no-cache-dir gunicorn==21.2.0 && \
+    rm -rf ~/.cache/pip /tmp/* /var/tmp/*
+
 # Copy only necessary application files
 COPY --chown=leanvibe:leanvibe app/ ./app/
 COPY --chown=leanvibe:leanvibe alembic.ini ./
 COPY --chown=leanvibe:leanvibe migrations/ ./migrations/
 
+# Create startup script for production initialization
+COPY --chown=leanvibe:leanvibe <<'EOF' ./startup.sh
+#!/bin/bash
+set -e
+
+echo "Starting LeanVibe Agent Hive Production Server..."
+
+# Wait for database to be ready
+echo "Waiting for database connection..."
+python -c "
+import asyncio
+import asyncpg
+import os
+import sys
+import time
+from urllib.parse import urlparse
+
+async def wait_for_db():
+    db_url = os.environ.get('DATABASE_URL', '')
+    if not db_url:
+        print('No DATABASE_URL provided, skipping database check')
+        return
+    
+    parsed = urlparse(db_url)
+    max_attempts = 30
+    attempt = 0
+    
+    while attempt < max_attempts:
+        try:
+            conn = await asyncpg.connect(
+                host=parsed.hostname,
+                port=parsed.port or 5432,
+                user=parsed.username,
+                password=parsed.password,
+                database=parsed.path.lstrip('/'),
+                timeout=10
+            )
+            await conn.close()
+            print('Database connection successful!')
+            return
+        except Exception as e:
+            attempt += 1
+            print(f'Database connection attempt {attempt}/{max_attempts} failed: {e}')
+            if attempt < max_attempts:
+                time.sleep(2)
+    
+    print('Failed to connect to database after maximum attempts')
+    sys.exit(1)
+
+asyncio.run(wait_for_db())
+"
+
+# Run database migrations if enabled
+if [ "${AUTO_MIGRATE:-false}" = "true" ]; then
+    echo "Running database migrations..."
+    python -m alembic upgrade head || {
+        echo "Migration failed, but continuing..."
+    }
+fi
+
+# Start the application
+exec "$@"
+EOF
+
+RUN chmod +x ./startup.sh
+
 # Compile Python bytecode for optimal performance
-RUN python -m compileall -b app/ && \
-    # Remove source files to reduce image size and improve security
-    find app/ -name "*.py" -delete && \
-    find app/ -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true && \
+RUN python -m compileall app/ && \
     # Set proper permissions
     chown -R leanvibe:leanvibe /app
 
@@ -146,12 +211,12 @@ USER leanvibe
 # Expose port
 EXPOSE 8000
 
-# Health check with improved reliability
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=5 \
-    CMD curl -f -H "User-Agent: Docker-Healthcheck" http://localhost:8000/health || exit 1
+# Health check with improved reliability and proper headers
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+    CMD curl -f -H "User-Agent: Docker-Healthcheck" -H "Accept: application/json" http://localhost:8000/health || exit 1
 
-# Production command with optimizations
-CMD ["gunicorn", \
+# Production command with optimizations and graceful shutdown
+CMD ["./startup.sh", "gunicorn", \
      "app.main:app", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--workers", "4", \
@@ -164,7 +229,8 @@ CMD ["gunicorn", \
      "--error-logfile", "-", \
      "--log-level", "info", \
      "--timeout", "120", \
-     "--keepalive", "5"]
+     "--keepalive", "5", \
+     "--graceful-timeout", "30"]
 
 # Monitoring stage for observability
 FROM production as monitoring
