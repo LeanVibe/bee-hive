@@ -26,57 +26,42 @@ async def get_live_data_compat():
     Path preserved for compatibility: `/dashboard/api/live-data`.
     """
     try:
-        raw_data = await coordination_dashboard.get_dashboard_data()
+        raw_data = await coordination_dashboard.get_graph_data()
+
+        # Extract stats from the graph data structure
+        stats = raw_data.get("stats", {})
+        nodes = raw_data.get("nodes", [])
+        
+        # Transform graph data into dashboard format
+        agent_activities = []
+        for node in nodes:
+            if node.get("type") == "agent":
+                metadata = node.get("metadata", {})
+                agent_activities.append({
+                    "agent_id": metadata.get("agent_id", node.get("id", "")),
+                    "name": node.get("label", "Unknown Agent"),
+                    "status": node.get("status", "unknown"),
+                    "current_project": metadata.get("current_project"),
+                    "current_task": metadata.get("current_task"),
+                    "task_progress": 0.0,  # Not available in graph data
+                    "performance_score": 0.0,  # Not available in graph data
+                    "specializations": metadata.get("specializations", []),
+                })
 
         live_data = {
             "metrics": {
-                "active_projects": raw_data.get("metrics", {}).get("active_projects", 0),
-                "active_agents": raw_data.get("metrics", {}).get("active_agents", 0),
-                "agent_utilization": raw_data.get("metrics", {}).get("agent_utilization", 0.0),
-                "completed_tasks": raw_data.get("metrics", {}).get("completed_tasks", 0),
-                "active_conflicts": raw_data.get("metrics", {}).get("active_conflicts", 0),
-                "system_efficiency": raw_data.get("metrics", {}).get("system_efficiency", 0.0),
-                "system_status": raw_data.get("metrics", {}).get("system_status", "healthy"),
-                "last_updated": raw_data.get("metrics", {}).get("last_updated", datetime.utcnow().isoformat()),
+                "active_projects": 0,  # Not tracked in current graph data
+                "active_agents": stats.get("active_agents", 0),
+                "agent_utilization": 0.0,  # Would need calculation
+                "completed_tasks": 0,  # Not tracked in current graph data
+                "active_conflicts": 0,  # Not tracked in current graph data
+                "system_efficiency": 0.0,  # Would need calculation
+                "system_status": "healthy" if stats.get("active_agents", 0) > 0 else "idle",
+                "last_updated": raw_data.get("timestamp", datetime.utcnow().isoformat()),
             },
-            "agent_activities": [
-                {
-                    "agent_id": agent.get("agent_id", ""),
-                    "name": agent.get("name", "Unknown Agent"),
-                    "status": agent.get("status", "unknown"),
-                    "current_project": agent.get("current_project"),
-                    "current_task": agent.get("current_task"),
-                    "task_progress": agent.get("task_progress", 0.0),
-                    "performance_score": agent.get("performance_score", 0.0),
-                    "specializations": agent.get("specializations", []),
-                }
-                for agent in raw_data.get("agent_activities", [])
-            ],
-            "project_snapshots": [
-                {
-                    "name": project.get("name", "Unknown Project"),
-                    "status": project.get("status", "unknown"),
-                    "progress_percentage": project.get("progress_percentage", 0.0),
-                    "participating_agents": project.get("participating_agents", []),
-                    "completed_tasks": project.get("completed_tasks", 0),
-                    "active_tasks": project.get("active_tasks", 0),
-                    "conflicts": project.get("conflicts", 0),
-                    "quality_score": project.get("quality_score", 0.0),
-                }
-                for project in raw_data.get("project_snapshots", [])
-            ],
-            "conflict_snapshots": [
-                {
-                    "conflict_type": conflict.get("conflict_type", "unknown"),
-                    "severity": conflict.get("severity", "low"),
-                    "project_name": conflict.get("project_name", "Unknown Project"),
-                    "description": conflict.get("description", ""),
-                    "affected_agents": conflict.get("affected_agents", []),
-                    "impact_score": conflict.get("impact_score", 0.0),
-                    "auto_resolvable": conflict.get("auto_resolvable", False),
-                }
-                for conflict in raw_data.get("conflict_snapshots", [])
-            ],
+            "agent_activities": agent_activities,
+            "project_snapshots": [],  # Not available in current graph data
+            "conflict_snapshots": [],  # Not available in current graph data
         }
 
         return live_data

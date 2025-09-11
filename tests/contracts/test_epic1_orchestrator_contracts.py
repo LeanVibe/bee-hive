@@ -146,15 +146,12 @@ class ContractTestAgent:
 def contract_config():
     """Configuration for contract testing."""
     return OrchestratorConfig(
-        max_concurrent_agents=15,
-        min_agent_pool=2,
-        max_agent_pool=20,
-        agent_registration_timeout=1.0,
-        task_delegation_timeout=1.0,
-        registration_target_ms=50.0,
-        delegation_target_ms=200.0,
-        health_check_interval=5.0,
-        metrics_collection_interval=3.0
+        max_agents=15,
+        task_timeout=300,
+        agent_heartbeat_interval=30,
+        enable_load_balancing=True,
+        enable_auto_scaling=False,
+        routing_strategy=TaskRoutingStrategy.CAPABILITY_BASED
     )
 
 
@@ -394,14 +391,14 @@ class TestOrchestratorContracts:
         config = orchestrator.config
         
         # Verify configuration contract
-        assert hasattr(config, 'max_concurrent_agents')
+        assert hasattr(config, 'max_agents')
         assert hasattr(config, 'registration_target_ms')
         assert hasattr(config, 'delegation_target_ms')
         assert hasattr(config, 'routing_strategy')
         
         # Verify types and ranges
-        assert isinstance(config.max_concurrent_agents, int)
-        assert config.max_concurrent_agents > 0
+        assert isinstance(config.max_agents, int)
+        assert config.max_agents > 0
         
         assert isinstance(config.registration_target_ms, (int, float))
         assert config.registration_target_ms > 0
@@ -412,9 +409,9 @@ class TestOrchestratorContracts:
         assert isinstance(config.routing_strategy, TaskRoutingStrategy)
         
         # Verify configuration is immutable during runtime
-        original_max = config.max_concurrent_agents
-        config.max_concurrent_agents = 999
-        assert orchestrator.config.max_concurrent_agents == original_max  # Should not change
+        original_max = config.max_agents
+        config.max_agents = 999
+        assert orchestrator.config.max_agents == original_max  # Should not change
     
     async def test_error_handling_contract(self, contract_orchestrator):
         """Test error handling follows expected contract."""
@@ -543,10 +540,12 @@ class TestOrchestratorPerformanceContracts:
         """Test orchestrator meets scalability contracts."""
         # Test with higher capacity
         high_capacity_config = OrchestratorConfig(
-            max_concurrent_agents=25,
-            max_agent_pool=30,
-            registration_target_ms=100.0,
-            delegation_target_ms=500.0
+            max_agents=25,
+            task_timeout=300,
+            agent_heartbeat_interval=30,
+            enable_load_balancing=True,
+            enable_auto_scaling=True,
+            routing_strategy=TaskRoutingStrategy.CAPABILITY_BASED
         )
         
         with patch('app.core.unified_production_orchestrator.get_redis') as mock_redis, \
