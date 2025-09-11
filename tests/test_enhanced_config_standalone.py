@@ -20,7 +20,7 @@ try:
         ConfigurationTemplate,
         ConfigurationProfile
     )
-    from configuration_validation_schemas import (
+    from archive.generated_artifacts.configuration_validation_schemas import (
         ConfigurationValidator,
         SchemaLevel,
         validate_python_project

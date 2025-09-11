@@ -384,6 +384,27 @@ def sample_agent_instance(sample_agent_capability):
 
 
 @pytest.fixture
+def sample_agent(sample_agent_capability):
+    """Create sample agent for testing - alias for sample_agent_instance."""
+    agent = TestCompatibleAgentInstance(
+        id="test-agent-001",
+        role=AgentRole.BACKEND_DEVELOPER,
+        status=AgentStatus.ACTIVE,
+        tmux_session=None,
+        capabilities=[sample_agent_capability],
+        current_task=None,
+        current_task_id=None,
+        context_window_usage=0.3,
+        last_heartbeat=datetime.utcnow(),
+        anthropic_client=None
+    )
+    # Add attributes that tests expect
+    agent.name = "Test Agent"
+    agent.type = "CLAUDE"
+    return agent
+
+
+@pytest.fixture
 def get_session_mock():
     """Mock get_session function that tests expect."""
     def mock_get_session():

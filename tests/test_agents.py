@@ -17,7 +17,7 @@ async def test_create_agent_endpoint(async_test_client, test_db_session):
     
     agent_data = {
         "name": "Test API Agent",
-        "type": "CLAUDE",
+        "type": "claude",  # Fixed: use lowercase enum value
         "role": "test_role",
         "capabilities": [
             {
@@ -33,13 +33,18 @@ async def test_create_agent_endpoint(async_test_client, test_db_session):
     
     response = await async_test_client.post("/api/v1/agents/", json=agent_data)
     
+    # Debug: print response if not 201
+    if response.status_code != 201:
+        print(f"Response status: {response.status_code}")
+        print(f"Response body: {response.text}")
+    
     assert response.status_code == 201
     data = response.json()
     
     assert data["name"] == agent_data["name"]
     assert data["type"] == agent_data["type"]
     assert data["role"] == agent_data["role"]
-    assert data["status"] == "INACTIVE"  # Default status
+    assert data["status"] == "inactive"  # Default status (lowercase enum value)
     assert len(data["capabilities"]) == 1
 
 
