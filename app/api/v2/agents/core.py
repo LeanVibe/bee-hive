@@ -55,10 +55,11 @@ except ImportError:
             return "mock_agent_id"
 
 try:
-    from ....core.production_orchestrator import get_production_orchestrator
+    from ....core.orchestrator import get_orchestrator as get_production_orchestrator
 except ImportError:
-    async def get_production_orchestrator():
-        return SimpleOrchestrator()
+    from ....core.simple_orchestrator import get_simple_orchestrator
+    def get_production_orchestrator():
+        return get_simple_orchestrator()
 
 try:
     from ....models.agent import AgentType

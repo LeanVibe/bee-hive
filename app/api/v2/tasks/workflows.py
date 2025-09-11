@@ -32,7 +32,7 @@ from .middleware import (
     workflow_circuit_breaker
 )
 
-from app.core.production_orchestrator import create_production_orchestrator
+from app.core.orchestrator import create_enhanced_simple_orchestrator as create_production_orchestrator
 from app.core.redis_integration import get_redis_service
 from app.models.workflow import Workflow, WorkflowStatus, WorkflowPriority
 from app.models.task import Task, TaskStatus

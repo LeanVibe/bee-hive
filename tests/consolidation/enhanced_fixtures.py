@@ -67,15 +67,20 @@ def consolidated_orchestrator_mock():
         }
     )
     
-    # Configure realistic behavior
-    mock.mock_instance.delegate_task.return_value = "task-123"
-    mock.mock_instance.spawn_agent.return_value = "agent-456"
-    mock.mock_instance.get_system_status.return_value = {
+    # Configure realistic behavior with AsyncMock for async methods
+    mock.mock_instance.start = AsyncMock()
+    mock.mock_instance.stop = AsyncMock()
+    mock.mock_instance.delegate_task = AsyncMock(return_value="task-123")
+    mock.mock_instance.spawn_agent = AsyncMock(return_value="agent-456")
+    mock.mock_instance.shutdown_agent = AsyncMock()
+    mock.mock_instance.process_task_queue = AsyncMock()
+    mock.mock_instance.monitor_health = AsyncMock()
+    mock.mock_instance.get_system_status = MagicMock(return_value={
         "status": "healthy",
         "agents": 0,
         "tasks": 0,
         "uptime": 0.0
-    }
+    })
     
     return mock.mock_instance
 
@@ -83,7 +88,7 @@ def consolidated_orchestrator_mock():
 @pytest.fixture(scope="function")
 def task_manager_mock():
     """Mock of consolidated TaskManager."""
-    return ConsolidatedComponentMock(
+    mock = ConsolidatedComponentMock(
         component_name="TaskManager",
         public_api=[
             "route_task", "execute_task", "get_queue_status", "process_queue",
@@ -99,13 +104,21 @@ def task_manager_mock():
             "processing_rate": 100.0,
             "success_rate": 0.95
         }
-    ).mock_instance
+    )
+    
+    # Configure async methods
+    mock.mock_instance.route_task = AsyncMock()
+    mock.mock_instance.execute_task = AsyncMock() 
+    mock.mock_instance.process_queue = AsyncMock()
+    mock.mock_instance.initialize = AsyncMock()
+    
+    return mock.mock_instance
 
 
 @pytest.fixture(scope="function")  
 def agent_manager_mock():
     """Mock of consolidated AgentManager."""
-    return ConsolidatedComponentMock(
+    mock = ConsolidatedComponentMock(
         component_name="AgentManager",
         public_api=[
             "create_agent", "destroy_agent", "get_agent", "list_agents",
@@ -121,13 +134,23 @@ def agent_manager_mock():
             "active_agents": 0,
             "capability_match_time": 0.1
         }
-    ).mock_instance
+    )
+    
+    # Configure async methods
+    mock.mock_instance.create_agent = AsyncMock()
+    mock.mock_instance.destroy_agent = AsyncMock()
+    mock.mock_instance.monitor_health = AsyncMock()
+    mock.mock_instance.update_capabilities = AsyncMock()
+    mock.mock_instance.find_suitable_agent = AsyncMock()
+    mock.mock_instance.initialize = AsyncMock()
+    
+    return mock.mock_instance
 
 
 @pytest.fixture(scope="function")
 def workflow_manager_mock():
     """Mock of consolidated WorkflowManager.""" 
-    return ConsolidatedComponentMock(
+    mock = ConsolidatedComponentMock(
         component_name="WorkflowManager",
         public_api=[
             "create_workflow", "execute_workflow", "pause_workflow", "resume_workflow",
@@ -143,7 +166,16 @@ def workflow_manager_mock():
             "success_rate": 0.92,
             "active_workflows": 0
         }
-    ).mock_instance
+    )
+    
+    # Configure async methods
+    mock.mock_instance.create_workflow = AsyncMock()
+    mock.mock_instance.execute_workflow = AsyncMock()
+    mock.mock_instance.pause_workflow = AsyncMock()
+    mock.mock_instance.resume_workflow = AsyncMock()
+    mock.mock_instance.initialize = AsyncMock()
+    
+    return mock.mock_instance
 
 
 @pytest.fixture(scope="function")
