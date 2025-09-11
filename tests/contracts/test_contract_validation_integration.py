@@ -344,7 +344,7 @@ class TestDatabaseContractIntegration:
             "name": "test-agent-contracts",
             "role": "testing",
             "capabilities": ["testing", "validation"],
-            "status": AgentStatus.ACTIVE
+            "status": AgentStatus.ACTIVE.value
         }
         
         # Test constraint validation (this would be done by SQLAlchemy in real scenario)
@@ -372,7 +372,7 @@ class TestDatabaseContractIntegration:
             "title": "Contract Test Task",
             "description": "Testing foreign key contracts",
             "assigned_agent_id": agent_id,
-            "status": TaskStatus.ASSIGNED
+            "status": TaskStatus.ASSIGNED.value
         }
         
         # Verify task data structure
