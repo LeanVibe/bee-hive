@@ -18,13 +18,15 @@ from .auth_endpoints import router as auth_router
 from .enterprise_pilots import router as pilots_router
 from .v1.coordination_monitoring import router as coordination_monitoring_router
 from .v1.github_integration import router as github_router
-from .v1.websocket import router as websocket_router
 from .project_index import router as project_index_router
 from .business_analytics import router as business_analytics_router
 
 # EPIC C PHASE 1: Core API endpoints for agent and task management
 from .endpoints.agents import router as agents_api_router
 from .endpoints.tasks import router as tasks_api_router
+
+# Import the consolidated v1 router for frontend compatibility
+from .v1 import router as v1_router
 
 # EPIC 1 PHASE 1.1: Add missing agent API endpoints (simplified version for CLI integration)
 from .v1.agents_simple import router as agents_router
@@ -41,7 +43,10 @@ router = APIRouter()
 # Include working API routes
 router.include_router(auth_router)
 router.include_router(pilots_router)
-router.include_router(websocket_router, prefix="/ws")
+
+# Include v1 API router for frontend compatibility
+router.include_router(v1_router, prefix="/v1")
+
 router.include_router(github_router, prefix="/api/v1")
 router.include_router(coordination_monitoring_router, prefix="/api/v1")
 router.include_router(project_index_router)  # Project Index API
