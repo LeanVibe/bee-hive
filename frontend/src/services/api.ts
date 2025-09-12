@@ -146,6 +146,7 @@ export const apiClient = new ApiClient()
 
 // Default export for backward compatibility
 export const api = apiClient
+export const apiService = apiClient
 
 // Global error interceptor
 const originalRequest = (apiClient as any).request.bind(apiClient)

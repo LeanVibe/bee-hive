@@ -100,7 +100,7 @@ class UnifiedWebSocketManager {
   public readonly isConnected = computed(() => this.state.isConnected)
   public readonly connectionCount = computed(() => this.state.connectionCount)
   public readonly metrics = computed(() => this.state.metrics)
-  public readonly connections = computed(() => Array.from(this.connections.values()))
+  public readonly activeConnections = computed(() => Array.from(this.connections.values()))
 
   constructor() {
     this.initializeCleanupInterval()
@@ -824,7 +824,7 @@ export function useUnifiedWebSocket() {
     isConnected: unifiedWebSocketManager.isConnected,
     connectionCount: unifiedWebSocketManager.connectionCount,
     metrics: unifiedWebSocketManager.metrics,
-    connections: unifiedWebSocketManager.connections,
+    connections: unifiedWebSocketManager.activeConnections,
     
     // Connection management
     registerEndpoint: unifiedWebSocketManager.registerEndpoint.bind(unifiedWebSocketManager),

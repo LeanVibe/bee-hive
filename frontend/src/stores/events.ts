@@ -4,14 +4,16 @@ import { apiClient } from '@/services/api'
 import { 
   HookType, 
   SecurityRisk,
+  ControlDecision
+} from '@/types/hooks'
+import type { 
   HookEvent as TypedHookEvent,
   SecurityAlert,
   EventFilter,
   SessionInfo,
   AgentInfo,
   HookPerformanceMetrics,
-  WebSocketHookMessage,
-  ControlDecision
+  WebSocketHookMessage
 } from '@/types/hooks'
 
 export interface AgentEvent {

@@ -431,7 +431,7 @@ class UserTestingFramework {
         if (!element) {
           throw new Error(`Element not found: ${assertion.target}`)
         }
-        const isVisible = element.offsetWidth > 0 && element.offsetHeight > 0
+        const isVisible = (element as HTMLElement).offsetWidth > 0 && (element as HTMLElement).offsetHeight > 0
         if (isVisible !== assertion.expected) {
           throw new Error(`Element visibility mismatch: ${assertion.target}`)
         }

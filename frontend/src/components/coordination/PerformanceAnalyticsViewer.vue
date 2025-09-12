@@ -557,11 +557,10 @@ const refreshAnalytics = async () => {
 
 const loadPerformanceMetrics = async () => {
   try {
-    const response = await api.get('/team-coordination/metrics', {
-      params: { 
-        time_range_hours: getTimeRangeHours(selectedTimeRange.value)
-      }
+    const params = new URLSearchParams({ 
+      time_range_hours: getTimeRangeHours(selectedTimeRange.value).toString()
     })
+    const response = await api.get('/team-coordination/metrics', params)
     
     metrics.value = {
       systemEfficiency: response.data.system_efficiency_score || 0.85,

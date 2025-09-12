@@ -1,90 +1,137 @@
 <template>
-  <div
-    v-if="isOpen"
-    class="fixed inset-0 z-50 overflow-y-auto"
-    @click="handleBackdropClick"
-  >
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
-    
-    <!-- Modal -->
-    <div class="flex min-h-full items-center justify-center p-4">
-      <div
-        ref="modalRef"
-        class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
-        @click.stop
-      >
-        <!-- Header -->
-        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex items-center space-x-3">
-            <div 
-              :class="[
-                'w-3 h-3 rounded-full',
-                getEventTypeColor()
-              ]"
-            ></div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-              {{ getEventTitle() }}
+  <div v-if="isVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="close">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl max-h-[90vh] overflow-hidden" @click.stop>
+      <!-- Header -->
+      <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Event Details
+        </h2>
+        <button
+          @click="close"
+          class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Content -->
+      <div class="p-6 max-h-[calc(90vh-8rem)] overflow-y-auto">
+        <div v-if="event">
+          <!-- Basic Event Info -->
+          <div class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+              Basic Information
             </h3>
-            <span 
-              :class="[
-                'inline-flex px-2.5 py-0.5 text-xs font-semibold rounded-full',
-                getEventTypeBadgeClass()
-              ]"
-            >
-              {{ formatEventType() }}
-            </span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Event Type</span>
+                <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">{{ event.hook_type || 'Unknown' }}</p>
+              </div>
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Agent ID</span>
+                <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">{{ event.agent_id || 'N/A' }}</p>
+              </div>
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Session ID</span>
+                <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">{{ event.session_id || 'N/A' }}</p>
+              </div>
+              <div>
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Timestamp</span>
+                <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">{{ event.timestamp || 'N/A' }}</p>
+              </div>
+            </div>
           </div>
-          
-          <button
-            @click="$emit('close')"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-          >
-            <XMarkIcon class="w-6 h-6" />
-          </button>
-        </div>
 
-        <!-- Content -->
-        <div class="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          <div v-if="event" class="space-y-6">
-            <!-- Basic information -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Event metadata -->
-              <div class="space-y-4">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  Event Information
-                </h4>
-                
-                <div class="space-y-3">
-                  <div class="info-row">
-                    <span class="info-label">Event ID</span>
-                    <span class="info-value font-mono">
-                      {{ event.event_id || 'N/A' }}
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Agent ID</span>
-                    <span class="info-value font-mono">
-                      {{ event.agent_id }}
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Session ID</span>
-                    <span class="info-value font-mono">
-                      {{ event.session_id || 'N/A' }}
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Timestamp</span>
-                    <span class="info-value">
-                      {{ formatTimestamp(event.timestamp) }}
-                    </span>
-                  </div>
-                  
-                  <div class="info-row">
-                    <span class="info-label">Priority</span>
-                    <div class="flex items-center space-x-2">
-                      <span class="info-value">{{ event.priority }}</span>\n                      <span \n                        :class="[\n                          'inline-flex px-2 py-0.5 text-xs font-semibold rounded-full',\n                          getPriorityBadgeClass(event.priority)\n                        ]"\n                      >\n                        {{ getPriorityLabel(event.priority) }}\n                      </span>\n                    </div>\n                  </div>\n                  \n                  <div v-if=\"event.correlation_id\" class=\"info-row\">\n                    <span class=\"info-label\">Correlation ID</span>\n                    <span class=\"info-value font-mono\">\n                      {{ event.correlation_id }}\n                    </span>\n                  </div>\n                </div>\n              </div>\n\n              <!-- Security information -->\n              <div v-if=\"showSecurityInfo && hasSecurityInfo()\" class=\"space-y-4\">\n                <h4 class=\"text-lg font-semibold text-gray-900 dark:text-white\">\n                  Security Analysis\n                </h4>\n                \n                <div class=\"space-y-3\">\n                  <div v-if=\"event.metadata?.security_decision\" class=\"info-row\">\n                    <span class=\"info-label\">Security Decision</span>\n                    <span \n                      :class=\"[\n                        'inline-flex px-2.5 py-0.5 text-sm font-semibold rounded-full',\n                        getSecurityDecisionClass(event.metadata.security_decision)\n                      ]\"\n                    >\n                      {{ event.metadata.security_decision }}\n                    </span>\n                  </div>\n                  \n                  <div v-if=\"event.metadata?.blocked_reason\" class=\"info-row\">\n                    <span class=\"info-label\">Blocked Reason</span>\n                    <span class=\"info-value text-red-600 dark:text-red-400\">\n                      {{ event.metadata.blocked_reason }}\n                    </span>\n                  </div>\n                  \n                  <div v-if=\"event.metadata?.security_blocked\" class=\"info-row\">\n                    <span class=\"info-label\">Status</span>\n                    <span class=\"inline-flex px-2.5 py-0.5 text-sm font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200\">\n                      BLOCKED\n                    </span>\n                  </div>\n                  \n                  <div v-if=\"getSecurityRiskLevel()\" class=\"info-row\">\n                    <span class=\"info-label\">Risk Level</span>\n                    <span \n                      :class=\"[\n                        'inline-flex px-2.5 py-0.5 text-sm font-semibold rounded-full',\n                        getRiskLevelBadgeClass(getSecurityRiskLevel()!)\n                      ]\"\n                    >\n                      {{ getSecurityRiskLevel() }}\n                    </span>\n                  </div>\n                </div>\n              </div>\n            </div>\n\n            <!-- Performance information -->\n            <div v-if=\"showPerformanceInfo && hasPerformanceInfo()\" class=\"performance-section\">\n              <h4 class=\"text-lg font-semibold text-gray-900 dark:text-white mb-4\">\n                Performance Metrics\n              </h4>\n              \n              <div class=\"grid grid-cols-1 md:grid-cols-3 gap-4\">\n                <div v-if=\"getExecutionTime()\" class=\"metric-card\">\n                  <div class=\"metric-value\">\n                    {{ getExecutionTime() }}ms\n                  </div>\n                  <div class=\"metric-label\">\n                    Execution Time\n                  </div>\n                </div>\n                \n                <div v-if=\"event.metadata?.processing_time_ms\" class=\"metric-card\">\n                  <div class=\"metric-value\">\n                    {{ event.metadata.processing_time_ms }}ms\n                  </div>\n                  <div class=\"metric-label\">\n                    Processing Time\n                  </div>\n                </div>\n                \n                <div v-if=\"event.metadata?.performance_score\" class=\"metric-card\">\n                  <div class=\"metric-value\">\n                    {{ event.metadata.performance_score }}\n                  </div>\n                  <div class=\"metric-label\">\n                    Performance Score\n                  </div>\n                </div>\n              </div>\n            </div>\n\n            <!-- Event payload -->\n            <div class=\"payload-section\">\n              <div class=\"flex items-center justify-between mb-4\">\n                <h4 class=\"text-lg font-semibold text-gray-900 dark:text-white\">\n                  Event Payload\n                </h4>\n                <button\n                  @click=\"copyPayload\"\n                  class=\"px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors\"\n                >\n                  Copy JSON\n                </button>\n              </div>\n              \n              <div class=\"payload-container\">\n                <pre class=\"payload-content\">{{ formatPayload(event.payload) }}</pre>\n              </div>\n            </div>\n\n            <!-- Event-specific details -->\n            <div class=\"event-details-section\">\n              <h4 class=\"text-lg font-semibold text-gray-900 dark:text-white mb-4\">\n                Event Details\n              </h4>\n              \n              <!-- Tool usage details -->\n              <div v-if=\"isToolEvent()\" class=\"tool-details\">\n                <div class=\"info-row\">\n                  <span class=\"info-label\">Tool Name</span>\n                  <span class=\"info-value font-mono\">\n                    {{ event.payload.tool_name }}\n                  </span>\n                </div>\n                \n                <div v-if=\"event.hook_type === HookType.PRE_TOOL_USE && event.payload.parameters\" class=\"mt-4\">\n                  <span class=\"info-label block mb-2\">Parameters</span>\n                  <div class=\"parameters-container\">\n                    <pre class=\"parameters-content\">{{ formatPayload(event.payload.parameters) }}</pre>\n                  </div>\n                </div>\n                \n                <div v-if=\"event.hook_type === HookType.POST_TOOL_USE\" class=\"mt-4\">\n                  <div class=\"info-row\">\n                    <span class=\"info-label\">Success</span>\n                    <span \n                      :class=\"[\n                        'inline-flex px-2 py-0.5 text-xs font-semibold rounded-full',\n                        event.payload.success\n                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'\n                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'\n                      ]\"\n                    >\n                      {{ event.payload.success ? 'Yes' : 'No' }}\n                    </span>\n                  </div>\n                  \n                  <div v-if=\"event.payload.result\" class=\"mt-4\">\n                    <span class=\"info-label block mb-2\">Result</span>\n                    <div class=\"result-container\">\n                      <pre class=\"result-content\">{{ formatResult(event.payload.result) }}</pre>\n                      <div v-if=\"event.payload.result_truncated\" class=\"truncation-notice\">\n                        Result truncated. Full size: {{ event.payload.full_result_size }} characters\n                      </div>\n                    </div>\n                  </div>\n                  \n                  <div v-if=\"event.payload.error\" class=\"mt-4\">\n                    <span class=\"info-label block mb-2\">Error</span>\n                    <div class=\"error-container\">\n                      <pre class=\"error-content\">{{ event.payload.error }}</pre>\n                    </div>\n                  </div>\n                </div>\n              </div>\n\n              <!-- Notification details -->\n              <div v-else-if=\"event.hook_type === HookType.NOTIFICATION\" class=\"notification-details\">\n                <div class=\"info-row\">\n                  <span class=\"info-label\">Level</span>\n                  <span \n                    :class=\"[\n                      'inline-flex px-2 py-0.5 text-xs font-semibold rounded-full',\n                      getNotificationLevelClass(event.payload.level)\n                    ]\"\n                  >\n                    {{ event.payload.level?.toUpperCase() }}\n                  </span>\n                </div>\n                \n                <div class=\"info-row\">\n                  <span class=\"info-label\">Message</span>\n                  <span class=\"info-value\">\n                    {{ event.payload.message }}\n                  </span>\n                </div>\n                \n                <div v-if=\"event.payload.details\" class=\"mt-4\">\n                  <span class=\"info-label block mb-2\">Details</span>\n                  <div class=\"details-container\">\n                    <pre class=\"details-content\">{{ formatPayload(event.payload.details) }}</pre>\n                  </div>\n                </div>\n              </div>\n\n              <!-- Stop event details -->\n              <div v-else-if=\"event.hook_type === HookType.STOP\" class=\"stop-details\">\n                <div class=\"info-row\">\n                  <span class=\"info-label\">Reason</span>\n                  <span class=\"info-value\">\n                    {{ event.payload.reason }}\n                  </span>\n                </div>\n                \n                <div v-if=\"event.payload.details\" class=\"mt-4\">\n                  <span class=\"info-label block mb-2\">Details</span>\n                  <div class=\"details-container\">\n                    <pre class=\"details-content\">{{ formatPayload(event.payload.details) }}</pre>\n                  </div>\n                </div>\n              </div>\n\n              <!-- Error event details -->\n              <div v-else-if=\"event.hook_type === HookType.ERROR\" class=\"error-details\">\n                <div class=\"info-row\">\n                  <span class=\"info-label\">Error Type</span>\n                  <span class=\"info-value font-mono text-red-600 dark:text-red-400\">\n                    {{ event.payload.error_type || 'Unknown' }}\n                  </span>\n                </div>\n                \n                <div class=\"info-row\">\n                  <span class=\"info-label\">Error Message</span>\n                  <span class=\"info-value text-red-600 dark:text-red-400\">\n                    {{ event.payload.error_message }}\n                  </span>\n                </div>\n                \n                <div v-if=\"event.payload.stack_trace\" class=\"mt-4\">\n                  <span class=\"info-label block mb-2\">Stack Trace</span>\n                  <div class=\"stack-trace-container\">\n                    <pre class=\"stack-trace-content\">{{ event.payload.stack_trace }}</pre>\n                  </div>\n                </div>\n                \n                <div v-if=\"event.payload.context\" class=\"mt-4\">\n                  <span class=\"info-label block mb-2\">Context</span>\n                  <div class=\"context-container\">\n                    <pre class=\"context-content\">{{ formatPayload(event.payload.context) }}</pre>\n                  </div>\n                </div>\n              </div>\n            </div>\n\n            <!-- Metadata -->\n            <div v-if=\"Object.keys(event.metadata).length > 0\" class=\"metadata-section\">\n              <h4 class=\"text-lg font-semibold text-gray-900 dark:text-white mb-4\">\n                Metadata\n              </h4>\n              \n              <div class=\"metadata-container\">\n                <pre class=\"metadata-content\">{{ formatPayload(event.metadata) }}</pre>\n              </div>\n            </div>\n          </div>\n          \n          <!-- No event selected state -->\n          <div v-else class=\"text-center py-12\">\n            <ExclamationTriangleIcon class=\"w-12 h-12 text-gray-400 mx-auto mb-3\" />\n            <h4 class=\"text-lg font-medium text-gray-900 dark:text-white\">\n              No Event Selected\n            </h4>\n            <p class=\"text-gray-500 dark:text-gray-400\">\n              Select an event to view its details\n            </p>\n          </div>\n        </div>\n\n        <!-- Footer -->\n        <div class=\"border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900\">\n          <div class=\"flex justify-end space-x-3\">\n            <button\n              @click=\"$emit('close')\"\n              class=\"px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors\"\n            >\n              Close\n            </button>\n          </div>\n        </div>\n      </div>\n    </div>\n  </div>\n</template>\n\n<script setup lang=\"ts\">\nimport { ref, computed } from 'vue'\nimport { useNotificationStore } from '@/stores/notifications'\nimport { \n  HookType,\n  SecurityRisk,\n  ControlDecision,\n  type HookEvent as TypedHookEvent,\n  type EventDetailsModalProps\n} from '@/types/hooks'\nimport {\n  XMarkIcon,\n  ExclamationTriangleIcon\n} from '@heroicons/vue/24/outline'\nimport { format } from 'date-fns'\n\n// Props\ninterface Props extends EventDetailsModalProps {}\n\nconst props = withDefaults(defineProps<Props>(), {\n  showSecurityInfo: true,\n  showPerformanceInfo: true\n})\n\n// Emits\nconst emit = defineEmits<{\n  close: []\n}>()\n\n// Stores\nconst notificationStore = useNotificationStore()\n\n// Refs\nconst modalRef = ref<HTMLElement>()\n\n// Methods\nconst handleBackdropClick = (event: MouseEvent) => {\n  if (event.target === event.currentTarget) {\n    emit('close')\n  }\n}\n\nconst getEventTitle = () => {\n  if (!props.event) return 'Event Details'\n  \n  switch (props.event.hook_type) {\n    case HookType.PRE_TOOL_USE:\n      return `Pre-Tool: ${props.event.payload.tool_name || 'Unknown'}`\n    case HookType.POST_TOOL_USE:\n      return `Post-Tool: ${props.event.payload.tool_name || 'Unknown'}`\n    case HookType.NOTIFICATION:\n      return `Notification: ${props.event.payload.level || 'Info'}`\n    case HookType.STOP:\n      return 'Agent Stop Event'\n    case HookType.ERROR:\n      return 'Error Event'\n    default:\n      return 'Event Details'\n  }\n}\n\nconst formatEventType = () => {\n  if (!props.event) return ''\n  \n  const typeMap = {\n    [HookType.PRE_TOOL_USE]: 'Pre Tool Use',\n    [HookType.POST_TOOL_USE]: 'Post Tool Use',\n    [HookType.STOP]: 'Stop',\n    [HookType.NOTIFICATION]: 'Notification',\n    [HookType.AGENT_START]: 'Agent Start',\n    [HookType.AGENT_STOP]: 'Agent Stop',\n    [HookType.ERROR]: 'Error',\n    [HookType.SUBAGENT_STOP]: 'Subagent Stop'\n  }\n  \n  return typeMap[props.event.hook_type] || props.event.hook_type\n}\n\nconst getEventTypeColor = () => {\n  if (!props.event) return 'bg-gray-500'\n  \n  const colorMap = {\n    [HookType.PRE_TOOL_USE]: 'bg-blue-500',\n    [HookType.POST_TOOL_USE]: 'bg-green-500',\n    [HookType.STOP]: 'bg-red-500',\n    [HookType.NOTIFICATION]: 'bg-yellow-500',\n    [HookType.AGENT_START]: 'bg-purple-500',\n    [HookType.AGENT_STOP]: 'bg-gray-500',\n    [HookType.ERROR]: 'bg-red-600',\n    [HookType.SUBAGENT_STOP]: 'bg-orange-500'\n  }\n  \n  return colorMap[props.event.hook_type] || 'bg-gray-400'\n}\n\nconst getEventTypeBadgeClass = () => {\n  if (!props.event) return 'bg-gray-100 text-gray-800'\n  \n  const classMap = {\n    [HookType.PRE_TOOL_USE]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',\n    [HookType.POST_TOOL_USE]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',\n    [HookType.STOP]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',\n    [HookType.NOTIFICATION]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',\n    [HookType.AGENT_START]: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',\n    [HookType.AGENT_STOP]: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',\n    [HookType.ERROR]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',\n    [HookType.SUBAGENT_STOP]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'\n  }\n  \n  return classMap[props.event.hook_type] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'\n}\n\nconst formatTimestamp = (timestamp: string) => {\n  return format(new Date(timestamp), 'PPpp')\n}\n\nconst getPriorityLabel = (priority: number) => {\n  if (priority <= 2) return 'Critical'\n  if (priority <= 4) return 'High'\n  if (priority <= 6) return 'Medium'\n  return 'Low'\n}\n\nconst getPriorityBadgeClass = (priority: number) => {\n  if (priority <= 2) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'\n  if (priority <= 4) return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'\n  if (priority <= 6) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'\n  return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'\n}\n\nconst hasSecurityInfo = () => {\n  return props.event?.metadata?.security_decision ||\n         props.event?.metadata?.blocked_reason ||\n         props.event?.metadata?.security_blocked\n}\n\nconst hasPerformanceInfo = () => {\n  return props.event?.payload?.execution_time_ms ||\n         props.event?.metadata?.processing_time_ms ||\n         props.event?.metadata?.performance_score\n}\n\nconst getSecurityDecisionClass = (decision: ControlDecision) => {\n  const classMap = {\n    [ControlDecision.ALLOW]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',\n    [ControlDecision.DENY]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',\n    [ControlDecision.REQUIRE_APPROVAL]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',\n    [ControlDecision.ESCALATE]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'\n  }\n  return classMap[decision] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'\n}\n\nconst getSecurityRiskLevel = (): SecurityRisk | null => {\n  return props.event?.metadata?.security_risk_level || null\n}\n\nconst getRiskLevelBadgeClass = (riskLevel: SecurityRisk) => {\n  const classMap = {\n    [SecurityRisk.CRITICAL]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',\n    [SecurityRisk.HIGH]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',\n    [SecurityRisk.MEDIUM]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',\n    [SecurityRisk.LOW]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',\n    [SecurityRisk.SAFE]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'\n  }\n  return classMap[riskLevel] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'\n}\n\nconst getExecutionTime = () => {\n  return props.event?.payload?.execution_time_ms || null\n}\n\nconst isToolEvent = () => {\n  return props.event?.hook_type === HookType.PRE_TOOL_USE ||\n         props.event?.hook_type === HookType.POST_TOOL_USE\n}\n\nconst getNotificationLevelClass = (level: string) => {\n  const classMap = {\n    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',\n    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',\n    error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',\n    critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'\n  }\n  return classMap[level as keyof typeof classMap] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'\n}\n\nconst formatPayload = (payload: any) => {\n  try {\n    return JSON.stringify(payload, null, 2)\n  } catch {\n    return String(payload)\n  }\n}\n\nconst formatResult = (result: any) => {\n  if (typeof result === 'string') {\n    return result\n  }\n  \n  try {\n    return JSON.stringify(result, null, 2)\n  } catch {\n    return String(result)\n  }\n}\n\nconst copyPayload = async () => {\n  if (!props.event) return\n  \n  try {\n    await navigator.clipboard.writeText(formatPayload(props.event.payload))\n    notificationStore.addNotification({\n      type: 'success',\n      title: 'Copied to Clipboard',\n      message: 'Event payload copied to clipboard',\n      duration: 2000\n    })\n  } catch (error) {\n    notificationStore.addNotification({\n      type: 'error',\n      title: 'Copy Failed',\n      message: 'Failed to copy payload to clipboard',\n      duration: 3000\n    })\n  }\n}\n</script>\n\n<style scoped>\n.info-row {\n  @apply flex justify-between items-start py-1;\n}\n\n.info-label {\n  @apply text-sm font-medium text-gray-500 dark:text-gray-400 min-w-0 flex-shrink-0 mr-4;\n}\n\n.info-value {\n  @apply text-sm text-gray-900 dark:text-white break-all;\n}\n\n.payload-container,\n.parameters-container,\n.result-container,\n.details-container,\n.context-container,\n.metadata-container,\n.stack-trace-container {\n  @apply bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg max-h-64 overflow-auto;\n}\n\n.payload-content,\n.parameters-content,\n.result-content,\n.details-content,\n.context-content,\n.metadata-content,\n.stack-trace-content {\n  @apply p-4 text-xs font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap;\n}\n\n.error-container {\n  @apply bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg;\n}\n\n.error-content {\n  @apply p-4 text-xs font-mono text-red-700 dark:text-red-300 whitespace-pre-wrap;\n}\n\n.truncation-notice {\n  @apply text-xs text-orange-600 dark:text-orange-400 border-t border-orange-200 dark:border-orange-800 p-2 bg-orange-50 dark:bg-orange-900/20;\n}\n\n.metric-card {\n  @apply bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center;\n}\n\n.metric-value {\n  @apply text-2xl font-bold text-gray-900 dark:text-white;\n}\n\n.metric-label {\n  @apply text-sm text-gray-500 dark:text-gray-400 mt-1;\n}\n\n/* Custom scrollbars */\n.payload-container::-webkit-scrollbar,\n.parameters-container::-webkit-scrollbar,\n.result-container::-webkit-scrollbar,\n.details-container::-webkit-scrollbar,\n.context-container::-webkit-scrollbar,\n.metadata-container::-webkit-scrollbar,\n.stack-trace-container::-webkit-scrollbar {\n  width: 6px;\n  height: 6px;\n}\n\n.payload-container::-webkit-scrollbar-track,\n.parameters-container::-webkit-scrollbar-track,\n.result-container::-webkit-scrollbar-track,\n.details-container::-webkit-scrollbar-track,\n.context-container::-webkit-scrollbar-track,\n.metadata-container::-webkit-scrollbar-track,\n.stack-trace-container::-webkit-scrollbar-track {\n  @apply bg-gray-100 dark:bg-gray-800 rounded;\n}\n\n.payload-container::-webkit-scrollbar-thumb,\n.parameters-container::-webkit-scrollbar-thumb,\n.result-container::-webkit-scrollbar-thumb,\n.details-container::-webkit-scrollbar-thumb,\n.context-container::-webkit-scrollbar-thumb,\n.metadata-container::-webkit-scrollbar-thumb,\n.stack-trace-container::-webkit-scrollbar-thumb {\n  @apply bg-gray-300 dark:bg-gray-600 rounded;\n}\n\n.payload-container::-webkit-scrollbar-thumb:hover,\n.parameters-container::-webkit-scrollbar-thumb:hover,\n.result-container::-webkit-scrollbar-thumb:hover,\n.details-container::-webkit-scrollbar-thumb:hover,\n.context-container::-webkit-scrollbar-thumb:hover,\n.metadata-container::-webkit-scrollbar-thumb:hover,\n.stack-trace-container::-webkit-scrollbar-thumb:hover {\n  @apply bg-gray-400 dark:bg-gray-500;\n}\n\n/* Responsive design */\n@media (max-width: 768px) {\n  .grid.grid-cols-1.md\\:grid-cols-2 {\n    @apply grid-cols-1;\n  }\n  \n  .grid.grid-cols-1.md\\:grid-cols-3 {\n    @apply grid-cols-1;\n  }\n  \n  .info-row {\n    @apply flex-col items-start space-y-1;\n  }\n  \n  .info-label {\n    @apply mr-0;\n  }\n}\n</style>"}
+          <!-- Event Payload -->
+          <div class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+              Event Payload
+            </h3>
+            <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <pre class="text-xs font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{
+                formatPayload(event.payload)
+              }}</pre>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div v-if="event.metadata && Object.keys(event.metadata).length > 0" class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+              Metadata
+            </h3>
+            <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <pre class="text-xs font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{
+                formatPayload(event.metadata)
+              }}</pre>
+            </div>
+          </div>
+        </div>
+        
+        <!-- No event selected -->
+        <div v-else class="text-center py-12">
+          <div class="w-12 h-12 text-gray-400 mx-auto mb-3">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+            No Event Selected
+          </h4>
+          <p class="text-gray-500 dark:text-gray-400">
+            Select an event to view its details
+          </p>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+        <button
+          @click="close"
+          class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+
+interface Props {
+  isVisible: boolean
+  event?: any
+  showSecurityInfo?: boolean
+  showPerformanceInfo?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  showSecurityInfo: true,
+  showPerformanceInfo: true
+})
+
+const emit = defineEmits<{
+  close: []
+}>()
+
+const formatPayload = (payload: any) => {
+  if (!payload) return 'No data'
+  
+  try {
+    return JSON.stringify(payload, null, 2)
+  } catch {
+    return String(payload)
+  }
+}
+
+const close = () => {
+  emit('close')
+}
+</script>
+
+<style scoped>
+/* Modal styles */
+</style>

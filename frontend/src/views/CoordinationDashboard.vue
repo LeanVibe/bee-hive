@@ -786,12 +786,11 @@ const refreshTranscript = async () => {
   
   try {
     const sessionId = selectedSession.value === 'all' ? 'all' : selectedSession.value
-    const response = await api.get(`/coordination/transcript/${sessionId}`, {
-      params: {
-        limit: 100,
-        start_time: getTimeRangeStart(transcriptTimeRange.value)
-      }
+    const params = new URLSearchParams({
+      limit: '100',
+      start_time: getTimeRangeStart(transcriptTimeRange.value)
     })
+    const response = await api.get(`/coordination/transcript/${sessionId}`, params)
     
     transcriptEvents.value = response.data.events || []
   } catch (error) {

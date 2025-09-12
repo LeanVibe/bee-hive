@@ -443,12 +443,11 @@ const filteredAgents = computed(() => {
 const loadTasks = async () => {
   loading.value = true
   try {
-    const response = await api.get('/tasks', {
-      params: {
-        status: 'pending,created',
-        limit: 100
-      }
+    const params = new URLSearchParams({
+      status: 'pending,created',
+      limit: '100'
     })
+    const response = await api.get('/tasks', params)
     tasks.value = response.data.tasks || []
   } catch (error) {
     console.error('Failed to load tasks:', error)
@@ -468,9 +467,8 @@ const loadAgents = async () => {
 
 const loadRecentAssignments = async () => {
   try {
-    const response = await api.get('/tasks/assignments/recent', {
-      params: { limit: 10 }
-    })
+    const params = new URLSearchParams({ limit: '10' })
+    const response = await api.get('/tasks/assignments/recent', params)
     recentAssignments.value = response.data.assignments || []
   } catch (error) {
     console.error('Failed to load recent assignments:', error)

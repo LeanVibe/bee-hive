@@ -7,7 +7,8 @@
 
 import { scaleOrdinal, scaleSequential } from 'd3-scale'
 import { interpolateViridis, interpolateRdYlBu, interpolatePlasma } from 'd3-scale-chromatic'
-import { SessionInfo, AgentInfo, SecurityRisk } from '@/types/hooks'
+import { SecurityRisk } from '@/types/hooks'
+import type { SessionInfo, AgentInfo } from '@/types/hooks'
 
 export interface ColorScheme {
   primary: string
