@@ -1,0 +1,1022 @@
+{
+  "timestamp": "2025-09-18T20:18:25.110528",
+  "total_tests": 742,
+  "total_passed": 434,
+  "total_failed": 302,
+  "total_skipped": 6,
+  "total_duration": 67.23664999008179,
+  "overall_pass_rate": 58.490566037735846,
+  "category_results": [
+    {
+      "category": "component_websocket",
+      "tests_run": 21,
+      "passed": 20,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.460395097732544,
+      "pass_rate": 95.23809523809523,
+      "error_messages": [
+        "tests/unit/components/test_websocket_unit.py::TestWebSocketConnectionManagerUnit::TestErrorHandling::test_handle_redis_publish_error FAILED [ 56%]"
+      ]
+    },
+    {
+      "category": "component_redis_pubsub",
+      "tests_run": 28,
+      "passed": 27,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.484210968017578,
+      "pass_rate": 96.42857142857143,
+      "error_messages": [
+        "tests/unit/components/test_redis_pubsub_unit.py::TestRedisPubSubUnit::TestBasicPubSub::test_unsubscribe_from_channel FAILED [ 12%]"
+      ]
+    },
+    {
+      "category": "component_enhanced_agent_launcher",
+      "tests_run": 6,
+      "passed": 5,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.5785861015319824,
+      "pass_rate": 83.33333333333334,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "component_task_queue",
+      "tests_run": 30,
+      "passed": 10,
+      "failed": 20,
+      "skipped": 0,
+      "duration": 3.8286850452423096,
+      "pass_rate": 33.33333333333333,
+      "error_messages": [
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestInitialization::test_task_queue_creation FAILED [  3%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestInitialization::test_task_queue_initialization FAILED [  9%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskEnqueuing::test_enqueue_task_success FAILED [ 21%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskEnqueuing::test_enqueue_task_database_failure FAILED [ 30%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskDequeuing::test_dequeue_task_success FAILED [ 33%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskDequeuing::test_dequeue_task_empty_queue FAILED [ 36%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskDequeuing::test_dequeue_task_capability_matching FAILED [ 39%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskDequeuing::test_dequeue_task_timeout_handling FAILED [ 42%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskAssignment::test_assign_task_to_agent_success FAILED [ 45%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskAssignment::test_assign_task_agent_not_available FAILED [ 48%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskAssignment::test_assign_task_database_error FAILED [ 51%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskRetryHandling::test_retry_failed_task FAILED [ 54%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestTaskRetryHandling::test_retry_exhausted_task FAILED [ 57%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestQueueMetrics::test_get_queue_metrics FAILED [ 60%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestQueueMetrics::test_get_all_queues_metrics FAILED [ 63%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestQueueMetrics::test_queue_performance_tracking FAILED [ 66%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestQueueMaintenance::test_cleanup_expired_tasks FAILED [ 69%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestQueueMaintenance::test_purge_queue FAILED [ 72%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestQueueMaintenance::test_get_queue_health FAILED [ 75%]",
+        "tests/unit/components/test_task_queue_unit.py::TestTaskQueueUnit::TestErrorHandling::test_concurrent_access_handling FAILED [ 84%]"
+      ]
+    },
+    {
+      "category": "component_config",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.04644775390625,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_metrics_fallback",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.6829450130462646,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_status_resilience",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.6137731075286865,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "component_simple_orchestrator",
+      "tests_run": 6,
+      "passed": 1,
+      "failed": 5,
+      "skipped": 0,
+      "duration": 4.906522989273071,
+      "pass_rate": 16.666666666666664,
+      "error_messages": [
+        "tests/unit/components/test_simple_orchestrator_unit.py::TestFactoryFunctions::test_create_simple_orchestrator FAILED [ 88%]",
+        "tests/unit/components/test_simple_orchestrator_unit.py::TestFactoryFunctions::test_create_enhanced_simple_orchestrator FAILED [ 91%]",
+        "tests/unit/components/test_simple_orchestrator_unit.py::TestIntegrationHelpers::test_find_suitable_agent_logic FAILED [ 94%]",
+        "tests/unit/components/test_simple_orchestrator_unit.py::TestIntegrationHelpers::test_find_suitable_agent_no_preference FAILED [ 97%]",
+        "tests/unit/components/test_simple_orchestrator_unit.py::TestIntegrationHelpers::test_find_suitable_agent_busy_agents FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_global_exception_handler",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 4.112694025039673,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_ws_unknown_type_error",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.9997689723968506,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_final_coverage_push",
+      "tests_run": 15,
+      "passed": 14,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 7.416428089141846,
+      "pass_rate": 93.33333333333333,
+      "error_messages": [
+        "tests/unit/test_final_coverage_push.py::test_fastapi_app_basics FAILED   [ 40%]"
+      ]
+    },
+    {
+      "category": "unit_project_index_utils",
+      "tests_run": 51,
+      "passed": 50,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 6.944251298904419,
+      "pass_rate": 98.0392156862745,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_backpressure_disconnect",
+      "tests_run": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.900907039642334,
+      "pass_rate": 50.0,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_component_unit_tests",
+      "tests_run": 11,
+      "passed": 10,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.164747953414917,
+      "pass_rate": 90.9090909090909,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_prometheus_response_time_header",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.527747869491577,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_critical_apis",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.4897689819335938,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_simple_coverage_boost",
+      "tests_run": 33,
+      "passed": 29,
+      "failed": 4,
+      "skipped": 0,
+      "duration": 3.4456841945648193,
+      "pass_rate": 87.87878787878788,
+      "error_messages": [
+        "tests/unit/test_simple_coverage_boost.py::TestConfigurationBasics::test_settings_creation FAILED [ 18%]",
+        "tests/unit/test_simple_coverage_boost.py::TestApplicationBasics::test_ci_mode_app FAILED [ 30%]",
+        "tests/unit/test_simple_coverage_boost.py::TestCLIBasics::test_agent_hive_config_class FAILED [ 39%]",
+        "tests/unit/test_simple_coverage_boost.py::TestCLIBasics::test_cli_config_methods FAILED [ 42%]"
+      ]
+    },
+    {
+      "category": "unit_redis_listener_routing",
+      "tests_run": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.6442675590515137,
+      "pass_rate": 50.0,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_ws_utils",
+      "tests_run": 3,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 7.839138984680176,
+      "pass_rate": 66.66666666666666,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_project_index_models",
+      "tests_run": 46,
+      "passed": 45,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 7.607073068618774,
+      "pass_rate": 97.82608695652173,
+      "error_messages": [
+        "tests/unit/test_project_index_models.py::TestProjectIndexConfig::test_default_config FAILED [ 10%]"
+      ]
+    },
+    {
+      "category": "unit_redis_basic",
+      "tests_run": 17,
+      "passed": 6,
+      "failed": 11,
+      "skipped": 0,
+      "duration": 7.787799835205078,
+      "pass_rate": 35.294117647058826,
+      "error_messages": [
+        "tests/unit/test_redis_basic.py::test_redis_client_creation FAILED        [ 17%]",
+        "tests/unit/test_redis_basic.py::test_message_broker_creation FAILED      [ 23%]",
+        "tests/unit/test_redis_basic.py::test_session_cache_creation FAILED       [ 29%]",
+        "tests/unit/test_redis_basic.py::test_agent_message_broker_send_message FAILED [ 47%]",
+        "tests/unit/test_redis_basic.py::test_agent_message_broker_receive_messages FAILED [ 52%]",
+        "tests/unit/test_redis_basic.py::test_session_cache_store_session FAILED  [ 58%]",
+        "tests/unit/test_redis_basic.py::test_session_cache_get_session FAILED    [ 64%]",
+        "tests/unit/test_redis_basic.py::test_session_cache_delete_session FAILED [ 70%]",
+        "tests/unit/test_redis_basic.py::test_redis_connection_singleton FAILED   [ 88%]",
+        "tests/unit/test_redis_basic.py::test_message_broker_singleton FAILED     [ 94%]",
+        "tests/unit/test_redis_basic.py::test_session_cache_singleton FAILED      [100%]"
+      ]
+    },
+    {
+      "category": "unit_main_app_basic",
+      "tests_run": 17,
+      "passed": 6,
+      "failed": 11,
+      "skipped": 0,
+      "duration": 8.50176215171814,
+      "pass_rate": 35.294117647058826,
+      "error_messages": [
+        "tests/unit/test_main_app_basic.py::test_ci_app_creation FAILED           [ 11%]",
+        "tests/unit/test_main_app_basic.py::test_create_app_function FAILED       [ 23%]",
+        "tests/unit/test_main_app_basic.py::test_create_app_with_debug FAILED     [ 29%]",
+        "tests/unit/test_main_app_basic.py::test_create_app_production FAILED     [ 35%]",
+        "tests/unit/test_main_app_basic.py::test_app_middleware_configuration FAILED [ 64%]",
+        "tests/unit/test_main_app_basic.py::test_app_route_configuration FAILED   [ 70%]",
+        "tests/unit/test_main_app_basic.py::test_health_endpoint_logic FAILED     [ 76%]",
+        "tests/unit/test_main_app_basic.py::test_status_endpoint_logic FAILED     [ 82%]",
+        "tests/unit/test_main_app_basic.py::test_metrics_endpoint_logic FAILED    [ 88%]",
+        "tests/unit/test_main_app_basic.py::test_debug_agents_endpoint_logic FAILED [ 94%]",
+        "tests/unit/test_main_app_basic.py::test_exception_handler_registration FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_dashboard_compat_live_data",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.478430986404419,
+      "pass_rate": 0.0,
+      "error_messages": [
+        "tests/unit/test_dashboard_compat_live_data.py::test_dashboard_live_data_compat_structure FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_ws_send_has_correlation_and_timestamp",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.549760103225708,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_project_index_database_models",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.9077188968658447,
+      "pass_rate": 0.0,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_optimization_components",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.351738214492798,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_context_compression",
+      "tests_run": 26,
+      "passed": 15,
+      "failed": 11,
+      "skipped": 0,
+      "duration": 3.525667905807495,
+      "pass_rate": 57.692307692307686,
+      "error_messages": [
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_compress_conversation_standard FAILED [ 15%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_compress_conversation_light FAILED [ 19%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_compress_conversation_aggressive FAILED [ 23%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_compress_with_context_type_decision FAILED [ 30%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_compress_with_context_type_error_resolution FAILED [ 34%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_compress_with_api_error FAILED [ 46%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_performance_metrics_tracking FAILED [ 53%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_health_check_failure FAILED [ 61%]",
+        "tests/unit/test_context_compression.py::TestContextCompressor::test_build_compression_prompt_context_specific FAILED [ 69%]",
+        "tests/unit/test_context_compression.py::TestCompressionSingleton::test_get_context_compressor_singleton FAILED [ 88%]",
+        "tests/unit/test_context_compression.py::TestCompressionSingleton::test_get_context_compressor_creates_new_instance FAILED [ 92%]"
+      ]
+    },
+    {
+      "category": "unit_rate_limit",
+      "tests_run": 3,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 5.588913202285767,
+      "pass_rate": 66.66666666666666,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_ws_oversized_message",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.5467751026153564,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_context_preserver",
+      "tests_run": 15,
+      "passed": 14,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.220167875289917,
+      "pass_rate": 93.33333333333333,
+      "error_messages": [
+        "tests/unit/test_context_preserver.py::TestProductionContextPreserver::test_validate_context_integrity_missing_data FAILED [ 46%]"
+      ]
+    },
+    {
+      "category": "unit_coverage_boost",
+      "tests_run": 16,
+      "passed": 12,
+      "failed": 4,
+      "skipped": 0,
+      "duration": 3.7269458770751953,
+      "pass_rate": 75.0,
+      "error_messages": [
+        "tests/unit/test_coverage_boost.py::test_api_routes_basic FAILED          [ 12%]",
+        "tests/unit/test_coverage_boost.py::test_app_metadata FAILED              [ 50%]",
+        "tests/unit/test_coverage_boost.py::test_workspace_manager_basic FAILED   [ 62%]",
+        "tests/unit/test_coverage_boost.py::test_main_app_configuration FAILED    [100%]"
+      ]
+    },
+    {
+      "category": "unit_cli_functionality",
+      "tests_run": 27,
+      "passed": 4,
+      "failed": 23,
+      "skipped": 0,
+      "duration": 6.016382932662964,
+      "pass_rate": 14.814814814814813,
+      "error_messages": [
+        "tests/unit/test_cli_functionality.py::TestAgentHiveConfig::test_load_default_config FAILED [  6%]",
+        "tests/unit/test_cli_functionality.py::TestAgentHiveConfig::test_save_and_load_config FAILED [  9%]",
+        "tests/unit/test_cli_functionality.py::TestAgentHiveConfig::test_get_workspace_path FAILED [ 12%]",
+        "tests/unit/test_cli_functionality.py::TestAgentHiveConfig::test_config_file_corruption_handling FAILED [ 15%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_main_command_help FAILED [ 34%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_start_command_success FAILED [ 37%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_start_command_already_running FAILED [ 40%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_status_command_healthy FAILED [ 46%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_status_command_unhealthy FAILED [ 50%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_dashboard_command FAILED [ 53%]",
+        "tests/unit/test_cli_functionality.py::TestCLICommands::test_dashboard_command_system_down FAILED [ 56%]",
+        "tests/unit/test_cli_functionality.py::TestWorkspaceCommands::test_config_directory_creation FAILED [ 59%]",
+        "tests/unit/test_cli_functionality.py::TestConfigCommands::test_config_show FAILED [ 62%]",
+        "tests/unit/test_cli_functionality.py::TestConfigCommands::test_config_set_api_base FAILED [ 65%]",
+        "tests/unit/test_cli_functionality.py::TestConfigCommands::test_config_set_invalid_key FAILED [ 68%]",
+        "tests/unit/test_cli_functionality.py::TestUpdateCommands::test_update_check_available FAILED [ 71%]",
+        "tests/unit/test_cli_functionality.py::TestUpdateCommands::test_update_check_current FAILED [ 75%]",
+        "tests/unit/test_cli_functionality.py::TestUpdateCommands::test_update_install FAILED [ 78%]",
+        "tests/unit/test_cli_functionality.py::TestDevCommands::test_develop_command_success FAILED [ 81%]",
+        "tests/unit/test_cli_functionality.py::TestDevCommands::test_develop_command_with_options FAILED [ 84%]",
+        "tests/unit/test_cli_functionality.py::TestErrorHandling::test_permission_error_handling FAILED [ 90%]",
+        "tests/unit/test_cli_functionality.py::TestIntegrationScenarios::test_full_startup_workflow FAILED [ 96%]",
+        "tests/unit/test_cli_functionality.py::TestIntegrationScenarios::test_workspace_creation_workflow FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_redis_messaging",
+      "tests_run": 47,
+      "passed": 29,
+      "failed": 18,
+      "skipped": 0,
+      "duration": 5.188293933868408,
+      "pass_rate": 61.702127659574465,
+      "error_messages": [
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_send_message_basic FAILED [ 17%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_send_message_with_retry FAILED [ 19%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_broadcast_message FAILED [ 23%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_create_consumer_group_new FAILED [ 25%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_read_messages FAILED [ 29%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_acknowledge_message FAILED [ 34%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_register_agent FAILED [ 36%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_coordinate_workflow_tasks FAILED [ 38%]",
+        "tests/unit/test_redis_messaging.py::TestAgentMessageBroker::test_handle_agent_failure FAILED [ 40%]",
+        "tests/unit/test_redis_messaging.py::TestSessionCache::test_set_session_state FAILED [ 53%]",
+        "tests/unit/test_redis_messaging.py::TestSessionCache::test_set_session_state_custom_ttl FAILED [ 55%]",
+        "tests/unit/test_redis_messaging.py::TestSessionCache::test_get_session_state FAILED [ 57%]",
+        "tests/unit/test_redis_messaging.py::TestSessionCache::test_delete_session_state FAILED [ 61%]",
+        "tests/unit/test_redis_messaging.py::TestRedisClient::test_redis_client_get FAILED [ 85%]",
+        "tests/unit/test_redis_messaging.py::TestRedisClient::test_redis_client_set FAILED [ 87%]",
+        "tests/unit/test_redis_messaging.py::TestRedisClient::test_redis_client_delete FAILED [ 89%]",
+        "tests/unit/test_redis_messaging.py::TestRedisClient::test_redis_client_exists FAILED [ 91%]",
+        "tests/unit/test_redis_messaging.py::TestRedisClient::test_redis_client_hash_operations FAILED [ 93%]"
+      ]
+    },
+    {
+      "category": "unit_monitoring_components",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 4.301392078399658,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_hive_compact_command",
+      "tests_run": 25,
+      "passed": 11,
+      "failed": 14,
+      "skipped": 0,
+      "duration": 4.411625146865845,
+      "pass_rate": 44.0,
+      "error_messages": [
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_execute_basic_compression FAILED [ 12%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_execute_with_session_id FAILED [ 16%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_execute_with_compression_level FAILED [ 20%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_execute_with_target_tokens FAILED [ 24%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_execute_with_preserve_flags FAILED [ 32%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_execute_compression_failure FAILED [ 40%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_extract_session_context_success FAILED [ 60%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_extract_session_context_not_found FAILED [ 64%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_extract_session_context_database_error FAILED [ 68%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_store_compressed_context_success FAILED [ 72%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_store_compressed_context_session_not_found FAILED [ 76%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommand::test_performance_tracking FAILED [ 80%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommandIntegration::test_execute_via_registry FAILED [ 88%]",
+        "tests/unit/test_hive_compact_command.py::TestHiveCompactCommandIntegration::test_execute_hive_command_function FAILED [ 92%]"
+      ]
+    },
+    {
+      "category": "unit_health_degraded",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.572988748550415,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_database_basic",
+      "tests_run": 11,
+      "passed": 9,
+      "failed": 2,
+      "skipped": 0,
+      "duration": 3.309154987335205,
+      "pass_rate": 81.81818181818183,
+      "error_messages": [
+        "tests/unit/test_database_basic.py::test_database_engine_creation FAILED  [ 27%]",
+        "tests/unit/test_database_basic.py::test_init_database_function FAILED    [ 45%]"
+      ]
+    },
+    {
+      "category": "unit_database_redis",
+      "tests_run": 38,
+      "passed": 15,
+      "failed": 23,
+      "skipped": 0,
+      "duration": 4.616145849227905,
+      "pass_rate": 39.473684210526315,
+      "error_messages": [
+        "tests/unit/test_database_redis.py::TestDatabaseFunctionality::test_init_database_success FAILED [ 10%]",
+        "tests/unit/test_database_redis.py::TestDatabaseFunctionality::test_init_database_connection_failure FAILED [ 13%]",
+        "tests/unit/test_database_redis.py::TestDatabaseFunctionality::test_get_async_session FAILED [ 15%]",
+        "tests/unit/test_database_redis.py::TestDatabaseFunctionality::test_get_async_session_exception_handling FAILED [ 18%]",
+        "tests/unit/test_database_redis.py::TestAgentMessageBroker::test_send_message FAILED [ 34%]",
+        "tests/unit/test_database_redis.py::TestAgentMessageBroker::test_send_broadcast_message FAILED [ 36%]",
+        "tests/unit/test_database_redis.py::TestAgentMessageBroker::test_receive_messages FAILED [ 39%]",
+        "tests/unit/test_database_redis.py::TestAgentMessageBroker::test_create_consumer_group FAILED [ 42%]",
+        "tests/unit/test_database_redis.py::TestAgentMessageBroker::test_register_message_handler FAILED [ 44%]",
+        "tests/unit/test_database_redis.py::TestAgentMessageBroker::test_coordination_features FAILED [ 47%]",
+        "tests/unit/test_database_redis.py::TestSessionCache::test_store_session_data FAILED [ 50%]",
+        "tests/unit/test_database_redis.py::TestSessionCache::test_retrieve_session_data FAILED [ 52%]",
+        "tests/unit/test_database_redis.py::TestSessionCache::test_retrieve_nonexistent_session FAILED [ 55%]",
+        "tests/unit/test_database_redis.py::TestSessionCache::test_delete_session FAILED [ 57%]",
+        "tests/unit/test_database_redis.py::TestSessionCache::test_extend_session_ttl FAILED [ 60%]",
+        "tests/unit/test_database_redis.py::TestRedisConnectionManagement::test_init_redis_success FAILED [ 63%]",
+        "tests/unit/test_database_redis.py::TestRedisConnectionManagement::test_init_redis_connection_failure FAILED [ 65%]",
+        "tests/unit/test_database_redis.py::TestRedisConnectionManagement::test_close_redis FAILED [ 76%]",
+        "tests/unit/test_database_redis.py::TestErrorHandlingAndRecovery::test_redis_connection_error_handling FAILED [ 81%]",
+        "tests/unit/test_database_redis.py::TestErrorHandlingAndRecovery::test_database_transaction_rollback FAILED [ 84%]",
+        "tests/unit/test_database_redis.py::TestErrorHandlingAndRecovery::test_session_cache_json_parsing_error FAILED [ 86%]",
+        "tests/unit/test_database_redis.py::TestPerformanceAndConcurrency::test_concurrent_session_operations FAILED [ 92%]",
+        "tests/unit/test_database_redis.py::TestConfigurationAndSettings::test_database_url_environment_variables FAILED [ 97%]"
+      ]
+    },
+    {
+      "category": "unit_app_main_endpoints",
+      "tests_run": 3,
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0,
+      "duration": 3.5458219051361084,
+      "pass_rate": 0.0,
+      "error_messages": [
+        "tests/unit/test_app_main_endpoints.py::test_status_endpoint_returns_json FAILED [ 33%]",
+        "tests/unit/test_app_main_endpoints.py::test_metrics_endpoint_returns_prometheus_text FAILED [ 66%]",
+        "tests/unit/test_app_main_endpoints.py::test_global_exception_handler_returns_500 FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_idle_disconnect",
+      "tests_run": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.729278087615967,
+      "pass_rate": 50.0,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_core_orchestrator",
+      "tests_run": 11,
+      "passed": 0,
+      "failed": 11,
+      "skipped": 0,
+      "duration": 3.9927029609680176,
+      "pass_rate": 0.0,
+      "error_messages": [
+        "tests/unit/test_core_orchestrator.py::TestAgentLifecycleManagement::test_spawn_agent_success FAILED [  6%]",
+        "tests/unit/test_core_orchestrator.py::TestAgentLifecycleManagement::test_spawn_agent_failure FAILED [ 12%]",
+        "tests/unit/test_core_orchestrator.py::TestAgentLifecycleManagement::test_monitor_agent_health_healthy FAILED [ 18%]",
+        "tests/unit/test_core_orchestrator.py::TestAgentLifecycleManagement::test_monitor_agent_health_unhealthy FAILED [ 25%]",
+        "tests/unit/test_core_orchestrator.py::TestAgentLifecycleManagement::test_shutdown_agent FAILED [ 31%]",
+        "tests/unit/test_core_orchestrator.py::TestErrorRecoveryAndResilience::test_memory_pressure_handling FAILED [ 68%]",
+        "tests/unit/test_core_orchestrator.py::TestPerformanceMetrics::test_collect_agent_metrics FAILED [ 75%]",
+        "tests/unit/test_core_orchestrator.py::TestPerformanceMetrics::test_performance_optimization FAILED [ 81%]",
+        "tests/unit/test_core_orchestrator.py::TestConcurrentOperations::test_concurrent_task_assignment FAILED [ 87%]",
+        "tests/unit/test_core_orchestrator.py::TestConfigurationAndSettings::test_orchestrator_initialization_with_config FAILED [ 93%]",
+        "tests/unit/test_core_orchestrator.py::TestConfigurationAndSettings::test_dynamic_configuration_update FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_ws_invalid_json_error",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.5067498683929443,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_prometheus_middleware_exclusions",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.577252149581909,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_focused_coverage",
+      "tests_run": 27,
+      "passed": 19,
+      "failed": 2,
+      "skipped": 6,
+      "duration": 5.920654296875,
+      "pass_rate": 70.37037037037037,
+      "error_messages": [
+        "tests/unit/test_focused_coverage.py::test_settings_with_env_vars FAILED  [ 22%]",
+        "tests/unit/test_focused_coverage.py::test_workspace_manager_imports FAILED [ 33%]"
+      ]
+    },
+    {
+      "category": "unit_main_app",
+      "tests_run": 22,
+      "passed": 8,
+      "failed": 14,
+      "skipped": 0,
+      "duration": 7.3216712474823,
+      "pass_rate": 36.36363636363637,
+      "error_messages": [
+        "tests/unit/test_main_app.py::TestMainAppBasics::test_create_app_basic_properties FAILED [  9%]",
+        "tests/unit/test_main_app.py::TestMainAppBasics::test_create_app_debug_mode FAILED [ 13%]",
+        "tests/unit/test_main_app.py::TestMainAppBasics::test_create_app_production_mode FAILED [ 18%]",
+        "tests/unit/test_main_app.py::TestAppRoutes::test_health_check_endpoint_response_structure FAILED [ 22%]",
+        "tests/unit/test_main_app.py::TestAppRoutes::test_status_endpoint_structure FAILED [ 27%]",
+        "tests/unit/test_main_app.py::TestAppRoutes::test_metrics_endpoint_exists FAILED [ 31%]",
+        "tests/unit/test_main_app.py::TestAppRoutes::test_debug_agents_endpoint_structure FAILED [ 36%]",
+        "tests/unit/test_main_app.py::TestAppMiddleware::test_cors_middleware_configured FAILED [ 40%]",
+        "tests/unit/test_main_app.py::TestAppMiddleware::test_trusted_host_middleware_configured FAILED [ 45%]",
+        "tests/unit/test_main_app.py::TestAppMiddleware::test_observability_middleware_configured FAILED [ 50%]",
+        "tests/unit/test_main_app.py::TestGlobalExceptionHandler::test_global_exception_handler_exists FAILED [ 68%]",
+        "tests/unit/test_main_app.py::TestAppRouterInclusion::test_api_routers_included FAILED [ 90%]",
+        "tests/unit/test_main_app.py::TestAppRouterInclusion::test_api_v1_routes_included FAILED [ 95%]",
+        "tests/unit/test_main_app.py::TestConfigurableFeatures::test_app_routes_exist FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_universal_orchestrator_comprehensive",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.7816851139068604,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_models_validation",
+      "tests_run": 40,
+      "passed": 32,
+      "failed": 8,
+      "skipped": 0,
+      "duration": 3.8875060081481934,
+      "pass_rate": 80.0,
+      "error_messages": [
+        "tests/unit/test_models_validation.py::TestAgentModelCreation::test_agent_model_creation_minimal FAILED [ 10%]",
+        "tests/unit/test_models_validation.py::TestAgentSerialization::test_agent_to_dict_minimal FAILED [ 17%]",
+        "tests/unit/test_models_validation.py::TestAgentSerialization::test_agent_to_dict_with_none_values FAILED [ 22%]",
+        "tests/unit/test_models_validation.py::TestAgentSerialization::test_agent_to_dict_string_conversion_edge_cases FAILED [ 25%]",
+        "tests/unit/test_models_validation.py::TestAgentTaskSuitability::test_is_available_for_task_no_context_usage FAILED [ 60%]",
+        "tests/unit/test_models_validation.py::TestAgentDataValidation::test_agent_numeric_string_fields FAILED [ 87%]",
+        "tests/unit/test_models_validation.py::TestAgentEdgeCases::test_agent_with_empty_strings FAILED [ 95%]",
+        "tests/unit/test_models_validation.py::TestAgentEdgeCases::test_agent_context_usage_edge_cases FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_project_index_graph",
+      "tests_run": 27,
+      "passed": 26,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 4.0677649974823,
+      "pass_rate": 96.29629629629629,
+      "error_messages": [
+        "/opt/homebrew/lib/python3.13/site-packages/coverage/inorout.py:521: CoverageWarning: Module app.api.dashboard_compat was never imported. (module-not-imported)\n  self.warn(f\"Module {pkg} was never impo"
+      ]
+    },
+    {
+      "category": "unit_project_index_cache",
+      "tests_run": 29,
+      "passed": 2,
+      "failed": 27,
+      "skipped": 0,
+      "duration": 4.62044620513916,
+      "pass_rate": 6.896551724137931,
+      "error_messages": [
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_cache_manager_initialization FAILED [  3%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_cache_manager_initialization_with_custom_ttl FAILED [  6%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_health_check_healthy FAILED [ 10%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_health_check_unhealthy FAILED [ 13%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_analysis_result_cache_hit FAILED [ 17%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_analysis_result_cache_miss FAILED [ 20%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_analysis_result_invalid_json FAILED [ 24%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_set_analysis_result FAILED [ 27%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_set_analysis_result_with_custom_ttl FAILED [ 31%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_file_analysis_cache_hit FAILED [ 34%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_file_analysis_cache_miss FAILED [ 37%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_set_file_analysis FAILED [ 41%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_dependency_graph_cache_hit FAILED [ 44%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_set_dependency_graph FAILED [ 48%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_context_optimization_cache_hit FAILED [ 51%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_set_context_optimization FAILED [ 55%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_invalidate_project_cache FAILED [ 58%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_invalidate_project_cache_no_entries FAILED [ 62%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_invalidate_file_cache FAILED [ 65%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_invalidate_file_cache_not_found FAILED [ 68%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_get_cache_stats FAILED [ 72%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_batch_get_file_analyses FAILED [ 75%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_batch_set_file_analyses FAILED [ 79%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_cleanup_expired_entries FAILED [ 82%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_cache_serialization_with_complex_objects FAILED [ 93%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_cache_error_handling FAILED [ 96%]",
+        "tests/unit/test_project_index_cache.py::TestCacheManager::test_cache_key_generation FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_redis_listener_backoff",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 5.105654954910278,
+      "pass_rate": 0.0,
+      "error_messages": [
+        "tests/unit/test_redis_listener_backoff.py::test_redis_listener_exponential_backoff FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_debug_agents_resilience",
+      "tests_run": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 3.551156997680664,
+      "pass_rate": 0.0,
+      "error_messages": [
+        ""
+      ]
+    },
+    {
+      "category": "unit_project_index_file_monitor",
+      "tests_run": 29,
+      "passed": 3,
+      "failed": 26,
+      "skipped": 0,
+      "duration": 5.5246970653533936,
+      "pass_rate": 10.344827586206897,
+      "error_messages": [
+        "tests/unit/test_project_index_file_monitor.py::TestFileChangeEvent::test_basic_event_creation FAILED [  6%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileChangeEvent::test_event_with_metadata FAILED [ 10%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileChangeEvent::test_event_equality FAILED [ 13%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_file_monitor_initialization FAILED [ 17%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_file_monitor_default_poll_interval FAILED [ 20%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_add_project FAILED [ 24%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_add_project_with_patterns FAILED [ 27%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_remove_project FAILED [ 31%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_get_project_info FAILED [ 34%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_list_projects FAILED [ 37%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_start_monitoring FAILED [ 41%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_stop_monitoring_not_running FAILED [ 44%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_monitoring_context_manager FAILED [ 48%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_scan_directory FAILED [ 51%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_scan_directory_with_exclude_patterns FAILED [ 55%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_should_include_file FAILED [ 58%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_get_file_hash FAILED [ 62%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_get_file_hash_nonexistent FAILED [ 65%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_file_change_detection FAILED [ 68%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_get_changes_since FAILED [ 79%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_get_changes_since_project FAILED [ 82%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_clear_change_history FAILED [ 86%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_get_statistics FAILED [ 89%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_monitoring_error_handling FAILED [ 93%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_file_state_tracking FAILED [ 96%]",
+        "tests/unit/test_project_index_file_monitor.py::TestFileMonitor::test_concurrent_monitoring FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_config_coverage",
+      "tests_run": 10,
+      "passed": 5,
+      "failed": 5,
+      "skipped": 0,
+      "duration": 3.1906049251556396,
+      "pass_rate": 50.0,
+      "error_messages": [
+        "tests/unit/test_config_coverage.py::test_settings_initialization_with_env FAILED [ 30%]",
+        "tests/unit/test_config_coverage.py::test_settings_environment_override FAILED [ 70%]",
+        "tests/unit/test_config_coverage.py::test_settings_field_validation FAILED [ 80%]",
+        "tests/unit/test_config_coverage.py::test_settings_cors_configuration FAILED [ 90%]",
+        "tests/unit/test_config_coverage.py::test_settings_security_configuration FAILED [100%]"
+      ]
+    },
+    {
+      "category": "unit_project_index_api_comprehensive",
+      "tests_run": 27,
+      "passed": 0,
+      "failed": 27,
+      "skipped": 0,
+      "duration": 11.042376279830933,
+      "pass_rate": 0.0,
+      "error_messages": [
+        "tests/unit/test_project_index_api_comprehensive.py::TestProjectIndexCRUDEndpoints::test_create_project_index_invalid_path FAILED [  6%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestProjectIndexCRUDEndpoints::test_create_project_index_validation_error FAILED [  9%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestProjectIndexCRUDEndpoints::test_get_project_index_success FAILED [ 12%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestProjectIndexCRUDEndpoints::test_get_project_index_not_found FAILED [ 16%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestProjectIndexCRUDEndpoints::test_refresh_project_index_success FAILED [ 19%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestFileAnalysisEndpoints::test_list_project_files_with_filters FAILED [ 29%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestFileAnalysisEndpoints::test_get_file_analysis_success FAILED [ 32%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestFileAnalysisEndpoints::test_get_file_analysis_not_found FAILED [ 35%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAnalysisEndpoints::test_analyze_project_success FAILED [ 38%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAnalysisEndpoints::test_analyze_project_invalid_type FAILED [ 41%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAnalysisEndpoints::test_analyze_project_rate_limited FAILED [ 45%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestDependencyEndpoints::test_get_dependencies_json_format FAILED [ 48%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestDependencyEndpoints::test_get_dependencies_graph_format FAILED [ 51%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestDependencyEndpoints::test_get_dependencies_with_file_filter FAILED [ 54%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestDependencyEndpoints::test_get_dependencies_file_not_found FAILED [ 58%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestWebSocketEndpoints::test_websocket_connection_success FAILED [ 61%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestWebSocketEndpoints::test_websocket_stats FAILED [ 64%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIErrorHandling::test_invalid_uuid_parameter FAILED [ 67%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIErrorHandling::test_malformed_json_request FAILED [ 70%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIErrorHandling::test_missing_required_fields FAILED [ 74%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIErrorHandling::test_large_request_body FAILED [ 80%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIResponseFormats::test_standard_response_format FAILED [ 83%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIResponseFormats::test_error_response_format FAILED [ 87%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIResponseFormats::test_pagination_metadata FAILED [ 90%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIParameterValidation::test_pagination_parameter_validation FAILED [ 93%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIParameterValidation::test_filter_parameter_validation FAILED [ 96%]",
+        "tests/unit/test_project_index_api_comprehensive.py::TestAPIParameterValidation::test_dependency_parameter_validation FAILED [100%]"
+      ]
+    }
+  ],
+  "quality_gates": [
+    {
+      "gate_name": "Unit Test Pass Rate",
+      "passed": false,
+      "actual_value": 58.490566037735846,
+      "threshold_value": 90.0,
+      "message": "Unit tests: 58.5% pass rate (need \u226590.0%)"
+    },
+    {
+      "gate_name": "Overall Test Pass Rate",
+      "passed": false,
+      "actual_value": 58.490566037735846,
+      "threshold_value": 85.0,
+      "message": "Overall: 58.5% pass rate (need \u226585.0%)"
+    },
+    {
+      "gate_name": "Test Execution Time",
+      "passed": true,
+      "actual_value": 67.23664999008179,
+      "threshold_value": 300.0,
+      "message": "Execution time: 67.2s (limit: 300.0s)"
+    },
+    {
+      "gate_name": "Component websocket Performance",
+      "passed": true,
+      "actual_value": 0.16478071893964494,
+      "threshold_value": 2.0,
+      "message": "websocket: 0.16s per test (limit: 2.0s)"
+    },
+    {
+      "gate_name": "Component redis_pubsub Performance",
+      "passed": true,
+      "actual_value": 0.1244361060006278,
+      "threshold_value": 2.0,
+      "message": "redis_pubsub: 0.12s per test (limit: 2.0s)"
+    },
+    {
+      "gate_name": "Component enhanced_agent_launcher Performance",
+      "passed": true,
+      "actual_value": 0.5964310169219971,
+      "threshold_value": 2.0,
+      "message": "enhanced_agent_launcher: 0.60s per test (limit: 2.0s)"
+    },
+    {
+      "gate_name": "Component task_queue Performance",
+      "passed": true,
+      "actual_value": 0.12762283484141032,
+      "threshold_value": 2.0,
+      "message": "task_queue: 0.13s per test (limit: 2.0s)"
+    },
+    {
+      "gate_name": "Component config Performance",
+      "passed": false,
+      "actual_value": 3.04644775390625,
+      "threshold_value": 2.0,
+      "message": "config: 3.05s per test (limit: 2.0s)"
+    },
+    {
+      "gate_name": "Component simple_orchestrator Performance",
+      "passed": true,
+      "actual_value": 0.8177538315455118,
+      "threshold_value": 2.0,
+      "message": "simple_orchestrator: 0.82s per test (limit: 2.0s)"
+    }
+  ],
+  "performance_metrics": {
+    "categories_run": 54,
+    "parallel_execution": true,
+    "avg_duration_per_category": 1.2451231479644775
+  },
+  "recommendations": [
+    "\ud83d\udd34 3 quality gate(s) failed. Address these before proceeding to higher test levels.",
+    "\u26a0\ufe0f  component_task_queue has low pass rate (33.3%). Review and fix failing tests.",
+    "\u26a0\ufe0f  component_config has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_metrics_fallback has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_status_resilience has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  component_simple_orchestrator has low pass rate (16.7%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_global_exception_handler has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_ws_unknown_type_error has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_backpressure_disconnect has low pass rate (50.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_prometheus_response_time_header has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_critical_apis has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_redis_listener_routing has low pass rate (50.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_ws_utils has low pass rate (66.7%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_redis_basic has low pass rate (35.3%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_main_app_basic has low pass rate (35.3%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_dashboard_compat_live_data has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_ws_send_has_correlation_and_timestamp has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_project_index_database_models has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_optimization_components has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_context_compression has low pass rate (57.7%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_rate_limit has low pass rate (66.7%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_ws_oversized_message has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_coverage_boost has low pass rate (75.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_cli_functionality has low pass rate (14.8%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_redis_messaging has low pass rate (61.7%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_monitoring_components has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_hive_compact_command has low pass rate (44.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_health_degraded has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_database_redis has low pass rate (39.5%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_app_main_endpoints has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_idle_disconnect has low pass rate (50.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_core_orchestrator has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_ws_invalid_json_error has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_prometheus_middleware_exclusions has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_focused_coverage has low pass rate (70.4%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_main_app has low pass rate (36.4%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_universal_orchestrator_comprehensive has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_project_index_cache has low pass rate (6.9%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_redis_listener_backoff has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_debug_agents_resilience has low pass rate (0.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_project_index_file_monitor has low pass rate (10.3%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_config_coverage has low pass rate (50.0%). Review and fix failing tests.",
+    "\u26a0\ufe0f  unit_project_index_api_comprehensive has low pass rate (0.0%). Review and fix failing tests."
+  ]
+}
