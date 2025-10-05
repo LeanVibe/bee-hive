@@ -101,6 +101,14 @@ export interface ContextTrajectoryNode {
   metadata: Record<string, any>
   semantic_embedding?: number[]
   connections: string[]
+  // D3 force simulation properties
+  x?: number
+  y?: number
+  fx?: number | null
+  fy?: number | null
+  vx?: number
+  vy?: number
+  index?: number
 }
 
 export interface ContextTrajectoryPath {
@@ -131,6 +139,14 @@ export interface WorkflowConstellationNode {
   size: number
   color: string
   metadata: Record<string, any>
+  // D3 force simulation properties
+  x?: number
+  y?: number
+  fx?: number | null
+  fy?: number | null
+  vx?: number
+  vy?: number
+  index?: number
 }
 
 export interface WorkflowConstellationEdge {
