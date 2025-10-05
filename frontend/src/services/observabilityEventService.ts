@@ -10,13 +10,13 @@
  */
 
 import { ref, reactive, computed, watch } from 'vue'
-import type { 
+import { DashboardComponent } from '@/types/coordination'
+import type {
   DashboardEvent,
-  DashboardComponent,
   WebSocketMessage,
-  EventFilter,
   PerformanceMetrics
 } from '@/types/coordination'
+import type { EventFilter } from '@/types/hooks'
 import { useUnifiedWebSocket } from './unifiedWebSocketManager'
 import { api } from './api'
 

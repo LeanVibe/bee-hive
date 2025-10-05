@@ -347,7 +347,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useEventsStore } from '@/stores/events'
 import { useNotificationStore } from '@/stores/notifications'
 import { 
@@ -383,7 +383,7 @@ const notificationStore = useNotificationStore()
 const loading = ref(false)
 const autoRefresh = ref(props.autoRefresh)
 const showAllAlerts = ref(false)
-const refreshTimer = ref<NodeJS.Timeout | null>(null)
+const refreshTimer = ref<number | null>(null)
 
 // Mock data (in real implementation, this would come from API)
 const mockDangerousPatterns: DangerousCommand[] = [

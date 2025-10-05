@@ -155,8 +155,8 @@ export const useConnectionStore = defineStore('connection', () => {
       
       case 'event':
         // Forward to event store
-        const { useEventStore } = await import('./events')
-        const eventStore = useEventStore()
+        const { useEventsStore } = await import('./events')
+        const eventStore = useEventsStore()
         eventStore.addRealtimeEvent(message.data)
         break
       

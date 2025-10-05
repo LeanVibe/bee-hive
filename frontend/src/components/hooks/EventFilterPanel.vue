@@ -370,7 +370,7 @@ const localFilters = ref<EventFilter>({ ...props.filters })
 const selectedPreset = ref('')
 
 // Debounce timer for search input
-let searchDebounceTimer: NodeJS.Timeout | null = null
+let searchDebounceTimer: number | null = null
 
 // Computed
 const { hookEvents, agents, sessions } = eventsStore

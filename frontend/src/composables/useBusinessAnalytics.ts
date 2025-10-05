@@ -377,10 +377,10 @@ export function useBusinessAnalytics() {
 
   return {
     // State
-    businessKPIs: readonly(businessKPIs),
-    performanceTrends: readonly(performanceTrends),
-    topInsights: readonly(topInsights),
-    recommendedActions: readonly(recommendedActions),
+    businessKPIs: computed(() => businessKPIs.value),
+    performanceTrends: computed(() => performanceTrends.value),
+    topInsights: computed(() => topInsights.value),
+    recommendedActions: computed(() => recommendedActions.value),
     businessMetrics: readonly(businessMetrics),
     loading: readonly(loading),
     error: readonly(error),

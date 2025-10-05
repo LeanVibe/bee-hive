@@ -308,7 +308,7 @@ const eventsStore = useEventsStore()
 const loading = ref(false)
 const autoRefresh = ref(true)
 const selectedTimeRange = ref(props.timeRange)
-const refreshTimer = ref<NodeJS.Timeout | null>(null)
+const refreshTimer = ref<number | null>(null)
 
 // Mock metrics data (in real implementation, this would come from API)
 const metrics = ref<HookPerformanceMetrics>({

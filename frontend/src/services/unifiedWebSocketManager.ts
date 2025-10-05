@@ -6,9 +6,9 @@
  */
 
 import { ref, reactive, computed } from 'vue'
-import type { 
+import { DashboardComponent } from '@/types/coordination'
+import type {
   DashboardEvent,
-  DashboardComponent,
   WebSocketMessage,
   GraphUpdateMessage,
   TranscriptUpdateMessage,
@@ -91,8 +91,8 @@ class UnifiedWebSocketManager {
   }
 
   // Internal tracking
-  private heartbeatIntervals = new Map<string, NodeJS.Timeout>()
-  private reconnectTimeouts = new Map<string, NodeJS.Timeout>()
+  private heartbeatIntervals = new Map<string, ReturnType<typeof setInterval>>()
+  private reconnectTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
   private messageCallbacks = new Map<string, Array<(message: any) => void>>()
   private latencyMeasurements: number[] = []
 
@@ -828,6 +828,7 @@ export function useUnifiedWebSocket() {
     
     // Connection management
     registerEndpoint: unifiedWebSocketManager.registerEndpoint.bind(unifiedWebSocketManager),
+    unregisterEndpoint: unifiedWebSocketManager.unregisterEndpoint.bind(unifiedWebSocketManager),
     connect: unifiedWebSocketManager.connect.bind(unifiedWebSocketManager),
     disconnect: unifiedWebSocketManager.disconnect.bind(unifiedWebSocketManager),
     disconnectAll: unifiedWebSocketManager.disconnectAll.bind(unifiedWebSocketManager),

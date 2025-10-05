@@ -89,14 +89,14 @@ class PerformanceOptimizer {
 
   // Throttle and debounce maps
   private throttleMap = new Map<string, number>()
-  private debounceMap = new Map<string, NodeJS.Timeout>()
+  private debounceMap = new Map<string, ReturnType<typeof setTimeout>>()
 
   // Component update schedulers
   private componentSchedulers = new Map<DashboardComponent, (() => void)[]>()
 
   // Memory management
-  private memoryMonitorInterval: NodeJS.Timeout | null = null
-  private garbageCollectionInterval: NodeJS.Timeout | null = null
+  private memoryMonitorInterval: ReturnType<typeof setInterval> | null = null
+  private garbageCollectionInterval: ReturnType<typeof setInterval> | null = null
 
   // Public reactive state
   public readonly metrics = computed(() => this.state.metrics)

@@ -299,8 +299,8 @@ const retryMessage = ref('')
 const autoRetryCountdown = ref(0)
 
 // Auto-retry timer
-let autoRetryTimer: NodeJS.Timeout | null = null
-let countdownTimer: NodeJS.Timeout | null = null
+let autoRetryTimer: number | null = null
+let countdownTimer: number | null = null
 
 // Error boundary state
 const errorBoundary = computed(() => {

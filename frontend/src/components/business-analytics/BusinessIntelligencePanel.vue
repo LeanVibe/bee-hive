@@ -103,10 +103,10 @@
           <h4 class="text-md font-medium text-slate-900 dark:text-white mb-4">
             Performance Trends
           </h4>
-          <PerformanceTrendsChart 
+          <PerformanceTrendsChart
             :data="performanceTrends"
             :timeframe="selectedTimeframe"
-            height="300"
+            :height="300"
           />
         </div>
 
