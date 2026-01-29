@@ -1,0 +1,59 @@
+{
+  "dashboard": {
+    "mobile_pwa_exists": true,
+    "frontend_exists": true,
+    "dashboard_components": [
+      "src/tests/enhanced-mobile-dashboard.test.ts",
+      "src/tests/performance-dashboard-validation.test.ts",
+      "src/components/autonomous-development-dashboard.ts",
+      "src/components/enhanced-agent-management-dashboard.ts",
+      "src/views/mobile-decision-dashboard.ts"
+    ],
+    "component_count": 17,
+    "websocket_integration": true
+  },
+  "websocket": {
+    "websocket_server_code": true,
+    "websocket_endpoints": [],
+    "rate_limiting": true,
+    "message_size_limits": true,
+    "websocket_files": [
+      "project_index/websocket_integration.py",
+      "project_index/websocket_events.py",
+      "project_index/websocket_performance.py",
+      "project_index/websocket_monitoring.py",
+      "agents/websocket_coordination.py"
+    ],
+    "contract_documented": true
+  },
+  "cli": {
+    "cli_directory_exists": true,
+    "bin_directory_exists": true,
+    "hive_command_exists": true,
+    "commands_available": [
+      "start",
+      "deploy",
+      "start",
+      "status",
+      "deploy",
+      "start",
+      "status",
+      "dashboard"
+    ],
+    "cli_files": 5,
+    "hive_executable": true,
+    "hive_help_works": true
+  },
+  "technical_debt_tools": {
+    "scripts_directory_exists": true,
+    "examples_directory_exists": true,
+    "refactoring_tools": [
+      "refactor_main_patterns.py",
+      "documentation_consolidation_analyzer.py"
+    ],
+    "refactoring_demo": true,
+    "documented": true
+  },
+  "issues": [],
+  "recommendations": []
+}
