@@ -325,4 +325,8 @@ performance_reports/
 /reports/
 
 # Development state and cache (from root directory cleanup)
-/dev-state/quality_metrics/
+/dev-state/
+
+
+# Quality metrics generated data
+quality_metrics/
